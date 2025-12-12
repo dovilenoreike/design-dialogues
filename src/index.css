@@ -2,87 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
+    /* Monochrome palette */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    --foreground: 220 9% 8%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 220 9% 8%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --popover-foreground: 220 9% 8%;
+    
+    /* Primary - Jet Black */
+    --primary: 220 9% 8%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Cool Gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 8%;
+    
+    /* Muted - Slate */
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    /* Accent */
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 8%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders - Thin elegant lines */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 9% 8%;
+    
     --radius: 0.5rem;
-
+    
+    /* Custom design tokens */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: 220 13% 91% / 0.5;
+    --surface-elevated: 0 0% 100%;
+    --text-primary: 220 9% 8%;
+    --text-secondary: 215 16% 47%;
+    --text-tertiary: 215 14% 64%;
+    
+    /* Sidebar tokens */
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 220 9% 8%;
+    --foreground: 0 0% 98%;
+    
+    --card: 220 9% 12%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 220 9% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 9% 8%;
+    
+    --secondary: 220 9% 18%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 220 9% 18%;
+    --muted-foreground: 215 16% 65%;
+    
+    --accent: 220 9% 18%;
+    --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 220 9% 18%;
+    --input: 220 9% 18%;
+    --ring: 0 0% 83.9%;
+    
+    --glass-bg: 220 9% 12% / 0.8;
+    --glass-border: 220 9% 24% / 0.5;
+    --surface-elevated: 220 9% 12%;
+    --text-primary: 0 0% 98%;
+    --text-secondary: 215 16% 65%;
+    --text-tertiary: 215 14% 45%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -98,8 +110,118 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  }
+}
+
+@layer components {
+  /* Glassmorphism panel */
+  .glass-panel {
+    @apply bg-background/80 backdrop-blur-md border border-border/50;
+  }
+  
+  /* Editorial headline */
+  .headline-editorial {
+    @apply font-serif tracking-tight leading-tight;
+  }
+  
+  /* Pill button base */
+  .pill-button {
+    @apply px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ease-out;
+    @apply border border-border hover:border-foreground/20;
+  }
+  
+  .pill-button-active {
+    @apply bg-foreground text-background border-foreground;
+  }
+  
+  /* Card with hover */
+  .card-interactive {
+    @apply bg-card rounded-xl border border-border p-4 cursor-pointer;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:border-foreground/30 hover:shadow-lg;
+  }
+  
+  .card-interactive-selected {
+    @apply border-foreground shadow-lg;
+  }
+  
+  /* Segmented control */
+  .segmented-control {
+    @apply inline-flex bg-secondary rounded-full p-1;
+  }
+  
+  .segmented-item {
+    @apply px-6 py-2 rounded-full text-sm font-medium transition-all duration-300;
+    @apply text-muted-foreground hover:text-foreground;
+  }
+  
+  .segmented-item-active {
+    @apply bg-background text-foreground shadow-sm;
+  }
+}
+
+@layer utilities {
+  /* Smooth reveal animation */
+  .reveal-enter {
+    animation: revealEnter 0.5s ease-out forwards;
+  }
+  
+  @keyframes revealEnter {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Progress bar animation */
+  .progress-animate {
+    animation: progressPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes progressPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  
+  /* Slide up animation */
+  .slide-up {
+    animation: slideUp 0.4s ease-out forwards;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Fade in */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
