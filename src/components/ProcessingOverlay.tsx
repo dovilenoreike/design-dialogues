@@ -1,0 +1,138 @@
+import { useState, useEffect } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface ProcessingOverlayProps {
+  isVisible: boolean;
+  onComplete: (formData: FormData) => void;
+}
+
+interface FormData {
+  area: number;
+  isRenovation: boolean;
+  hasKitchen: boolean;
+}
+
+const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) => {
+  const [progress, setProgress] = useState(0);
+  const [area, setArea] = useState(50);
+  const [isRenovation, setIsRenovation] = useState(false);
+  const [hasKitchen, setHasKitchen] = useState(false);
+  const [formReady, setFormReady] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      setProgress(0);
+      setFormReady(false);
+      
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 2;
+        });
+      }, 100);
+
+      // Show form after initial progress
+      setTimeout(() => setFormReady(true), 800);
+
+      return () => clearInterval(interval);
+    }
+  }, [isVisible]);
+
+  const handleSubmit = () => {
+    onComplete({ area, isRenovation, hasKitchen });
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center fade-in">
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" />
+      
+      <div className="relative z-10 w-full max-w-md px-6">
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="h-0.5 bg-border rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-foreground transition-all duration-300 ease-out progress-animate"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-2 text-center">
+            Analyzing your space...
+          </p>
+        </div>
+
+        {/* Form card */}
+        {formReady && (
+          <div className="glass-panel rounded-2xl p-6 slide-up">
+            <h3 className="text-xl font-serif mb-1">Refine your Quote</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Help us calculate accurately
+            </p>
+
+            {/* Area slider */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-sm font-medium">Total Area</label>
+                <span className="text-sm text-muted-foreground">{area} m²</span>
+              </div>
+              <Slider
+                value={[area]}
+                onValueChange={(value) => setArea(value[0])}
+                min={20}
+                max={200}
+                step={5}
+                className="w-full"
+              />
+            </div>
+
+            {/* Renovation toggle */}
+            <div className="flex items-center justify-between py-4 border-t border-border">
+              <div>
+                <label className="text-sm font-medium">Renovation State</label>
+                <p className="text-xs text-muted-foreground">
+                  {isRenovation ? "Old / Renovation" : "New Build"}
+                </p>
+              </div>
+              <Switch
+                checked={isRenovation}
+                onCheckedChange={setIsRenovation}
+              />
+            </div>
+
+            {/* Kitchen checkbox */}
+            <div className="flex items-center justify-between py-4 border-t border-border">
+              <div>
+                <label className="text-sm font-medium">Kitchen Fit-out</label>
+                <p className="text-xs text-muted-foreground">Include full kitchen</p>
+              </div>
+              <Checkbox
+                checked={hasKitchen}
+                onCheckedChange={(checked) => setHasKitchen(checked as boolean)}
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={progress < 100}
+              className={`w-full mt-6 py-3.5 rounded-full font-medium text-sm transition-all duration-300 ${
+                progress >= 100
+                  ? "bg-foreground text-background hover:opacity-90"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              }`}
+            >
+              {progress >= 100 ? "View Solutions" : "Processing..."}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProcessingOverlay;
