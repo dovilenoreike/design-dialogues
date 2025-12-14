@@ -42,9 +42,6 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
 
   return (
     <div>
-      <h3 className="text-base md:text-lg font-serif mb-1">Architectural Style</h3>
-      <p className="text-xs md:text-sm text-muted-foreground mb-4">Define your shape</p>
-      
       {/* Checkbox toggle */}
       <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:border-foreground/30 transition-all duration-300">
         <Checkbox 
@@ -59,43 +56,48 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
         />
       </label>
 
-      {/* Expandable style grid */}
-      <div className={`grid gap-3 overflow-hidden transition-all duration-300 ease-out ${
-        isExpanded ? 'grid-cols-2 mt-4 max-h-[500px] opacity-100' : 'max-h-0 opacity-0 mt-0'
+      {/* Expandable section with header and style grid */}
+      <div className={`overflow-hidden transition-all duration-300 ease-out ${
+        isExpanded ? 'max-h-[600px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
       }`}>
-        {styles.map((style) => {
-          const isSelected = selectedStyle === style.name;
-          
-          return (
-            <button
-              key={style.name}
-              onClick={() => onSelectStyle(style.name)}
-              className={`card-interactive text-left overflow-hidden ${
-                isSelected ? "card-interactive-selected" : ""
-              }`}
-            >
-              {/* Preview image */}
-              <div className="relative aspect-[4/3] -mx-4 -mt-4 mb-3 overflow-hidden">
-                <img 
-                  src={style.image} 
-                  alt={style.name}
-                  className="w-full h-full object-cover"
-                />
-                {isSelected && (
-                  <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-                      <Check size={16} className="text-background" />
+        <h3 className="text-base md:text-lg font-serif mb-1">Architectural Style</h3>
+        <p className="text-xs md:text-sm text-muted-foreground mb-4">Define your shape</p>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {styles.map((style) => {
+            const isSelected = selectedStyle === style.name;
+            
+            return (
+              <button
+                key={style.name}
+                onClick={() => onSelectStyle(style.name)}
+                className={`card-interactive text-left overflow-hidden ${
+                  isSelected ? "card-interactive-selected" : ""
+                }`}
+              >
+                {/* Preview image */}
+                <div className="relative aspect-[4/3] -mx-4 -mt-4 mb-3 overflow-hidden">
+                  <img 
+                    src={style.image} 
+                    alt={style.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+                        <Check size={16} className="text-background" />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="font-medium text-sm">{style.name}</p>
-                <p className="text-xs text-muted-foreground">{style.desc}</p>
-              </div>
-            </button>
-          );
-        })}
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{style.name}</p>
+                  <p className="text-xs text-muted-foreground">{style.desc}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
