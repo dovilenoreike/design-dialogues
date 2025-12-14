@@ -37,7 +37,7 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
 
   return (
     <div
-      className={`relative w-full aspect-[16/9] rounded-2xl border-2 border-dashed transition-all duration-300 ease-out overflow-hidden ${
+      className={`relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-xl md:rounded-2xl border-2 border-dashed transition-all duration-300 ease-out overflow-hidden ${
         isDragging 
           ? "border-foreground bg-secondary/50" 
           : uploadedImage 
@@ -55,11 +55,12 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
             alt="Uploaded space"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-all duration-300 flex items-center justify-center">
-            <label className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer">
-              <div className="glass-panel px-6 py-3 rounded-full flex items-center gap-2">
-                <Upload size={16} />
-                <span className="text-sm font-medium">Replace Image</span>
+          {/* Mobile: always show button, Desktop: show on hover */}
+          <div className="absolute inset-0 bg-foreground/0 md:group-hover:bg-foreground/20 transition-all duration-300 flex items-end md:items-center justify-center p-4 md:p-0">
+            <label className="md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 cursor-pointer">
+              <div className="glass-panel px-4 md:px-6 py-2.5 md:py-3 rounded-full flex items-center gap-2">
+                <Upload size={14} className="md:w-4 md:h-4" />
+                <span className="text-xs md:text-sm font-medium">Replace</span>
               </div>
               <input
                 type="file"
@@ -71,15 +72,15 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
           </div>
         </div>
       ) : (
-        <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
-          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-            <ImageIcon size={28} className="text-muted-foreground" />
+        <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer p-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-secondary flex items-center justify-center mb-3 md:mb-4">
+            <ImageIcon size={22} className="md:w-7 md:h-7 text-muted-foreground" />
           </div>
-          <p className="text-foreground font-medium mb-1">
+          <p className="text-sm md:text-base text-foreground font-medium mb-1 text-center">
             Drop your space here
           </p>
-          <p className="text-sm text-muted-foreground">
-            or click to browse
+          <p className="text-xs md:text-sm text-muted-foreground text-center">
+            or tap to browse
           </p>
           <input
             type="file"

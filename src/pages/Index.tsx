@@ -23,7 +23,8 @@ const Index = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
 
   const showDesignMatrix = uploadedImage && selectedCategory;
-  const canGenerate = selectedMaterial && selectedStyle;
+  // Allow generation with just material selected (style is optional)
+  const canGenerate = selectedMaterial;
 
   const handleImageUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -47,16 +48,16 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-6">
+      <main className="pt-20 md:pt-24 pb-12 md:pb-16">
+        <div className="container mx-auto px-4 md:px-6">
           {/* Section 1: The Canvas */}
-          <section className="max-w-4xl mx-auto mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-serif headline-editorial mb-4">
+          <section className="max-w-4xl mx-auto mb-10 md:mb-16">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif headline-editorial mb-3 md:mb-4">
                 Design your space,<br />
                 <span className="italic">dialogue</span> with possibilities.
               </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
+              <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-2">
                 Upload your room, choose your style, and let our AI generate 
                 personalized design solutions with accurate cost estimates.
               </p>
@@ -67,7 +68,7 @@ const Index = () => {
               uploadedImage={uploadedImage}
             />
             
-            <div className="mt-6">
+            <div className="mt-4 md:mt-6">
               <SpaceCategoryPills 
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
@@ -78,14 +79,14 @@ const Index = () => {
           {/* Section 2: The Design Matrix */}
           {showDesignMatrix && (
             <section className="max-w-4xl mx-auto reveal-enter">
-              <div className="border-t border-border pt-12 mb-8">
-                <h3 className="text-2xl font-serif mb-2">Define Your Aesthetic</h3>
-                <p className="text-muted-foreground">
-                  Select materials and style to generate your design
+              <div className="border-t border-border pt-8 md:pt-12 mb-6 md:mb-8">
+                <h3 className="text-xl md:text-2xl font-serif mb-1 md:mb-2">Define Your Aesthetic</h3>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Select materials to generate your design
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <MaterialPalette 
                   selectedMaterial={selectedMaterial}
                   onSelectMaterial={setSelectedMaterial}
@@ -100,9 +101,9 @@ const Index = () => {
                 <button
                   onClick={handleGenerate}
                   disabled={!canGenerate}
-                  className={`px-12 py-4 rounded-full font-medium text-sm transition-all duration-300 ${
+                  className={`w-full sm:w-auto px-8 sm:px-12 py-3.5 md:py-4 rounded-full font-medium text-sm transition-all duration-300 ${
                     canGenerate
-                      ? "bg-foreground text-background hover:opacity-90"
+                      ? "bg-foreground text-background hover:opacity-90 active:scale-[0.98]"
                       : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                   }`}
                 >

@@ -6,40 +6,68 @@ interface MaterialPaletteProps {
 }
 
 const materials = [
-  { name: "Milan Grey", color: "bg-slate-400", temp: "Cool" },
-  { name: "Natural Walnut", color: "bg-amber-700", temp: "Warm" },
-  { name: "Onyx & Brass", color: "bg-zinc-900", temp: "Bold" },
-  { name: "Calacatta White", color: "bg-stone-100 border border-border", temp: "Clean" },
+  { 
+    name: "Milan Grey", 
+    temp: "Cool",
+    swatches: ["bg-slate-300", "bg-slate-400", "bg-slate-500", "bg-zinc-400"]
+  },
+  { 
+    name: "Natural Walnut", 
+    temp: "Warm",
+    swatches: ["bg-amber-600", "bg-amber-700", "bg-amber-800", "bg-yellow-700"]
+  },
+  { 
+    name: "Onyx & Brass", 
+    temp: "Bold",
+    swatches: ["bg-zinc-900", "bg-zinc-800", "bg-yellow-600", "bg-zinc-700"]
+  },
+  { 
+    name: "Calacatta White", 
+    temp: "Clean",
+    swatches: ["bg-stone-100", "bg-stone-200", "bg-gray-100", "bg-stone-50"]
+  },
 ];
 
 const MaterialPalette = ({ selectedMaterial, onSelectMaterial }: MaterialPaletteProps) => {
   return (
     <div>
-      <h3 className="text-lg font-serif mb-1">Material Palette</h3>
-      <p className="text-sm text-muted-foreground mb-4">Select your texture</p>
+      <h3 className="text-base md:text-lg font-serif mb-1">Material Palette</h3>
+      <p className="text-xs md:text-sm text-muted-foreground mb-4">Select your texture</p>
       
-      <div className="grid grid-cols-2 gap-3">
-        {materials.map((material) => (
-          <button
-            key={material.name}
-            onClick={() => onSelectMaterial(material.name)}
-            className={`card-interactive text-left ${
-              selectedMaterial === material.name ? "card-interactive-selected" : ""
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-full ${material.color} flex-shrink-0 flex items-center justify-center`}>
-                {selectedMaterial === material.name && (
-                  <Check size={16} className={material.name === "Calacatta White" ? "text-foreground" : "text-primary-foreground"} />
-                )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {materials.map((material) => {
+          const isSelected = selectedMaterial === material.name;
+          
+          return (
+            <button
+              key={material.name}
+              onClick={() => onSelectMaterial(material.name)}
+              className={`card-interactive text-left ${
+                isSelected ? "card-interactive-selected" : ""
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {/* 4-swatch preview grid */}
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <div className="grid grid-cols-2 grid-rows-2 w-full h-full rounded-lg overflow-hidden border border-border">
+                    {material.swatches.map((swatch, i) => (
+                      <div key={i} className={`${swatch}`} />
+                    ))}
+                  </div>
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-foreground/60 rounded-lg flex items-center justify-center">
+                      <Check size={16} className="text-background" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{material.name}</p>
+                  <p className="text-xs text-muted-foreground">{material.temp}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-sm">{material.name}</p>
-                <p className="text-xs text-muted-foreground">{material.temp}</p>
-              </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
