@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface ArchitecturalStyleProps {
   selectedStyle: string | null;
@@ -32,22 +33,29 @@ const styles = [
 
 const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyleProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const haptic = useHaptic();
 
   const handleCheckboxChange = (checked: boolean) => {
+    haptic.light();
     setIsExpanded(checked);
     if (!checked) {
       onSelectStyle(null);
     }
   };
 
+  const handleStyleSelect = (styleName: string) => {
+    haptic.medium();
+    onSelectStyle(styleName);
+  };
+
   return (
     <div>
       {/* Checkbox toggle */}
-      <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:border-foreground/30 transition-all duration-300">
+      <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:border-foreground/30 transition-all duration-300 min-h-[52px] touch-manipulation active:bg-secondary/50">
         <Checkbox 
           checked={isExpanded} 
           onCheckedChange={handleCheckboxChange}
-          className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+          className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground w-5 h-5"
         />
         <span className="text-sm font-medium flex-1">I want to try a specific style</span>
         <ChevronDown 
@@ -70,8 +78,8 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
             return (
               <button
                 key={style.name}
-                onClick={() => onSelectStyle(style.name)}
-                className={`card-interactive text-left overflow-hidden ${
+                onClick={() => handleStyleSelect(style.name)}
+                className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >

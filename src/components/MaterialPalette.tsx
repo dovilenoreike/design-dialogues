@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface MaterialPaletteProps {
   selectedMaterial: string | null;
@@ -29,6 +30,13 @@ const materials = [
 ];
 
 const MaterialPalette = ({ selectedMaterial, onSelectMaterial }: MaterialPaletteProps) => {
+  const haptic = useHaptic();
+
+  const handleSelect = (material: string) => {
+    haptic.medium();
+    onSelectMaterial(material);
+  };
+
   return (
     <div>
       <h3 className="text-base md:text-lg font-serif mb-1">Material Palette</h3>
@@ -41,8 +49,8 @@ const MaterialPalette = ({ selectedMaterial, onSelectMaterial }: MaterialPalette
           return (
             <button
               key={material.name}
-              onClick={() => onSelectMaterial(material.name)}
-              className={`card-interactive text-left ${
+              onClick={() => handleSelect(material.name)}
+              className={`card-interactive text-left min-h-[60px] touch-manipulation active:scale-[0.98] transition-transform ${
                 isSelected ? "card-interactive-selected" : ""
               }`}
             >
