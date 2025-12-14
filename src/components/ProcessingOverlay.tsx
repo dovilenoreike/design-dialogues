@@ -50,36 +50,36 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center fade-in">
       <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" />
       
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-4 sm:px-6 pb-safe">
         {/* Progress bar */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <div className="h-0.5 bg-border rounded-full overflow-hidden">
             <div 
               className="h-full bg-foreground transition-all duration-300 ease-out progress-animate"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-sm text-muted-foreground mt-2 text-center">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
             Analyzing your space...
           </p>
         </div>
 
         {/* Form card */}
         {formReady && (
-          <div className="glass-panel rounded-2xl p-6 slide-up">
-            <h3 className="text-xl font-serif mb-1">Refine your Quote</h3>
-            <p className="text-sm text-muted-foreground mb-6">
+          <div className="glass-panel rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 slide-up">
+            <h3 className="text-lg sm:text-xl font-serif mb-1">Refine your Quote</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-5 sm:mb-6">
               Help us calculate accurately
             </p>
 
             {/* Area slider */}
-            <div className="mb-6">
+            <div className="mb-5 sm:mb-6">
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-medium">Total Area</label>
-                <span className="text-sm text-muted-foreground">{area} m²</span>
+                <label className="text-xs sm:text-sm font-medium">Total Area</label>
+                <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">{area} m²</span>
               </div>
               <Slider
                 value={[area]}
@@ -92,10 +92,10 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
             </div>
 
             {/* Renovation toggle */}
-            <div className="flex items-center justify-between py-4 border-t border-border">
+            <div className="flex items-center justify-between py-3 sm:py-4 border-t border-border">
               <div>
-                <label className="text-sm font-medium">Renovation State</label>
-                <p className="text-xs text-muted-foreground">
+                <label className="text-xs sm:text-sm font-medium">Renovation State</label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   {isRenovation ? "Old / Renovation" : "New Build"}
                 </p>
               </div>
@@ -106,10 +106,10 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
             </div>
 
             {/* Kitchen checkbox */}
-            <div className="flex items-center justify-between py-4 border-t border-border">
+            <div className="flex items-center justify-between py-3 sm:py-4 border-t border-border">
               <div>
-                <label className="text-sm font-medium">Kitchen Fit-out</label>
-                <p className="text-xs text-muted-foreground">Include full kitchen</p>
+                <label className="text-xs sm:text-sm font-medium">Kitchen Fit-out</label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Include full kitchen</p>
               </div>
               <Checkbox
                 checked={hasKitchen}
@@ -120,7 +120,7 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
             <button
               onClick={handleSubmit}
               disabled={progress < 100}
-              className={`w-full mt-6 py-3.5 rounded-full font-medium text-sm transition-all duration-300 ${
+              className={`w-full mt-5 sm:mt-6 py-3 sm:py-3.5 rounded-full font-medium text-sm transition-all duration-300 active:scale-[0.98] ${
                 progress >= 100
                   ? "bg-foreground text-background hover:opacity-90"
                   : "bg-muted text-muted-foreground cursor-not-allowed"

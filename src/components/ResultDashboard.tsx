@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
-import { ArrowRight, Download, Share2 } from "lucide-react";
+import { ArrowRight, Download, Share2, X } from "lucide-react";
 
 interface ResultDashboardProps {
   isVisible: boolean;
@@ -12,6 +12,7 @@ interface ResultDashboardProps {
   uploadedImage: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;
+  onClose?: () => void;
 }
 
 const baseRates = {
@@ -52,7 +53,8 @@ const ResultDashboard = ({
   formData, 
   uploadedImage,
   selectedMaterial,
-  selectedStyle 
+  selectedStyle,
+  onClose
 }: ResultDashboardProps) => {
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
 
@@ -78,28 +80,36 @@ const ResultDashboard = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-background fade-in overflow-auto">
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-safe">
         {/* Header */}
         <div className="glass-panel sticky top-0 z-10">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-serif">Design Dialogues</h1>
-            <div className="flex items-center gap-3">
+          <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+            <h1 className="text-lg md:text-xl font-serif">Design Dialogues</h1>
+            <div className="flex items-center gap-1 md:gap-3">
               <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                <Share2 size={18} />
+                <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
               </button>
               <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                <Download size={18} />
+                <Download size={16} className="md:w-[18px] md:h-[18px]" />
               </button>
+              {onClose && (
+                <button 
+                  onClick={onClose}
+                  className="p-2 rounded-full hover:bg-secondary transition-colors ml-1"
+                >
+                  <X size={16} className="md:w-[18px] md:h-[18px]" />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid lg:grid-cols-2 gap-12">
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-12">
             {/* Left - Image */}
             <div className="slide-up">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-secondary">
+              <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
                 {uploadedImage ? (
                   <img 
                     src={uploadedImage} 
@@ -108,25 +118,29 @@ const ResultDashboard = ({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <p className="text-muted-foreground">AI Rendered Design</p>
+                    <p className="text-sm text-muted-foreground">AI Rendered Design</p>
                   </div>
                 )}
               </div>
-              <div className="mt-4 flex gap-2">
-                <span className="px-3 py-1.5 bg-secondary rounded-full text-xs font-medium">
-                  {selectedMaterial}
-                </span>
-                <span className="px-3 py-1.5 bg-secondary rounded-full text-xs font-medium">
-                  {selectedStyle}
-                </span>
+              <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
+                {selectedMaterial && (
+                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
+                    {selectedMaterial}
+                  </span>
+                )}
+                {selectedStyle && (
+                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
+                    {selectedStyle}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Right - Calculator */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
-              <div className="sticky top-24">
-                <h2 className="text-3xl font-serif mb-2">Project Passport</h2>
-                <p className="text-muted-foreground mb-8">
+              <div className="lg:sticky lg:top-24">
+                <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">Project Passport</h2>
+                <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-8">
                   Estimated investment for {formData.area}m²
                 </p>
 
@@ -137,30 +151,30 @@ const ResultDashboard = ({
                 />
 
                 {/* Price */}
-                <div className="mt-8 mb-6">
-                  <p className="text-sm text-muted-foreground mb-1">Estimated Total</p>
-                  <p className="text-5xl font-serif">
+                <div className="mt-6 md:mt-8 mb-4 md:mb-6">
+                  <p className="text-xs md:text-sm text-muted-foreground mb-1">Estimated Total</p>
+                  <p className="text-4xl md:text-5xl font-serif tabular-nums">
                     €{calculation.total.toLocaleString()}
                   </p>
                 </div>
 
                 {/* Breakdown */}
-                <div className="space-y-3 mb-8">
+                <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                   {calculation.breakdown.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
+                    <div key={index} className="flex justify-between text-xs md:text-sm">
                       <span className="text-muted-foreground">{item.label}</span>
-                      <span className="font-medium">€{item.value.toLocaleString()}</span>
+                      <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Material List */}
-                <div className="border-t border-border pt-6 mb-8">
-                  <h4 className="text-sm font-medium mb-4">Material Recipe</h4>
-                  <div className="space-y-2">
+                <div className="border-t border-border pt-5 md:pt-6 mb-6 md:mb-8">
+                  <h4 className="text-xs md:text-sm font-medium mb-3 md:mb-4">Material Recipe</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 md:gap-2">
                     {materialLists[selectedTier].map((material, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                      <div key={index} className="flex items-center gap-2 text-xs md:text-sm">
+                        <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-foreground flex-shrink-0" />
                         <span className="text-muted-foreground">{material}</span>
                       </div>
                     ))}
@@ -168,9 +182,9 @@ const ResultDashboard = ({
                 </div>
 
                 {/* CTA */}
-                <button className="w-full py-4 bg-foreground text-background rounded-full font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                <button className="w-full py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
                   Schedule Consultation
-                  <ArrowRight size={18} />
+                  <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
               </div>
             </div>

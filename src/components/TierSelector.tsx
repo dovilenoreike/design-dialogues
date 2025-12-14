@@ -12,7 +12,7 @@ const TierSelector = ({ selectedTier, onSelectTier }: TierSelectorProps) => {
         <button
           key={tier}
           onClick={() => onSelectTier(tier)}
-          className={`segmented-item flex-1 ${
+          className={`segmented-item flex-1 text-xs md:text-sm px-3 md:px-6 py-2 md:py-2.5 ${
             selectedTier === tier ? "segmented-item-active" : ""
           }`}
         >
