@@ -31,26 +31,41 @@ const baseRates = {
   Premium: 900,
 };
 
-const materialData = {
-  Budget: [
-    { swatchColors: ["bg-amber-100", "bg-amber-200", "bg-amber-50", "bg-amber-300"], title: "Laminate Flooring", category: "Oak Effect • 8mm" },
-    { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-stone-300"], title: "Melamine Fronts", category: "White Gloss" },
-    { swatchColors: ["bg-zinc-200", "bg-zinc-300", "bg-zinc-100", "bg-zinc-400"], title: "Standard Spots", category: "LED Downlights" },
-    { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-gray-300"], title: "Vinyl Wallcovering", category: "Textured White" },
+// Material data mapped to each palette
+const paletteMaterials: Record<string, { swatchColors: string[]; title: string; category: string }[]> = {
+  "Milan Grey": [
+    { swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"], title: "Polished Concrete", category: "Micro-cement Finish" },
+    { swatchColors: ["bg-zinc-400", "bg-zinc-500", "bg-zinc-300", "bg-zinc-600"], title: "Brushed Steel", category: "Cabinet Handles" },
+    { swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"], title: "Limestone Tile", category: "Honed 600x600" },
+    { swatchColors: ["bg-slate-200", "bg-slate-300", "bg-slate-100", "bg-slate-400"], title: "Smoked Glass", category: "Partition Panels" },
   ],
-  Standard: [
-    { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Vinyl Click Flooring", category: "Oak Texture • Waterproof" },
-    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Painted MDF", category: "Matte Finish" },
-    { swatchColors: ["bg-zinc-300", "bg-zinc-400", "bg-zinc-200", "bg-zinc-500"], title: "Track System", category: "Magnetic • Dimmable" },
-    { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Textured Panels", category: "3D Wall Tiles" },
+  "Natural Walnut": [
+    { swatchColors: ["bg-amber-600", "bg-amber-700", "bg-amber-500", "bg-amber-800"], title: "Engineered Walnut", category: "Herringbone • 15mm" },
+    { swatchColors: ["bg-yellow-700", "bg-yellow-800", "bg-yellow-600", "bg-amber-700"], title: "Walnut Veneer", category: "Joinery Fronts" },
+    { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Brass Fixtures", category: "Burnished Finish" },
+    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Linen Fabric", category: "Acoustic Panels" },
   ],
-  Premium: [
-    { swatchColors: ["bg-amber-300", "bg-amber-400", "bg-amber-200", "bg-amber-500"], title: "Engineered Oak", category: "Herringbone • 15mm" },
-    { swatchColors: ["bg-amber-100", "bg-amber-200", "bg-stone-100", "bg-stone-200"], title: "Natural Veneer", category: "Walnut Finish" },
-    { swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"], title: "DALI System", category: "Smart Lighting" },
-    { swatchColors: ["bg-stone-300", "bg-stone-400", "bg-stone-200", "bg-stone-500"], title: "Artisan Plaster", category: "Venetian Finish" },
+  "Onyx & Brass": [
+    { swatchColors: ["bg-zinc-900", "bg-zinc-800", "bg-zinc-950", "bg-zinc-700"], title: "Black Marble", category: "Nero Marquina • Polished" },
+    { swatchColors: ["bg-yellow-600", "bg-yellow-500", "bg-amber-500", "bg-yellow-700"], title: "Brushed Brass", category: "Hardware & Fixtures" },
+    { swatchColors: ["bg-zinc-800", "bg-zinc-700", "bg-zinc-900", "bg-zinc-600"], title: "Smoked Oak", category: "Flooring • Matte" },
+    { swatchColors: ["bg-zinc-700", "bg-zinc-600", "bg-zinc-800", "bg-zinc-500"], title: "Black Steel", category: "Frame Details" },
+  ],
+  "Calacatta White": [
+    { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-gray-100"], title: "Calacatta Quartz", category: "Worktops • 30mm" },
+    { swatchColors: ["bg-white", "bg-gray-50", "bg-stone-50", "bg-gray-100"], title: "White Oak", category: "Flooring • Wide Plank" },
+    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Matte Lacquer", category: "Cabinet Finish" },
+    { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-stone-100"], title: "Textured Plaster", category: "Wall Finish" },
   ],
 };
+
+// Fallback materials if no palette selected
+const defaultMaterials = [
+  { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Engineered Wood", category: "Oak Finish" },
+  { swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"], title: "Painted MDF", category: "Matte White" },
+  { swatchColors: ["bg-zinc-300", "bg-zinc-400", "bg-zinc-200", "bg-zinc-500"], title: "LED System", category: "Dimmable Track" },
+  { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Wall Panels", category: "Textured Finish" },
+];
 
 const ResultDashboard = ({ 
   isVisible, 
@@ -202,7 +217,10 @@ const ResultDashboard = ({
 
                     {/* Material Cards Grid */}
                     <div className="space-y-2">
-                      {materialData[selectedTier].map((material, index) => (
+                      {(selectedMaterial && paletteMaterials[selectedMaterial] 
+                        ? paletteMaterials[selectedMaterial] 
+                        : defaultMaterials
+                      ).map((material, index) => (
                         <MaterialCard
                           key={index}
                           swatchColors={material.swatchColors}
