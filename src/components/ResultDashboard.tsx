@@ -2,12 +2,14 @@ import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
 import { ArrowRight, Download, Share2, X } from "lucide-react";
 
+type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
+
 interface ResultDashboardProps {
   isVisible: boolean;
   formData: {
     area: number;
     isRenovation: boolean;
-    hasKitchen: boolean;
+    projectScope: ProjectScope;
   } | null;
   uploadedImage: string | null;
   selectedMaterial: string | null;
@@ -15,17 +17,24 @@ interface ResultDashboardProps {
   onClose?: () => void;
 }
 
+const scopeMultipliers: Record<ProjectScope, number> = {
+  'space-planning': 0.3,
+  'interior-finishes': 0.6,
+  'full-interior': 1.0,
+};
+
+const scopeLabels: Record<ProjectScope, string> = {
+  'space-planning': 'Space Planning',
+  'interior-finishes': 'Interior Finishes',
+  'full-interior': 'Full Interior',
+};
+
 const baseRates = {
   Budget: 350,
   Standard: 550,
   Premium: 900,
 };
 
-const kitchenCosts = {
-  Budget: 4000,
-  Standard: 7000,
-  Premium: 12000,
-};
 
 const materialLists = {
   Budget: [
@@ -62,15 +71,14 @@ const ResultDashboard = ({
     if (!formData) return { total: 0, breakdown: [] };
 
     const baseRate = baseRates[selectedTier];
-    const baseCost = formData.area * baseRate;
+    const scopeMultiplier = scopeMultipliers[formData.projectScope];
+    const baseCost = Math.round(formData.area * baseRate * scopeMultiplier);
     const renovationCost = formData.isRenovation ? formData.area * 150 : 0;
-    const kitchenCost = formData.hasKitchen ? kitchenCosts[selectedTier] : 0;
-    const total = baseCost + renovationCost + kitchenCost;
+    const total = baseCost + renovationCost;
 
     const breakdown = [
-      { label: "Base Design", value: baseCost },
+      { label: `${scopeLabels[formData.projectScope]}`, value: baseCost },
       ...(formData.isRenovation ? [{ label: "Renovation Prep", value: renovationCost }] : []),
-      ...(formData.hasKitchen ? [{ label: "Kitchen Fit-out", value: kitchenCost }] : []),
     ];
 
     return { total, breakdown };
