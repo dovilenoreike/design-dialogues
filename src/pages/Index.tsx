@@ -130,6 +130,7 @@ const Index = () => {
         uploadedImage={uploadedImage}
         selectedMaterial={selectedMaterial}
         selectedStyle={selectedStyle}
+        onFormDataChange={setFormData}
       />
     </div>
   );

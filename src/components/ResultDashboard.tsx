@@ -2,21 +2,26 @@ import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
 import DesignerInsight from "./DesignerInsight";
 import MaterialCard from "./MaterialCard";
-import { ArrowRight, Download, Share2, X } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { ChevronDown, Download, Share2, X } from "lucide-react";
 
 type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
 
+interface FormData {
+  area: number;
+  isRenovation: boolean;
+  projectScope: ProjectScope;
+}
+
 interface ResultDashboardProps {
   isVisible: boolean;
-  formData: {
-    area: number;
-    isRenovation: boolean;
-    projectScope: ProjectScope;
-  } | null;
+  formData: FormData | null;
   uploadedImage: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;
   onClose?: () => void;
+  onFormDataChange?: (formData: FormData) => void;
 }
 
 const scopeMultipliers: Record<ProjectScope, number> = {
@@ -24,6 +29,12 @@ const scopeMultipliers: Record<ProjectScope, number> = {
   'interior-finishes': 0.6,
   'full-interior': 1.0,
 };
+
+const scopeOptions: { value: ProjectScope; label: string }[] = [
+  { value: 'space-planning', label: 'Space Planning' },
+  { value: 'interior-finishes', label: 'Interior Finishes' },
+  { value: 'full-interior', label: 'Full Interior' },
+];
 
 const baseRates = {
   Budget: 350,
@@ -73,17 +84,45 @@ const ResultDashboard = ({
   uploadedImage,
   selectedMaterial,
   selectedStyle,
-  onClose
+  onClose,
+  onFormDataChange
 }: ResultDashboardProps) => {
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
+  const [isRefineOpen, setIsRefineOpen] = useState(false);
+
+  // Local state for refine inputs
+  const [localArea, setLocalArea] = useState(formData?.area ?? 50);
+  const [localIsRenovation, setLocalIsRenovation] = useState(formData?.isRenovation ?? false);
+  const [localProjectScope, setLocalProjectScope] = useState<ProjectScope>(formData?.projectScope ?? 'full-interior');
+
+  // Sync local state when formData changes
+  useState(() => {
+    if (formData) {
+      setLocalArea(formData.area);
+      setLocalIsRenovation(formData.isRenovation);
+      setLocalProjectScope(formData.projectScope);
+    }
+  });
+
+  const handleUpdateFormData = (updates: Partial<FormData>) => {
+    const newFormData: FormData = {
+      area: updates.area ?? localArea,
+      isRenovation: updates.isRenovation ?? localIsRenovation,
+      projectScope: updates.projectScope ?? localProjectScope,
+    };
+    
+    if (updates.area !== undefined) setLocalArea(updates.area);
+    if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
+    if (updates.projectScope !== undefined) setLocalProjectScope(updates.projectScope);
+    
+    onFormDataChange?.(newFormData);
+  };
 
   const calculation = useMemo(() => {
-    if (!formData) return { total: 0, pillars: [], renovationCost: 0 };
-
     const baseRate = baseRates[selectedTier];
-    const scopeMultiplier = scopeMultipliers[formData.projectScope];
-    const baseCost = Math.round(formData.area * baseRate * scopeMultiplier);
-    const renovationCost = formData.isRenovation ? Math.round(formData.area * 150) : 0;
+    const scopeMultiplier = scopeMultipliers[localProjectScope];
+    const baseCost = Math.round(localArea * baseRate * scopeMultiplier);
+    const renovationCost = localIsRenovation ? Math.round(localArea * 150) : 0;
     const total = baseCost + renovationCost;
 
     // Split baseCost into 3 pillars
@@ -94,7 +133,7 @@ const ResultDashboard = ({
     ];
 
     return { total, pillars, renovationCost };
-  }, [formData, selectedTier]);
+  }, [localArea, localIsRenovation, localProjectScope, selectedTier]);
 
   if (!isVisible || !formData) return null;
 
@@ -161,7 +200,7 @@ const ResultDashboard = ({
               <div className="lg:sticky lg:top-24">
                 <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">Project Passport</h2>
                 <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-8">
-                  Estimated investment for {formData.area}m²
+                  Estimated investment for {localArea}m²
                 </p>
 
                 {/* Unified Card Container */}
@@ -194,6 +233,74 @@ const ResultDashboard = ({
                         <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
                           <span className="text-muted-foreground">Renovation Prep</span>
                           <span className="font-medium tabular-nums">€{calculation.renovationCost.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Refine Quote Collapsible */}
+                    <div className="mt-6 border-t border-border pt-4">
+                      <button
+                        onClick={() => setIsRefineOpen(!isRefineOpen)}
+                        className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-foreground/80 transition-colors touch-manipulation"
+                      >
+                        <span>Refine Quote</span>
+                        <ChevronDown 
+                          size={16} 
+                          className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
+                        />
+                      </button>
+                      
+                      {isRefineOpen && (
+                        <div className="mt-4 space-y-4 animate-fade-in">
+                          {/* Area slider */}
+                          <div>
+                            <div className="flex justify-between items-center mb-3">
+                              <label className="text-xs text-muted-foreground">Total Area</label>
+                              <span className="text-xs text-muted-foreground tabular-nums">{localArea} m²</span>
+                            </div>
+                            <Slider
+                              value={[localArea]}
+                              onValueChange={(value) => handleUpdateFormData({ area: value[0] })}
+                              min={20}
+                              max={200}
+                              step={5}
+                              className="w-full"
+                            />
+                          </div>
+
+                          {/* Renovation toggle */}
+                          <div className="flex items-center justify-between py-3 border-t border-border">
+                            <div>
+                              <label className="text-xs font-medium">Renovation State</label>
+                              <p className="text-[10px] text-muted-foreground">
+                                {localIsRenovation ? "Old / Renovation" : "New Build"}
+                              </p>
+                            </div>
+                            <Switch
+                              checked={localIsRenovation}
+                              onCheckedChange={(checked) => handleUpdateFormData({ isRenovation: checked })}
+                            />
+                          </div>
+
+                          {/* Project Scope */}
+                          <div className="py-3 border-t border-border">
+                            <label className="text-xs font-medium mb-3 block">Project Scope</label>
+                            <div className="flex gap-2">
+                              {scopeOptions.map((option) => (
+                                <button
+                                  key={option.value}
+                                  onClick={() => handleUpdateFormData({ projectScope: option.value })}
+                                  className={`flex-1 py-2 px-2 rounded-full text-[10px] font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
+                                    localProjectScope === option.value
+                                      ? 'bg-foreground text-background'
+                                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
