@@ -224,4 +224,9 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  
+  /* Safe area padding for mobile */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
 }
