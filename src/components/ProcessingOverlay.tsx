@@ -8,17 +8,19 @@ interface ProcessingOverlayProps {
   onComplete: (formData: FormData) => void;
 }
 
+type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
+
 interface FormData {
   area: number;
   isRenovation: boolean;
-  hasKitchen: boolean;
+  projectScope: ProjectScope;
 }
 
 const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) => {
   const [progress, setProgress] = useState(0);
   const [area, setArea] = useState(50);
   const [isRenovation, setIsRenovation] = useState(false);
-  const [hasKitchen, setHasKitchen] = useState(false);
+  const [projectScope, setProjectScope] = useState<ProjectScope>('full-interior');
   const [formReady, setFormReady] = useState(false);
 
   useEffect(() => {
@@ -44,8 +46,14 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   }, [isVisible]);
 
   const handleSubmit = () => {
-    onComplete({ area, isRenovation, hasKitchen });
+    onComplete({ area, isRenovation, projectScope });
   };
+
+  const scopeOptions: { value: ProjectScope; label: string }[] = [
+    { value: 'space-planning', label: 'Space Planning' },
+    { value: 'interior-finishes', label: 'Interior Finishes' },
+    { value: 'full-interior', label: 'Full Interior' },
+  ];
 
   if (!isVisible) return null;
 
@@ -105,16 +113,24 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
               />
             </div>
 
-            {/* Kitchen checkbox */}
-            <div className="flex items-center justify-between py-3 sm:py-4 border-t border-border">
-              <div>
-                <label className="text-xs sm:text-sm font-medium">Kitchen Fit-out</label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Include full kitchen</p>
+            {/* Project Scope */}
+            <div className="py-3 sm:py-4 border-t border-border">
+              <label className="text-xs sm:text-sm font-medium mb-3 block">Project Scope</label>
+              <div className="flex gap-2">
+                {scopeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setProjectScope(option.value)}
+                    className={`flex-1 py-2 px-2 sm:px-3 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
+                      projectScope === option.value
+                        ? 'bg-foreground text-background'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-              <Checkbox
-                checked={hasKitchen}
-                onCheckedChange={(checked) => setHasKitchen(checked as boolean)}
-              />
             </div>
 
             <button

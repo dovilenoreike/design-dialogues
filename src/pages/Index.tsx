@@ -7,10 +7,12 @@ import ArchitecturalStyle from "@/components/ArchitecturalStyle";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import ResultDashboard from "@/components/ResultDashboard";
 
+type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
+
 interface FormData {
   area: number;
   isRenovation: boolean;
-  hasKitchen: boolean;
+  projectScope: ProjectScope;
 }
 
 const Index = () => {
