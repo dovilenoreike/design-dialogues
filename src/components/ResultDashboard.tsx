@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
+import DesignerInsight from "./DesignerInsight";
+import MaterialCard from "./MaterialCard";
 import { ArrowRight, Download, Share2, X } from "lucide-react";
 
 type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
@@ -23,37 +25,30 @@ const scopeMultipliers: Record<ProjectScope, number> = {
   'full-interior': 1.0,
 };
 
-const scopeLabels: Record<ProjectScope, string> = {
-  'space-planning': 'Space Planning',
-  'interior-finishes': 'Interior Finishes',
-  'full-interior': 'Full Interior',
-};
-
 const baseRates = {
   Budget: 350,
   Standard: 550,
   Premium: 900,
 };
 
-
-const materialLists = {
+const materialData = {
   Budget: [
-    "Laminate Flooring",
-    "Melamine Fronts",
-    "Standard Spots",
-    "Vinyl Wallcovering",
+    { swatchColors: ["bg-amber-100", "bg-amber-200", "bg-amber-50", "bg-amber-300"], title: "Laminate Flooring", category: "Oak Effect • 8mm" },
+    { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-stone-300"], title: "Melamine Fronts", category: "White Gloss" },
+    { swatchColors: ["bg-zinc-200", "bg-zinc-300", "bg-zinc-100", "bg-zinc-400"], title: "Standard Spots", category: "LED Downlights" },
+    { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-gray-300"], title: "Vinyl Wallcovering", category: "Textured White" },
   ],
   Standard: [
-    "Vinyl Click Flooring",
-    "Matte Painted MDF",
-    "Magnetic Track Lighting",
-    "Textured Wall Panels",
+    { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Vinyl Click Flooring", category: "Oak Texture • Waterproof" },
+    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Painted MDF", category: "Matte Finish" },
+    { swatchColors: ["bg-zinc-300", "bg-zinc-400", "bg-zinc-200", "bg-zinc-500"], title: "Track System", category: "Magnetic • Dimmable" },
+    { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Textured Panels", category: "3D Wall Tiles" },
   ],
   Premium: [
-    "Engineered Oak Flooring",
-    "Natural Wood Veneer",
-    "DALI Lighting System",
-    "Artisan Plaster Walls",
+    { swatchColors: ["bg-amber-300", "bg-amber-400", "bg-amber-200", "bg-amber-500"], title: "Engineered Oak", category: "Herringbone • 15mm" },
+    { swatchColors: ["bg-amber-100", "bg-amber-200", "bg-stone-100", "bg-stone-200"], title: "Natural Veneer", category: "Walnut Finish" },
+    { swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"], title: "DALI System", category: "Smart Lighting" },
+    { swatchColors: ["bg-stone-300", "bg-stone-400", "bg-stone-200", "bg-stone-500"], title: "Artisan Plaster", category: "Venetian Finish" },
   ],
 };
 
@@ -68,20 +63,22 @@ const ResultDashboard = ({
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
 
   const calculation = useMemo(() => {
-    if (!formData) return { total: 0, breakdown: [] };
+    if (!formData) return { total: 0, pillars: [], renovationCost: 0 };
 
     const baseRate = baseRates[selectedTier];
     const scopeMultiplier = scopeMultipliers[formData.projectScope];
     const baseCost = Math.round(formData.area * baseRate * scopeMultiplier);
-    const renovationCost = formData.isRenovation ? formData.area * 150 : 0;
+    const renovationCost = formData.isRenovation ? Math.round(formData.area * 150) : 0;
     const total = baseCost + renovationCost;
 
-    const breakdown = [
-      { label: `${scopeLabels[formData.projectScope]}`, value: baseCost },
-      ...(formData.isRenovation ? [{ label: "Renovation Prep", value: renovationCost }] : []),
+    // Split baseCost into 3 pillars
+    const pillars = [
+      { label: "Construction & Finish", value: Math.round(baseCost * 0.40), percent: "40%" },
+      { label: "Kitchen & Joinery", value: Math.round(baseCost * 0.35), percent: "35%" },
+      { label: "Technics & Lighting", value: Math.round(baseCost * 0.25), percent: "25%" },
     ];
 
-    return { total, breakdown };
+    return { total, pillars, renovationCost };
   }, [formData, selectedTier]);
 
   if (!isVisible || !formData) return null;
@@ -144,7 +141,7 @@ const ResultDashboard = ({
               </div>
             </div>
 
-            {/* Right - Calculator */}
+            {/* Right - Project Passport */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
               <div className="lg:sticky lg:top-24">
                 <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">Project Passport</h2>
@@ -152,47 +149,75 @@ const ResultDashboard = ({
                   Estimated investment for {formData.area}m²
                 </p>
 
-                {/* Tier Selector */}
-                <TierSelector 
-                  selectedTier={selectedTier} 
-                  onSelectTier={setSelectedTier} 
-                />
+                {/* Unified Card Container */}
+                <div className="border border-stone-200 rounded-2xl overflow-hidden">
+                  {/* Top Half - Financials (White) */}
+                  <div className="bg-white p-5 md:p-6">
+                    {/* Tier Selector */}
+                    <TierSelector 
+                      selectedTier={selectedTier} 
+                      onSelectTier={setSelectedTier} 
+                    />
 
-                {/* Price */}
-                <div className="mt-6 md:mt-8 mb-4 md:mb-6">
-                  <p className="text-xs md:text-sm text-muted-foreground mb-1">Estimated Total</p>
-                  <p className="text-4xl md:text-5xl font-serif tabular-nums">
-                    €{calculation.total.toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Breakdown */}
-                <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
-                  {calculation.breakdown.map((item, index) => (
-                    <div key={index} className="flex justify-between text-xs md:text-sm">
-                      <span className="text-muted-foreground">{item.label}</span>
-                      <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
+                    {/* Total Price */}
+                    <div className="mt-6 mb-6">
+                      <p className="text-xs text-muted-foreground mb-1">Estimated Total</p>
+                      <p className="text-4xl md:text-5xl font-serif tabular-nums">
+                        €{calculation.total.toLocaleString()}
+                      </p>
                     </div>
-                  ))}
-                </div>
 
-                {/* Material List */}
-                <div className="border-t border-border pt-5 md:pt-6 mb-6 md:mb-8">
-                  <h4 className="text-xs md:text-sm font-medium mb-3 md:mb-4">Material Recipe</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 md:gap-2">
-                    {materialLists[selectedTier].map((material, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs md:text-sm">
-                        <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-foreground flex-shrink-0" />
-                        <span className="text-muted-foreground">{material}</span>
-                      </div>
-                    ))}
+                    {/* 3 Pillars Breakdown */}
+                    <div className="space-y-3">
+                      {calculation.pillars.map((pillar, index) => (
+                        <div key={index} className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">{pillar.label}</span>
+                          <span className="font-medium tabular-nums">€{pillar.value.toLocaleString()}</span>
+                        </div>
+                      ))}
+                      {calculation.renovationCost > 0 && (
+                        <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
+                          <span className="text-muted-foreground">Renovation Prep</span>
+                          <span className="font-medium tabular-nums">€{calculation.renovationCost.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Designer Insight */}
+                    <div className="mt-6">
+                      <DesignerInsight tier={selectedTier} />
+                    </div>
+                  </div>
+
+                  {/* Dashed Divider */}
+                  <div className="border-t border-dashed border-stone-300" />
+
+                  {/* Bottom Half - Material Manifest (Stone) */}
+                  <div className="bg-stone-50 p-5 md:p-6">
+                    {/* Header */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Curated by Sigita Kulikajeva</p>
+                    </div>
+
+                    {/* Material Cards Grid */}
+                    <div className="space-y-2">
+                      {materialData[selectedTier].map((material, index) => (
+                        <MaterialCard
+                          key={index}
+                          swatchColors={material.swatchColors}
+                          title={material.title}
+                          category={material.category}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* CTA */}
-                <button className="w-full py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-                  Schedule Consultation
-                  <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
+                {/* CTA Button */}
+                <button className="w-full mt-6 py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+                  Download Project Passport (PDF)
+                  <Download size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
               </div>
             </div>
