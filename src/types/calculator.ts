@@ -20,11 +20,18 @@ export const scopeOptions: { value: ProjectScope; label: string }[] = [
   { value: 'full-interior', label: 'Full Interior' },
 ];
 
-// Base rates per m² by tier (includes design fees embedded)
+// Base rates per m² by tier
 export const baseRates = {
   Budget: 350,
   Standard: 550,
   Premium: 900,
+};
+
+// Interior Design Project rates per m² by tier
+export const designRates = {
+  Budget: 30,
+  Standard: 50,
+  Premium: 80,
 };
 
 // Kitchen & Joinery rates per linear meter

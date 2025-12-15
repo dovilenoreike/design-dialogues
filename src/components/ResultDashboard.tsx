@@ -11,6 +11,7 @@ import {
   scopeMultipliers,
   scopeOptions,
   baseRates,
+  designRates,
   kitchenRates,
   appliancePackages,
   wardrobeRates,
@@ -117,28 +118,31 @@ const ResultDashboard = ({
     const tier = selectedTier;
     const scopeMultiplier = scopeMultipliers[localProjectScope];
     
-    // 1. Construction & Finish Work (based on area and tier)
+    // 1. Interior Design Project (based on area, tier, and scope)
+    const interiorDesign = Math.round(localArea * designRates[tier] * scopeMultiplier);
+    
+    // 2. Construction & Finish Work (based on area and tier)
     const constructionFinish = Math.round(localArea * baseRates[tier] * 0.35 * scopeMultiplier);
     
-    // 2. Built-in Products & Finish Materials (based on area and tier)
+    // 3. Built-in Products & Finish Materials (based on area and tier)
     const builtInProducts = Math.round(localArea * baseRates[tier] * 0.25 * scopeMultiplier);
     
-    // 3. Kitchen & Joinery (based on linear meters)
+    // 4. Kitchen & Joinery (based on linear meters)
     const kitchenJoinery = Math.round(localKitchenLength * kitchenRates[tier] * scopeMultiplier);
     
-    // 4. Home Appliances (tier-based fixed package, scaled by scope)
+    // 5. Home Appliances (tier-based fixed package, scaled by scope)
     const appliances = Math.round(appliancePackages[tier] * scopeMultiplier);
     
-    // 5. Built-in Wardrobes (based on linear meters)
+    // 6. Built-in Wardrobes (based on linear meters)
     const wardrobes = Math.round(localWardrobeLength * wardrobeRates[tier] * scopeMultiplier);
     
-    // 6. Renovation Prep (if applicable)
+    // 7. Renovation Prep (if applicable)
     const renovationCost = localIsRenovation ? Math.round(localArea * renovationRate) : 0;
     
     // Subtotal before furniture
-    const subtotal = constructionFinish + builtInProducts + kitchenJoinery + appliances + wardrobes + renovationCost;
+    const subtotal = interiorDesign + constructionFinish + builtInProducts + kitchenJoinery + appliances + wardrobes + renovationCost;
     
-    // 7. Furniture (~20% of subtotal)
+    // 8. Furniture (~20% of subtotal)
     const furniture = Math.round(subtotal * furniturePercentage);
     
     // Total
@@ -150,6 +154,7 @@ const ResultDashboard = ({
 
     // Line items (mid-points shown)
     const lineItems = [
+      { label: "Interior Design Project", value: interiorDesign },
       { label: "Construction & Finish", value: constructionFinish },
       { label: "Built-in Products & Materials", value: builtInProducts },
       { label: "Kitchen & Joinery", value: kitchenJoinery },
@@ -240,7 +245,7 @@ const ResultDashboard = ({
                     />
 
                     {/* Total Price Range */}
-                    <div className="mt-6 mb-6">
+                    <div className="mt-6">
                       <p className="text-xs text-muted-foreground mb-1">Estimated Total</p>
                       <p className="text-3xl md:text-4xl font-serif tabular-nums">
                         €{calculation.lowEstimate.toLocaleString()} – €{calculation.highEstimate.toLocaleString()}
@@ -250,29 +255,13 @@ const ResultDashboard = ({
                       </p>
                     </div>
 
-                    {/* 7 Line Items Breakdown */}
-                    <div className="space-y-2.5">
-                      {calculation.lineItems.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">{item.label}</span>
-                          <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
-                        </div>
-                      ))}
-                      {calculation.renovationCost > 0 && (
-                        <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
-                          <span className="text-muted-foreground">Renovation Prep</span>
-                          <span className="font-medium tabular-nums">€{calculation.renovationCost.toLocaleString()}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Refine Quote Collapsible */}
+                    {/* Customize & Details Collapsible */}
                     <div className="mt-6 border-t border-border pt-4">
                       <button
                         onClick={() => setIsRefineOpen(!isRefineOpen)}
                         className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-foreground/80 transition-colors touch-manipulation"
                       >
-                        <span>Refine Quote</span>
+                        <span>Customize & Details</span>
                         <ChevronDown 
                           size={16} 
                           className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
@@ -280,7 +269,26 @@ const ResultDashboard = ({
                       </button>
                       
                       {isRefineOpen && (
-                        <div className="mt-4 space-y-4 animate-fade-in">
+                        <div className="mt-4 space-y-5 animate-fade-in">
+                          {/* Line Items Breakdown */}
+                          <div className="space-y-2.5">
+                            {calculation.lineItems.map((item, index) => (
+                              <div key={index} className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">{item.label}</span>
+                                <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
+                              </div>
+                            ))}
+                            {calculation.renovationCost > 0 && (
+                              <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
+                                <span className="text-muted-foreground">Renovation Prep</span>
+                                <span className="font-medium tabular-nums">€{calculation.renovationCost.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Divider between items and sliders */}
+                          <div className="border-t border-dashed border-stone-200" />
+
                           {/* Area slider */}
                           <div>
                             <div className="flex justify-between items-center mb-3">
