@@ -3,6 +3,7 @@ import { useHaptic } from "@/hooks/use-haptic";
 interface SpaceCategoryPillsProps {
   selectedCategory: string | null;
   onSelectCategory: (category: string) => void;
+  disabled?: boolean;
 }
 
 const categories = [
@@ -13,23 +14,34 @@ const categories = [
   "Hallway",
 ];
 
-const SpaceCategoryPills = ({ selectedCategory, onSelectCategory }: SpaceCategoryPillsProps) => {
+const SpaceCategoryPills = ({ selectedCategory, onSelectCategory, disabled = false }: SpaceCategoryPillsProps) => {
   const haptic = useHaptic();
 
   const handleSelect = (category: string) => {
+    if (disabled) return;
     haptic.light();
     onSelectCategory(category);
   };
 
   return (
-    <div className="w-full">
-      <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">Space Category</p>
-      <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+    <div className={`w-full transition-opacity duration-300 ${disabled ? 'opacity-50' : 'opacity-100'}`}>
+      <p className={`text-xs md:text-sm mb-2 md:mb-3 transition-colors duration-300 ${
+        disabled ? 'text-muted-foreground' : 'text-foreground font-medium'
+      }`}>
+        {disabled ? 'Select room type (after upload)' : 'What room is this?'}
+      </p>
+      <div className="flex flex-wrap justify-center gap-2 md:gap-3">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => handleSelect(category)}
-            className={`pill-button whitespace-nowrap text-xs md:text-sm px-4 md:px-5 py-2.5 md:py-2.5 min-h-[44px] touch-manipulation active:scale-95 transition-transform ${
+            disabled={disabled}
+            aria-disabled={disabled}
+            className={`pill-button whitespace-nowrap text-xs md:text-sm px-4 md:px-5 py-2.5 md:py-2.5 min-h-[44px] touch-manipulation transition-all duration-200 ${
+              disabled 
+                ? 'cursor-not-allowed' 
+                : 'active:scale-95'
+            } ${
               selectedCategory === category ? "pill-button-active" : ""
             }`}
           >

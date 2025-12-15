@@ -67,6 +67,7 @@ const Index = () => {
               <SpaceCategoryPills 
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
+                disabled={!uploadedImage}
               />
             </div>
           </section>
