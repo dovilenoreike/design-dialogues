@@ -176,15 +176,54 @@ const ResultDashboard = ({
     const lowEstimate = roundToHundred(total * (1 - priceVariance));
     const highEstimate = roundToHundred(total * (1 + priceVariance));
 
-    // Line items (rounded estimates) with tooltip descriptions
+    // Tier-aware tooltips explaining why prices differ
+    const tierTooltips = {
+      "Interior Design Project": {
+        Budget: "Functional layouts with basic lighting — one pendant per room and standard ergonomics",
+        Standard: "Detailed plans with layered lighting zones, optimized circulation, and custom details",
+        Premium: "Full 3D visualization, bespoke lighting design, premium ergonomics, and meticulous detailing",
+      },
+      "Construction & Finish": {
+        Budget: "Standard finishes, basic plastering, and cost-effective flooring installation",
+        Standard: "Quality workmanship, smooth finishes, and precise detailing throughout",
+        Premium: "Artisan-level craftsmanship, seamless finishes, and premium installation techniques",
+      },
+      "Built-in Products & Materials": {
+        Budget: "Practical materials — laminate flooring, standard tiles, and basic fixtures",
+        Standard: "Quality mid-range — engineered wood, porcelain tiles, and branded fixtures",
+        Premium: "Luxury selection — natural stone, hardwood, designer fixtures, and premium hardware",
+      },
+      "Kitchen & Joinery": {
+        Budget: "MDF carcasses with laminate finish, standard hardware, and practical worktops",
+        Standard: "Solid wood frames, soft-close mechanisms, and engineered stone surfaces",
+        Premium: "Solid timber construction, premium hardware, natural stone worktops, and bespoke details",
+      },
+      "Home Appliances": {
+        Budget: "Reliable brands covering essential functions — practical and efficient",
+        Standard: "Premium brands with advanced features — better performance and longevity",
+        Premium: "Top-tier brands — professional-grade performance, smart features, and integrated design",
+      },
+      "Built-in Wardrobes": {
+        Budget: "Melamine finish with basic internal layout and standard fittings",
+        Standard: "Painted MDF, customized internals, soft-close doors, and quality accessories",
+        Premium: "Lacquered or veneer finish, LED lighting, premium fittings, and bespoke organization",
+      },
+      "Furniture (est.)": {
+        Budget: "Functional basics — mix of ready-made pieces from reliable brands",
+        Standard: "Quality mid-range — coordinated selection from established furniture brands",
+        Premium: "Designer pieces, custom upholstery, and investment furniture built to last decades",
+      },
+    };
+
+    // Line items (rounded estimates) with tier-aware tooltip descriptions
     const lineItems = [
-      { label: "Interior Design Project", value: interiorDesign, tooltip: "Design concept, floor plans, 3D visualizations, material selection, and project coordination" },
-      { label: "Construction & Finish", value: constructionFinish, tooltip: "Demolition, walls, flooring installation, painting, plastering, and general construction work" },
-      { label: "Built-in Products & Materials", value: builtInProducts, tooltip: "Flooring materials, tiles, paint, fixtures, switches, sockets, and finish materials" },
-      { label: "Kitchen & Joinery", value: kitchenJoinery, tooltip: "Custom kitchen cabinets, worktops, sinks, taps, and bespoke joinery elements" },
-      { label: "Home Appliances", value: appliances, tooltip: "Oven, hob, extractor, fridge, dishwasher, washing machine, and other appliances" },
-      { label: "Built-in Wardrobes", value: wardrobes, tooltip: "Custom wardrobe systems with internal fittings, doors, and installation" },
-      { label: "Furniture (est.)", value: furniture, tooltip: "Sofas, beds, dining tables, chairs, and other movable furniture pieces" },
+      { label: "Interior Design Project", value: interiorDesign, tooltip: tierTooltips["Interior Design Project"][tier] },
+      { label: "Construction & Finish", value: constructionFinish, tooltip: tierTooltips["Construction & Finish"][tier] },
+      { label: "Built-in Products & Materials", value: builtInProducts, tooltip: tierTooltips["Built-in Products & Materials"][tier] },
+      { label: "Kitchen & Joinery", value: kitchenJoinery, tooltip: tierTooltips["Kitchen & Joinery"][tier] },
+      { label: "Home Appliances", value: appliances, tooltip: tierTooltips["Home Appliances"][tier] },
+      { label: "Built-in Wardrobes", value: wardrobes, tooltip: tierTooltips["Built-in Wardrobes"][tier] },
+      { label: "Furniture (est.)", value: furniture, tooltip: tierTooltips["Furniture (est.)"][tier] },
     ];
 
     return { total, lowEstimate, highEstimate, lineItems, renovationCost };
@@ -298,6 +337,13 @@ const ResultDashboard = ({
                       selectedTier={selectedTier} 
                       onSelectTier={setSelectedTier} 
                     />
+                    
+                    {/* Tier Philosophy */}
+                    <p className="text-xs text-muted-foreground italic mt-3 text-center">
+                      {selectedTier === "Budget" && "Smart solutions that maximize value — quality basics done well."}
+                      {selectedTier === "Standard" && "The sweet spot — lasting quality with thoughtful design details."}
+                      {selectedTier === "Premium" && "Exceptional finishes and craftsmanship — built to inspire for decades."}
+                    </p>
 
                     {/* Total Price Range */}
                     <div className="mt-6">
