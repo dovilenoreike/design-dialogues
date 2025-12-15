@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
-import DesignerInsight from "./DesignerInsight";
+
 import MaterialCard from "./MaterialCard";
 import ServiceCard from "./ServiceCard";
 import { Slider } from "@/components/ui/slider";
@@ -550,10 +550,6 @@ const ResultDashboard = ({
                       </div>
                     )}
 
-                    {/* Designer Insight */}
-                    <div className="mt-6">
-                      <DesignerInsight tier={selectedTier} />
-                    </div>
                   </div>
 
                   {/* Dashed Divider */}
