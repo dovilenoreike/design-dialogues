@@ -5,14 +5,19 @@ import MaterialCard from "./MaterialCard";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ChevronDown, Download, Share2, X } from "lucide-react";
-
-type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
-
-interface FormData {
-  area: number;
-  isRenovation: boolean;
-  projectScope: ProjectScope;
-}
+import {
+  FormData,
+  ProjectScope,
+  scopeMultipliers,
+  scopeOptions,
+  baseRates,
+  kitchenRates,
+  appliancePackages,
+  wardrobeRates,
+  renovationRate,
+  furniturePercentage,
+  priceVariance,
+} from "@/types/calculator";
 
 interface ResultDashboardProps {
   isVisible: boolean;
@@ -23,24 +28,6 @@ interface ResultDashboardProps {
   onClose?: () => void;
   onFormDataChange?: (formData: FormData) => void;
 }
-
-const scopeMultipliers: Record<ProjectScope, number> = {
-  'space-planning': 0.3,
-  'interior-finishes': 0.6,
-  'full-interior': 1.0,
-};
-
-const scopeOptions: { value: ProjectScope; label: string }[] = [
-  { value: 'space-planning', label: 'Space Planning' },
-  { value: 'interior-finishes', label: 'Interior Finishes' },
-  { value: 'full-interior', label: 'Full Interior' },
-];
-
-const baseRates = {
-  Budget: 350,
-  Standard: 550,
-  Premium: 900,
-};
 
 // Material data mapped to each palette
 const paletteMaterials: Record<string, { swatchColors: string[]; title: string; category: string }[]> = {
@@ -94,6 +81,8 @@ const ResultDashboard = ({
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
   const [localIsRenovation, setLocalIsRenovation] = useState(formData?.isRenovation ?? false);
   const [localProjectScope, setLocalProjectScope] = useState<ProjectScope>(formData?.projectScope ?? 'full-interior');
+  const [localKitchenLength, setLocalKitchenLength] = useState(formData?.kitchenLength ?? 4);
+  const [localWardrobeLength, setLocalWardrobeLength] = useState(formData?.wardrobeLength ?? 3);
 
   // Sync local state when formData changes
   useState(() => {
@@ -101,6 +90,8 @@ const ResultDashboard = ({
       setLocalArea(formData.area);
       setLocalIsRenovation(formData.isRenovation);
       setLocalProjectScope(formData.projectScope);
+      setLocalKitchenLength(formData.kitchenLength);
+      setLocalWardrobeLength(formData.wardrobeLength);
     }
   });
 
@@ -109,31 +100,66 @@ const ResultDashboard = ({
       area: updates.area ?? localArea,
       isRenovation: updates.isRenovation ?? localIsRenovation,
       projectScope: updates.projectScope ?? localProjectScope,
+      kitchenLength: updates.kitchenLength ?? localKitchenLength,
+      wardrobeLength: updates.wardrobeLength ?? localWardrobeLength,
     };
     
     if (updates.area !== undefined) setLocalArea(updates.area);
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
     if (updates.projectScope !== undefined) setLocalProjectScope(updates.projectScope);
+    if (updates.kitchenLength !== undefined) setLocalKitchenLength(updates.kitchenLength);
+    if (updates.wardrobeLength !== undefined) setLocalWardrobeLength(updates.wardrobeLength);
     
     onFormDataChange?.(newFormData);
   };
 
   const calculation = useMemo(() => {
-    const baseRate = baseRates[selectedTier];
+    const tier = selectedTier;
     const scopeMultiplier = scopeMultipliers[localProjectScope];
-    const baseCost = Math.round(localArea * baseRate * scopeMultiplier);
-    const renovationCost = localIsRenovation ? Math.round(localArea * 150) : 0;
-    const total = baseCost + renovationCost;
+    
+    // 1. Construction & Finish Work (based on area and tier)
+    const constructionFinish = Math.round(localArea * baseRates[tier] * 0.35 * scopeMultiplier);
+    
+    // 2. Built-in Products & Finish Materials (based on area and tier)
+    const builtInProducts = Math.round(localArea * baseRates[tier] * 0.25 * scopeMultiplier);
+    
+    // 3. Kitchen & Joinery (based on linear meters)
+    const kitchenJoinery = Math.round(localKitchenLength * kitchenRates[tier] * scopeMultiplier);
+    
+    // 4. Home Appliances (tier-based fixed package, scaled by scope)
+    const appliances = Math.round(appliancePackages[tier] * scopeMultiplier);
+    
+    // 5. Built-in Wardrobes (based on linear meters)
+    const wardrobes = Math.round(localWardrobeLength * wardrobeRates[tier] * scopeMultiplier);
+    
+    // 6. Renovation Prep (if applicable)
+    const renovationCost = localIsRenovation ? Math.round(localArea * renovationRate) : 0;
+    
+    // Subtotal before furniture
+    const subtotal = constructionFinish + builtInProducts + kitchenJoinery + appliances + wardrobes + renovationCost;
+    
+    // 7. Furniture (~20% of subtotal)
+    const furniture = Math.round(subtotal * furniturePercentage);
+    
+    // Total
+    const total = subtotal + furniture;
+    
+    // Calculate ±15% range for total
+    const lowEstimate = Math.round(total * (1 - priceVariance));
+    const highEstimate = Math.round(total * (1 + priceVariance));
 
-    // Split baseCost into 3 pillars
-    const pillars = [
-      { label: "Construction & Finish", value: Math.round(baseCost * 0.40), percent: "40%" },
-      { label: "Kitchen & Joinery", value: Math.round(baseCost * 0.35), percent: "35%" },
-      { label: "Technics & Lighting", value: Math.round(baseCost * 0.25), percent: "25%" },
+    // Line items (mid-points shown)
+    const lineItems = [
+      { label: "Construction & Finish", value: constructionFinish },
+      { label: "Built-in Products & Materials", value: builtInProducts },
+      { label: "Kitchen & Joinery", value: kitchenJoinery },
+      { label: "Home Appliances", value: appliances },
+      { label: "Built-in Wardrobes", value: wardrobes },
+      { label: "Furniture (est.)", value: furniture },
     ];
 
-    return { total, pillars, renovationCost };
-  }, [localArea, localIsRenovation, localProjectScope, selectedTier]);
+    return { total, lowEstimate, highEstimate, lineItems, renovationCost };
+  }, [localArea, localIsRenovation, localProjectScope, localKitchenLength, localWardrobeLength, selectedTier]);
 
   if (!isVisible || !formData) return null;
 
@@ -213,20 +239,23 @@ const ResultDashboard = ({
                       onSelectTier={setSelectedTier} 
                     />
 
-                    {/* Total Price */}
+                    {/* Total Price Range */}
                     <div className="mt-6 mb-6">
                       <p className="text-xs text-muted-foreground mb-1">Estimated Total</p>
-                      <p className="text-4xl md:text-5xl font-serif tabular-nums">
-                        €{calculation.total.toLocaleString()}
+                      <p className="text-3xl md:text-4xl font-serif tabular-nums">
+                        €{calculation.lowEstimate.toLocaleString()} – €{calculation.highEstimate.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Based on typical project costs (±15%)
                       </p>
                     </div>
 
-                    {/* 3 Pillars Breakdown */}
-                    <div className="space-y-3">
-                      {calculation.pillars.map((pillar, index) => (
+                    {/* 7 Line Items Breakdown */}
+                    <div className="space-y-2.5">
+                      {calculation.lineItems.map((item, index) => (
                         <div key={index} className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">{pillar.label}</span>
-                          <span className="font-medium tabular-nums">€{pillar.value.toLocaleString()}</span>
+                          <span className="text-muted-foreground">{item.label}</span>
+                          <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
                         </div>
                       ))}
                       {calculation.renovationCost > 0 && (
@@ -264,6 +293,38 @@ const ResultDashboard = ({
                               min={20}
                               max={200}
                               step={5}
+                              className="w-full"
+                            />
+                          </div>
+
+                          {/* Kitchen Length slider */}
+                          <div>
+                            <div className="flex justify-between items-center mb-3">
+                              <label className="text-xs text-muted-foreground">Kitchen Length</label>
+                              <span className="text-xs text-muted-foreground tabular-nums">{localKitchenLength} lm</span>
+                            </div>
+                            <Slider
+                              value={[localKitchenLength]}
+                              onValueChange={(value) => handleUpdateFormData({ kitchenLength: value[0] })}
+                              min={2}
+                              max={8}
+                              step={0.5}
+                              className="w-full"
+                            />
+                          </div>
+
+                          {/* Wardrobe Length slider */}
+                          <div>
+                            <div className="flex justify-between items-center mb-3">
+                              <label className="text-xs text-muted-foreground">Built-in Wardrobes</label>
+                              <span className="text-xs text-muted-foreground tabular-nums">{localWardrobeLength} lm</span>
+                            </div>
+                            <Slider
+                              value={[localWardrobeLength]}
+                              onValueChange={(value) => handleUpdateFormData({ wardrobeLength: value[0] })}
+                              min={0}
+                              max={12}
+                              step={0.5}
                               className="w-full"
                             />
                           </div>

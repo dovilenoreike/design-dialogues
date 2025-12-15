@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import { FormData, ProjectScope, scopeOptions } from "@/types/calculator";
 
 interface ProcessingOverlayProps {
   isVisible: boolean;
   onComplete: (formData: FormData) => void;
-}
-
-type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
-
-interface FormData {
-  area: number;
-  isRenovation: boolean;
-  projectScope: ProjectScope;
 }
 
 const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) => {
@@ -21,6 +13,8 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   const [area, setArea] = useState(50);
   const [isRenovation, setIsRenovation] = useState(false);
   const [projectScope, setProjectScope] = useState<ProjectScope>('full-interior');
+  const [kitchenLength, setKitchenLength] = useState(4);
+  const [wardrobeLength, setWardrobeLength] = useState(3);
   const [formReady, setFormReady] = useState(false);
 
   useEffect(() => {
@@ -46,14 +40,8 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   }, [isVisible]);
 
   const handleSubmit = () => {
-    onComplete({ area, isRenovation, projectScope });
+    onComplete({ area, isRenovation, projectScope, kitchenLength, wardrobeLength });
   };
-
-  const scopeOptions: { value: ProjectScope; label: string }[] = [
-    { value: 'space-planning', label: 'Space Planning' },
-    { value: 'interior-finishes', label: 'Interior Finishes' },
-    { value: 'full-interior', label: 'Full Interior' },
-  ];
 
   if (!isVisible) return null;
 
@@ -77,7 +65,7 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
 
         {/* Form card */}
         {formReady && (
-          <div className="glass-panel rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 slide-up">
+          <div className="glass-panel rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 slide-up max-h-[70vh] overflow-y-auto">
             <h3 className="text-lg sm:text-xl font-serif mb-1">Refine your Quote</h3>
             <p className="text-xs sm:text-sm text-muted-foreground mb-5 sm:mb-6">
               Help us calculate accurately
@@ -95,6 +83,38 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
                 min={20}
                 max={200}
                 step={5}
+                className="w-full"
+              />
+            </div>
+
+            {/* Kitchen Length slider */}
+            <div className="mb-5 sm:mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-xs sm:text-sm font-medium">Kitchen Length</label>
+                <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">{kitchenLength} lm</span>
+              </div>
+              <Slider
+                value={[kitchenLength]}
+                onValueChange={(value) => setKitchenLength(value[0])}
+                min={2}
+                max={8}
+                step={0.5}
+                className="w-full"
+              />
+            </div>
+
+            {/* Wardrobe Length slider */}
+            <div className="mb-5 sm:mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-xs sm:text-sm font-medium">Built-in Wardrobes</label>
+                <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">{wardrobeLength} lm</span>
+              </div>
+              <Slider
+                value={[wardrobeLength]}
+                onValueChange={(value) => setWardrobeLength(value[0])}
+                min={0}
+                max={12}
+                step={0.5}
                 className="w-full"
               />
             </div>
