@@ -462,13 +462,8 @@ const ResultDashboard = ({
                         </div>
 
                         {/* Renovation toggle */}
-                        <div className="flex items-center justify-between py-3 border-t border-stone-200">
-                          <div>
-                            <label className="text-xs font-medium">Renovation State</label>
-                            <p className="text-[10px] text-muted-foreground">
-                              {localIsRenovation ? "Old / Renovation" : "New Build"}
-                            </p>
-                          </div>
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-stone-100">
+                          <label className="font-medium text-sm text-stone-900">Renovation Required</label>
                           <Switch
                             checked={localIsRenovation}
                             onCheckedChange={(checked) => handleUpdateFormData({ isRenovation: checked })}
