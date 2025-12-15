@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
-import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw } from "lucide-react";
+import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw, User } from "lucide-react";
 import {
   FormData,
   ProjectScope,
@@ -36,32 +36,47 @@ interface ResultDashboardProps {
   onStartFresh?: () => void;
 }
 
-// Material data mapped to each palette
-const paletteMaterials: Record<string, { swatchColors: string[]; title: string; category: string }[]> = {
-  "Milan Grey": [
-    { swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"], title: "Polished Concrete", category: "Micro-cement Finish" },
-    { swatchColors: ["bg-zinc-400", "bg-zinc-500", "bg-zinc-300", "bg-zinc-600"], title: "Brushed Steel", category: "Cabinet Handles" },
-    { swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"], title: "Limestone Tile", category: "Honed 600x600" },
-    { swatchColors: ["bg-slate-200", "bg-slate-300", "bg-slate-100", "bg-slate-400"], title: "Smoked Glass", category: "Partition Panels" },
-  ],
-  "Natural Walnut": [
-    { swatchColors: ["bg-amber-600", "bg-amber-700", "bg-amber-500", "bg-amber-800"], title: "Engineered Walnut", category: "Herringbone • 15mm" },
-    { swatchColors: ["bg-yellow-700", "bg-yellow-800", "bg-yellow-600", "bg-amber-700"], title: "Walnut Veneer", category: "Joinery Fronts" },
-    { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Brass Fixtures", category: "Burnished Finish" },
-    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Linen Fabric", category: "Acoustic Panels" },
-  ],
-  "Onyx & Brass": [
-    { swatchColors: ["bg-zinc-900", "bg-zinc-800", "bg-zinc-950", "bg-zinc-700"], title: "Black Marble", category: "Nero Marquina • Polished" },
-    { swatchColors: ["bg-yellow-600", "bg-yellow-500", "bg-amber-500", "bg-yellow-700"], title: "Brushed Brass", category: "Hardware & Fixtures" },
-    { swatchColors: ["bg-zinc-800", "bg-zinc-700", "bg-zinc-900", "bg-zinc-600"], title: "Smoked Oak", category: "Flooring • Matte" },
-    { swatchColors: ["bg-zinc-700", "bg-zinc-600", "bg-zinc-800", "bg-zinc-500"], title: "Black Steel", category: "Frame Details" },
-  ],
-  "Calacatta White": [
-    { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-gray-100"], title: "Calacatta Quartz", category: "Worktops • 30mm" },
-    { swatchColors: ["bg-white", "bg-gray-50", "bg-stone-50", "bg-gray-100"], title: "White Oak", category: "Flooring • Wide Plank" },
-    { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Matte Lacquer", category: "Cabinet Finish" },
-    { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-stone-100"], title: "Textured Plaster", category: "Wall Finish" },
-  ],
+// Material data mapped to each palette with designer info
+const paletteMaterials: Record<string, {
+  designer: { name: string; title: string };
+  materials: { swatchColors: string[]; title: string; category: string }[];
+}> = {
+  "Milan Grey": {
+    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
+    materials: [
+      { swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"], title: "Polished Concrete", category: "Micro-cement Finish" },
+      { swatchColors: ["bg-zinc-400", "bg-zinc-500", "bg-zinc-300", "bg-zinc-600"], title: "Brushed Steel", category: "Cabinet Handles" },
+      { swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"], title: "Limestone Tile", category: "Honed 600x600" },
+      { swatchColors: ["bg-slate-200", "bg-slate-300", "bg-slate-100", "bg-slate-400"], title: "Smoked Glass", category: "Partition Panels" },
+    ],
+  },
+  "Natural Walnut": {
+    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
+    materials: [
+      { swatchColors: ["bg-amber-600", "bg-amber-700", "bg-amber-500", "bg-amber-800"], title: "Engineered Walnut", category: "Herringbone • 15mm" },
+      { swatchColors: ["bg-yellow-700", "bg-yellow-800", "bg-yellow-600", "bg-amber-700"], title: "Walnut Veneer", category: "Joinery Fronts" },
+      { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Brass Fixtures", category: "Burnished Finish" },
+      { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Linen Fabric", category: "Acoustic Panels" },
+    ],
+  },
+  "Onyx & Brass": {
+    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
+    materials: [
+      { swatchColors: ["bg-zinc-900", "bg-zinc-800", "bg-zinc-950", "bg-zinc-700"], title: "Black Marble", category: "Nero Marquina • Polished" },
+      { swatchColors: ["bg-yellow-600", "bg-yellow-500", "bg-amber-500", "bg-yellow-700"], title: "Brushed Brass", category: "Hardware & Fixtures" },
+      { swatchColors: ["bg-zinc-800", "bg-zinc-700", "bg-zinc-900", "bg-zinc-600"], title: "Smoked Oak", category: "Flooring • Matte" },
+      { swatchColors: ["bg-zinc-700", "bg-zinc-600", "bg-zinc-800", "bg-zinc-500"], title: "Black Steel", category: "Frame Details" },
+    ],
+  },
+  "Calacatta White": {
+    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
+    materials: [
+      { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-gray-100"], title: "Calacatta Quartz", category: "Worktops • 30mm" },
+      { swatchColors: ["bg-white", "bg-gray-50", "bg-stone-50", "bg-gray-100"], title: "White Oak", category: "Flooring • Wide Plank" },
+      { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Matte Lacquer", category: "Cabinet Finish" },
+      { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-stone-100"], title: "Textured Plaster", category: "Wall Finish" },
+    ],
+  },
 };
 
 // Fallback materials if no palette selected
@@ -201,7 +216,11 @@ const ResultDashboard = ({
               )}
             </div>
           </div>
-        </div>
+              </div>
+              {/* Visualization Disclaimer */}
+              <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2">
+                Conceptual visualization — actual spaces and materials may vary
+              </p>
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
@@ -437,16 +456,32 @@ const ResultDashboard = ({
 
                   {/* Bottom Half - Material Manifest (Stone) */}
                   <div className="bg-stone-50 p-5 md:p-6">
-                    {/* Header */}
+                    {/* Header with Designer Credit */}
                     <div className="mb-4">
                       <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Curated by Sigita Kulikajeva</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
+                          <User size={12} className="text-stone-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-foreground">
+                            {selectedMaterial && paletteMaterials[selectedMaterial]
+                              ? paletteMaterials[selectedMaterial].designer.name
+                              : "Design Dialogues"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {selectedMaterial && paletteMaterials[selectedMaterial]
+                              ? paletteMaterials[selectedMaterial].designer.title
+                              : "Interior Designer"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Material Cards Grid */}
                     <div className="space-y-2">
                       {(selectedMaterial && paletteMaterials[selectedMaterial] 
-                        ? paletteMaterials[selectedMaterial] 
+                        ? paletteMaterials[selectedMaterial].materials 
                         : defaultMaterials
                       ).map((material, index) => (
                         <MaterialCard
