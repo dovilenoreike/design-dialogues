@@ -1,12 +1,10 @@
 import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
-
 import MaterialCard from "./MaterialCard";
 import ServiceCard from "./ServiceCard";
+import { CostInsightSheet } from "./CostInsightSheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw, User } from "lucide-react";
 import {
   FormData,
@@ -101,6 +99,7 @@ const ResultDashboard = ({
 }: ResultDashboardProps) => {
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
   const [isRefineOpen, setIsRefineOpen] = useState(false);
+  const [activeInsight, setActiveInsight] = useState<string | null>(null);
 
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
@@ -496,57 +495,56 @@ const ResultDashboard = ({
                         </div>
 
                         {/* SECTION B: OUTPUTS - Grouped Line Items */}
-                        <TooltipProvider delayDuration={0}>
-                          <div className="space-y-4 pt-3 border-t border-stone-200">
-                            {calculation.groupedLineItems.map((group, groupIndex) => (
-                              <div key={groupIndex} className="space-y-2 mt-5 first:mt-0">
-                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                                  {group.header}
-                                </p>
-                                {group.items.map((item, index) => (
-                                  <div key={index} className="flex justify-between items-center text-sm">
-                                    <HybridTooltip content={<p>{item.tooltip}</p>} className="max-w-[240px] text-xs">
-                                      <span className="text-stone-500 flex items-center cursor-help">
-                                        {item.label}
-                                        <Info size={11} className="ml-1 text-stone-300" />
-                                      </span>
-                                    </HybridTooltip>
-                                    <span className="font-medium text-stone-900 tabular-nums text-right">
-                                      €{item.value.toLocaleString()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                            
-                            {/* Renovation Prep (conditional) */}
-                            {calculation.renovationCost > 0 && (
-                              <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-stone-200">
-                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                                  RENOVATION
-                                </p>
-                                <div className="flex justify-between items-center text-sm">
-                                  <HybridTooltip 
-                                    content={<p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>}
-                                    className="max-w-[240px] text-xs"
-                                  >
-                                    <span className="text-stone-500 flex items-center cursor-help">
-                                      Prep Work
-                                      <Info size={11} className="ml-1 text-stone-300" />
-                                    </span>
-                                  </HybridTooltip>
+                        <div className="space-y-4 pt-3 border-t border-stone-200">
+                          {calculation.groupedLineItems.map((group, groupIndex) => (
+                            <div key={groupIndex} className="space-y-2 mt-5 first:mt-0">
+                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                                {group.header}
+                              </p>
+                              {group.items.map((item, index) => (
+                                <div key={index} className="flex justify-between items-center text-sm">
+                                  <span className="text-stone-500 flex items-center">
+                                    {item.label}
+                                    <Info 
+                                      size={11} 
+                                      className="ml-1 text-stone-300 cursor-pointer hover:text-stone-900 transition-colors" 
+                                      onClick={() => setActiveInsight(item.label)}
+                                    />
+                                  </span>
                                   <span className="font-medium text-stone-900 tabular-nums text-right">
-                                    €{calculation.renovationCost.toLocaleString()}
+                                    €{item.value.toLocaleString()}
                                   </span>
                                 </div>
+                              ))}
+                            </div>
+                          ))}
+                          
+                          {/* Renovation Prep (conditional) */}
+                          {calculation.renovationCost > 0 && (
+                            <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-stone-200">
+                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                                RENOVATION
+                              </p>
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-stone-500 flex items-center">
+                                  Prep Work
+                                  <Info 
+                                    size={11} 
+                                    className="ml-1 text-stone-300 cursor-pointer hover:text-stone-900 transition-colors" 
+                                    onClick={() => setActiveInsight("Prep Work")}
+                                  />
+                                </span>
+                                <span className="font-medium text-stone-900 tabular-nums text-right">
+                                  €{calculation.renovationCost.toLocaleString()}
+                                </span>
                               </div>
-                            )}
-                            
-                            <p className="text-[10px] text-muted-foreground pt-2 italic">
-                              All figures are preliminary estimates based on typical project costs
-                            </p>
-                          </div>
-                        </TooltipProvider>
+                            </div>
+                          )}
+                          
+                          <p className="text-[10px] text-muted-foreground pt-2 italic">
+                            All figures are preliminary estimates based on typical project costs
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -606,6 +604,13 @@ const ResultDashboard = ({
           </div>
         </div>
       </div>
+
+      {/* Cost Insight Sheet */}
+      <CostInsightSheet 
+        isOpen={activeInsight !== null}
+        onClose={() => setActiveInsight(null)}
+        category={activeInsight || ""}
+      />
     </div>
   );
 };
