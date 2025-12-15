@@ -6,14 +6,7 @@ import MaterialPalette from "@/components/MaterialPalette";
 import ArchitecturalStyle from "@/components/ArchitecturalStyle";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import ResultDashboard from "@/components/ResultDashboard";
-
-type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
-
-interface FormData {
-  area: number;
-  isRenovation: boolean;
-  projectScope: ProjectScope;
-}
+import { FormData } from "@/types/calculator";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
