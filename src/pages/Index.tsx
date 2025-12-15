@@ -39,6 +39,28 @@ const Index = () => {
     setShowResults(true);
   };
 
+  const handleRegenerateVisualization = () => {
+    setShowResults(false);
+    setIsProcessing(true);
+  };
+
+  const handleChangeStyle = () => {
+    setShowResults(false);
+    setTimeout(() => {
+      document.querySelector('#design-matrix')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleStartFresh = () => {
+    setShowResults(false);
+    setUploadedImage(null);
+    setSelectedCategory(null);
+    setSelectedMaterial(null);
+    setSelectedStyle(null);
+    setFormData(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -74,7 +96,7 @@ const Index = () => {
 
           {/* Section 2: The Design Matrix */}
           {showDesignMatrix && (
-            <section className="max-w-4xl mx-auto reveal-enter">
+            <section id="design-matrix" className="max-w-4xl mx-auto reveal-enter">
               <div className="border-t border-border pt-8 md:pt-12 mb-6 md:mb-8">
                 <h3 className="text-xl md:text-2xl font-serif mb-1 md:mb-2">Define Your Aesthetic</h3>
                 <p className="text-sm md:text-base text-muted-foreground">
@@ -125,6 +147,9 @@ const Index = () => {
         selectedMaterial={selectedMaterial}
         selectedStyle={selectedStyle}
         onFormDataChange={setFormData}
+        onRegenerateVisualization={handleRegenerateVisualization}
+        onChangeStyle={handleChangeStyle}
+        onStartFresh={handleStartFresh}
       />
     </div>
   );
