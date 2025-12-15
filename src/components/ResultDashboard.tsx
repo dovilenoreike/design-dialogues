@@ -4,7 +4,8 @@ import DesignerInsight from "./DesignerInsight";
 import MaterialCard from "./MaterialCard";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 import { ChevronDown, Download, Share2, X, Info } from "lucide-react";
 import {
   FormData,
@@ -277,33 +278,26 @@ const ResultDashboard = ({
                             <div className="space-y-2.5">
                               {calculation.lineItems.map((item, index) => (
                                 <div key={index} className="flex justify-between items-center text-sm">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
-                                        {item.label}
-                                        <Info size={12} className="text-muted-foreground/50" />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-[240px] text-xs">
-                                      <p>{item.tooltip}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <HybridTooltip content={<p>{item.tooltip}</p>} className="max-w-[240px] text-xs">
+                                    <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
+                                      {item.label}
+                                      <Info size={12} className="text-muted-foreground/50" />
+                                    </span>
+                                  </HybridTooltip>
                                   <span className="text-muted-foreground tabular-nums">≈ €{item.value.toLocaleString()}</span>
                                 </div>
                               ))}
                               {calculation.renovationCost > 0 && (
                                 <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
-                                        Renovation Prep
-                                        <Info size={12} className="text-muted-foreground/50" />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-[240px] text-xs">
-                                      <p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <HybridTooltip 
+                                    content={<p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>}
+                                    className="max-w-[240px] text-xs"
+                                  >
+                                    <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
+                                      Renovation Prep
+                                      <Info size={12} className="text-muted-foreground/50" />
+                                    </span>
+                                  </HybridTooltip>
                                   <span className="text-muted-foreground tabular-nums">≈ €{calculation.renovationCost.toLocaleString()}</span>
                                 </div>
                               )}
