@@ -610,6 +610,7 @@ const ResultDashboard = ({
         isOpen={activeInsight !== null}
         onClose={() => setActiveInsight(null)}
         category={activeInsight || ""}
+        tier={selectedTier.toLowerCase() as "budget" | "standard" | "premium"}
       />
     </div>
   );
