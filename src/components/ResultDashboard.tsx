@@ -499,19 +499,19 @@ const ResultDashboard = ({
                         <TooltipProvider delayDuration={0}>
                           <div className="space-y-4 pt-3 border-t border-stone-200">
                             {calculation.groupedLineItems.map((group, groupIndex) => (
-                              <div key={groupIndex} className="space-y-2">
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                              <div key={groupIndex} className="space-y-2 mt-5 first:mt-0">
+                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                                   {group.header}
                                 </p>
                                 {group.items.map((item, index) => (
                                   <div key={index} className="flex justify-between items-center text-sm">
                                     <HybridTooltip content={<p>{item.tooltip}</p>} className="max-w-[240px] text-xs">
-                                      <span className="text-gray-500 flex items-center gap-1.5 cursor-help">
+                                      <span className="text-stone-500 flex items-center cursor-help">
                                         {item.label}
-                                        <Info size={11} className="text-gray-400" />
+                                        <Info size={11} className="ml-1 text-stone-300" />
                                       </span>
                                     </HybridTooltip>
-                                    <span className="text-gray-600 tabular-nums text-right">
+                                    <span className="font-medium text-stone-900 tabular-nums text-right">
                                       €{item.value.toLocaleString()}
                                     </span>
                                   </div>
@@ -521,8 +521,8 @@ const ResultDashboard = ({
                             
                             {/* Renovation Prep (conditional) */}
                             {calculation.renovationCost > 0 && (
-                              <div className="space-y-2 pt-2 border-t border-dashed border-stone-200">
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                              <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-stone-200">
+                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                                   RENOVATION
                                 </p>
                                 <div className="flex justify-between items-center text-sm">
@@ -530,12 +530,12 @@ const ResultDashboard = ({
                                     content={<p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>}
                                     className="max-w-[240px] text-xs"
                                   >
-                                    <span className="text-gray-500 flex items-center gap-1.5 cursor-help">
+                                    <span className="text-stone-500 flex items-center cursor-help">
                                       Prep Work
-                                      <Info size={11} className="text-gray-400" />
+                                      <Info size={11} className="ml-1 text-stone-300" />
                                     </span>
                                   </HybridTooltip>
-                                  <span className="text-gray-600 tabular-nums text-right">
+                                  <span className="font-medium text-stone-900 tabular-nums text-right">
                                     €{calculation.renovationCost.toLocaleString()}
                                   </span>
                                 </div>
@@ -552,8 +552,8 @@ const ResultDashboard = ({
 
                   </div>
 
-                  {/* Dashed Divider */}
-                  <div className="border-t border-dashed border-stone-300" />
+                  {/* Subtle Divider */}
+                  <div className="border-t border-stone-100" />
 
                   {/* Bottom Half - Material Manifest (Stone) */}
                   <div className="bg-stone-50 p-5 md:p-6">
