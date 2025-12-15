@@ -215,18 +215,33 @@ const ResultDashboard = ({
       },
     };
 
-    // Line items (rounded estimates) with tier-aware tooltip descriptions
-    const lineItems = [
-      { label: "Interior Design Project", value: interiorDesign, tooltip: tierTooltips["Interior Design Project"][tier] },
-      { label: "Construction & Finish", value: constructionFinish, tooltip: tierTooltips["Construction & Finish"][tier] },
-      { label: "Built-in Products & Materials", value: builtInProducts, tooltip: tierTooltips["Built-in Products & Materials"][tier] },
-      { label: "Kitchen & Joinery", value: kitchenJoinery, tooltip: tierTooltips["Kitchen & Joinery"][tier] },
-      { label: "Home Appliances", value: appliances, tooltip: tierTooltips["Home Appliances"][tier] },
-      { label: "Built-in Wardrobes", value: wardrobes, tooltip: tierTooltips["Built-in Wardrobes"][tier] },
-      { label: "Furniture (est.)", value: furniture, tooltip: tierTooltips["Furniture (est.)"][tier] },
+    // Grouped line items for semantic display
+    const groupedLineItems = [
+      {
+        header: "PROJECT & SHELL",
+        items: [
+          { label: "Interior Design", value: interiorDesign, tooltip: tierTooltips["Interior Design Project"][tier] },
+          { label: "Construction & Finish", value: constructionFinish, tooltip: tierTooltips["Construction & Finish"][tier] },
+          { label: "Materials", value: builtInProducts, tooltip: tierTooltips["Built-in Products & Materials"][tier] },
+        ]
+      },
+      {
+        header: "FIXED JOINERY",
+        items: [
+          { label: "Kitchen", value: kitchenJoinery, tooltip: tierTooltips["Kitchen & Joinery"][tier] },
+          { label: "Wardrobes", value: wardrobes, tooltip: tierTooltips["Built-in Wardrobes"][tier] },
+        ]
+      },
+      {
+        header: "MOVABLES & TECH",
+        items: [
+          { label: "Appliances", value: appliances, tooltip: tierTooltips["Home Appliances"][tier] },
+          { label: "Furniture", value: furniture, tooltip: tierTooltips["Furniture (est.)"][tier] },
+        ]
+      },
     ];
 
-    return { total, lowEstimate, highEstimate, lineItems, renovationCost };
+    return { total, lowEstimate, highEstimate, groupedLineItems, renovationCost };
   }, [localArea, localIsRenovation, localProjectScope, localKitchenLength, localWardrobeLength, selectedTier]);
 
   if (!isVisible || !formData) return null;
@@ -345,153 +360,173 @@ const ResultDashboard = ({
                       {selectedTier === "Premium" && "Exceptional finishes and craftsmanship — built to inspire for decades."}
                     </p>
 
-                    {/* Total Price Range */}
-                    <div className="mt-6">
-                      <p className="text-xs text-muted-foreground mb-1">Estimated Total</p>
-                      <p className="text-3xl md:text-4xl font-serif tabular-nums">
-                        €{calculation.lowEstimate.toLocaleString()} – €{calculation.highEstimate.toLocaleString()}
+                    {/* Conservative Estimate */}
+                    <div className="mt-6 text-center">
+                      <p className="text-4xl md:text-5xl font-serif tabular-nums">
+                        €{calculation.highEstimate.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Based on typical project costs (±15%)
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Conservative estimate incl. 15% market buffer
                       </p>
-                    </div>
-
-                    {/* Customize & Details Collapsible */}
-                    <div className="mt-6 border-t border-border pt-4">
+                      
+                      {/* Summary Line */}
+                      <p className="text-sm text-gray-400 mt-4">
+                        Construction ~40% • Joinery ~35% • Technics ~25%
+                      </p>
+                      
+                      {/* Trigger Link */}
                       <button
                         onClick={() => setIsRefineOpen(!isRefineOpen)}
-                        className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-foreground/80 transition-colors touch-manipulation"
+                        className="mt-4 text-sm text-gray-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
                       >
-                        <span>Customize & Details</span>
+                        Adjust Parameters & Breakdown
                         <ChevronDown 
-                          size={16} 
+                          size={14} 
                           className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
                         />
                       </button>
-                      
-                      {isRefineOpen && (
-                        <div className="mt-4 space-y-5 animate-fade-in">
-                          {/* Line Items Breakdown */}
-                          <TooltipProvider delayDuration={0}>
-                            <div className="space-y-2.5">
-                              {calculation.lineItems.map((item, index) => (
-                                <div key={index} className="flex justify-between items-center text-sm">
-                                  <HybridTooltip content={<p>{item.tooltip}</p>} className="max-w-[240px] text-xs">
-                                    <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
-                                      {item.label}
-                                      <Info size={12} className="text-muted-foreground/50" />
+                    </div>
+
+                    {/* Expanded Panel */}
+                    {isRefineOpen && (
+                      <div className="mt-4 bg-stone-50/50 rounded-xl p-4 space-y-5 animate-fade-in">
+                        {/* SECTION A: INPUTS */}
+                        {/* Area slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <label className="text-xs text-muted-foreground">Total Area</label>
+                            <span className="text-xs text-muted-foreground tabular-nums">{localArea} m²</span>
+                          </div>
+                          <Slider
+                            value={[localArea]}
+                            onValueChange={(value) => handleUpdateFormData({ area: value[0] })}
+                            min={20}
+                            max={200}
+                            step={5}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Kitchen Length slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <label className="text-xs text-muted-foreground">Kitchen Length</label>
+                            <span className="text-xs text-muted-foreground tabular-nums">{localKitchenLength} lm</span>
+                          </div>
+                          <Slider
+                            value={[localKitchenLength]}
+                            onValueChange={(value) => handleUpdateFormData({ kitchenLength: value[0] })}
+                            min={2}
+                            max={8}
+                            step={0.5}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Wardrobe Length slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <label className="text-xs text-muted-foreground">Built-in Wardrobes</label>
+                            <span className="text-xs text-muted-foreground tabular-nums">{localWardrobeLength} lm</span>
+                          </div>
+                          <Slider
+                            value={[localWardrobeLength]}
+                            onValueChange={(value) => handleUpdateFormData({ wardrobeLength: value[0] })}
+                            min={0}
+                            max={12}
+                            step={0.5}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Renovation toggle */}
+                        <div className="flex items-center justify-between py-3 border-t border-stone-200">
+                          <div>
+                            <label className="text-xs font-medium">Renovation State</label>
+                            <p className="text-[10px] text-muted-foreground">
+                              {localIsRenovation ? "Old / Renovation" : "New Build"}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={localIsRenovation}
+                            onCheckedChange={(checked) => handleUpdateFormData({ isRenovation: checked })}
+                          />
+                        </div>
+
+                        {/* Project Scope */}
+                        <div className="pb-3 border-b border-stone-200">
+                          <label className="text-xs font-medium mb-3 block">Project Scope</label>
+                          <div className="flex gap-2">
+                            {scopeOptions.map((option) => (
+                              <button
+                                key={option.value}
+                                onClick={() => handleUpdateFormData({ projectScope: option.value })}
+                                className={`flex-1 py-2 px-2 rounded-full text-[10px] font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
+                                  localProjectScope === option.value
+                                    ? 'bg-foreground text-background'
+                                    : 'bg-white text-muted-foreground hover:bg-white/80 border border-stone-200'
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* SECTION B: OUTPUTS - Grouped Line Items */}
+                        <TooltipProvider delayDuration={0}>
+                          <div className="space-y-4">
+                            {calculation.groupedLineItems.map((group, groupIndex) => (
+                              <div key={groupIndex} className="space-y-2">
+                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                  {group.header}
+                                </p>
+                                {group.items.map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center text-sm">
+                                    <HybridTooltip content={<p>{item.tooltip}</p>} className="max-w-[240px] text-xs">
+                                      <span className="text-gray-500 flex items-center gap-1.5 cursor-help">
+                                        {item.label}
+                                        <Info size={11} className="text-gray-400" />
+                                      </span>
+                                    </HybridTooltip>
+                                    <span className="text-gray-600 tabular-nums text-right">
+                                      €{item.value.toLocaleString()}
                                     </span>
-                                  </HybridTooltip>
-                                  <span className="text-muted-foreground tabular-nums">≈ €{item.value.toLocaleString()}</span>
-                                </div>
-                              ))}
-                              {calculation.renovationCost > 0 && (
-                                <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                            
+                            {/* Renovation Prep (conditional) */}
+                            {calculation.renovationCost > 0 && (
+                              <div className="space-y-2 pt-2 border-t border-dashed border-stone-200">
+                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                  RENOVATION
+                                </p>
+                                <div className="flex justify-between items-center text-sm">
                                   <HybridTooltip 
                                     content={<p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>}
                                     className="max-w-[240px] text-xs"
                                   >
-                                    <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
-                                      Renovation Prep
-                                      <Info size={12} className="text-muted-foreground/50" />
+                                    <span className="text-gray-500 flex items-center gap-1.5 cursor-help">
+                                      Prep Work
+                                      <Info size={11} className="text-gray-400" />
                                     </span>
                                   </HybridTooltip>
-                                  <span className="text-muted-foreground tabular-nums">≈ €{calculation.renovationCost.toLocaleString()}</span>
+                                  <span className="text-gray-600 tabular-nums text-right">
+                                    €{calculation.renovationCost.toLocaleString()}
+                                  </span>
                                 </div>
-                              )}
-                              <p className="text-[10px] text-muted-foreground mt-3 italic">
-                                All figures are preliminary estimates based on typical project costs
-                              </p>
-                            </div>
-                          </TooltipProvider>
-
-                          {/* Divider between items and sliders */}
-                          <div className="border-t border-dashed border-stone-200" />
-
-                          {/* Area slider */}
-                          <div>
-                            <div className="flex justify-between items-center mb-3">
-                              <label className="text-xs text-muted-foreground">Total Area</label>
-                              <span className="text-xs text-muted-foreground tabular-nums">{localArea} m²</span>
-                            </div>
-                            <Slider
-                              value={[localArea]}
-                              onValueChange={(value) => handleUpdateFormData({ area: value[0] })}
-                              min={20}
-                              max={200}
-                              step={5}
-                              className="w-full"
-                            />
+                              </div>
+                            )}
+                            
+                            <p className="text-[10px] text-muted-foreground pt-2 italic">
+                              All figures are preliminary estimates based on typical project costs
+                            </p>
                           </div>
-
-                          {/* Kitchen Length slider */}
-                          <div>
-                            <div className="flex justify-between items-center mb-3">
-                              <label className="text-xs text-muted-foreground">Kitchen Length</label>
-                              <span className="text-xs text-muted-foreground tabular-nums">{localKitchenLength} lm</span>
-                            </div>
-                            <Slider
-                              value={[localKitchenLength]}
-                              onValueChange={(value) => handleUpdateFormData({ kitchenLength: value[0] })}
-                              min={2}
-                              max={8}
-                              step={0.5}
-                              className="w-full"
-                            />
-                          </div>
-
-                          {/* Wardrobe Length slider */}
-                          <div>
-                            <div className="flex justify-between items-center mb-3">
-                              <label className="text-xs text-muted-foreground">Built-in Wardrobes</label>
-                              <span className="text-xs text-muted-foreground tabular-nums">{localWardrobeLength} lm</span>
-                            </div>
-                            <Slider
-                              value={[localWardrobeLength]}
-                              onValueChange={(value) => handleUpdateFormData({ wardrobeLength: value[0] })}
-                              min={0}
-                              max={12}
-                              step={0.5}
-                              className="w-full"
-                            />
-                          </div>
-
-                          {/* Renovation toggle */}
-                          <div className="flex items-center justify-between py-3 border-t border-border">
-                            <div>
-                              <label className="text-xs font-medium">Renovation State</label>
-                              <p className="text-[10px] text-muted-foreground">
-                                {localIsRenovation ? "Old / Renovation" : "New Build"}
-                              </p>
-                            </div>
-                            <Switch
-                              checked={localIsRenovation}
-                              onCheckedChange={(checked) => handleUpdateFormData({ isRenovation: checked })}
-                            />
-                          </div>
-
-                          {/* Project Scope */}
-                          <div className="py-3 border-t border-border">
-                            <label className="text-xs font-medium mb-3 block">Project Scope</label>
-                            <div className="flex gap-2">
-                              {scopeOptions.map((option) => (
-                                <button
-                                  key={option.value}
-                                  onClick={() => handleUpdateFormData({ projectScope: option.value })}
-                                  className={`flex-1 py-2 px-2 rounded-full text-[10px] font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
-                                    localProjectScope === option.value
-                                      ? 'bg-foreground text-background'
-                                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                  }`}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                        </TooltipProvider>
+                      </div>
+                    )}
 
                     {/* Designer Insight */}
                     <div className="mt-6">
