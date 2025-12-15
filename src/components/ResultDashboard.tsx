@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import TierSelector from "./TierSelector";
 import DesignerInsight from "./DesignerInsight";
 import MaterialCard from "./MaterialCard";
+import ServiceCard from "./ServiceCard";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,9 +10,7 @@ import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw, User } from "lucide-react";
 import {
   FormData,
-  ProjectScope,
-  scopeMultipliers,
-  scopeOptions,
+  ServiceSelection,
   baseRates,
   designRates,
   kitchenRates,
@@ -21,6 +20,7 @@ import {
   furniturePercentage,
   priceVariance,
   roundToHundred,
+  serviceCardContent,
 } from "@/types/calculator";
 
 interface ResultDashboardProps {
@@ -105,7 +105,9 @@ const ResultDashboard = ({
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
   const [localIsRenovation, setLocalIsRenovation] = useState(formData?.isRenovation ?? false);
-  const [localProjectScope, setLocalProjectScope] = useState<ProjectScope>(formData?.projectScope ?? 'full-interior');
+  const [localServices, setLocalServices] = useState<ServiceSelection>(
+    formData?.services ?? { spacePlanning: true, interiorFinishes: true, furnishingDecor: true }
+  );
   const [localKitchenLength, setLocalKitchenLength] = useState(formData?.kitchenLength ?? 4);
   const [localWardrobeLength, setLocalWardrobeLength] = useState(formData?.wardrobeLength ?? 3);
 
@@ -114,7 +116,7 @@ const ResultDashboard = ({
     if (formData) {
       setLocalArea(formData.area);
       setLocalIsRenovation(formData.isRenovation);
-      setLocalProjectScope(formData.projectScope);
+      setLocalServices(formData.services);
       setLocalKitchenLength(formData.kitchenLength);
       setLocalWardrobeLength(formData.wardrobeLength);
     }
@@ -124,50 +126,61 @@ const ResultDashboard = ({
     const newFormData: FormData = {
       area: updates.area ?? localArea,
       isRenovation: updates.isRenovation ?? localIsRenovation,
-      projectScope: updates.projectScope ?? localProjectScope,
+      services: updates.services ?? localServices,
       kitchenLength: updates.kitchenLength ?? localKitchenLength,
       wardrobeLength: updates.wardrobeLength ?? localWardrobeLength,
     };
     
     if (updates.area !== undefined) setLocalArea(updates.area);
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
-    if (updates.projectScope !== undefined) setLocalProjectScope(updates.projectScope);
+    if (updates.services !== undefined) setLocalServices(updates.services);
     if (updates.kitchenLength !== undefined) setLocalKitchenLength(updates.kitchenLength);
     if (updates.wardrobeLength !== undefined) setLocalWardrobeLength(updates.wardrobeLength);
     
     onFormDataChange?.(newFormData);
   };
 
+  const handleToggleService = (service: keyof ServiceSelection) => {
+    const newServices = { ...localServices, [service]: !localServices[service] };
+    handleUpdateFormData({ services: newServices });
+  };
+
   const calculation = useMemo(() => {
     const tier = selectedTier;
-    const scopeMultiplier = scopeMultipliers[localProjectScope];
     
-    // 1. Interior Design Project (based on area, tier, and scope)
-    const interiorDesign = roundToHundred(localArea * designRates[tier] * scopeMultiplier);
+    // Calculate costs based on selected services
+    // Space Planning affects Interior Design cost
+    const interiorDesign = localServices.spacePlanning 
+      ? roundToHundred(localArea * designRates[tier])
+      : 0;
     
-    // 2. Construction & Finish Work (based on area and tier)
-    const constructionFinish = roundToHundred(localArea * baseRates[tier] * 0.35 * scopeMultiplier);
+    // Construction & Finish (always included as core project cost)
+    const constructionFinish = roundToHundred(localArea * baseRates[tier] * 0.35);
     
-    // 3. Built-in Products & Finish Materials (based on area and tier)
-    const builtInProducts = roundToHundred(localArea * baseRates[tier] * 0.25 * scopeMultiplier);
+    // Interior Finishes affects Materials cost
+    const builtInProducts = localServices.interiorFinishes
+      ? roundToHundred(localArea * baseRates[tier] * 0.25)
+      : 0;
     
-    // 4. Kitchen & Joinery (based on linear meters)
-    const kitchenJoinery = roundToHundred(localKitchenLength * kitchenRates[tier] * scopeMultiplier);
+    // Kitchen & Joinery (always included)
+    const kitchenJoinery = roundToHundred(localKitchenLength * kitchenRates[tier]);
     
-    // 5. Home Appliances (tier-based fixed package, scaled by scope)
-    const appliances = roundToHundred(appliancePackages[tier] * scopeMultiplier);
+    // Home Appliances (always included)
+    const appliances = roundToHundred(appliancePackages[tier]);
     
-    // 6. Built-in Wardrobes (based on linear meters)
-    const wardrobes = roundToHundred(localWardrobeLength * wardrobeRates[tier] * scopeMultiplier);
+    // Built-in Wardrobes (always included)
+    const wardrobes = roundToHundred(localWardrobeLength * wardrobeRates[tier]);
     
-    // 7. Renovation Prep (if applicable)
+    // Renovation Prep (if applicable)
     const renovationCost = localIsRenovation ? roundToHundred(localArea * renovationRate) : 0;
     
     // Subtotal before furniture
     const subtotal = interiorDesign + constructionFinish + builtInProducts + kitchenJoinery + appliances + wardrobes + renovationCost;
     
-    // 8. Furniture (~20% of subtotal)
-    const furniture = roundToHundred(subtotal * furniturePercentage);
+    // Furnishing & Decor affects Furniture cost
+    const furniture = localServices.furnishingDecor
+      ? roundToHundred(subtotal * furniturePercentage)
+      : 0;
     
     // Total
     const total = subtotal + furniture;
@@ -215,34 +228,43 @@ const ResultDashboard = ({
       },
     };
 
-    // Grouped line items for semantic display
+    // Build grouped line items, filtering out zero-value items
     const groupedLineItems = [
       {
         header: "PROJECT & SHELL",
         items: [
-          { label: "Interior Design", value: interiorDesign, tooltip: tierTooltips["Interior Design Project"][tier] },
+          ...(interiorDesign > 0 ? [{ label: "Interior Design", value: interiorDesign, tooltip: tierTooltips["Interior Design Project"][tier] }] : []),
           { label: "Construction & Finish", value: constructionFinish, tooltip: tierTooltips["Construction & Finish"][tier] },
-          { label: "Materials", value: builtInProducts, tooltip: tierTooltips["Built-in Products & Materials"][tier] },
-        ]
+          ...(builtInProducts > 0 ? [{ label: "Materials", value: builtInProducts, tooltip: tierTooltips["Built-in Products & Materials"][tier] }] : []),
+        ].filter(item => item.value > 0)
       },
       {
         header: "FIXED JOINERY",
         items: [
           { label: "Kitchen", value: kitchenJoinery, tooltip: tierTooltips["Kitchen & Joinery"][tier] },
           { label: "Wardrobes", value: wardrobes, tooltip: tierTooltips["Built-in Wardrobes"][tier] },
-        ]
+        ].filter(item => item.value > 0)
       },
       {
         header: "MOVABLES & TECH",
         items: [
           { label: "Appliances", value: appliances, tooltip: tierTooltips["Home Appliances"][tier] },
-          { label: "Furniture", value: furniture, tooltip: tierTooltips["Furniture (est.)"][tier] },
-        ]
+          ...(furniture > 0 ? [{ label: "Furniture", value: furniture, tooltip: tierTooltips["Furniture (est.)"][tier] }] : []),
+        ].filter(item => item.value > 0)
       },
-    ];
+    ].filter(group => group.items.length > 0);
 
     return { total, lowEstimate, highEstimate, groupedLineItems, renovationCost };
-  }, [localArea, localIsRenovation, localProjectScope, localKitchenLength, localWardrobeLength, selectedTier]);
+  }, [localArea, localIsRenovation, localServices, localKitchenLength, localWardrobeLength, selectedTier]);
+
+  // Build summary line based on selected services
+  const summaryLine = useMemo(() => {
+    const allSelected = localServices.spacePlanning && localServices.interiorFinishes && localServices.furnishingDecor;
+    if (allSelected) {
+      return "Construction ~40% • Joinery ~35% • Technics ~25%";
+    }
+    return "Custom package — see breakdown";
+  }, [localServices]);
 
   if (!isVisible || !formData) return null;
 
@@ -270,7 +292,7 @@ const ResultDashboard = ({
               )}
             </div>
           </div>
-              </div>
+        </div>
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
@@ -371,7 +393,7 @@ const ResultDashboard = ({
                       
                       {/* Summary Line */}
                       <p className="text-sm text-gray-400 mt-4">
-                        Construction ~40% • Joinery ~35% • Technics ~25%
+                        {summaryLine}
                       </p>
                       
                       {/* Trigger Link */}
@@ -453,29 +475,34 @@ const ResultDashboard = ({
                           />
                         </div>
 
-                        {/* Project Scope */}
-                        <div className="pb-3 border-b border-stone-200">
-                          <label className="text-xs font-medium mb-3 block">Project Scope</label>
-                          <div className="flex gap-2">
-                            {scopeOptions.map((option) => (
-                              <button
-                                key={option.value}
-                                onClick={() => handleUpdateFormData({ projectScope: option.value })}
-                                className={`flex-1 py-2 px-2 rounded-full text-[10px] font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
-                                  localProjectScope === option.value
-                                    ? 'bg-foreground text-background'
-                                    : 'bg-white text-muted-foreground hover:bg-white/80 border border-stone-200'
-                                }`}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
+                        {/* Service Selection Cards */}
+                        <div className="py-3 border-t border-stone-200">
+                          <label className="text-xs font-medium mb-3 block">Services Included</label>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <ServiceCard
+                              title={serviceCardContent.spacePlanning.title}
+                              description={serviceCardContent.spacePlanning.descriptions[selectedTier]}
+                              isSelected={localServices.spacePlanning}
+                              onToggle={() => handleToggleService('spacePlanning')}
+                            />
+                            <ServiceCard
+                              title={serviceCardContent.interiorFinishes.title}
+                              description={serviceCardContent.interiorFinishes.descriptions[selectedTier]}
+                              isSelected={localServices.interiorFinishes}
+                              onToggle={() => handleToggleService('interiorFinishes')}
+                            />
+                            <ServiceCard
+                              title={serviceCardContent.furnishingDecor.title}
+                              description={serviceCardContent.furnishingDecor.descriptions[selectedTier]}
+                              isSelected={localServices.furnishingDecor}
+                              onToggle={() => handleToggleService('furnishingDecor')}
+                            />
                           </div>
                         </div>
 
                         {/* SECTION B: OUTPUTS - Grouped Line Items */}
                         <TooltipProvider delayDuration={0}>
-                          <div className="space-y-4">
+                          <div className="space-y-4 pt-3 border-t border-stone-200">
                             {calculation.groupedLineItems.map((group, groupIndex) => (
                               <div key={groupIndex} className="space-y-2">
                                 <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">

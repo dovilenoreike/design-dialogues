@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { FormData, ProjectScope, scopeOptions } from "@/types/calculator";
+import { FormData, ServiceSelection } from "@/types/calculator";
 
 interface ProcessingOverlayProps {
   isVisible: boolean;
@@ -12,7 +12,11 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   const [progress, setProgress] = useState(0);
   const [area, setArea] = useState(50);
   const [isRenovation, setIsRenovation] = useState(false);
-  const [projectScope, setProjectScope] = useState<ProjectScope>('full-interior');
+  const [services, setServices] = useState<ServiceSelection>({
+    spacePlanning: true,
+    interiorFinishes: true,
+    furnishingDecor: true,
+  });
   const [kitchenLength, setKitchenLength] = useState(4);
   const [wardrobeLength, setWardrobeLength] = useState(3);
   const [formReady, setFormReady] = useState(false);
@@ -40,7 +44,7 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
   }, [isVisible]);
 
   const handleSubmit = () => {
-    onComplete({ area, isRenovation, projectScope, kitchenLength, wardrobeLength });
+    onComplete({ area, isRenovation, services, kitchenLength, wardrobeLength });
   };
 
   if (!isVisible) return null;
@@ -131,26 +135,6 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
                 checked={isRenovation}
                 onCheckedChange={setIsRenovation}
               />
-            </div>
-
-            {/* Project Scope */}
-            <div className="py-3 sm:py-4 border-t border-border">
-              <label className="text-xs sm:text-sm font-medium mb-3 block">Project Scope</label>
-              <div className="flex gap-2">
-                {scopeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setProjectScope(option.value)}
-                    className={`flex-1 py-2 px-2 sm:px-3 rounded-full text-[10px] sm:text-xs font-medium transition-all duration-200 touch-manipulation active:scale-[0.98] ${
-                      projectScope === option.value
-                        ? 'bg-foreground text-background'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <button
