@@ -63,3 +63,6 @@ export const furniturePercentage = 0.20;
 
 // Price range variance (±15%)
 export const priceVariance = 0.15;
+
+// Round to nearest hundred for cleaner estimates
+export const roundToHundred = (value: number): number => Math.round(value / 100) * 100;

@@ -18,6 +18,7 @@ import {
   renovationRate,
   furniturePercentage,
   priceVariance,
+  roundToHundred,
 } from "@/types/calculator";
 
 interface ResultDashboardProps {
@@ -119,40 +120,40 @@ const ResultDashboard = ({
     const scopeMultiplier = scopeMultipliers[localProjectScope];
     
     // 1. Interior Design Project (based on area, tier, and scope)
-    const interiorDesign = Math.round(localArea * designRates[tier] * scopeMultiplier);
+    const interiorDesign = roundToHundred(localArea * designRates[tier] * scopeMultiplier);
     
     // 2. Construction & Finish Work (based on area and tier)
-    const constructionFinish = Math.round(localArea * baseRates[tier] * 0.35 * scopeMultiplier);
+    const constructionFinish = roundToHundred(localArea * baseRates[tier] * 0.35 * scopeMultiplier);
     
     // 3. Built-in Products & Finish Materials (based on area and tier)
-    const builtInProducts = Math.round(localArea * baseRates[tier] * 0.25 * scopeMultiplier);
+    const builtInProducts = roundToHundred(localArea * baseRates[tier] * 0.25 * scopeMultiplier);
     
     // 4. Kitchen & Joinery (based on linear meters)
-    const kitchenJoinery = Math.round(localKitchenLength * kitchenRates[tier] * scopeMultiplier);
+    const kitchenJoinery = roundToHundred(localKitchenLength * kitchenRates[tier] * scopeMultiplier);
     
     // 5. Home Appliances (tier-based fixed package, scaled by scope)
-    const appliances = Math.round(appliancePackages[tier] * scopeMultiplier);
+    const appliances = roundToHundred(appliancePackages[tier] * scopeMultiplier);
     
     // 6. Built-in Wardrobes (based on linear meters)
-    const wardrobes = Math.round(localWardrobeLength * wardrobeRates[tier] * scopeMultiplier);
+    const wardrobes = roundToHundred(localWardrobeLength * wardrobeRates[tier] * scopeMultiplier);
     
     // 7. Renovation Prep (if applicable)
-    const renovationCost = localIsRenovation ? Math.round(localArea * renovationRate) : 0;
+    const renovationCost = localIsRenovation ? roundToHundred(localArea * renovationRate) : 0;
     
     // Subtotal before furniture
     const subtotal = interiorDesign + constructionFinish + builtInProducts + kitchenJoinery + appliances + wardrobes + renovationCost;
     
     // 8. Furniture (~20% of subtotal)
-    const furniture = Math.round(subtotal * furniturePercentage);
+    const furniture = roundToHundred(subtotal * furniturePercentage);
     
     // Total
     const total = subtotal + furniture;
     
-    // Calculate ±15% range for total
-    const lowEstimate = Math.round(total * (1 - priceVariance));
-    const highEstimate = Math.round(total * (1 + priceVariance));
+    // Calculate ±15% range for total (also rounded)
+    const lowEstimate = roundToHundred(total * (1 - priceVariance));
+    const highEstimate = roundToHundred(total * (1 + priceVariance));
 
-    // Line items (mid-points shown)
+    // Line items (rounded estimates)
     const lineItems = [
       { label: "Interior Design Project", value: interiorDesign },
       { label: "Construction & Finish", value: constructionFinish },
@@ -275,15 +276,18 @@ const ResultDashboard = ({
                             {calculation.lineItems.map((item, index) => (
                               <div key={index} className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">{item.label}</span>
-                                <span className="font-medium tabular-nums">€{item.value.toLocaleString()}</span>
+                                <span className="text-muted-foreground tabular-nums">≈ €{item.value.toLocaleString()}</span>
                               </div>
                             ))}
                             {calculation.renovationCost > 0 && (
                               <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
                                 <span className="text-muted-foreground">Renovation Prep</span>
-                                <span className="font-medium tabular-nums">€{calculation.renovationCost.toLocaleString()}</span>
+                                <span className="text-muted-foreground tabular-nums">≈ €{calculation.renovationCost.toLocaleString()}</span>
                               </div>
                             )}
+                            <p className="text-[10px] text-muted-foreground mt-3 italic">
+                              All figures are preliminary estimates based on typical project costs
+                            </p>
                           </div>
 
                           {/* Divider between items and sliders */}
