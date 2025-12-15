@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
-import { ChevronDown, Download, Share2, X, Info } from "lucide-react";
+import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw } from "lucide-react";
 import {
   FormData,
   ProjectScope,
@@ -31,6 +31,9 @@ interface ResultDashboardProps {
   selectedStyle: string | null;
   onClose?: () => void;
   onFormDataChange?: (formData: FormData) => void;
+  onRegenerateVisualization?: () => void;
+  onChangeStyle?: () => void;
+  onStartFresh?: () => void;
 }
 
 // Material data mapped to each palette
@@ -76,7 +79,10 @@ const ResultDashboard = ({
   selectedMaterial,
   selectedStyle,
   onClose,
-  onFormDataChange
+  onFormDataChange,
+  onRegenerateVisualization,
+  onChangeStyle,
+  onStartFresh
 }: ResultDashboardProps) => {
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
   const [isRefineOpen, setIsRefineOpen] = useState(false);
@@ -227,6 +233,31 @@ const ResultDashboard = ({
                   </span>
                 )}
               </div>
+
+              {/* Exploration Actions */}
+              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={onRegenerateVisualization}
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                >
+                  <RefreshCw size={16} />
+                  Try Another Version
+                </button>
+                <button
+                  onClick={onChangeStyle}
+                  className="flex items-center justify-center gap-2 px-5 py-3 border border-foreground rounded-full font-medium text-sm hover:bg-secondary transition-all touch-manipulation"
+                >
+                  <Palette size={16} />
+                  Change Style
+                </button>
+              </div>
+              <button
+                onClick={onStartFresh}
+                className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+              >
+                <RotateCcw size={12} />
+                Start Fresh
+              </button>
             </div>
 
             {/* Right - Project Passport */}
