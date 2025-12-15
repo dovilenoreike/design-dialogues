@@ -4,7 +4,8 @@ import DesignerInsight from "./DesignerInsight";
 import MaterialCard from "./MaterialCard";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Download, Share2, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronDown, Download, Share2, X, Info } from "lucide-react";
 import {
   FormData,
   ProjectScope,
@@ -153,15 +154,15 @@ const ResultDashboard = ({
     const lowEstimate = roundToHundred(total * (1 - priceVariance));
     const highEstimate = roundToHundred(total * (1 + priceVariance));
 
-    // Line items (rounded estimates)
+    // Line items (rounded estimates) with tooltip descriptions
     const lineItems = [
-      { label: "Interior Design Project", value: interiorDesign },
-      { label: "Construction & Finish", value: constructionFinish },
-      { label: "Built-in Products & Materials", value: builtInProducts },
-      { label: "Kitchen & Joinery", value: kitchenJoinery },
-      { label: "Home Appliances", value: appliances },
-      { label: "Built-in Wardrobes", value: wardrobes },
-      { label: "Furniture (est.)", value: furniture },
+      { label: "Interior Design Project", value: interiorDesign, tooltip: "Design concept, floor plans, 3D visualizations, material selection, and project coordination" },
+      { label: "Construction & Finish", value: constructionFinish, tooltip: "Demolition, walls, flooring installation, painting, plastering, and general construction work" },
+      { label: "Built-in Products & Materials", value: builtInProducts, tooltip: "Flooring materials, tiles, paint, fixtures, switches, sockets, and finish materials" },
+      { label: "Kitchen & Joinery", value: kitchenJoinery, tooltip: "Custom kitchen cabinets, worktops, sinks, taps, and bespoke joinery elements" },
+      { label: "Home Appliances", value: appliances, tooltip: "Oven, hob, extractor, fridge, dishwasher, washing machine, and other appliances" },
+      { label: "Built-in Wardrobes", value: wardrobes, tooltip: "Custom wardrobe systems with internal fittings, doors, and installation" },
+      { label: "Furniture (est.)", value: furniture, tooltip: "Sofas, beds, dining tables, chairs, and other movable furniture pieces" },
     ];
 
     return { total, lowEstimate, highEstimate, lineItems, renovationCost };
@@ -272,23 +273,45 @@ const ResultDashboard = ({
                       {isRefineOpen && (
                         <div className="mt-4 space-y-5 animate-fade-in">
                           {/* Line Items Breakdown */}
-                          <div className="space-y-2.5">
-                            {calculation.lineItems.map((item, index) => (
-                              <div key={index} className="flex justify-between items-center text-sm">
-                                <span className="text-muted-foreground">{item.label}</span>
-                                <span className="text-muted-foreground tabular-nums">≈ €{item.value.toLocaleString()}</span>
-                              </div>
-                            ))}
-                            {calculation.renovationCost > 0 && (
-                              <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
-                                <span className="text-muted-foreground">Renovation Prep</span>
-                                <span className="text-muted-foreground tabular-nums">≈ €{calculation.renovationCost.toLocaleString()}</span>
-                              </div>
-                            )}
-                            <p className="text-[10px] text-muted-foreground mt-3 italic">
-                              All figures are preliminary estimates based on typical project costs
-                            </p>
-                          </div>
+                          <TooltipProvider delayDuration={0}>
+                            <div className="space-y-2.5">
+                              {calculation.lineItems.map((item, index) => (
+                                <div key={index} className="flex justify-between items-center text-sm">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
+                                        {item.label}
+                                        <Info size={12} className="text-muted-foreground/50" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                      <p>{item.tooltip}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <span className="text-muted-foreground tabular-nums">≈ €{item.value.toLocaleString()}</span>
+                                </div>
+                              ))}
+                              {calculation.renovationCost > 0 && (
+                                <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-stone-200">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
+                                        Renovation Prep
+                                        <Info size={12} className="text-muted-foreground/50" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                      <p>Stripping existing finishes, waste removal, and preparing surfaces for new work</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <span className="text-muted-foreground tabular-nums">≈ €{calculation.renovationCost.toLocaleString()}</span>
+                                </div>
+                              )}
+                              <p className="text-[10px] text-muted-foreground mt-3 italic">
+                                All figures are preliminary estimates based on typical project costs
+                              </p>
+                            </div>
+                          </TooltipProvider>
 
                           {/* Divider between items and sliders */}
                           <div className="border-t border-dashed border-stone-200" />
