@@ -217,10 +217,6 @@ const ResultDashboard = ({
             </div>
           </div>
               </div>
-              {/* Visualization Disclaimer */}
-              <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2">
-                Conceptual visualization — actual spaces and materials may vary
-              </p>
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
@@ -240,6 +236,12 @@ const ResultDashboard = ({
                   </div>
                 )}
               </div>
+              
+              {/* Visualization Disclaimer */}
+              <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2 text-center">
+                Conceptual visualization — actual spaces and materials may vary
+              </p>
+              
               <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
                 {selectedMaterial && (
                   <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
