@@ -1,24 +1,16 @@
-export type ProjectScope = 'space-planning' | 'interior-finishes' | 'full-interior';
+export interface ServiceSelection {
+  spacePlanning: boolean;
+  interiorFinishes: boolean;
+  furnishingDecor: boolean;
+}
 
 export interface FormData {
   area: number;
   isRenovation: boolean;
-  projectScope: ProjectScope;
+  services: ServiceSelection;
   kitchenLength: number;
   wardrobeLength: number;
 }
-
-export const scopeMultipliers: Record<ProjectScope, number> = {
-  'space-planning': 0.3,
-  'interior-finishes': 0.6,
-  'full-interior': 1.0,
-};
-
-export const scopeOptions: { value: ProjectScope; label: string }[] = [
-  { value: 'space-planning', label: 'Space Planning' },
-  { value: 'interior-finishes', label: 'Interior Finishes' },
-  { value: 'full-interior', label: 'Full Interior' },
-];
 
 // Base rates per m² by tier
 export const baseRates = {
@@ -66,3 +58,31 @@ export const priceVariance = 0.15;
 
 // Round to nearest hundred for cleaner estimates
 export const roundToHundred = (value: number): number => Math.round(value / 100) * 100;
+
+// Service card content with tier-aware descriptions
+export const serviceCardContent = {
+  spacePlanning: {
+    title: "Space Planning",
+    descriptions: {
+      Budget: "Standardized Efficiency. Application of universal ergonomic principles. Focuses on standard layouts to minimize complexity.",
+      Standard: "Tailored Logic. Flow optimized for specific lifestyle habits. Involves custom zoning and solving specific spatial challenges.",
+      Premium: "Architectural Restructuring. Comprehensive spatial re-imagining. Includes wall reconfiguration, advanced joinery integration, and complex systems.",
+    },
+  },
+  interiorFinishes: {
+    title: "Interior Finishes",
+    descriptions: {
+      Budget: "Single-Source Selection. Materials selected from consolidated vendors. Optimizes design hours while ensuring a clean result.",
+      Standard: "Cross-Supplier Curation. Textures matched across multiple specialized suppliers to create unique aesthetic depth.",
+      Premium: "Unrestricted Sourcing. Global procurement scope. Includes rare natural materials, trade-only surfaces, and custom elements.",
+    },
+  },
+  furnishingDecor: {
+    title: "Furnishing & Decor",
+    descriptions: {
+      Budget: "Retail Specification. Selection of ready-to-ship, in-stock items from major retailers. Focuses on budget control.",
+      Standard: "Semi-Custom Mix. Blends retail items with semi-custom selections. Includes fabric matching and dimension checks.",
+      Premium: "Bespoke Commissioning. Specification of trade-only brands. Includes exact sizing, custom upholstery, and made-to-measure detailing.",
+    },
+  },
+};
