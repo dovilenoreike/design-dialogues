@@ -81,10 +81,10 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
             <ImageIcon size={22} className="md:w-7 md:h-7 text-muted-foreground" />
           </div>
           <p className="text-sm md:text-base text-foreground font-medium mb-1 text-center">
-            Drop your space here
+            Drop your room here
           </p>
           <p className="text-xs md:text-sm text-muted-foreground text-center">
-            or tap to browse
+            Photo, sketch, or floor plan
           </p>
           <input
             type="file"
