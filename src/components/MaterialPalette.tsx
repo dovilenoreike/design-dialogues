@@ -65,7 +65,7 @@ const MaterialPalette = ({
       <p className="text-xs md:text-sm text-muted-foreground mb-4">Select your texture</p>
       
       {/* Mode Toggle */}
-      <div className="relative flex p-1 bg-stone-100 rounded-full mb-4">
+      <div className="relative flex p-1 bg-surface-muted rounded-full mb-4">
         <div
           className="absolute top-1 bottom-1 bg-white rounded-full shadow-sm transition-all duration-300 ease-out"
           style={{
@@ -76,7 +76,7 @@ const MaterialPalette = ({
         <button
           onClick={() => handleModeChange("curated")}
           className={`relative z-10 flex-1 py-2 text-xs font-medium rounded-full transition-colors duration-200 ${
-            mode === "curated" ? "text-stone-900" : "text-stone-500"
+            mode === "curated" ? "text-text-primary" : "text-text-tertiary"
           }`}
         >
           Designer Collections
@@ -84,7 +84,7 @@ const MaterialPalette = ({
         <button
           onClick={() => handleModeChange("freestyle")}
           className={`relative z-10 flex-1 py-2 text-xs font-medium rounded-full transition-colors duration-200 flex items-center justify-center gap-1.5 ${
-            mode === "freestyle" ? "text-stone-900" : "text-stone-500"
+            mode === "freestyle" ? "text-text-primary" : "text-text-tertiary"
           }`}
         >
           <Sparkles size={12} />
@@ -136,7 +136,7 @@ const MaterialPalette = ({
             value={freestyleDescription}
             onChange={(e) => onFreestyleChange(e.target.value)}
             placeholder="Describe your vision...&#10;e.g., Black matte kitchen facades, white quartz worktops, warm oak flooring, brass accents"
-            className="w-full h-32 p-4 text-sm bg-white border border-stone-200 rounded-xl resize-none placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-300 transition-all"
+            className="w-full h-32 p-4 text-sm bg-white border border-ds-border-default rounded-xl resize-none placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-interactive-default/10 focus:border-ds-border-strong transition-all"
           />
           <p className="text-[11px] text-muted-foreground">
             Our designers will curate a personalized material selection based on your description
