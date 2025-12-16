@@ -278,7 +278,7 @@ const ResultDashboard = ({
         {/* Header */}
         <div className="glass-panel sticky top-0 z-10">
           <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-serif">Design Dialogues</h1>
+            <Link to="/" className="text-xl md:text-2xl font-serif font-medium tracking-tight text-foreground">Design Dialogues</Link>
             <div className="flex items-center gap-1 md:gap-3">
               <button className="p-2 rounded-full hover:bg-secondary transition-colors">
                 <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
