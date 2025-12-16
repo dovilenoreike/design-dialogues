@@ -429,12 +429,12 @@ const ResultDashboard = ({
                     {/* Trigger Link */}
                     <button
                       onClick={() => setIsRefineOpen(!isRefineOpen)}
-                      className="mt-6 text-sm text-gray-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
+                      className="mt-6 text-sm text-stone-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
                     >
                       Adjust Parameters & Breakdown
                       <ChevronDown 
                         size={14} 
-                        className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
+                        className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
 
