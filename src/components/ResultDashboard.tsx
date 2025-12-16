@@ -5,7 +5,7 @@ import ServiceCard from "./ServiceCard";
 import { CostInsightSheet } from "./CostInsightSheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw, User } from "lucide-react";
+import { ChevronDown, Download, Share2, X, Info, RefreshCw, Palette, RotateCcw, User, MessageSquare, Sparkles } from "lucide-react";
 import {
   FormData,
   ServiceSelection,
@@ -27,6 +27,7 @@ interface ResultDashboardProps {
   uploadedImage: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;
+  freestyleDescription?: string;
   onClose?: () => void;
   onFormDataChange?: (formData: FormData) => void;
   onRegenerateVisualization?: () => void;
@@ -91,6 +92,7 @@ const ResultDashboard = ({
   uploadedImage,
   selectedMaterial,
   selectedStyle,
+  freestyleDescription,
   onClose,
   onFormDataChange,
   onRegenerateVisualization,
@@ -318,11 +320,16 @@ const ResultDashboard = ({
               </p>
               
               <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
-                {selectedMaterial && (
+                {freestyleDescription ? (
+                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium flex items-center gap-1">
+                    <Sparkles size={10} />
+                    Custom Vision
+                  </span>
+                ) : selectedMaterial ? (
                   <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
                     {selectedMaterial}
                   </span>
-                )}
+                ) : null}
                 {selectedStyle && (
                   <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
                     {selectedStyle}
@@ -555,42 +562,65 @@ const ResultDashboard = ({
 
                   {/* Bottom Half - Material Manifest (Stone) */}
                   <div className="bg-stone-50 p-5 md:p-6">
-                    {/* Header with Designer Credit */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
-                          <User size={12} className="text-stone-400" />
+                    {freestyleDescription ? (
+                      /* Freestyle Mode - Show description and CTA */
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles size={14} className="text-stone-400" />
+                          <h4 className="text-sm font-medium text-foreground">Your Vision</h4>
                         </div>
-                        <div>
-                          <p className="text-xs font-medium text-foreground">
-                            {selectedMaterial && paletteMaterials[selectedMaterial]
-                              ? paletteMaterials[selectedMaterial].designer.name
-                              : "Design Dialogues"}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {selectedMaterial && paletteMaterials[selectedMaterial]
-                              ? paletteMaterials[selectedMaterial].designer.title
-                              : "Interior Designer"}
-                          </p>
-                        </div>
+                        <blockquote className="text-sm text-stone-600 italic border-l-2 border-stone-300 pl-3 mb-5">
+                          "{freestyleDescription}"
+                        </blockquote>
+                        <p className="text-xs text-muted-foreground mb-4">
+                          Our designers will curate a personalized material selection based on your description
+                        </p>
+                        <button className="w-full py-3 border-2 border-stone-800 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-stone-100 transition-colors touch-manipulation">
+                          <MessageSquare size={16} />
+                          Request Curated Material List
+                        </button>
                       </div>
-                    </div>
+                    ) : (
+                      /* Curated Mode - Show material cards */
+                      <>
+                        {/* Header with Designer Credit */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
+                              <User size={12} className="text-stone-400" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-foreground">
+                                {selectedMaterial && paletteMaterials[selectedMaterial]
+                                  ? paletteMaterials[selectedMaterial].designer.name
+                                  : "Design Dialogues"}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {selectedMaterial && paletteMaterials[selectedMaterial]
+                                  ? paletteMaterials[selectedMaterial].designer.title
+                                  : "Interior Designer"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-                    {/* Material Cards Grid */}
-                    <div className="space-y-2">
-                      {(selectedMaterial && paletteMaterials[selectedMaterial] 
-                        ? paletteMaterials[selectedMaterial].materials 
-                        : defaultMaterials
-                      ).map((material, index) => (
-                        <MaterialCard
-                          key={index}
-                          swatchColors={material.swatchColors}
-                          title={material.title}
-                          category={material.category}
-                        />
-                      ))}
-                    </div>
+                        {/* Material Cards Grid */}
+                        <div className="space-y-2">
+                          {(selectedMaterial && paletteMaterials[selectedMaterial] 
+                            ? paletteMaterials[selectedMaterial].materials 
+                            : defaultMaterials
+                          ).map((material, index) => (
+                            <MaterialCard
+                              key={index}
+                              swatchColors={material.swatchColors}
+                              title={material.title}
+                              category={material.category}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

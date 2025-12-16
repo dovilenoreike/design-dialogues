@@ -13,13 +13,14 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [freestyleDescription, setFreestyleDescription] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
 
   const showDesignMatrix = uploadedImage && selectedCategory;
-  // Allow generation with just material selected (style is optional)
-  const canGenerate = selectedMaterial;
+  // Allow generation with material selected OR freestyle description
+  const canGenerate = selectedMaterial || freestyleDescription.trim().length > 0;
 
   const handleImageUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -57,6 +58,7 @@ const Index = () => {
     setSelectedCategory(null);
     setSelectedMaterial(null);
     setSelectedStyle(null);
+    setFreestyleDescription("");
     setFormData(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -108,6 +110,8 @@ const Index = () => {
                 <MaterialPalette 
                   selectedMaterial={selectedMaterial}
                   onSelectMaterial={setSelectedMaterial}
+                  freestyleDescription={freestyleDescription}
+                  onFreestyleChange={setFreestyleDescription}
                 />
                 <ArchitecturalStyle 
                   selectedStyle={selectedStyle}
@@ -146,6 +150,7 @@ const Index = () => {
         uploadedImage={uploadedImage}
         selectedMaterial={selectedMaterial}
         selectedStyle={selectedStyle}
+        freestyleDescription={freestyleDescription}
         onFormDataChange={setFormData}
         onRegenerateVisualization={handleRegenerateVisualization}
         onChangeStyle={handleChangeStyle}
