@@ -322,11 +322,22 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
 
   const tierContent = insight[tier];
 
+  const tierConfig = {
+    budget: { label: "Budget", className: "bg-amber-100 text-amber-700" },
+    standard: { label: "Standard", className: "bg-blue-100 text-blue-700" },
+    premium: { label: "Premium", className: "bg-stone-800 text-stone-100" }
+  };
+
   const content = (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <h2 className="font-serif text-2xl text-stone-900">{category}</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="font-serif text-2xl text-stone-900">{category}</h2>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${tierConfig[tier].className}`}>
+            {tierConfig[tier].label}
+          </span>
+        </div>
         {!isMobile && (
           <button onClick={onClose} className="text-stone-400 hover:text-stone-900 transition-colors">
             <X size={20} />
