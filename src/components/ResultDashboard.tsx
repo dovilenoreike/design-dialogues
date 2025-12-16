@@ -391,38 +391,52 @@ const ResultDashboard = ({
                     />
                     
                     {/* Tier Philosophy */}
-                    <p className="text-xs text-muted-foreground italic mt-3 text-center">
+                    <p className="text-sm text-stone-400 italic py-6 text-center">
                       {selectedTier === "Budget" && "Smart solutions that maximize value — quality basics done well."}
                       {selectedTier === "Standard" && "The sweet spot — lasting quality with thoughtful design details."}
                       {selectedTier === "Premium" && "Exceptional finishes and craftsmanship — built to inspire for decades."}
                     </p>
 
                     {/* Conservative Estimate */}
-                    <div className="mt-6 text-center">
+                    <div className="text-center">
                       <p className="text-4xl md:text-5xl font-serif tabular-nums">
                         €{calculation.highEstimate.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
                         Conservative estimate incl. 15% market buffer
                       </p>
-                      
-                      {/* Summary Line */}
-                      <p className="text-sm text-gray-400 mt-4">
-                        {summaryLine}
-                      </p>
-                      
-                      {/* Trigger Link */}
-                      <button
-                        onClick={() => setIsRefineOpen(!isRefineOpen)}
-                        className="mt-4 text-sm text-gray-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
-                      >
-                        Adjust Parameters & Breakdown
-                        <ChevronDown 
-                          size={14} 
-                          className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
-                        />
-                      </button>
                     </div>
+                    
+                    {/* Divider */}
+                    <div className="border-t border-stone-100 my-6" />
+                    
+                    {/* Stat Row - 3 Column Breakdown */}
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-lg font-semibold text-stone-700">40%</p>
+                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Shell</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-stone-700">35%</p>
+                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Joinery</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-stone-700">25%</p>
+                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Technics</p>
+                      </div>
+                    </div>
+                    
+                    {/* Trigger Link */}
+                    <button
+                      onClick={() => setIsRefineOpen(!isRefineOpen)}
+                      className="mt-6 text-sm text-gray-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
+                    >
+                      Adjust Parameters & Breakdown
+                      <ChevronDown 
+                        size={14} 
+                        className={`transition-transform duration-200 ${isRefineOpen ? 'rotate-180' : ''}`} 
+                      />
+                    </button>
 
                     {/* Expanded Panel */}
                     {isRefineOpen && (
