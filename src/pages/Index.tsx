@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import UploadZone from "@/components/UploadZone";
 import SpaceCategoryPills from "@/components/SpaceCategoryPills";
@@ -79,6 +80,9 @@ const Index = () => {
               <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-2">
                 Upload your room, choose your style, and let our AI generate 
                 personalized design solutions with accurate cost estimates.
+              </p>
+              <p className="text-sm text-muted-foreground mt-3">
+                Or <Link to="/calculator" className="underline hover:text-foreground transition-colors">estimate budget only</Link> →
               </p>
             </div>
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import TierSelector from "./TierSelector";
 import MaterialCard from "./MaterialCard";
 import ServiceCard from "./ServiceCard";
@@ -22,6 +23,7 @@ import {
 } from "@/types/calculator";
 
 interface ResultDashboardProps {
+  mode?: "full" | "calculator";
   isVisible: boolean;
   formData: FormData | null;
   uploadedImage: string | null;
@@ -87,6 +89,7 @@ const defaultMaterials = [
 ];
 
 const ResultDashboard = ({ 
+  mode = "full",
   isVisible, 
   formData, 
   uploadedImage,
@@ -297,71 +300,73 @@ const ResultDashboard = ({
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
-          <div className="grid lg:grid-cols-2 gap-6 md:gap-12">
-            {/* Left - Image */}
-            <div className="slide-up">
-              <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
-                {uploadedImage ? (
-                  <img 
-                    src={uploadedImage} 
-                    alt="Your space" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">AI Rendered Design</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Visualization Disclaimer */}
-              <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2 text-center">
-                Conceptual visualization — actual spaces and materials may vary
-              </p>
-              
-              <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
-                {freestyleDescription ? (
-                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium flex items-center gap-1">
-                    <Sparkles size={10} />
-                    Custom Vision
-                  </span>
-                ) : selectedMaterial ? (
-                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-                    {selectedMaterial}
-                  </span>
-                ) : null}
-                {selectedStyle && (
-                  <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-                    {selectedStyle}
-                  </span>
-                )}
-              </div>
+          <div className={`grid gap-6 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
+            {/* Left - Image (only in full mode) */}
+            {mode === "full" && (
+              <div className="slide-up">
+                <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
+                  {uploadedImage ? (
+                    <img 
+                      src={uploadedImage} 
+                      alt="Your space" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground">AI Rendered Design</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Visualization Disclaimer */}
+                <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2 text-center">
+                  Conceptual visualization — actual spaces and materials may vary
+                </p>
+                
+                <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
+                  {freestyleDescription ? (
+                    <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium flex items-center gap-1">
+                      <Sparkles size={10} />
+                      Custom Vision
+                    </span>
+                  ) : selectedMaterial ? (
+                    <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
+                      {selectedMaterial}
+                    </span>
+                  ) : null}
+                  {selectedStyle && (
+                    <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
+                      {selectedStyle}
+                    </span>
+                  )}
+                </div>
 
-              {/* Exploration Actions */}
-              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row gap-3">
+                {/* Exploration Actions */}
+                <div className="mt-5 md:mt-6 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={onRegenerateVisualization}
+                    className="flex items-center justify-center gap-2 px-5 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                  >
+                    <RefreshCw size={16} />
+                    Try Another Version
+                  </button>
+                  <button
+                    onClick={onChangeStyle}
+                    className="flex items-center justify-center gap-2 px-5 py-3 border border-foreground rounded-full font-medium text-sm hover:bg-secondary transition-all touch-manipulation"
+                  >
+                    <Palette size={16} />
+                    Change Style
+                  </button>
+                </div>
                 <button
-                  onClick={onRegenerateVisualization}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                  onClick={onStartFresh}
+                  className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 >
-                  <RefreshCw size={16} />
-                  Try Another Version
-                </button>
-                <button
-                  onClick={onChangeStyle}
-                  className="flex items-center justify-center gap-2 px-5 py-3 border border-foreground rounded-full font-medium text-sm hover:bg-secondary transition-all touch-manipulation"
-                >
-                  <Palette size={16} />
-                  Change Style
+                  <RotateCcw size={12} />
+                  Start Fresh
                 </button>
               </div>
-              <button
-                onClick={onStartFresh}
-                className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
-              >
-                <RotateCcw size={12} />
-                Start Fresh
-              </button>
-            </div>
+            )}
 
             {/* Right - Project Passport */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
@@ -560,9 +565,20 @@ const ResultDashboard = ({
                   {/* Subtle Divider */}
                   <div className="border-t border-stone-100" />
 
-                  {/* Bottom Half - Material Manifest (Stone) */}
+                  {/* Bottom Half - Material Manifest (Stone) or Visualize CTA */}
                   <div className="bg-stone-50 p-5 md:p-6">
-                    {freestyleDescription ? (
+                    {mode === "calculator" ? (
+                      /* Calculator Mode - Show Visualize CTA */
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <Link
+                          to="/"
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                        >
+                          <Sparkles size={16} />
+                          Visualize Your Space
+                        </Link>
+                      </div>
+                    ) : freestyleDescription ? (
                       /* Freestyle Mode - Show description and CTA */
                       <div>
                         <div className="flex items-center gap-2 mb-3">
@@ -624,11 +640,13 @@ const ResultDashboard = ({
                   </div>
                 </div>
 
-                {/* CTA Button */}
-                <button className="w-full mt-6 py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-                  Download Project Passport (PDF)
-                  <Download size={16} className="md:w-[18px] md:h-[18px]" />
-                </button>
+                {/* CTA Button (only in full mode) */}
+                {mode === "full" && (
+                  <button className="w-full mt-6 py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+                    Download Project Passport (PDF)
+                    <Download size={16} className="md:w-[18px] md:h-[18px]" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
