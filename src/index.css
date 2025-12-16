@@ -4,105 +4,166 @@
 
 @layer base {
   :root {
-    /* Warm Stone Monochrome palette */
+    /* ========================================
+       UNIFIED DESIGN SYSTEM - Neutral Gray
+       Hue: 0° | Saturation: 0% (Pure Neutral)
+       ======================================== */
+    
+    /* Base palette controls - change these to theme entire app */
+    --ds-hue: 0;
+    --ds-sat: 0%;
+    
+    /* Core semantic tokens */
     --background: 0 0% 100%;
-    --foreground: 30 6% 10%;
+    --foreground: var(--ds-hue) var(--ds-sat) 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 30 6% 10%;
+    --card-foreground: var(--ds-hue) var(--ds-sat) 10%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 30 6% 10%;
+    --popover-foreground: var(--ds-hue) var(--ds-sat) 10%;
     
-    /* Primary - Warm Black */
-    --primary: 30 6% 10%;
+    /* Primary - Near Black */
+    --primary: var(--ds-hue) var(--ds-sat) 10%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Warm Stone */
-    --secondary: 30 6% 96%;
-    --secondary-foreground: 30 6% 10%;
+    /* Secondary - Light Gray */
+    --secondary: var(--ds-hue) var(--ds-sat) 96%;
+    --secondary-foreground: var(--ds-hue) var(--ds-sat) 10%;
     
-    /* Muted - Stone */
-    --muted: 30 6% 96%;
-    --muted-foreground: 30 6% 45%;
+    /* Muted */
+    --muted: var(--ds-hue) var(--ds-sat) 96%;
+    --muted-foreground: var(--ds-hue) var(--ds-sat) 45%;
     
     /* Accent */
-    --accent: 30 6% 96%;
-    --accent-foreground: 30 6% 10%;
+    --accent: var(--ds-hue) var(--ds-sat) 96%;
+    --accent-foreground: var(--ds-hue) var(--ds-sat) 10%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Borders - Warm stone lines */
-    --border: 30 6% 90%;
-    --input: 30 6% 90%;
-    --ring: 30 6% 10%;
+    /* Borders */
+    --border: var(--ds-hue) var(--ds-sat) 90%;
+    --input: var(--ds-hue) var(--ds-sat) 90%;
+    --ring: var(--ds-hue) var(--ds-sat) 10%;
     
     --radius: 0.5rem;
     
-    /* Custom design tokens */
-    --glass-bg: 0 0% 100% / 0.8;
-    --glass-border: 30 6% 90% / 0.5;
+    /* ========================================
+       SEMANTIC SURFACE TOKENS
+       ======================================== */
+    --surface-primary: 0 0% 100%;
+    --surface-secondary: var(--ds-hue) var(--ds-sat) 98%;
+    --surface-muted: var(--ds-hue) var(--ds-sat) 96%;
+    --surface-sunken: var(--ds-hue) var(--ds-sat) 94%;
     --surface-elevated: 0 0% 100%;
-    --text-primary: 30 6% 10%;
-    --text-secondary: 30 6% 45%;
-    --text-tertiary: 30 6% 60%;
+    
+    /* ========================================
+       SEMANTIC BORDER TOKENS
+       ======================================== */
+    --border-subtle: var(--ds-hue) var(--ds-sat) 94%;
+    --border-default: var(--ds-hue) var(--ds-sat) 90%;
+    --border-strong: var(--ds-hue) var(--ds-sat) 80%;
+    --border-emphasis: var(--ds-hue) var(--ds-sat) 20%;
+    
+    /* ========================================
+       SEMANTIC TEXT TOKENS
+       ======================================== */
+    --text-primary: var(--ds-hue) var(--ds-sat) 10%;
+    --text-secondary: var(--ds-hue) var(--ds-sat) 35%;
+    --text-tertiary: var(--ds-hue) var(--ds-sat) 50%;
+    --text-muted: var(--ds-hue) var(--ds-sat) 60%;
+    --text-subtle: var(--ds-hue) var(--ds-sat) 70%;
+    
+    /* ========================================
+       INTERACTIVE STATE TOKENS
+       ======================================== */
+    --interactive-default: var(--ds-hue) var(--ds-sat) 10%;
+    --interactive-hover: var(--ds-hue) var(--ds-sat) 20%;
+    --interactive-muted: var(--ds-hue) var(--ds-sat) 90%;
+    --interactive-muted-hover: var(--ds-hue) var(--ds-sat) 85%;
+    
+    /* Glass/overlay tokens */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: var(--ds-hue) var(--ds-sat) 90% / 0.5;
     
     /* Sidebar tokens */
-    --sidebar-background: 30 6% 98%;
-    --sidebar-foreground: 30 6% 26%;
-    --sidebar-primary: 30 6% 10%;
+    --sidebar-background: var(--ds-hue) var(--ds-sat) 98%;
+    --sidebar-foreground: var(--ds-hue) var(--ds-sat) 26%;
+    --sidebar-primary: var(--ds-hue) var(--ds-sat) 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 30 6% 96%;
-    --sidebar-accent-foreground: 30 6% 10%;
-    --sidebar-border: 30 6% 90%;
-    --sidebar-ring: 30 6% 45%;
+    --sidebar-accent: var(--ds-hue) var(--ds-sat) 96%;
+    --sidebar-accent-foreground: var(--ds-hue) var(--ds-sat) 10%;
+    --sidebar-border: var(--ds-hue) var(--ds-sat) 90%;
+    --sidebar-ring: var(--ds-hue) var(--ds-sat) 45%;
   }
 
   .dark {
-    --background: 30 6% 8%;
+    --background: var(--ds-hue) var(--ds-sat) 8%;
     --foreground: 0 0% 98%;
     
-    --card: 30 6% 12%;
+    --card: var(--ds-hue) var(--ds-sat) 12%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 30 6% 12%;
+    --popover: var(--ds-hue) var(--ds-sat) 12%;
     --popover-foreground: 0 0% 98%;
     
     --primary: 0 0% 98%;
-    --primary-foreground: 30 6% 8%;
+    --primary-foreground: var(--ds-hue) var(--ds-sat) 8%;
     
-    --secondary: 30 6% 18%;
+    --secondary: var(--ds-hue) var(--ds-sat) 18%;
     --secondary-foreground: 0 0% 98%;
     
-    --muted: 30 6% 18%;
-    --muted-foreground: 30 6% 65%;
+    --muted: var(--ds-hue) var(--ds-sat) 18%;
+    --muted-foreground: var(--ds-hue) var(--ds-sat) 65%;
     
-    --accent: 30 6% 18%;
+    --accent: var(--ds-hue) var(--ds-sat) 18%;
     --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 30 6% 18%;
-    --input: 30 6% 18%;
+    --border: var(--ds-hue) var(--ds-sat) 18%;
+    --input: var(--ds-hue) var(--ds-sat) 18%;
     --ring: 0 0% 83.9%;
     
-    --glass-bg: 30 6% 12% / 0.8;
-    --glass-border: 30 6% 24% / 0.5;
-    --surface-elevated: 30 6% 12%;
-    --text-primary: 0 0% 98%;
-    --text-secondary: 30 6% 65%;
-    --text-tertiary: 30 6% 45%;
+    /* Semantic surfaces - dark */
+    --surface-primary: var(--ds-hue) var(--ds-sat) 8%;
+    --surface-secondary: var(--ds-hue) var(--ds-sat) 10%;
+    --surface-muted: var(--ds-hue) var(--ds-sat) 14%;
+    --surface-sunken: var(--ds-hue) var(--ds-sat) 6%;
+    --surface-elevated: var(--ds-hue) var(--ds-sat) 12%;
     
-    --sidebar-background: 30 6% 10%;
-    --sidebar-foreground: 30 6% 96%;
-    --sidebar-primary: 30 6% 48%;
+    /* Semantic borders - dark */
+    --border-subtle: var(--ds-hue) var(--ds-sat) 14%;
+    --border-default: var(--ds-hue) var(--ds-sat) 18%;
+    --border-strong: var(--ds-hue) var(--ds-sat) 28%;
+    --border-emphasis: var(--ds-hue) var(--ds-sat) 80%;
+    
+    /* Semantic text - dark */
+    --text-primary: 0 0% 98%;
+    --text-secondary: var(--ds-hue) var(--ds-sat) 70%;
+    --text-tertiary: var(--ds-hue) var(--ds-sat) 55%;
+    --text-muted: var(--ds-hue) var(--ds-sat) 45%;
+    --text-subtle: var(--ds-hue) var(--ds-sat) 35%;
+    
+    /* Interactive - dark */
+    --interactive-default: 0 0% 98%;
+    --interactive-hover: 0 0% 90%;
+    --interactive-muted: var(--ds-hue) var(--ds-sat) 18%;
+    --interactive-muted-hover: var(--ds-hue) var(--ds-sat) 24%;
+    
+    --glass-bg: var(--ds-hue) var(--ds-sat) 12% / 0.8;
+    --glass-border: var(--ds-hue) var(--ds-sat) 24% / 0.5;
+    
+    --sidebar-background: var(--ds-hue) var(--ds-sat) 10%;
+    --sidebar-foreground: var(--ds-hue) var(--ds-sat) 96%;
+    --sidebar-primary: var(--ds-hue) var(--ds-sat) 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 6% 16%;
-    --sidebar-accent-foreground: 30 6% 96%;
-    --sidebar-border: 30 6% 16%;
-    --sidebar-ring: 30 6% 45%;
+    --sidebar-accent: var(--ds-hue) var(--ds-sat) 16%;
+    --sidebar-accent-foreground: var(--ds-hue) var(--ds-sat) 96%;
+    --sidebar-border: var(--ds-hue) var(--ds-sat) 16%;
+    --sidebar-ring: var(--ds-hue) var(--ds-sat) 45%;
   }
 }
 
