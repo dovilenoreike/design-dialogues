@@ -158,22 +158,26 @@ const ResultDashboard = ({
       ? roundToHundred(localArea * designRates[tier])
       : 0;
     
-    // Construction & Finish (always included as core project cost)
-    const constructionFinish = roundToHundred(localArea * baseRates[tier] * 0.35);
+    // Interior Finishes affects Construction & Finish, Materials, Kitchen, Wardrobes, Appliances
+    const constructionFinish = localServices.interiorFinishes
+      ? roundToHundred(localArea * baseRates[tier] * 0.35)
+      : 0;
     
-    // Interior Finishes affects Materials cost
     const builtInProducts = localServices.interiorFinishes
       ? roundToHundred(localArea * baseRates[tier] * 0.25)
       : 0;
     
-    // Kitchen & Joinery (always included)
-    const kitchenJoinery = roundToHundred(localKitchenLength * kitchenRates[tier]);
+    const kitchenJoinery = localServices.interiorFinishes
+      ? roundToHundred(localKitchenLength * kitchenRates[tier])
+      : 0;
     
-    // Home Appliances (always included)
-    const appliances = roundToHundred(appliancePackages[tier]);
+    const appliances = localServices.interiorFinishes
+      ? roundToHundred(appliancePackages[tier])
+      : 0;
     
-    // Built-in Wardrobes (always included)
-    const wardrobes = roundToHundred(localWardrobeLength * wardrobeRates[tier]);
+    const wardrobes = localServices.interiorFinishes
+      ? roundToHundred(localWardrobeLength * wardrobeRates[tier])
+      : 0;
     
     // Renovation Prep (if applicable)
     const renovationCost = localIsRenovation ? roundToHundred(localArea * renovationRate) : 0;
