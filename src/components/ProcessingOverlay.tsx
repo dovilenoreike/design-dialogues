@@ -124,13 +124,8 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
             </div>
 
             {/* Renovation toggle */}
-            <div className="flex items-center justify-between py-3 sm:py-4 border-t border-border">
-              <div>
-                <label className="text-xs sm:text-sm font-medium">Renovation State</label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {isRenovation ? "Old / Renovation" : "New Build"}
-                </p>
-              </div>
+            <div className="flex items-center justify-between pt-4 mt-4 border-t border-stone-100">
+              <label className="font-medium text-sm text-stone-900">Renovation Required</label>
               <Switch
                 checked={isRenovation}
                 onCheckedChange={setIsRenovation}
