@@ -323,9 +323,9 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
   const tierContent = insight[tier];
 
   const tierConfig = {
-    budget: { label: "Budget", className: "bg-stone-200 text-stone-600" },
-    standard: { label: "Standard", className: "bg-stone-300 text-stone-700" },
-    premium: { label: "Premium", className: "bg-stone-800 text-stone-100" }
+    budget: { label: "BUDGET", className: "bg-stone-200 text-stone-600 text-[10px] uppercase tracking-widest" },
+    standard: { label: "STANDARD", className: "border border-stone-300 bg-transparent text-stone-600 text-[10px] uppercase tracking-widest" },
+    premium: { label: "PREMIUM", className: "bg-stone-800 text-stone-100 text-[10px] uppercase tracking-widest" }
   };
 
   const content = (
@@ -359,15 +359,13 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
         {/* Save Block */}
         <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center">
-              <Check size={14} className="text-stone-600" />
-            </div>
-            <span className="font-medium text-stone-900 text-sm">{tierContent.save.title}</span>
+            <Check size={18} className="text-stone-900" />
+            <span className="font-bold text-[10px] uppercase tracking-widest text-stone-900">{tierContent.save.title}</span>
           </div>
           <ul className="space-y-2">
             {tierContent.save.items.map((item, idx) => (
               <li key={idx} className="text-stone-600 text-sm leading-relaxed">
-                • {item}
+                — {item}
               </li>
             ))}
           </ul>
@@ -376,15 +374,13 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
         {/* Risk Block */}
         <div className="bg-stone-100 border border-stone-200 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center">
-              <AlertTriangle size={14} className="text-stone-700" />
-            </div>
-            <span className="font-medium text-stone-900 text-sm">{tierContent.risk.title}</span>
+            <AlertTriangle size={18} className="text-stone-900" />
+            <span className="font-bold text-[10px] uppercase tracking-widest text-stone-900">{tierContent.risk.title}</span>
           </div>
           <ul className="space-y-2">
             {tierContent.risk.items.map((item, idx) => (
               <li key={idx} className="text-stone-600 text-sm leading-relaxed">
-                • {item}
+                — {item}
               </li>
             ))}
           </ul>
