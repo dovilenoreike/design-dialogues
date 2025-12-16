@@ -57,7 +57,7 @@ const paletteMaterials: Record<string, {
       { swatchColors: ["bg-amber-600", "bg-amber-700", "bg-amber-500", "bg-amber-800"], title: "Engineered Walnut", category: "Herringbone • 15mm" },
       { swatchColors: ["bg-yellow-700", "bg-yellow-800", "bg-yellow-600", "bg-amber-700"], title: "Walnut Veneer", category: "Joinery Fronts" },
       { swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"], title: "Brass Fixtures", category: "Burnished Finish" },
-      { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Linen Fabric", category: "Acoustic Panels" },
+      { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Linen Fabric", category: "Acoustic Panels" },
     ],
   },
   "Onyx & Brass": {
@@ -72,17 +72,17 @@ const paletteMaterials: Record<string, {
   "Calacatta White": {
     designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
     materials: [
-      { swatchColors: ["bg-stone-100", "bg-stone-200", "bg-stone-50", "bg-gray-100"], title: "Calacatta Quartz", category: "Worktops • 30mm" },
-      { swatchColors: ["bg-white", "bg-gray-50", "bg-stone-50", "bg-gray-100"], title: "White Oak", category: "Flooring • Wide Plank" },
-      { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Matte Lacquer", category: "Cabinet Finish" },
-      { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-stone-100"], title: "Textured Plaster", category: "Wall Finish" },
+      { swatchColors: ["bg-neutral-100", "bg-neutral-200", "bg-neutral-50", "bg-gray-100"], title: "Calacatta Quartz", category: "Worktops • 30mm" },
+      { swatchColors: ["bg-white", "bg-gray-50", "bg-neutral-50", "bg-gray-100"], title: "White Oak", category: "Flooring • Wide Plank" },
+      { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Matte Lacquer", category: "Cabinet Finish" },
+      { swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-neutral-100"], title: "Textured Plaster", category: "Wall Finish" },
     ],
   },
 };
 
 // Fallback materials if no palette selected
 const defaultMaterials = [
-  { swatchColors: ["bg-stone-200", "bg-stone-300", "bg-stone-100", "bg-stone-400"], title: "Engineered Wood", category: "Oak Finish" },
+  { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Engineered Wood", category: "Oak Finish" },
   { swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"], title: "Painted MDF", category: "Matte White" },
   { swatchColors: ["bg-zinc-300", "bg-zinc-400", "bg-zinc-200", "bg-zinc-500"], title: "LED System", category: "Dimmable Track" },
   { swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"], title: "Wall Panels", category: "Textured Finish" },
@@ -381,9 +381,9 @@ const ResultDashboard = ({
                 </p>
 
                 {/* Unified Card Container */}
-                <div className="border border-stone-200 rounded-2xl overflow-hidden">
+                <div className="border border-ds-border-default rounded-2xl overflow-hidden">
                   {/* Top Half - Financials (White) */}
-                  <div className="bg-white p-5 md:p-6">
+                  <div className="bg-surface-primary p-5 md:p-6">
                     {/* Tier Selector */}
                     <TierSelector 
                       selectedTier={selectedTier} 
@@ -391,7 +391,7 @@ const ResultDashboard = ({
                     />
                     
                     {/* Tier Philosophy */}
-                    <p className="text-sm text-stone-400 italic py-6 text-center">
+                    <p className="text-sm text-text-muted italic py-6 text-center">
                       {selectedTier === "Budget" && "Smart solutions that maximize value — quality basics done well."}
                       {selectedTier === "Standard" && "The sweet spot — lasting quality with thoughtful design details."}
                       {selectedTier === "Premium" && "Exceptional finishes and craftsmanship — built to inspire for decades."}
@@ -408,28 +408,28 @@ const ResultDashboard = ({
                     </div>
                     
                     {/* Divider */}
-                    <div className="border-t border-stone-100 my-6" />
+                    <div className="border-t border-ds-border-subtle my-6" />
                     
                     {/* Stat Row - 3 Column Breakdown */}
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
-                        <p className="text-lg font-semibold text-stone-700">40%</p>
-                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Shell</p>
+                        <p className="text-lg font-semibold text-text-secondary">40%</p>
+                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
                       </div>
                       <div>
-                        <p className="text-lg font-semibold text-stone-700">35%</p>
-                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Joinery</p>
+                        <p className="text-lg font-semibold text-text-secondary">35%</p>
+                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
                       </div>
                       <div>
-                        <p className="text-lg font-semibold text-stone-700">25%</p>
-                        <p className="text-[10px] text-stone-400 uppercase tracking-wide">Technics</p>
+                        <p className="text-lg font-semibold text-text-secondary">25%</p>
+                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
                       </div>
                     </div>
                     
                     {/* Trigger Link */}
                     <button
                       onClick={() => setIsRefineOpen(!isRefineOpen)}
-                      className="mt-6 text-sm text-stone-500 hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
+                      className="mt-6 text-sm text-text-tertiary hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
                     >
                       Adjust Parameters & Breakdown
                       <ChevronDown 
@@ -440,7 +440,7 @@ const ResultDashboard = ({
 
                     {/* Expanded Panel */}
                     {isRefineOpen && (
-                      <div className="mt-4 bg-stone-50/50 rounded-xl p-4 space-y-5 animate-fade-in">
+                      <div className="mt-4 bg-surface-muted/50 rounded-xl p-4 space-y-5 animate-fade-in">
                         {/* SECTION A: INPUTS */}
                         {/* Area slider */}
                         <div>
@@ -491,8 +491,8 @@ const ResultDashboard = ({
                         </div>
 
                         {/* Renovation toggle */}
-                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-stone-100">
-                          <label className="font-medium text-sm text-stone-900">Renovation Required</label>
+                        <div className="flex items-center justify-between pt-4 mt-4 border-t border-ds-border-subtle">
+                          <label className="font-medium text-sm text-text-primary">Renovation Required</label>
                           <Switch
                             checked={localIsRenovation}
                             onCheckedChange={(checked) => handleUpdateFormData({ isRenovation: checked })}
@@ -500,7 +500,7 @@ const ResultDashboard = ({
                         </div>
 
                         {/* Service Selection Cards */}
-                        <div className="py-3 border-t border-stone-200">
+                        <div className="py-3 border-t border-ds-border-default">
                           <label className="text-xs font-medium mb-3 block">Services Included</label>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <ServiceCard
@@ -525,23 +525,23 @@ const ResultDashboard = ({
                         </div>
 
                         {/* SECTION B: OUTPUTS - Grouped Line Items */}
-                        <div className="space-y-4 pt-3 border-t border-stone-200">
+                        <div className="space-y-4 pt-3 border-t border-ds-border-default">
                           {calculation.groupedLineItems.map((group, groupIndex) => (
                             <div key={groupIndex} className="space-y-2 mt-5 first:mt-0">
-                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
                                 {group.header}
                               </p>
                               {group.items.map((item, index) => (
                                 <div key={index} className="flex justify-between items-center text-sm">
-                                  <span className="text-stone-500 flex items-center">
+                                  <span className="text-text-tertiary flex items-center">
                                     {item.label}
                                     <Info 
                                       size={11} 
-                                      className="ml-1 text-stone-300 cursor-pointer hover:text-stone-900 transition-colors" 
+                                      className="ml-1 text-text-subtle cursor-pointer hover:text-text-primary transition-colors" 
                                       onClick={() => setActiveInsight(item.label)}
                                     />
                                   </span>
-                                  <span className="font-medium text-stone-900 tabular-nums text-right">
+                                  <span className="font-medium text-text-primary tabular-nums text-right">
                                     €{item.value.toLocaleString()}
                                   </span>
                                 </div>
@@ -551,20 +551,20 @@ const ResultDashboard = ({
                           
                           {/* Renovation Prep (conditional) */}
                           {calculation.renovationCost > 0 && (
-                            <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-stone-200">
-                              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                            <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-ds-border-default">
+                              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
                                 RENOVATION
                               </p>
                               <div className="flex justify-between items-center text-sm">
-                                <span className="text-stone-500 flex items-center">
+                                <span className="text-text-tertiary flex items-center">
                                   Prep Work
                                   <Info 
                                     size={11} 
-                                    className="ml-1 text-stone-300 cursor-pointer hover:text-stone-900 transition-colors" 
+                                    className="ml-1 text-text-subtle cursor-pointer hover:text-text-primary transition-colors" 
                                     onClick={() => setActiveInsight("Prep Work")}
                                   />
                                 </span>
-                                <span className="font-medium text-stone-900 tabular-nums text-right">
+                                <span className="font-medium text-text-primary tabular-nums text-right">
                                   €{calculation.renovationCost.toLocaleString()}
                                 </span>
                               </div>
@@ -581,10 +581,10 @@ const ResultDashboard = ({
                   </div>
 
                   {/* Subtle Divider */}
-                  <div className="border-t border-stone-100" />
+                  <div className="border-t border-ds-border-subtle" />
 
-                  {/* Bottom Half - Material Manifest (Stone) or Visualize CTA */}
-                  <div className="bg-stone-50 p-5 md:p-6">
+                  {/* Bottom Half - Material Manifest (Muted) or Visualize CTA */}
+                  <div className="bg-surface-muted p-5 md:p-6">
                     {mode === "calculator" ? (
                       /* Calculator Mode - Show Visualize CTA */
                       <div className="flex flex-col items-center justify-center py-4">
@@ -600,16 +600,16 @@ const ResultDashboard = ({
                       /* Freestyle Mode - Show description and CTA */
                       <div>
                         <div className="flex items-center gap-2 mb-3">
-                          <Sparkles size={14} className="text-stone-400" />
+                          <Sparkles size={14} className="text-text-muted" />
                           <h4 className="text-sm font-medium text-foreground">Your Vision</h4>
                         </div>
-                        <blockquote className="text-sm text-stone-600 italic border-l-2 border-stone-300 pl-3 mb-5">
+                        <blockquote className="text-sm text-text-secondary italic border-l-2 border-ds-border-strong pl-3 mb-5">
                           "{freestyleDescription}"
                         </blockquote>
                         <p className="text-xs text-muted-foreground mb-4">
                           Our designers will curate a personalized material selection based on your description
                         </p>
-                        <button className="w-full py-3 border-2 border-stone-800 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-stone-100 transition-colors touch-manipulation">
+                        <button className="w-full py-3 border-2 border-ds-border-emphasis rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-surface-sunken transition-colors touch-manipulation">
                           <MessageSquare size={16} />
                           Request Curated Material List
                         </button>
@@ -621,8 +621,8 @@ const ResultDashboard = ({
                         <div className="mb-4">
                           <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
                           <div className="flex items-center gap-2 mt-2">
-                            <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
-                              <User size={12} className="text-stone-400" />
+                            <div className="w-6 h-6 rounded-full bg-surface-sunken flex items-center justify-center flex-shrink-0">
+                              <User size={12} className="text-text-muted" />
                             </div>
                             <div>
                               <p className="text-xs font-medium text-foreground">

@@ -323,9 +323,9 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
   const tierContent = insight[tier];
 
   const tierConfig = {
-    budget: { label: "BUDGET", className: "bg-stone-200 text-stone-600 text-[10px] uppercase tracking-widest" },
-    standard: { label: "STANDARD", className: "border border-stone-300 bg-transparent text-stone-600 text-[10px] uppercase tracking-widest" },
-    premium: { label: "PREMIUM", className: "bg-stone-800 text-stone-100 text-[10px] uppercase tracking-widest" }
+    budget: { label: "BUDGET", className: "bg-surface-muted text-text-secondary text-[10px] uppercase tracking-widest" },
+    standard: { label: "STANDARD", className: "border border-ds-border-strong bg-transparent text-text-secondary text-[10px] uppercase tracking-widest" },
+    premium: { label: "PREMIUM", className: "bg-interactive text-background text-[10px] uppercase tracking-widest" }
   };
 
   const content = (
@@ -333,23 +333,23 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-serif text-2xl text-stone-900">{category}</h2>
+          <h2 className="font-serif text-2xl text-text-primary">{category}</h2>
           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${tierConfig[tier].className}`}>
             {tierConfig[tier].label}
           </span>
         </div>
         {!isMobile && (
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 transition-colors">
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
             <X size={20} />
           </button>
         )}
       </div>
 
       {/* Definition */}
-      <p className="text-stone-500 text-sm leading-relaxed">{insight.definition}</p>
+      <p className="text-text-tertiary text-sm leading-relaxed">{insight.definition}</p>
 
       {/* Durability Badge */}
-      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-full text-xs font-medium text-stone-600">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-sunken rounded-full text-xs font-medium text-text-secondary">
         <Clock size={12} />
         <span>Lifespan: {tierContent.lifespan}</span>
       </div>
@@ -357,14 +357,14 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
       {/* Strategy Blocks */}
       <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {/* Save Block */}
-        <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
+        <div className="bg-surface-muted border border-ds-border-default rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Check size={18} className="text-stone-900" />
-            <span className="font-bold text-[10px] uppercase tracking-widest text-stone-900">{tierContent.save.title}</span>
+            <Check size={18} className="text-text-primary" />
+            <span className="font-bold text-[10px] uppercase tracking-widest text-text-primary">{tierContent.save.title}</span>
           </div>
           <ul className="space-y-2">
             {tierContent.save.items.map((item, idx) => (
-              <li key={idx} className="text-stone-600 text-sm leading-relaxed">
+              <li key={idx} className="text-text-secondary text-sm leading-relaxed">
                 — {item}
               </li>
             ))}
@@ -372,14 +372,14 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
         </div>
 
         {/* Risk Block */}
-        <div className="bg-stone-100 border border-stone-200 rounded-xl p-4 space-y-3">
+        <div className="bg-surface-sunken border border-ds-border-default rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <AlertTriangle size={18} className="text-stone-900" />
-            <span className="font-bold text-[10px] uppercase tracking-widest text-stone-900">{tierContent.risk.title}</span>
+            <AlertTriangle size={18} className="text-text-primary" />
+            <span className="font-bold text-[10px] uppercase tracking-widest text-text-primary">{tierContent.risk.title}</span>
           </div>
           <ul className="space-y-2">
             {tierContent.risk.items.map((item, idx) => (
-              <li key={idx} className="text-stone-600 text-sm leading-relaxed">
+              <li key={idx} className="text-text-secondary text-sm leading-relaxed">
                 — {item}
               </li>
             ))}

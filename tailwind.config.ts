@@ -65,13 +65,34 @@ export default {
           bg: "hsl(var(--glass-bg))",
           border: "hsl(var(--glass-border))",
         },
+        // ========================================
+        // DESIGN SYSTEM SEMANTIC TOKENS
+        // ========================================
         surface: {
+          primary: "hsl(var(--surface-primary))",
+          secondary: "hsl(var(--surface-secondary))",
+          muted: "hsl(var(--surface-muted))",
+          sunken: "hsl(var(--surface-sunken))",
           elevated: "hsl(var(--surface-elevated))",
+        },
+        "ds-border": {
+          subtle: "hsl(var(--border-subtle))",
+          DEFAULT: "hsl(var(--border-default))",
+          strong: "hsl(var(--border-strong))",
+          emphasis: "hsl(var(--border-emphasis))",
         },
         text: {
           primary: "hsl(var(--text-primary))",
           secondary: "hsl(var(--text-secondary))",
           tertiary: "hsl(var(--text-tertiary))",
+          muted: "hsl(var(--text-muted))",
+          subtle: "hsl(var(--text-subtle))",
+        },
+        interactive: {
+          DEFAULT: "hsl(var(--interactive-default))",
+          hover: "hsl(var(--interactive-hover))",
+          muted: "hsl(var(--interactive-muted))",
+          "muted-hover": "hsl(var(--interactive-muted-hover))",
         },
       },
       borderRadius: {
