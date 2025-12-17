@@ -75,7 +75,7 @@ const Index = () => {
 
       if (data?.generatedImage) {
         setGeneratedImage(data.generatedImage);
-        toast.success("Interior visualization generated!");
+        toast.success("Interior visualization generated!", { position: "top-center" });
       }
     } catch (err) {
       console.error("Generation error:", err);
