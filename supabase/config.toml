@@ -1,0 +1,4 @@
+project_id = "ocgbsmaeoauueotddffs"
+
+[functions.generate-interior]
+verify_jwt = false
