@@ -3,6 +3,11 @@ import { Check, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useHaptic } from "@/hooks/use-haptic";
 
+import minimalistImg from "@/assets/styles/minimalist.jpg";
+import midCenturyImg from "@/assets/styles/mid-century-modern.jpg";
+import bauhausImg from "@/assets/styles/bauhaus.png";
+import contemporaryLuxuryImg from "@/assets/styles/contemporary-luxury.jpg";
+
 interface ArchitecturalStyleProps {
   selectedStyle: string | null;
   onSelectStyle: (style: string | null) => void;
@@ -12,22 +17,22 @@ const styles = [
   { 
     name: "Minimalist", 
     desc: "Less is more",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&h=200&fit=crop"
+    image: minimalistImg
   },
   { 
     name: "Mid-Century Modern", 
     desc: "Organic curves",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop"
+    image: midCenturyImg
   },
   { 
     name: "Bauhaus", 
     desc: "Form follows function",
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=200&h=200&fit=crop"
+    image: bauhausImg
   },
   { 
     name: "Contemporary Luxury", 
     desc: "Bold statements",
-    image: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=200&h=200&fit=crop"
+    image: contemporaryLuxuryImg
   },
 ];
 

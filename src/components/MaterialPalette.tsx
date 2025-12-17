@@ -2,6 +2,11 @@ import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
 
+import milanGreyImg from "@/assets/materials/milan-grey.jpg";
+import naturalWalnutImg from "@/assets/materials/natural-walnut.jpg";
+import onyxBrassImg from "@/assets/materials/onyx-brass.jpg";
+import calacattaWhiteImg from "@/assets/materials/calacatta-white.jpg";
+
 interface MaterialPaletteProps {
   selectedMaterial: string | null;
   onSelectMaterial: (material: string | null) => void;
@@ -13,22 +18,22 @@ const materials = [
   { 
     name: "Milan Grey", 
     temp: "Cool",
-    swatches: ["bg-slate-300", "bg-slate-400", "bg-slate-500", "bg-zinc-400"]
+    image: milanGreyImg
   },
   { 
     name: "Natural Walnut", 
     temp: "Warm",
-    swatches: ["bg-amber-600", "bg-amber-700", "bg-amber-800", "bg-yellow-700"]
+    image: naturalWalnutImg
   },
   { 
     name: "Onyx & Brass", 
     temp: "Bold",
-    swatches: ["bg-zinc-900", "bg-zinc-800", "bg-yellow-600", "bg-zinc-700"]
+    image: onyxBrassImg
   },
   { 
     name: "Calacatta White", 
     temp: "Clean",
-    swatches: ["bg-stone-100", "bg-stone-200", "bg-gray-100", "bg-stone-50"]
+    image: calacattaWhiteImg
   },
 ];
 
@@ -107,13 +112,13 @@ const MaterialPalette = ({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {/* 4-swatch preview grid */}
+                  {/* Image preview */}
                   <div className="relative w-10 h-10 flex-shrink-0">
-                    <div className="grid grid-cols-2 grid-rows-2 w-full h-full rounded-lg overflow-hidden border border-border">
-                      {material.swatches.map((swatch, i) => (
-                        <div key={i} className={`${swatch}`} />
-                      ))}
-                    </div>
+                    <img 
+                      src={material.image} 
+                      alt={material.name}
+                      className="w-full h-full rounded-lg object-cover border border-border"
+                    />
                     {isSelected && (
                       <div className="absolute inset-0 bg-foreground/60 rounded-lg flex items-center justify-center">
                         <Check size={16} className="text-background" />
