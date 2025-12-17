@@ -12,6 +12,7 @@ import { FormData } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { supabase } from "@/integrations/supabase/client";
+import { buildDetailedMaterialPrompt, loadMaterialImagesAsBase64 } from "@/lib/palette-utils";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -44,17 +45,29 @@ const Index = () => {
   };
 
   const generateInteriorRender = async () => {
-    if (!uploadedImage) return;
+    if (!uploadedImage || !selectedCategory) return;
 
     try {
       const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
       const style = selectedStyle ? getStyleById(selectedStyle) : null;
 
+      // Build detailed material prompt with room-specific purposes
+      let materialPrompt = "";
+      let materialImages: string[] = [];
+      
+      if (palette) {
+        materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
+        // Load material reference images
+        materialImages = await loadMaterialImagesAsBase64(palette.id, selectedCategory, palette);
+        console.log(`Loaded ${materialImages.length} material reference images for ${selectedCategory}`);
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-interior', {
         body: {
           imageBase64: uploadedImage,
           roomCategory: selectedCategory,
-          materialPrompt: palette?.promptSnippet,
+          materialPrompt: materialPrompt || null,
+          materialImages: materialImages.length > 0 ? materialImages : null,
           stylePrompt: style?.promptSnippet,
           freestyleDescription: freestyleDescription.trim() || null
         }
