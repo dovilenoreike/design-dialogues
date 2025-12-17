@@ -100,6 +100,7 @@ interface ResultDashboardProps {
   isVisible: boolean;
   formData: FormData | null;
   uploadedImage: string | null;
+  generatedImage?: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;
   freestyleDescription?: string;
@@ -115,6 +116,7 @@ const ResultDashboard = ({
   isVisible,
   formData,
   uploadedImage,
+  generatedImage,
   selectedMaterial,
   selectedStyle,
   freestyleDescription,
@@ -339,7 +341,9 @@ const ResultDashboard = ({
             {mode === "full" && (
               <div className="slide-up">
                 <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
-                  {uploadedImage ? (
+                  {generatedImage ? (
+                    <img src={generatedImage} alt="AI generated interior" className="w-full h-full object-cover" />
+                  ) : uploadedImage ? (
                     <img src={uploadedImage} alt="Your space" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

@@ -6,9 +6,10 @@ import { FormData, ServiceSelection } from "@/types/calculator";
 interface ProcessingOverlayProps {
   isVisible: boolean;
   onComplete: (formData: FormData) => void;
+  isGenerating?: boolean;
 }
 
-const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) => {
+const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOverlayProps) => {
   const [progress, setProgress] = useState(0);
   const [area, setArea] = useState(50);
   const [isRenovation, setIsRenovation] = useState(false);
@@ -63,7 +64,7 @@ const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) =>
             />
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
-            Analyzing your space...
+            {isGenerating ? "Generating your interior visualization..." : "Analyzing your space..."}
           </p>
         </div>
 

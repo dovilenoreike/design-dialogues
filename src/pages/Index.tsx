@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import UploadZone from "@/components/UploadZone";
 import SpaceCategoryPills from "@/components/SpaceCategoryPills";
@@ -8,6 +9,9 @@ import ArchitecturalStyle from "@/components/ArchitecturalStyle";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import ResultDashboard from "@/components/ResultDashboard";
 import { FormData } from "@/types/calculator";
+import { getPaletteById } from "@/data/palettes";
+import { getStyleById } from "@/data/styles";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -18,6 +22,8 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const showDesignMatrix = uploadedImage && selectedCategory;
   // Allow generation with material selected OR freestyle description
@@ -33,6 +39,50 @@ const Index = () => {
 
   const handleGenerate = () => {
     setIsProcessing(true);
+    setIsGenerating(true);
+    generateInteriorRender();
+  };
+
+  const generateInteriorRender = async () => {
+    if (!uploadedImage) return;
+
+    try {
+      const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+      const style = selectedStyle ? getStyleById(selectedStyle) : null;
+
+      const { data, error } = await supabase.functions.invoke('generate-interior', {
+        body: {
+          imageBase64: uploadedImage,
+          roomCategory: selectedCategory,
+          materialPrompt: palette?.promptSnippet,
+          stylePrompt: style?.promptSnippet,
+          freestyleDescription: freestyleDescription.trim() || null
+        }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error("Failed to generate interior. Please try again.");
+        setIsGenerating(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsGenerating(false);
+        return;
+      }
+
+      if (data?.generatedImage) {
+        setGeneratedImage(data.generatedImage);
+        toast.success("Interior visualization generated!");
+      }
+    } catch (err) {
+      console.error("Generation error:", err);
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleProcessingComplete = (data: FormData) => {
@@ -43,7 +93,10 @@ const Index = () => {
 
   const handleRegenerateVisualization = () => {
     setShowResults(false);
+    setGeneratedImage(null);
     setIsProcessing(true);
+    setIsGenerating(true);
+    generateInteriorRender();
   };
 
   const handleChangeStyle = () => {
@@ -61,6 +114,7 @@ const Index = () => {
     setSelectedStyle(null);
     setFreestyleDescription("");
     setFormData(null);
+    setGeneratedImage(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -145,6 +199,7 @@ const Index = () => {
       <ProcessingOverlay 
         isVisible={isProcessing}
         onComplete={handleProcessingComplete}
+        isGenerating={isGenerating}
       />
 
       {/* Section 4: Result Dashboard */}
@@ -152,6 +207,7 @@ const Index = () => {
         isVisible={showResults}
         formData={formData}
         uploadedImage={uploadedImage}
+        generatedImage={generatedImage}
         selectedMaterial={selectedMaterial}
         selectedStyle={selectedStyle}
         freestyleDescription={freestyleDescription}
