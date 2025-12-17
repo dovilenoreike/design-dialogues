@@ -99,7 +99,7 @@ const MaterialPalette = ({
 
       {mode === "curated" ? (
         /* Mobile: Horizontal scroll | Desktop: Grid */
-        <div className="flex md:grid md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+        <div className="flex md:grid md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
           {materials.map((material) => {
             const isSelected = selectedMaterial === material.name;
             
@@ -107,7 +107,7 @@ const MaterialPalette = ({
               <button
                 key={material.name}
                 onClick={() => handleSelect(material.name)}
-                className={`card-interactive text-left touch-manipulation active:scale-[0.98] transition-transform w-[140px] md:w-auto flex-shrink-0 snap-start p-0 overflow-hidden ${
+                className={`card-interactive text-left touch-manipulation active:scale-[0.98] transition-transform w-32 md:w-auto flex-shrink-0 snap-start p-0 overflow-hidden ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >
@@ -122,14 +122,14 @@ const MaterialPalette = ({
                     />
                     {isSelected && (
                       <div className="absolute inset-0 bg-foreground/60 flex items-center justify-center">
-                        <Check size={24} className="text-background" />
+                        <Check size={20} className="text-background" />
                       </div>
                     )}
                   </div>
                   {/* Text below image */}
-                  <div className="p-3 text-center">
-                    <p className="font-serif text-sm md:text-base">{material.name}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{material.temp}</p>
+                  <div className="p-2 text-center">
+                    <p className="font-serif text-sm">{material.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{material.temp}</p>
                   </div>
                 </div>
               </button>
