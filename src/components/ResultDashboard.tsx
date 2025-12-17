@@ -33,131 +33,44 @@ import {
   roundToHundred,
   serviceCardContent,
 } from "@/types/calculator";
+import { getPaletteById } from "@/data/palettes";
+import { getMaterialsForRoom, getMaterialPurpose, mapSpaceCategoryToRoom } from "@/lib/palette-utils";
 
-// Milan Grey material images
-import milanGreyFlooring from "@/assets/materials/milan-grey/flooring.jpg";
-import milanGreyWorktop from "@/assets/materials/milan-grey/worktop.jpg";
-import milanGreyCabinetry from "@/assets/materials/milan-grey/cabinetry.jpg";
-import milanGreyTiles from "@/assets/materials/milan-grey/tiles.jpg";
-import milanGreyHardware from "@/assets/materials/milan-grey/hardware.jpg";
-import milanGreyPaint from "@/assets/materials/milan-grey/paint.jpg";
-import milanGreyAccent from "@/assets/materials/milan-grey/accent.jpg";
-import milanGreyLighting from "@/assets/materials/milan-grey/lighting.jpg";
+// Import fog-in-the-forest material images (only palette with images currently)
+import fogMaterial1 from "@/assets/materials/fog-in-the-forest/material1.jpg";
+import fogMaterial2 from "@/assets/materials/fog-in-the-forest/material2.jpg";
+import fogMaterial3 from "@/assets/materials/fog-in-the-forest/material3.jpg";
+import fogMaterial4 from "@/assets/materials/fog-in-the-forest/material4.jpg";
+import fogMaterial5 from "@/assets/materials/fog-in-the-forest/material5.jpg";
+import fogMaterial6 from "@/assets/materials/fog-in-the-forest/material6.jpg";
+import fogMaterial7 from "@/assets/materials/fog-in-the-forest/material7.jpg";
+import fogMaterial8 from "@/assets/materials/fog-in-the-forest/material8.jpg";
 
-interface ResultDashboardProps {
-  mode?: "full" | "calculator";
-  isVisible: boolean;
-  formData: FormData | null;
-  uploadedImage: string | null;
-  selectedMaterial: string | null;
-  selectedStyle: string | null;
-  freestyleDescription?: string;
-  onClose?: () => void;
-  onFormDataChange?: (formData: FormData) => void;
-  onRegenerateVisualization?: () => void;
-  onChangeStyle?: () => void;
-  onStartFresh?: () => void;
-}
-
-// Material data mapped to each palette with designer info
-const paletteMaterials: Record<
-  string,
-  {
-    designer: { name: string; title: string };
-    materials: { image?: string; swatchColors?: string[]; title: string; category: string }[];
-  }
-> = {
-  "Milan Grey": {
-    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
-    materials: [
-      { image: milanGreyFlooring, title: "Chevron Oak", category: "Flooring" },
-      { image: milanGreyWorktop, title: "Dark Marble", category: "Worktop" },
-      { image: milanGreyCabinetry, title: "Sage Matte", category: "Cabinetry" },
-      { image: milanGreyTiles, title: "Stone Grey", category: "Tiles" },
-      { image: milanGreyHardware, title: "Matte Nickel", category: "Hardware" },
-      { image: milanGreyPaint, title: "Soft White", category: "Paint" },
-      { image: milanGreyAccent, title: "Walnut Grain", category: "Accent" },
-      { image: milanGreyLighting, title: "Ribbed Glass", category: "Lighting" },
-    ],
-  },
-  "Natural Walnut": {
-    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
-    materials: [
-      {
-        swatchColors: ["bg-amber-600", "bg-amber-700", "bg-amber-500", "bg-amber-800"],
-        title: "Engineered Walnut",
-        category: "Herringbone • 15mm",
-      },
-      {
-        swatchColors: ["bg-yellow-700", "bg-yellow-800", "bg-yellow-600", "bg-amber-700"],
-        title: "Walnut Veneer",
-        category: "Joinery Fronts",
-      },
-      {
-        swatchColors: ["bg-amber-200", "bg-amber-300", "bg-amber-100", "bg-amber-400"],
-        title: "Brass Fixtures",
-        category: "Burnished Finish",
-      },
-      {
-        swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"],
-        title: "Linen Fabric",
-        category: "Acoustic Panels",
-      },
-    ],
-  },
-  "Onyx & Brass": {
-    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
-    materials: [
-      {
-        swatchColors: ["bg-zinc-900", "bg-zinc-800", "bg-zinc-950", "bg-zinc-700"],
-        title: "Black Marble",
-        category: "Nero Marquina • Polished",
-      },
-      {
-        swatchColors: ["bg-yellow-600", "bg-yellow-500", "bg-amber-500", "bg-yellow-700"],
-        title: "Brushed Brass",
-        category: "Hardware & Fixtures",
-      },
-      {
-        swatchColors: ["bg-zinc-800", "bg-zinc-700", "bg-zinc-900", "bg-zinc-600"],
-        title: "Smoked Oak",
-        category: "Flooring • Matte",
-      },
-      {
-        swatchColors: ["bg-zinc-700", "bg-zinc-600", "bg-zinc-800", "bg-zinc-500"],
-        title: "Black Steel",
-        category: "Frame Details",
-      },
-    ],
-  },
-  "Calacatta White": {
-    designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
-    materials: [
-      {
-        swatchColors: ["bg-neutral-100", "bg-neutral-200", "bg-neutral-50", "bg-gray-100"],
-        title: "Calacatta Quartz",
-        category: "Worktops • 30mm",
-      },
-      {
-        swatchColors: ["bg-white", "bg-gray-50", "bg-neutral-50", "bg-gray-100"],
-        title: "White Oak",
-        category: "Flooring • Wide Plank",
-      },
-      {
-        swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"],
-        title: "Matte Lacquer",
-        category: "Cabinet Finish",
-      },
-      {
-        swatchColors: ["bg-gray-100", "bg-gray-200", "bg-gray-50", "bg-neutral-100"],
-        title: "Textured Plaster",
-        category: "Wall Finish",
-      },
-    ],
-  },
+// Map material keys to imported images for fog-in-the-forest
+const fogMaterialImages: Record<string, string> = {
+  material1: fogMaterial1,
+  material2: fogMaterial2,
+  material3: fogMaterial3,
+  material4: fogMaterial4,
+  material5: fogMaterial5,
+  material6: fogMaterial6,
+  material7: fogMaterial7,
+  material8: fogMaterial8,
 };
 
-// Fallback materials if no palette selected
+// Material display names for fog-in-the-forest palette
+const fogMaterialNames: Record<string, string> = {
+  material1: "Chevron Oak",
+  material2: "Dark Marble",
+  material3: "Sage Matte",
+  material4: "Stone Grey",
+  material5: "Matte Nickel",
+  material6: "Soft White",
+  material7: "Walnut Grain",
+  material8: "Ribbed Glass",
+};
+
+// Fallback materials if no palette selected or palette has no images
 const defaultMaterials = [
   {
     swatchColors: ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100", "bg-neutral-400"],
@@ -180,6 +93,21 @@ const defaultMaterials = [
     category: "Textured Finish",
   },
 ];
+
+interface ResultDashboardProps {
+  mode?: "full" | "calculator";
+  isVisible: boolean;
+  formData: FormData | null;
+  uploadedImage: string | null;
+  selectedMaterial: string | null;
+  selectedStyle: string | null;
+  freestyleDescription?: string;
+  onClose?: () => void;
+  onFormDataChange?: (formData: FormData) => void;
+  onRegenerateVisualization?: () => void;
+  onChangeStyle?: () => void;
+  onStartFresh?: () => void;
+}
 
 const ResultDashboard = ({
   mode = "full",
@@ -721,13 +649,13 @@ const ResultDashboard = ({
                             </div>
                             <div>
                               <p className="text-xs font-medium text-foreground">
-                                {selectedMaterial && paletteMaterials[selectedMaterial]
-                                  ? paletteMaterials[selectedMaterial].designer.name
+                                {selectedMaterial && getPaletteById(selectedMaterial)
+                                  ? getPaletteById(selectedMaterial)?.designer
                                   : "Design Dialogues"}
                               </p>
                               <p className="text-[10px] text-muted-foreground">
-                                {selectedMaterial && paletteMaterials[selectedMaterial]
-                                  ? paletteMaterials[selectedMaterial].designer.title
+                                {selectedMaterial && getPaletteById(selectedMaterial)
+                                  ? getPaletteById(selectedMaterial)?.designerTitle
                                   : "Interior Designer"}
                               </p>
                             </div>
@@ -736,18 +664,31 @@ const ResultDashboard = ({
 
                         {/* Material Cards Grid */}
                         <div className="space-y-2">
-                          {(selectedMaterial && paletteMaterials[selectedMaterial]
-                            ? paletteMaterials[selectedMaterial].materials
-                            : defaultMaterials
-                          ).map((material, index) => (
-                            <MaterialCard
-                              key={index}
-                              image={material.image}
-                              swatchColors={material.swatchColors}
-                              title={material.title}
-                              category={material.category}
-                            />
-                          ))}
+                          {(() => {
+                            const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+                            
+                            if (palette && palette.id === "fog-in-the-forest") {
+                              // Use actual images for fog-in-the-forest
+                              return Object.entries(palette.materials).map(([key, material]) => (
+                                <MaterialCard
+                                  key={key}
+                                  image={fogMaterialImages[key]}
+                                  title={fogMaterialNames[key] || key}
+                                  category={getMaterialPurpose(material)}
+                                />
+                              ));
+                            }
+                            
+                            // Fallback for other palettes or no selection
+                            return defaultMaterials.map((material, index) => (
+                              <MaterialCard
+                                key={index}
+                                swatchColors={material.swatchColors}
+                                title={material.title}
+                                category={material.category}
+                              />
+                            ));
+                          })()}
                         </div>
                       </>
                     )}
