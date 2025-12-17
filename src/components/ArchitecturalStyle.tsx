@@ -76,7 +76,8 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
         <h3 className="text-base md:text-lg font-serif mb-1">Architectural Style</h3>
         <p className="text-xs md:text-sm text-muted-foreground mb-4">Define your shape</p>
         
-        <div className="grid grid-cols-2 gap-3">
+        {/* Mobile: Horizontal scroll | Desktop: Grid */}
+        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
           {styles.map((style) => {
             const isSelected = selectedStyle === style.name;
             
@@ -84,7 +85,7 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
               <button
                 key={style.name}
                 onClick={() => handleStyleSelect(style.name)}
-                className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform ${
+                className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform w-[160px] md:w-auto flex-shrink-0 snap-start ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >

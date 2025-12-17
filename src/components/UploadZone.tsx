@@ -41,7 +41,7 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
 
   return (
     <div
-      className={`relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-xl md:rounded-2xl border-2 border-dashed transition-all duration-300 ease-out overflow-hidden touch-manipulation ${
+      className={`relative w-full aspect-[4/3] md:aspect-[16/9] rounded-xl md:rounded-2xl border-2 border-dashed transition-all duration-300 ease-out overflow-hidden touch-manipulation ${
         isDragging 
           ? "border-foreground bg-secondary/50" 
           : uploadedImage 
