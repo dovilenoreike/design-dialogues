@@ -99,7 +99,7 @@ const MaterialPalette = ({
 
       {mode === "curated" ? (
         /* Mobile: Horizontal scroll | Desktop: Grid */
-        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+        <div className="flex md:grid md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
           {materials.map((material) => {
             const isSelected = selectedMaterial === material.name;
             
@@ -107,27 +107,29 @@ const MaterialPalette = ({
               <button
                 key={material.name}
                 onClick={() => handleSelect(material.name)}
-                className={`card-interactive text-left min-h-[60px] touch-manipulation active:scale-[0.98] transition-transform w-[160px] md:w-auto flex-shrink-0 snap-start ${
+                className={`card-interactive text-left touch-manipulation active:scale-[0.98] transition-transform w-[140px] md:w-auto flex-shrink-0 snap-start p-0 overflow-hidden ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  {/* Image preview */}
-                  <div className="relative w-10 h-10 flex-shrink-0">
+                {/* Vertical Stack: Image on top, Text below */}
+                <div className="flex flex-col">
+                  {/* Square Image */}
+                  <div className="relative aspect-square w-full">
                     <img 
                       src={material.image} 
                       alt={material.name}
-                      className="w-full h-full rounded-lg object-cover border border-border"
+                      className="w-full h-full object-cover"
                     />
                     {isSelected && (
-                      <div className="absolute inset-0 bg-foreground/60 rounded-lg flex items-center justify-center">
-                        <Check size={16} className="text-background" />
+                      <div className="absolute inset-0 bg-foreground/60 flex items-center justify-center">
+                        <Check size={24} className="text-background" />
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{material.name}</p>
-                    <p className="text-xs text-muted-foreground">{material.temp}</p>
+                  {/* Text below image */}
+                  <div className="p-3 text-center">
+                    <p className="font-serif text-sm md:text-base">{material.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{material.temp}</p>
                   </div>
                 </div>
               </button>
