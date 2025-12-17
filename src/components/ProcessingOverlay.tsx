@@ -135,14 +135,14 @@ const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOv
 
             <button
               onClick={handleSubmit}
-              disabled={progress < 100}
+              disabled={isGenerating || progress < 100}
               className={`w-full mt-5 sm:mt-6 py-3 sm:py-3.5 rounded-full font-medium text-sm transition-all duration-300 active:scale-[0.98] ${
-                progress >= 100
+                !isGenerating && progress >= 100
                   ? "bg-foreground text-background hover:opacity-90"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               }`}
             >
-              {progress >= 100 ? "View Solutions" : "Processing..."}
+              {isGenerating ? "Generating..." : progress >= 100 ? "View Solutions" : "Processing..."}
             </button>
           </div>
         )}
