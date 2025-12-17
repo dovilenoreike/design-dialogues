@@ -360,7 +360,7 @@ const ResultDashboard = ({
                     </span>
                   ) : selectedMaterial ? (
                     <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-                      {selectedMaterial}
+                      {getPaletteById(selectedMaterial)?.name || selectedMaterial}
                     </span>
                   ) : null}
                   {selectedStyle && (
