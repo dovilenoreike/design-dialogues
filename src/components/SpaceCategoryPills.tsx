@@ -30,14 +30,15 @@ const SpaceCategoryPills = ({ selectedCategory, onSelectCategory, disabled = fal
       }`}>
         {disabled ? 'Select room type (after upload)' : 'What room is this?'}
       </p>
-      <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+      {/* Mobile: Horizontal scroll | Desktop: Flex wrap */}
+      <div className="flex md:flex-wrap md:justify-center gap-2 md:gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => handleSelect(category)}
             disabled={disabled}
             aria-disabled={disabled}
-            className={`pill-button whitespace-nowrap text-xs md:text-sm px-4 md:px-5 py-2.5 md:py-2.5 min-h-[44px] touch-manipulation transition-all duration-200 ${
+            className={`pill-button whitespace-nowrap text-xs md:text-sm px-4 md:px-5 py-2.5 md:py-2.5 min-h-[44px] touch-manipulation transition-all duration-200 snap-start flex-shrink-0 ${
               disabled 
                 ? 'cursor-not-allowed' 
                 : 'active:scale-95'

@@ -98,8 +98,8 @@ const MaterialPalette = ({
       </div>
 
       {mode === "curated" ? (
-        /* Curated Palettes Grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        /* Mobile: Horizontal scroll | Desktop: Grid */
+        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
           {materials.map((material) => {
             const isSelected = selectedMaterial === material.name;
             
@@ -107,7 +107,7 @@ const MaterialPalette = ({
               <button
                 key={material.name}
                 onClick={() => handleSelect(material.name)}
-                className={`card-interactive text-left min-h-[60px] touch-manipulation active:scale-[0.98] transition-transform ${
+                className={`card-interactive text-left min-h-[60px] touch-manipulation active:scale-[0.98] transition-transform w-[160px] md:w-auto flex-shrink-0 snap-start ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >
