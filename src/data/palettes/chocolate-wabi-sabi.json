@@ -1,0 +1,42 @@
+{
+  "id": "chocolate-wabi-sabi",
+  "name": "Chocolate Wabi-Sabi",
+  "temp": "Bold",
+  "designer": "Sigita Kulikajeva",
+  "designerTitle": "Interior Designer",
+  "promptSnippet": "dark chocolate tones, black marble, brushed brass, smoked oak, imperfect beauty",
+  "materials": {
+    "material1": {
+      "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
+      "purpose": { "default": "Flooring", "kitchen": "Flooring" }
+    },
+    "material2": {
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": { "default": "Worktop", "bathroom": "Vanity Top" }
+    },
+    "material3": {
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+    },
+    "material4": {
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": { "default": "Tiles", "kitchen": "Backsplash" }
+    },
+    "material5": {
+      "rooms": ["kitchen", "bathroom", "bedroom"],
+      "purpose": { "default": "Hardware" }
+    },
+    "material6": {
+      "rooms": ["livingRoom", "bedroom", "office"],
+      "purpose": { "default": "Paint", "bedroom": "Wall Color" }
+    },
+    "material7": {
+      "rooms": ["livingRoom", "bedroom", "office"],
+      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
+    },
+    "material8": {
+      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
+      "purpose": { "default": "Lighting" }
+    }
+  }
+}

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
+import { palettes } from "@/data/palettes";
 
-import milanGreyImg from "@/assets/materials/milan-grey.jpg";
-import naturalWalnutImg from "@/assets/materials/natural-walnut.jpg";
-import onyxBrassImg from "@/assets/materials/onyx-brass.jpg";
-import calacattaWhiteImg from "@/assets/materials/calacatta-white.jpg";
+// Import thumbnail images for palette cards
+import fogInTheForestImg from "@/assets/materials/fog-in-the-forest.jpg";
+import behindTheLightsImg from "@/assets/materials/behind-the-lights.jpg";
+import chocolateWabiSabiImg from "@/assets/materials/chocolate-wabi-sabi.jpg";
+import morningForestImg from "@/assets/materials/morning-forest.jpg";
 
 interface MaterialPaletteProps {
   selectedMaterial: string | null;
@@ -14,28 +16,13 @@ interface MaterialPaletteProps {
   onFreestyleChange: (description: string) => void;
 }
 
-const materials = [
-  { 
-    name: "Milan Grey", 
-    temp: "Cool",
-    image: milanGreyImg
-  },
-  { 
-    name: "Natural Walnut", 
-    temp: "Warm",
-    image: naturalWalnutImg
-  },
-  { 
-    name: "Onyx & Brass", 
-    temp: "Bold",
-    image: onyxBrassImg
-  },
-  { 
-    name: "Calacatta White", 
-    temp: "Clean",
-    image: calacattaWhiteImg
-  },
-];
+// Map palette IDs to thumbnail images
+const paletteThumbnails: Record<string, string> = {
+  "fog-in-the-forest": fogInTheForestImg,
+  "behind-the-lights": behindTheLightsImg,
+  "chocolate-wabi-sabi": chocolateWabiSabiImg,
+  "morning-forest": morningForestImg,
+};
 
 type PaletteMode = "curated" | "freestyle";
 
@@ -59,9 +46,9 @@ const MaterialPalette = ({
     }
   };
 
-  const handleSelect = (material: string) => {
+  const handleSelect = (paletteId: string) => {
     haptic.medium();
-    onSelectMaterial(material);
+    onSelectMaterial(paletteId);
   };
 
   return (
@@ -100,13 +87,13 @@ const MaterialPalette = ({
       {mode === "curated" ? (
         /* Mobile: Horizontal scroll | Desktop: Grid */
         <div className="flex md:grid md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
-          {materials.map((material) => {
-            const isSelected = selectedMaterial === material.name;
+          {palettes.map((palette) => {
+            const isSelected = selectedMaterial === palette.id;
             
             return (
               <button
-                key={material.name}
-                onClick={() => handleSelect(material.name)}
+                key={palette.id}
+                onClick={() => handleSelect(palette.id)}
                 className={`card-interactive text-left touch-manipulation active:scale-[0.98] transition-transform w-32 md:w-auto flex-shrink-0 snap-start p-0 overflow-hidden ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
@@ -116,8 +103,8 @@ const MaterialPalette = ({
                   {/* Square Image */}
                   <div className="relative aspect-square w-full">
                     <img 
-                      src={material.image} 
-                      alt={material.name}
+                      src={paletteThumbnails[palette.id]} 
+                      alt={palette.name}
                       className="w-full h-full object-cover"
                     />
                     {isSelected && (
@@ -128,8 +115,8 @@ const MaterialPalette = ({
                   </div>
                   {/* Text below image */}
                   <div className="p-2 text-center">
-                    <p className="font-serif text-sm">{material.name}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{material.temp}</p>
+                    <p className="font-serif text-sm">{palette.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{palette.temp}</p>
                   </div>
                 </div>
               </button>
