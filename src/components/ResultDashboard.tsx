@@ -34,6 +34,16 @@ import {
   serviceCardContent,
 } from "@/types/calculator";
 
+// Milan Grey material images
+import milanGreyFlooring from "@/assets/materials/milan-grey/flooring.jpg";
+import milanGreyWorktop from "@/assets/materials/milan-grey/worktop.jpg";
+import milanGreyCabinetry from "@/assets/materials/milan-grey/cabinetry.jpg";
+import milanGreyTiles from "@/assets/materials/milan-grey/tiles.jpg";
+import milanGreyHardware from "@/assets/materials/milan-grey/hardware.jpg";
+import milanGreyPaint from "@/assets/materials/milan-grey/paint.jpg";
+import milanGreyAccent from "@/assets/materials/milan-grey/accent.jpg";
+import milanGreyLighting from "@/assets/materials/milan-grey/lighting.jpg";
+
 interface ResultDashboardProps {
   mode?: "full" | "calculator";
   isVisible: boolean;
@@ -54,32 +64,20 @@ const paletteMaterials: Record<
   string,
   {
     designer: { name: string; title: string };
-    materials: { swatchColors: string[]; title: string; category: string }[];
+    materials: { image?: string; swatchColors?: string[]; title: string; category: string }[];
   }
 > = {
   "Milan Grey": {
     designer: { name: "Sigita Kulikajeva", title: "Interior Designer" },
     materials: [
-      {
-        swatchColors: ["bg-slate-300", "bg-slate-400", "bg-slate-200", "bg-slate-500"],
-        title: "Polished Concrete",
-        category: "Micro-cement Finish",
-      },
-      {
-        swatchColors: ["bg-zinc-400", "bg-zinc-500", "bg-zinc-300", "bg-zinc-600"],
-        title: "Brushed Steel",
-        category: "Cabinet Handles",
-      },
-      {
-        swatchColors: ["bg-gray-200", "bg-gray-300", "bg-gray-100", "bg-gray-400"],
-        title: "Limestone Tile",
-        category: "Honed 600x600",
-      },
-      {
-        swatchColors: ["bg-slate-200", "bg-slate-300", "bg-slate-100", "bg-slate-400"],
-        title: "Smoked Glass",
-        category: "Partition Panels",
-      },
+      { image: milanGreyFlooring, title: "Chevron Oak", category: "Flooring" },
+      { image: milanGreyWorktop, title: "Dark Marble", category: "Worktop" },
+      { image: milanGreyCabinetry, title: "Sage Matte", category: "Cabinetry" },
+      { image: milanGreyTiles, title: "Stone Grey", category: "Tiles" },
+      { image: milanGreyHardware, title: "Matte Nickel", category: "Hardware" },
+      { image: milanGreyPaint, title: "Soft White", category: "Paint" },
+      { image: milanGreyAccent, title: "Walnut Grain", category: "Accent" },
+      { image: milanGreyLighting, title: "Ribbed Glass", category: "Lighting" },
     ],
   },
   "Natural Walnut": {
@@ -744,6 +742,7 @@ const ResultDashboard = ({
                           ).map((material, index) => (
                             <MaterialCard
                               key={index}
+                              image={material.image}
                               swatchColors={material.swatchColors}
                               title={material.title}
                               category={material.category}
