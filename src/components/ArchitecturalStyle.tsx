@@ -2,39 +2,12 @@ import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useHaptic } from "@/hooks/use-haptic";
-
-import minimalistImg from "@/assets/styles/minimalist.jpg";
-import midCenturyImg from "@/assets/styles/mid-century-modern.jpg";
-import bauhausImg from "@/assets/styles/bauhaus.png";
-import contemporaryLuxuryImg from "@/assets/styles/contemporary-luxury.jpg";
+import { styles, styleImages } from "@/data/styles";
 
 interface ArchitecturalStyleProps {
   selectedStyle: string | null;
   onSelectStyle: (style: string | null) => void;
 }
-
-const styles = [
-  { 
-    name: "Minimalist", 
-    desc: "Less is more",
-    image: minimalistImg
-  },
-  { 
-    name: "Mid-Century Modern", 
-    desc: "Organic curves",
-    image: midCenturyImg
-  },
-  { 
-    name: "Bauhaus", 
-    desc: "Form follows function",
-    image: bauhausImg
-  },
-  { 
-    name: "Contemporary Luxury", 
-    desc: "Bold statements",
-    image: contemporaryLuxuryImg
-  },
-];
 
 const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyleProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -79,12 +52,12 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
         {/* Mobile: Horizontal scroll | Desktop: Grid */}
         <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
           {styles.map((style) => {
-            const isSelected = selectedStyle === style.name;
+            const isSelected = selectedStyle === style.id;
             
             return (
               <button
-                key={style.name}
-                onClick={() => handleStyleSelect(style.name)}
+                key={style.id}
+                onClick={() => handleStyleSelect(style.id)}
                 className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform w-32 md:w-auto flex-shrink-0 snap-start p-0 ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
@@ -92,7 +65,7 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
                 {/* Preview image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <img 
-                    src={style.image} 
+                    src={styleImages[style.id]} 
                     alt={style.name}
                     className="w-full h-full object-cover"
                   />

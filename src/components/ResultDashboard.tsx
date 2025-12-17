@@ -34,6 +34,7 @@ import {
   serviceCardContent,
 } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
+import { getStyleById } from "@/data/styles";
 import { getMaterialsForRoom, getMaterialPurpose, mapSpaceCategoryToRoom } from "@/lib/palette-utils";
 
 // Import fog-in-the-forest material images (only palette with images currently)
@@ -365,7 +366,7 @@ const ResultDashboard = ({
                   ) : null}
                   {selectedStyle && (
                     <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-                      {selectedStyle}
+                      {getStyleById(selectedStyle)?.name || selectedStyle}
                     </span>
                   )}
                 </div>
