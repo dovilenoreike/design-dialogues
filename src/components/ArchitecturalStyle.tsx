@@ -77,7 +77,7 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
         <p className="text-xs md:text-sm text-muted-foreground mb-4">Define your shape</p>
         
         {/* Mobile: Horizontal scroll | Desktop: Grid */}
-        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
           {styles.map((style) => {
             const isSelected = selectedStyle === style.name;
             
@@ -85,12 +85,12 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
               <button
                 key={style.name}
                 onClick={() => handleStyleSelect(style.name)}
-                className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform w-[160px] md:w-auto flex-shrink-0 snap-start ${
+                className={`card-interactive text-left overflow-hidden touch-manipulation active:scale-[0.98] transition-transform w-32 md:w-auto flex-shrink-0 snap-start p-0 ${
                   isSelected ? "card-interactive-selected" : ""
                 }`}
               >
                 {/* Preview image */}
-                <div className="relative aspect-[4/3] -mx-4 -mt-4 mb-3 overflow-hidden">
+                <div className="relative aspect-[4/3] overflow-hidden">
                   <img 
                     src={style.image} 
                     alt={style.name}
@@ -98,15 +98,15 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
                   />
                   {isSelected && (
                     <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-                        <Check size={16} className="text-background" />
+                      <div className="w-6 h-6 rounded-full bg-foreground flex items-center justify-center">
+                        <Check size={12} className="text-background" />
                       </div>
                     </div>
                   )}
                 </div>
-                <div>
-                  <p className="font-medium text-sm">{style.name}</p>
-                  <p className="text-xs text-muted-foreground">{style.desc}</p>
+                <div className="p-2">
+                  <p className="font-medium text-xs">{style.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{style.desc}</p>
                 </div>
               </button>
             );
