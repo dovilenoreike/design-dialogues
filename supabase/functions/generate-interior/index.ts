@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, roomCategory, materialPrompt, stylePrompt, freestyleDescription } = await req.json();
+    const { imageBase64, roomCategory, materialPrompt, materialImages, stylePrompt, freestyleDescription } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -26,7 +26,7 @@ serve(async (req) => {
     if (freestyleDescription) {
       designPrompt += ` Use these materials and finishes: ${freestyleDescription}.`;
     } else if (materialPrompt) {
-      designPrompt += ` Apply this material palette: ${materialPrompt}.`;
+      designPrompt += ` Apply this material palette and finishes: ${materialPrompt}.`;
     }
     
     if (stylePrompt) {
@@ -35,9 +35,42 @@ serve(async (req) => {
       designPrompt += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
     }
     
+    // Add instruction about reference images if provided
+    if (materialImages && materialImages.length > 0) {
+      designPrompt += ` Use the provided material reference images as exact visual guides for textures, colors, and finishes. Match these materials precisely in the generated interior.`;
+    }
+    
     designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
 
     console.log("Generating interior with prompt:", designPrompt);
+    console.log("Number of material reference images:", materialImages?.length || 0);
+
+    // Build content array with room image and optional material reference images
+    const contentArray: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+      {
+        type: "text",
+        text: designPrompt
+      },
+      {
+        type: "image_url",
+        image_url: {
+          url: imageBase64
+        }
+      }
+    ];
+    
+    // Add material reference images if provided (limit to 4 to avoid token limits)
+    if (materialImages && Array.isArray(materialImages)) {
+      const limitedImages = materialImages.slice(0, 4);
+      for (const materialImage of limitedImages) {
+        contentArray.push({
+          type: "image_url",
+          image_url: {
+            url: materialImage
+          }
+        });
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -50,18 +83,7 @@ serve(async (req) => {
         messages: [
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: designPrompt
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: imageBase64
-                }
-              }
-            ]
+            content: contentArray
           }
         ],
         modalities: ["image", "text"]
