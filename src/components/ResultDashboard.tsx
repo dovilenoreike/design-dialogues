@@ -4,6 +4,7 @@ import TierSelector from "./TierSelector";
 import MaterialCard from "./MaterialCard";
 import ServiceCard from "./ServiceCard";
 import { CostInsightSheet } from "./CostInsightSheet";
+import Footer from "./Footer";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -714,18 +715,14 @@ const ResultDashboard = ({
                   </div>
                 </div>
 
-                {/* CTA Button (only in full mode) */}
-                {mode === "full" && (
-                  <button className="w-full mt-6 py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-                    Download Project Passport (PDF)
-                    <Download size={16} className="md:w-[18px] md:h-[18px]" />
-                  </button>
-                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Cost Insight Sheet */}
       <CostInsightSheet
