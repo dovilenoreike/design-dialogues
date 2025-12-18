@@ -334,7 +334,7 @@ const ResultDashboard = ({
             {/* Left - Image (only in full mode) */}
             {mode === "full" && (
               <div className="slide-up">
-                <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
+                <div className="aspect-square md:aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
                   {generatedImage ? (
                     <img src={generatedImage} alt="AI generated interior" className="w-full h-full object-cover" />
                   ) : uploadedImage ? (
