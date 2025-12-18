@@ -12,6 +12,7 @@ const languages: { code: Language; label: string; flag: string }[] = [
   { code: "lt", label: "Lietuvių", flag: "🇱🇹" },
 ];
 
+// Desktop dropdown version
 const LanguageSelector = () => {
   const { language, setLanguage } = useLanguage();
   const currentLang = languages.find((l) => l.code === language);
@@ -24,7 +25,7 @@ const LanguageSelector = () => {
           <span className="hidden sm:inline">{currentLang?.flag}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
+      <DropdownMenuContent align="end" className="min-w-[140px] bg-surface-primary border-border-default">
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
@@ -39,6 +40,36 @@ const LanguageSelector = () => {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+// Mobile inline version
+export const LanguageSelectorInline = () => {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className="flex items-center gap-3">
+      <Globe size={18} className="text-text-tertiary" />
+      <div className="flex items-center gap-3">
+        {languages.map((lang, index) => (
+          <div key={lang.code} className="flex items-center gap-3">
+            {index > 0 && (
+              <span className="text-text-muted">|</span>
+            )}
+            <button
+              onClick={() => setLanguage(lang.code)}
+              className={`py-2 transition-colors min-w-[44px] ${
+                language === lang.code
+                  ? "text-text-primary font-medium"
+                  : "text-text-tertiary hover:text-text-secondary"
+              }`}
+            >
+              {lang.label}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
