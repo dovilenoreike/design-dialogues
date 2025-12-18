@@ -113,6 +113,7 @@ interface ResultDashboardProps {
   onRegenerateVisualization?: () => void;
   onChangeStyle?: () => void;
   onStartFresh?: () => void;
+  onSelectPalette?: (paletteId: string) => void;
 }
 
 const ResultDashboard = ({
@@ -129,6 +130,7 @@ const ResultDashboard = ({
   onRegenerateVisualization,
   onChangeStyle,
   onStartFresh,
+  onSelectPalette,
 }: ResultDashboardProps) => {
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
   const [isRefineOpen, setIsRefineOpen] = useState(false);
@@ -749,6 +751,7 @@ const ResultDashboard = ({
             : "Interior Designer"
         }
         currentPaletteId={selectedMaterial || undefined}
+        onSelectPalette={onSelectPalette}
       />
 
       {/* Material Match Request Modal */}
