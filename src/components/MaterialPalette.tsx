@@ -125,16 +125,13 @@ const MaterialPalette = ({
         </div>
       ) : (
         /* Freestyle Input */
-        <div className="space-y-3">
+        <div>
           <textarea
             value={freestyleDescription}
             onChange={(e) => onFreestyleChange(e.target.value)}
             placeholder="Describe your vision...&#10;e.g., Black matte kitchen facades, white quartz worktops, warm oak flooring, brass accents"
             className="w-full h-32 p-4 text-sm bg-white border border-ds-border-default rounded-xl resize-none placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-interactive-default/10 focus:border-ds-border-strong transition-all"
           />
-          <p className="text-[11px] text-muted-foreground">
-            Our designers will curate a personalized material selection based on your description
-          </p>
         </div>
       )}
     </div>
