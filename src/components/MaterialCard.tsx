@@ -5,13 +5,14 @@ interface MaterialCardProps {
   swatchColors?: string[];
   title: string;
   category: string;
+  subtext?: string;
 }
 
-const MaterialCard = ({ image, swatchColors, title, category }: MaterialCardProps) => {
+const MaterialCard = ({ image, swatchColors, title, category, subtext }: MaterialCardProps) => {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-border hover:border-foreground/20 transition-colors cursor-pointer group">
+    <div className="flex items-center gap-4 py-4 px-4 md:px-5 cursor-pointer group hover:bg-surface-sunken/50 transition-colors">
       {/* Swatch - Image or Color Grid */}
-      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+      <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden flex-shrink-0">
         {image ? (
           <img src={image} alt={title} className="w-full h-full object-cover" />
         ) : swatchColors ? (
@@ -21,19 +22,34 @@ const MaterialCard = ({ image, swatchColors, title, category }: MaterialCardProp
             ))}
           </div>
         ) : (
-          <div className="w-full h-full bg-secondary" />
+          <div className="w-full h-full bg-surface-muted" />
         )}
       </div>
       
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{title}</p>
-        <p className="text-xs text-muted-foreground truncate">{category}</p>
+      {/* Text Stack */}
+      <div className="flex-1 min-w-0 space-y-0.5">
+        {/* Category Label - Caption style */}
+        <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium">
+          {category}
+        </p>
+        {/* Material Name - Heading/Serif font */}
+        <p className="text-base font-serif text-text-primary truncate">
+          {title}
+        </p>
+        {/* Subtext - Body font, secondary color */}
+        {subtext && (
+          <p className="text-xs text-text-secondary truncate">
+            {subtext}
+          </p>
+        )}
       </div>
       
-      {/* Link Icon */}
-      <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ExternalLink size={14} className="text-muted-foreground" />
+      {/* External Link Icon */}
+      <div className="flex-shrink-0">
+        <ExternalLink 
+          size={16} 
+          className="text-text-subtle group-hover:text-text-primary transition-colors" 
+        />
       </div>
     </div>
   );

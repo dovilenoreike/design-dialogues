@@ -679,8 +679,8 @@ const ResultDashboard = ({
                           </button>
                         </div>
 
-                        {/* Material Cards Grid */}
-                        <div className="space-y-2">
+                        {/* Material List - Unified Container */}
+                        <div className="bg-surface-primary border border-ds-border-default rounded-xl overflow-hidden divide-y divide-ds-border-subtle">
                           {(() => {
                             const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
                             
@@ -692,6 +692,7 @@ const ResultDashboard = ({
                                   image={fogMaterialImages[key]}
                                   title={fogMaterialNames[key] || key}
                                   category={getMaterialPurpose(material)}
+                                  subtext="Natural Finish"
                                 />
                               ));
                             }
@@ -703,6 +704,7 @@ const ResultDashboard = ({
                                 swatchColors={material.swatchColors}
                                 title={material.title}
                                 category={material.category}
+                                subtext="Standard Finish"
                               />
                             ));
                           })()}
