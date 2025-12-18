@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import ResultDashboard from "@/components/ResultDashboard";
-import { FormData, ServiceSelection } from "@/types/calculator";
+import { FormData } from "@/types/calculator";
 
 const Calculator = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -13,15 +14,21 @@ const Calculator = () => {
   });
 
   return (
-    <ResultDashboard
-      mode="calculator"
-      isVisible={true}
-      formData={formData}
-      uploadedImage={null}
-      selectedMaterial={null}
-      selectedStyle={null}
-      onFormDataChange={setFormData}
-    />
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <ResultDashboard
+          mode="calculator"
+          isVisible={true}
+          formData={formData}
+          uploadedImage={null}
+          selectedMaterial={null}
+          selectedStyle={null}
+          onFormDataChange={setFormData}
+        />
+      </main>
+      <Footer />
+    </div>
   );
 };
 

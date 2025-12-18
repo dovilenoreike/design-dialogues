@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import UploadZone from "@/components/UploadZone";
 import SpaceCategoryPills from "@/components/SpaceCategoryPills";
 import MaterialPalette from "@/components/MaterialPalette";
@@ -229,6 +230,8 @@ const Index = () => {
         onChangeStyle={handleChangeStyle}
         onStartFresh={handleStartFresh}
       />
+
+      <Footer />
     </div>
   );
 };
