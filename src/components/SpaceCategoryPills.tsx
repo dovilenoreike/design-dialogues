@@ -3,7 +3,6 @@ import { useHaptic } from "@/hooks/use-haptic";
 interface SpaceCategoryPillsProps {
   selectedCategory: string | null;
   onSelectCategory: (category: string) => void;
-  disabled?: boolean;
 }
 
 const categories = [
@@ -14,21 +13,18 @@ const categories = [
   "Hallway",
 ];
 
-const SpaceCategoryPills = ({ selectedCategory, onSelectCategory, disabled = false }: SpaceCategoryPillsProps) => {
+const SpaceCategoryPills = ({ selectedCategory, onSelectCategory }: SpaceCategoryPillsProps) => {
   const haptic = useHaptic();
 
   const handleSelect = (category: string) => {
-    if (disabled) return;
     haptic.light();
     onSelectCategory(category);
   };
 
   return (
-    <div className={`w-full transition-opacity duration-300 ${disabled ? 'opacity-50' : 'opacity-100'}`}>
-      <p className={`text-xs md:text-sm mb-2 md:mb-3 transition-colors duration-300 ${
-        disabled ? 'text-muted-foreground' : 'text-foreground font-medium'
-      }`}>
-        {disabled ? 'Select room type (after upload)' : 'What room is this?'}
+    <div className="w-full">
+      <p className="text-xs md:text-sm mb-2 md:mb-3 text-foreground font-medium">
+        What room is this?
       </p>
       {/* Mobile: Horizontal scroll | Desktop: Flex wrap */}
       <div className="flex md:flex-wrap md:justify-center gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
@@ -36,13 +32,7 @@ const SpaceCategoryPills = ({ selectedCategory, onSelectCategory, disabled = fal
           <button
             key={category}
             onClick={() => handleSelect(category)}
-            disabled={disabled}
-            aria-disabled={disabled}
-            className={`pill-button whitespace-nowrap text-xs px-4 py-2 min-h-[40px] touch-manipulation transition-all duration-200 snap-start flex-shrink-0 ${
-              disabled 
-                ? 'cursor-not-allowed' 
-                : 'active:scale-95'
-            } ${
+            className={`pill-button whitespace-nowrap text-xs px-4 py-2 min-h-[40px] touch-manipulation transition-all duration-200 snap-start flex-shrink-0 active:scale-95 ${
               selectedCategory === category ? "pill-button-active" : ""
             }`}
           >
