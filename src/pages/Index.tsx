@@ -149,8 +149,13 @@ const Index = () => {
                 Upload your room, choose your style, and let our AI generate 
                 personalized design solutions with accurate cost estimates.
               </p>
-              <p className="text-sm text-muted-foreground mt-3">
-                Or <Link to="/calculator" className="underline hover:text-foreground transition-colors">estimate budget only</Link> →
+              <p className="mt-4">
+                <Link 
+                  to="/calculator" 
+                  className="inline-block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors min-h-[44px] touch-manipulation"
+                >
+                  Or estimate budget only →
+                </Link>
               </p>
             </div>
 
@@ -159,13 +164,15 @@ const Index = () => {
               uploadedImage={uploadedImage}
             />
             
-            <div className="mt-4 md:mt-6">
-              <SpaceCategoryPills 
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                disabled={!uploadedImage}
-              />
-            </div>
+            {/* Progressive disclosure: Room pills appear after upload */}
+            {uploadedImage && (
+              <div className="mt-4 md:mt-6 animate-fade-in">
+                <SpaceCategoryPills 
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                />
+              </div>
+            )}
           </section>
 
           {/* Section 2: The Design Matrix */}
