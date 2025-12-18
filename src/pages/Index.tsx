@@ -120,6 +120,15 @@ const Index = () => {
     }, 100);
   };
 
+  const handleSelectPaletteFromResults = (paletteId: string) => {
+    setSelectedMaterial(paletteId);
+    setFreestyleDescription(""); // Clear freestyle if they pick a curated palette
+    setShowResults(false);
+    setTimeout(() => {
+      document.querySelector('#design-matrix')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   const handleStartFresh = () => {
     setShowResults(false);
     setUploadedImage(null);
@@ -236,6 +245,7 @@ const Index = () => {
         onRegenerateVisualization={handleRegenerateVisualization}
         onChangeStyle={handleChangeStyle}
         onStartFresh={handleStartFresh}
+        onSelectPalette={handleSelectPaletteFromResults}
       />
 
       <Footer />

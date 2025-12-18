@@ -39,6 +39,7 @@ interface DesignerProfileSheetProps {
   designerName: string;
   designerTitle: string;
   currentPaletteId?: string;
+  onSelectPalette?: (paletteId: string) => void;
 }
 
 const DesignerProfileSheet = ({
@@ -47,6 +48,7 @@ const DesignerProfileSheet = ({
   designerName,
   designerTitle,
   currentPaletteId,
+  onSelectPalette,
 }: DesignerProfileSheetProps) => {
   // Get designer profile
   const profile = defaultDesignerProfiles[designerName] || {
@@ -140,9 +142,13 @@ const DesignerProfileSheet = ({
               </h4>
               <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-6">
                 {otherPalettes.map((palette) => (
-                  <div
+                  <button
                     key={palette.id}
-                    className="flex-shrink-0 w-32 snap-start"
+                    onClick={() => {
+                      onSelectPalette?.(palette.id);
+                      onClose();
+                    }}
+                    className="flex-shrink-0 w-32 snap-start text-left hover:opacity-80 active:scale-[0.98] transition-all touch-manipulation"
                   >
                     <div className="aspect-square rounded-lg overflow-hidden bg-surface-muted mb-2">
                       <img
@@ -153,7 +159,7 @@ const DesignerProfileSheet = ({
                     </div>
                     <p className="font-serif text-sm truncate">{palette.name}</p>
                     <p className="text-[10px] text-muted-foreground">{palette.temp}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
