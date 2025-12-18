@@ -5,6 +5,7 @@ import MaterialCard from "./MaterialCard";
 import ServiceCard from "./ServiceCard";
 import { CostInsightSheet } from "./CostInsightSheet";
 import Footer from "./Footer";
+import MaterialMatchRequestModal from "./MaterialMatchRequestModal";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -133,6 +134,7 @@ const ResultDashboard = ({
   const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [activeInsight, setActiveInsight] = useState<string | null>(null);
   const [isDesignerSheetOpen, setIsDesignerSheetOpen] = useState(false);
+  const [isMaterialMatchModalOpen, setIsMaterialMatchModalOpen] = useState(false);
 
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
@@ -643,10 +645,10 @@ const ResultDashboard = ({
                         <blockquote className="text-sm text-text-secondary italic border-l-2 border-ds-border-strong pl-3 mb-5">
                           "{freestyleDescription}"
                         </blockquote>
-                        <p className="text-xs text-muted-foreground mb-4">
-                          Our designers will curate a personalized material selection based on your description
-                        </p>
-                        <button className="w-full py-3 border-2 border-ds-border-emphasis rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-surface-sunken transition-colors touch-manipulation">
+                        <button
+                          onClick={() => setIsMaterialMatchModalOpen(true)}
+                          className="w-full py-3 border-2 border-ds-border-emphasis rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-surface-sunken transition-colors touch-manipulation"
+                        >
                           <MessageSquare size={16} />
                           Request Curated Material List
                         </button>
@@ -747,6 +749,15 @@ const ResultDashboard = ({
             : "Interior Designer"
         }
         currentPaletteId={selectedMaterial || undefined}
+      />
+
+      {/* Material Match Request Modal */}
+      <MaterialMatchRequestModal
+        isOpen={isMaterialMatchModalOpen}
+        onClose={() => setIsMaterialMatchModalOpen(false)}
+        generatedImage={generatedImage || null}
+        freestyleDescription={freestyleDescription || ""}
+        selectedTier={selectedTier}
       />
     </div>
   );
