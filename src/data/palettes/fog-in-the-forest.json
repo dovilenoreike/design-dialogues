@@ -2,7 +2,7 @@
   "id": "fog-in-the-forest",
   "name": "Fog in the Forest",
   "temp": "Cool",
-  "designer": "Sigita Kulikajeva",
+  "designer": "Athena Blackbird",
   "designerTitle": "Interior Designer",
   "promptSnippet": "Inspired by fog in the forest.",
   "materials": {
@@ -19,28 +19,23 @@
       }
     },
     "material3": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Cabinetry", "kitchen": " garrison gray colour with blue undertone for top cabinets" }
     },
     "material4": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Tiles", "kitchen": "Backsplash" }
+      "rooms": ["kitchen", "bathroom", "bedroom"],
+      "purpose": {
+        "default": "Cabinetry",
+        "kitchen": "Matte dark brown cabinet fronts with fine horizontal wood grain for bottom cabinets."
+      }
     },
     "material5": {
       "rooms": ["kitchen", "bathroom", "bedroom"],
-      "purpose": { "default": "Hardware" }
+      "purpose": { "default": "Wall paint" }
     },
     "material6": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Paint", "bedroom": "Wall Color" }
-    },
-    "material7": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
-    },
-    "material8": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
-      "purpose": { "default": "Lighting" }
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Tiles" }
     }
   }
 }
