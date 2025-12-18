@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import {
   ChevronDown,
+  ChevronRight,
   Download,
   Share2,
   X,
@@ -19,6 +20,7 @@ import {
   MessageSquare,
   Sparkles,
 } from "lucide-react";
+import DesignerProfileSheet from "./DesignerProfileSheet";
 import {
   FormData,
   ServiceSelection,
@@ -129,6 +131,7 @@ const ResultDashboard = ({
   const [selectedTier, setSelectedTier] = useState<"Budget" | "Standard" | "Premium">("Standard");
   const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [activeInsight, setActiveInsight] = useState<string | null>(null);
+  const [isDesignerSheetOpen, setIsDesignerSheetOpen] = useState(false);
 
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
@@ -648,11 +651,14 @@ const ResultDashboard = ({
                         {/* Header with Designer Credit */}
                         <div className="mb-4">
                           <h4 className="text-sm font-medium text-foreground">Material Palette</h4>
-                          <div className="flex items-center gap-2 mt-2">
-                            <div className="w-6 h-6 rounded-full bg-surface-sunken flex items-center justify-center flex-shrink-0">
-                              <User size={12} className="text-text-muted" />
+                          <button
+                            onClick={() => setIsDesignerSheetOpen(true)}
+                            className="w-full flex items-center gap-2 mt-2 p-2 -mx-2 rounded-lg hover:bg-surface-sunken transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center flex-shrink-0">
+                              <User size={14} className="text-text-muted" />
                             </div>
-                            <div>
+                            <div className="flex-1 text-left">
                               <p className="text-xs font-medium text-foreground">
                                 {selectedMaterial && getPaletteById(selectedMaterial)
                                   ? getPaletteById(selectedMaterial)?.designer
@@ -664,7 +670,8 @@ const ResultDashboard = ({
                                   : "Interior Designer"}
                               </p>
                             </div>
-                          </div>
+                            <ChevronRight size={16} className="text-text-muted group-hover:text-text-secondary transition-colors" />
+                          </button>
                         </div>
 
                         {/* Material Cards Grid */}
@@ -719,6 +726,23 @@ const ResultDashboard = ({
         onClose={() => setActiveInsight(null)}
         category={activeInsight || ""}
         tier={selectedTier.toLowerCase() as "budget" | "standard" | "premium"}
+      />
+
+      {/* Designer Profile Sheet */}
+      <DesignerProfileSheet
+        isOpen={isDesignerSheetOpen}
+        onClose={() => setIsDesignerSheetOpen(false)}
+        designerName={
+          selectedMaterial && getPaletteById(selectedMaterial)
+            ? getPaletteById(selectedMaterial)?.designer || "Design Dialogues"
+            : "Design Dialogues"
+        }
+        designerTitle={
+          selectedMaterial && getPaletteById(selectedMaterial)
+            ? getPaletteById(selectedMaterial)?.designerTitle || "Interior Designer"
+            : "Interior Designer"
+        }
+        currentPaletteId={selectedMaterial || undefined}
       />
     </div>
   );
