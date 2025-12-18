@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Check, Sparkles, User, ChevronRight } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
-import { palettes, getPaletteById } from "@/data/palettes";
-import DesignerProfileSheet from "./DesignerProfileSheet";
+import { palettes } from "@/data/palettes";
 
 // Import thumbnail images for palette cards
 import fogInTheForestImg from "@/assets/materials/fog-in-the-forest.jpg";
@@ -35,12 +34,6 @@ const MaterialPalette = ({
 }: MaterialPaletteProps) => {
   const haptic = useHaptic();
   const [mode, setMode] = useState<PaletteMode>("curated");
-  const [designerSheetOpen, setDesignerSheetOpen] = useState(false);
-
-  // Get selected palette for designer info
-  const selectedPalette = selectedMaterial ? getPaletteById(selectedMaterial) : palettes[0];
-  const currentDesigner = selectedPalette?.designer || "Sigita Kulikajeva";
-  const currentDesignerTitle = selectedPalette?.designerTitle || "Interior Designer";
 
   const handleModeChange = (newMode: PaletteMode) => {
     haptic.light();
@@ -58,40 +51,10 @@ const MaterialPalette = ({
     onSelectMaterial(paletteId);
   };
 
-  const handleDesignerClick = () => {
-    haptic.light();
-    setDesignerSheetOpen(true);
-  };
-
   return (
     <div>
       <h3 className="text-base md:text-lg font-serif mb-1">Material Palette</h3>
-      <p className="text-xs md:text-sm text-muted-foreground mb-3">Select your texture</p>
-      
-      {/* Designer Row - Clickable */}
-      <button
-        onClick={handleDesignerClick}
-        className="w-full flex items-center gap-3 p-3 mb-4 rounded-xl bg-surface-muted hover:bg-surface-sunken transition-colors group"
-      >
-        <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center border border-ds-border-default">
-          <User size={18} className="text-text-tertiary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-medium text-text-primary">{currentDesigner}</p>
-          <p className="text-xs text-text-tertiary">{currentDesignerTitle}</p>
-        </div>
-        <ChevronRight size={18} className="text-text-tertiary group-hover:text-text-secondary transition-colors" />
-      </button>
-
-      {/* Designer Profile Sheet */}
-      <DesignerProfileSheet
-        open={designerSheetOpen}
-        onOpenChange={setDesignerSheetOpen}
-        designer={currentDesigner}
-        designerTitle={currentDesignerTitle}
-        currentPaletteId={selectedMaterial || "fog-in-the-forest"}
-        onSelectPalette={onSelectMaterial}
-      />
+      <p className="text-xs md:text-sm text-muted-foreground mb-4">Select your texture</p>
       
       {/* Mode Toggle */}
       <div className="relative flex p-1 bg-surface-muted rounded-full mb-4">
