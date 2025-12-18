@@ -647,7 +647,7 @@ const ResultDashboard = ({
                         </blockquote>
                         <button
                           onClick={() => setIsMaterialMatchModalOpen(true)}
-                          className="w-full py-3 border-2 border-ds-border-emphasis rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-surface-sunken transition-colors touch-manipulation"
+                          className="w-full py-3 border border-foreground rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:bg-secondary transition-all touch-manipulation active:scale-[0.98]"
                         >
                           <MessageSquare size={16} />
                           Request Curated Material List
