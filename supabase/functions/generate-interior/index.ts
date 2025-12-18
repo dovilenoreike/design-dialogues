@@ -37,10 +37,10 @@ serve(async (req) => {
     
     // Add instruction about reference images if provided
     if (materialImages && materialImages.length > 0) {
-      designPrompt += ` CRITICAL: The attached material reference images show the EXACT textures, colors, and finishes to use. Replicate these materials precisely - match the exact color tones, grain patterns, surface textures, and material characteristics shown in each reference image. The flooring, cabinetry, countertops, and backsplash must visually match the provided material samples.`;
+      designPrompt += ` Use the provided material reference images as exact visual guides for textures, colors, and finishes. Match these materials precisely in the generated interior.`;
     }
     
-    designPrompt += " Create a photorealistic interior render with natural lighting and professional photography quality. Maintain the room's existing architecture, windows, and spatial layout while transforming the finishes and materials.";
+    designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
 
     console.log("Generating interior with prompt:", designPrompt);
     console.log("Number of material reference images:", materialImages?.length || 0);
