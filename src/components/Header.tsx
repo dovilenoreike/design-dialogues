@@ -8,7 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import LanguageSelector from "./LanguageSelector";
+import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
 
@@ -61,7 +61,7 @@ const Header = () => {
                   {/* Mobile drawer footer */}
                   <div className="mt-auto pt-6 border-t border-border space-y-4">
                     <FeedbackMobileItem onClick={handleMobileFeedback} />
-                    <LanguageSelector />
+                    <LanguageSelectorInline />
                   </div>
                 </SheetContent>
               </Sheet>
