@@ -308,7 +308,7 @@ const ResultDashboard = ({
       <div className="min-h-screen pb-safe">
         {/* Header */}
         <div className="glass-panel sticky top-0 z-10">
-          <div className="px-3 md:container md:mx-auto md:px-6 py-2.5 md:py-4 flex items-center justify-between">
+          <div className="px-2 sm:px-3 md:container md:mx-auto md:px-6 py-2.5 md:py-4 flex items-center justify-between">
             <Link to="/" className="text-lg md:text-2xl font-serif font-medium tracking-tight text-foreground">
               Design Dialogues
             </Link>
@@ -329,12 +329,12 @@ const ResultDashboard = ({
         </div>
 
         {/* Content */}
-        <div className="px-3 md:container md:mx-auto md:px-6 py-4 md:py-12">
+        <div className="px-2 sm:px-3 md:container md:mx-auto md:px-6 py-3 sm:py-4 md:py-12">
           <div className={`grid gap-4 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
             {/* Left - Image (only in full mode) */}
             {mode === "full" && (
               <div className="slide-up">
-                <div className="aspect-square md:aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
+                <div className="aspect-[16/10] sm:aspect-square md:aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
                   {generatedImage ? (
                     <img src={generatedImage} alt="AI generated interior" className="w-full h-full object-cover" />
                   ) : uploadedImage ? (
@@ -371,7 +371,7 @@ const ResultDashboard = ({
 
                 {/* Exploration Actions */}
                 <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={onRegenerateVisualization}
                       className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 md:py-3 bg-foreground text-background rounded-full font-medium text-xs md:text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
@@ -409,12 +409,12 @@ const ResultDashboard = ({
                 {/* Unified Card Container */}
                 <div className="border border-ds-border-default rounded-xl md:rounded-2xl overflow-hidden">
                   {/* Top Half - Financials (White) */}
-                  <div className="bg-surface-primary p-4 md:p-6">
+                  <div className="bg-surface-primary p-3 sm:p-4 md:p-6">
                     {/* Tier Selector */}
                     <TierSelector selectedTier={selectedTier} onSelectTier={setSelectedTier} />
 
                     {/* Tier Philosophy */}
-                    <p className="text-xs md:text-sm text-text-muted italic py-4 md:py-6 text-center">
+                    <p className="text-xs md:text-sm text-text-muted italic py-3 sm:py-4 md:py-6 text-center">
                       {selectedTier === "Budget" && "Smart solutions that maximize value — quality basics done well."}
                       {selectedTier === "Standard" &&
                         "The sweet spot — lasting quality with thoughtful design details."}
@@ -433,21 +433,21 @@ const ResultDashboard = ({
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-ds-border-subtle my-4 md:my-6" />
+                    <div className="border-t border-ds-border-subtle my-3 sm:my-4 md:my-6" />
 
-                    {/* Stat Row - 3 Column Breakdown */}
-                    <div className="grid grid-cols-3 gap-2 md:gap-4 text-center">
-                      <div>
+                    {/* Stat Row - Breakdown */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 sm:text-center">
+                      <div className="flex items-center justify-between sm:block">
                         <p className="text-base md:text-lg font-semibold text-text-secondary">40%</p>
-                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
+                        <p className="text-[10px] md:text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
                       </div>
-                      <div>
+                      <div className="flex items-center justify-between sm:block">
                         <p className="text-base md:text-lg font-semibold text-text-secondary">35%</p>
-                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
+                        <p className="text-[10px] md:text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
                       </div>
-                      <div>
+                      <div className="flex items-center justify-between sm:block">
                         <p className="text-base md:text-lg font-semibold text-text-secondary">25%</p>
-                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
+                        <p className="text-[10px] md:text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
                       </div>
                     </div>
 
@@ -465,7 +465,7 @@ const ResultDashboard = ({
 
                     {/* Expanded Panel */}
                     {isRefineOpen && (
-                      <div className="mt-4 bg-surface-muted/50 rounded-xl p-4 space-y-5 animate-fade-in">
+                      <div className="mt-4 bg-surface-muted/50 rounded-xl p-3 sm:p-4 space-y-5 animate-fade-in">
                         {/* SECTION A: INPUTS */}
                         {/* Area slider */}
                         <div>
@@ -608,7 +608,7 @@ const ResultDashboard = ({
                   <div className="border-t border-ds-border-subtle" />
 
                   {/* Bottom Half - Material Manifest (Muted) or Visualize CTA */}
-                  <div className="bg-surface-muted p-4 md:p-6">
+                  <div className="bg-surface-muted p-3 sm:p-4 md:p-6">
                     {mode === "calculator" ? (
                       /* Calculator Mode - Show Visualize CTA */
                       <div className="flex flex-col items-center justify-center py-4">
