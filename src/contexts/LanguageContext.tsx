@@ -138,6 +138,18 @@ const translations: Record<Language, Record<string, string>> = {
     "designer.workWithMe": "Work with Me",
     "designer.sendInquiry": "Send Project Inquiry",
     "designer.myCollections": "My Collections",
+    
+    // Feedback
+    "feedback.button": "Feedback",
+    "feedback.mobileButton": "Send Feedback",
+    "feedback.title": "Help us improve",
+    "feedback.description": "We are constantly tuning our pricing and design engine. Did you find a mistake, or do you have an idea?",
+    "feedback.placeholder": "Your feedback...",
+    "feedback.emailPlaceholder": "Email (optional)",
+    "feedback.submit": "Send Message",
+    "feedback.sending": "Sending...",
+    "feedback.success": "Thank you for your feedback!",
+    "feedback.errorEmpty": "Please enter your feedback",
   },
   lt: {
     // Header
@@ -265,6 +277,18 @@ const translations: Record<Language, Record<string, string>> = {
     "designer.workWithMe": "Dirbkime Kartu",
     "designer.sendInquiry": "Siųsti Užklausą",
     "designer.myCollections": "Mano Kolekcijos",
+    
+    // Feedback
+    "feedback.button": "Atsiliepimas",
+    "feedback.mobileButton": "Siųsti Atsiliepimą",
+    "feedback.title": "Padėkite mums tobulėti",
+    "feedback.description": "Nuolat tobuliname savo kainų ir dizaino sistemą. Radote klaidą ar turite idėją?",
+    "feedback.placeholder": "Jūsų atsiliepimas...",
+    "feedback.emailPlaceholder": "El. paštas (neprivaloma)",
+    "feedback.submit": "Siųsti Žinutę",
+    "feedback.sending": "Siunčiama...",
+    "feedback.success": "Ačiū už jūsų atsiliepimą!",
+    "feedback.errorEmpty": "Prašome įvesti atsiliepimą",
   },
 };
 
