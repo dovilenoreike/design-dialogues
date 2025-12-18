@@ -312,30 +312,35 @@ const ResultDashboard = ({
 
   if (!isVisible || !formData) return null;
 
+  // Calculator mode: inline, no internal header. Full mode: fixed overlay with header.
+  const isCalculatorMode = mode === "calculator";
+
   return (
-    <div className="fixed inset-0 z-50 bg-background fade-in overflow-auto">
-      <div className="min-h-screen pb-safe">
-        {/* Header */}
-        <div className="glass-panel sticky top-0 z-10">
-          <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-            <Link to="/" className="text-xl md:text-2xl font-serif font-medium tracking-tight text-foreground">
-              Design Dialogues
-            </Link>
-            <div className="flex items-center gap-1 md:gap-3">
-              <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
-              </button>
-              <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                <Download size={16} className="md:w-[18px] md:h-[18px]" />
-              </button>
-              {onClose && (
-                <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors ml-1">
-                  <X size={16} className="md:w-[18px] md:h-[18px]" />
+    <div className={isCalculatorMode ? "bg-background" : "fixed inset-0 z-50 bg-background fade-in overflow-auto"}>
+      <div className={isCalculatorMode ? "" : "min-h-screen pb-safe"}>
+        {/* Header - only in full mode */}
+        {!isCalculatorMode && (
+          <div className="glass-panel sticky top-0 z-10">
+            <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+              <Link to="/" className="text-xl md:text-2xl font-serif font-medium tracking-tight text-foreground">
+                Design Dialogues
+              </Link>
+              <div className="flex items-center gap-1 md:gap-3">
+                <button className="p-2 rounded-full hover:bg-secondary transition-colors">
+                  <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
-              )}
+                <button className="p-2 rounded-full hover:bg-secondary transition-colors">
+                  <Download size={16} className="md:w-[18px] md:h-[18px]" />
+                </button>
+                {onClose && (
+                  <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors ml-1">
+                    <X size={16} className="md:w-[18px] md:h-[18px]" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
