@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/sheet";
 
 const NAV_ITEMS = [
-  { label: "How it Works", href: "#how-it-works" },
-  { label: "The Mission", href: "#mission" },
-  { label: "Partner with Us", href: "#partner" },
+  { label: "How it Works", href: "/how-it-works" },
+  { label: "The Mission", href: "/mission" },
+  { label: "Partner with Us", href: "/partner" },
 ];
 
 const Header = () => {
@@ -36,14 +36,14 @@ const Header = () => {
                 </SheetHeader>
                 <nav className="flex flex-col gap-6 mt-8">
                   {NAV_ITEMS.map((item) => (
-                    <a
+                    <Link
                       key={item.label}
-                      href={item.href}
+                      to={item.href}
                       onClick={() => setIsOpen(false)}
                       className="font-serif text-lg text-foreground hover:text-primary transition-colors"
                     >
                       {item.label}
-                    </a>
+                    </Link>
                   ))}
                 </nav>
               </SheetContent>
@@ -68,13 +68,13 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {NAV_ITEMS.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
             <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
               3 Credits
