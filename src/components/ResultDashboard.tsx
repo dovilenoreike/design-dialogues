@@ -330,7 +330,7 @@ const ResultDashboard = ({
 
         {/* Content */}
         <div className="px-2 sm:px-3 md:container md:mx-auto md:px-6 py-3 sm:py-4 md:py-12">
-          <div className={`grid gap-4 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
+          <div className={`grid gap-4 md:gap-12 ${mode === "full" ? "md:grid-cols-2" : "max-w-xl mx-auto"}`}>
             {/* Left - Image (only in full mode) */}
             {mode === "full" && (
               <div className="slide-up">
@@ -400,7 +400,7 @@ const ResultDashboard = ({
 
             {/* Right - Project Passport */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
-              <div className="lg:sticky lg:top-20">
+              <div className="md:sticky md:top-20">
                 <h2 className="text-xl md:text-3xl font-serif mb-0.5 md:mb-2">Project Passport</h2>
                 <p className="text-xs md:text-base text-muted-foreground mb-3 md:mb-8">
                   Estimated investment for {localArea}m²
