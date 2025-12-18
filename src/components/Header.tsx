@@ -32,58 +32,65 @@ const Header = () => {
     <>
       <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            {/* Mobile: Hamburger Menu */}
-            <div className="md:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <button className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors">
-                    <Menu size={22} />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] flex flex-col">
-                  <SheetHeader className="text-left">
-                    <SheetTitle className="font-serif text-xl">Menu</SheetTitle>
-                  </SheetHeader>
-                  <nav className="flex flex-col gap-6 mt-8 flex-1">
-                    {NAV_ITEMS.map((item) => (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className="font-serif text-lg text-foreground hover:text-primary transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                  
-                  {/* Mobile drawer footer */}
-                  <div className="mt-auto pt-6 border-t border-border space-y-4">
-                    <FeedbackMobileItem onClick={handleMobileFeedback} />
-                    <LanguageSelectorInline />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+          {/* Mobile Layout */}
+          <div className="flex md:hidden items-center justify-between">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <button className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors">
+                  <Menu size={22} />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] flex flex-col">
+                <SheetHeader className="text-left">
+                  <SheetTitle className="font-serif text-xl">Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-6 mt-8 flex-1">
+                  {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className="font-serif text-lg text-foreground hover:text-primary transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                
+                {/* Mobile drawer footer */}
+                <div className="mt-auto pt-6 border-t border-border space-y-4">
+                  <FeedbackMobileItem onClick={handleMobileFeedback} />
+                  <LanguageSelectorInline />
+                </div>
+              </SheetContent>
+            </Sheet>
             
-            {/* Logo - centered on mobile */}
             <Link 
               to="/" 
-              className="text-xl md:text-2xl font-serif font-medium tracking-tight text-foreground md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
+              className="text-xl font-serif font-medium tracking-tight text-foreground absolute left-1/2 -translate-x-1/2"
             >
               Design Dialogues
             </Link>
             
-            {/* Mobile: Credit Pill */}
-            <div className="md:hidden">
-              <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-                3 {t("header.credits")}
-              </div>
+            <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
+              3 {t("header.credits")}
+            </div>
+          </div>
+          
+          {/* Desktop Layout - 3-part grid */}
+          <div className="hidden md:grid grid-cols-3 items-center">
+            {/* Left: Logo */}
+            <div className="justify-self-start">
+              <Link 
+                to="/" 
+                className="text-2xl font-serif font-medium tracking-tight text-foreground"
+              >
+                Design Dialogues
+              </Link>
             </div>
             
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            {/* Center: Navigation */}
+            <nav className="justify-self-center flex items-center gap-8">
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
@@ -93,12 +100,16 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
+            </nav>
+            
+            {/* Right: Utilities */}
+            <div className="justify-self-end flex items-center gap-4">
               <LanguageSelector />
               <FeedbackTrigger onClick={() => setFeedbackOpen(true)} />
               <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
                 3 {t("header.credits")}
               </div>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
