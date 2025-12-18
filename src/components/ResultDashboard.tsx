@@ -308,11 +308,11 @@ const ResultDashboard = ({
       <div className="min-h-screen pb-safe">
         {/* Header */}
         <div className="glass-panel sticky top-0 z-10">
-          <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-            <Link to="/" className="text-xl md:text-2xl font-serif font-medium tracking-tight text-foreground">
+          <div className="px-3 md:container md:mx-auto md:px-6 py-2.5 md:py-4 flex items-center justify-between">
+            <Link to="/" className="text-lg md:text-2xl font-serif font-medium tracking-tight text-foreground">
               Design Dialogues
             </Link>
-            <div className="flex items-center gap-1 md:gap-3">
+            <div className="flex items-center gap-0.5 md:gap-3">
               <button className="p-2 rounded-full hover:bg-secondary transition-colors">
                 <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
               </button>
@@ -320,7 +320,7 @@ const ResultDashboard = ({
                 <Download size={16} className="md:w-[18px] md:h-[18px]" />
               </button>
               {onClose && (
-                <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors ml-1">
+                <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors">
                   <X size={16} className="md:w-[18px] md:h-[18px]" />
                 </button>
               )}
@@ -329,8 +329,8 @@ const ResultDashboard = ({
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
-          <div className={`grid gap-6 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
+        <div className="px-3 md:container md:mx-auto md:px-6 py-4 md:py-12">
+          <div className={`grid gap-4 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
             {/* Left - Image (only in full mode) */}
             {mode === "full" && (
               <div className="slide-up">
@@ -370,49 +370,51 @@ const ResultDashboard = ({
                 </div>
 
                 {/* Exploration Actions */}
-                <div className="mt-5 md:mt-6 flex flex-col sm:flex-row gap-3">
+                <div className="mt-4 md:mt-6 flex flex-col gap-2 md:gap-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={onRegenerateVisualization}
+                      className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 md:py-3 bg-foreground text-background rounded-full font-medium text-xs md:text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                    >
+                      <RefreshCw size={14} className="md:w-4 md:h-4" />
+                      Try Again
+                    </button>
+                    <button
+                      onClick={onChangeStyle}
+                      className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 md:py-3 border border-foreground rounded-full font-medium text-xs md:text-sm hover:bg-secondary transition-all touch-manipulation"
+                    >
+                      <Palette size={14} className="md:w-4 md:h-4" />
+                      Change Style
+                    </button>
+                  </div>
                   <button
-                    onClick={onRegenerateVisualization}
-                    className="flex items-center justify-center gap-2 px-5 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+                    onClick={onStartFresh}
+                    className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation py-1"
                   >
-                    <RefreshCw size={16} />
-                    Try Another Version
-                  </button>
-                  <button
-                    onClick={onChangeStyle}
-                    className="flex items-center justify-center gap-2 px-5 py-3 border border-foreground rounded-full font-medium text-sm hover:bg-secondary transition-all touch-manipulation"
-                  >
-                    <Palette size={16} />
-                    Change Style
+                    <RotateCcw size={12} />
+                    Start Fresh
                   </button>
                 </div>
-                <button
-                  onClick={onStartFresh}
-                  className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
-                >
-                  <RotateCcw size={12} />
-                  Start Fresh
-                </button>
               </div>
             )}
 
             {/* Right - Project Passport */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
-              <div className="lg:sticky lg:top-24">
-                <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">Project Passport</h2>
-                <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-8">
+              <div className="lg:sticky lg:top-20">
+                <h2 className="text-xl md:text-3xl font-serif mb-0.5 md:mb-2">Project Passport</h2>
+                <p className="text-xs md:text-base text-muted-foreground mb-3 md:mb-8">
                   Estimated investment for {localArea}m²
                 </p>
 
                 {/* Unified Card Container */}
-                <div className="border border-ds-border-default rounded-2xl overflow-hidden">
+                <div className="border border-ds-border-default rounded-xl md:rounded-2xl overflow-hidden">
                   {/* Top Half - Financials (White) */}
-                  <div className="bg-surface-primary p-5 md:p-6">
+                  <div className="bg-surface-primary p-4 md:p-6">
                     {/* Tier Selector */}
                     <TierSelector selectedTier={selectedTier} onSelectTier={setSelectedTier} />
 
                     {/* Tier Philosophy */}
-                    <p className="text-sm text-text-muted italic py-6 text-center">
+                    <p className="text-xs md:text-sm text-text-muted italic py-4 md:py-6 text-center">
                       {selectedTier === "Budget" && "Smart solutions that maximize value — quality basics done well."}
                       {selectedTier === "Standard" &&
                         "The sweet spot — lasting quality with thoughtful design details."}
@@ -422,37 +424,37 @@ const ResultDashboard = ({
 
                     {/* Conservative Estimate */}
                     <div className="text-center">
-                      <p className="text-4xl md:text-5xl font-serif tabular-nums">
+                      <p className="text-3xl md:text-5xl font-serif tabular-nums">
                         €{calculation.highEstimate.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-[10px] md:text-xs text-muted-foreground mt-1.5 md:mt-2">
                         Conservative estimate incl. 15% market buffer
                       </p>
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-ds-border-subtle my-6" />
+                    <div className="border-t border-ds-border-subtle my-4 md:my-6" />
 
                     {/* Stat Row - 3 Column Breakdown */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-3 gap-2 md:gap-4 text-center">
                       <div>
-                        <p className="text-lg font-semibold text-text-secondary">40%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
+                        <p className="text-base md:text-lg font-semibold text-text-secondary">40%</p>
+                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
                       </div>
                       <div>
-                        <p className="text-lg font-semibold text-text-secondary">35%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
+                        <p className="text-base md:text-lg font-semibold text-text-secondary">35%</p>
+                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
                       </div>
                       <div>
-                        <p className="text-lg font-semibold text-text-secondary">25%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
+                        <p className="text-base md:text-lg font-semibold text-text-secondary">25%</p>
+                        <p className="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
                       </div>
                     </div>
 
                     {/* Trigger Link */}
                     <button
                       onClick={() => setIsRefineOpen(!isRefineOpen)}
-                      className="mt-6 text-sm text-text-tertiary hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
+                      className="mt-4 md:mt-6 text-xs md:text-sm text-text-tertiary hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
                     >
                       Adjust Parameters & Breakdown
                       <ChevronDown
@@ -606,7 +608,7 @@ const ResultDashboard = ({
                   <div className="border-t border-ds-border-subtle" />
 
                   {/* Bottom Half - Material Manifest (Muted) or Visualize CTA */}
-                  <div className="bg-surface-muted p-5 md:p-6">
+                  <div className="bg-surface-muted p-4 md:p-6">
                     {mode === "calculator" ? (
                       /* Calculator Mode - Show Visualize CTA */
                       <div className="flex flex-col items-center justify-center py-4">
@@ -696,9 +698,9 @@ const ResultDashboard = ({
 
                 {/* CTA Button (only in full mode) */}
                 {mode === "full" && (
-                  <button className="w-full mt-6 py-3.5 md:py-4 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+                  <button className="w-full mt-4 md:mt-6 py-3 md:py-4 bg-foreground text-background rounded-full font-medium text-xs md:text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
                     Download Project Passport (PDF)
-                    <Download size={16} className="md:w-[18px] md:h-[18px]" />
+                    <Download size={14} className="md:w-[18px] md:h-[18px]" />
                   </button>
                 )}
               </div>
