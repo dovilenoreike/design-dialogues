@@ -12,12 +12,22 @@ export interface Material {
   purpose: MaterialPurpose;
 }
 
+export interface DesignerProfile {
+  name: string;
+  title: string;
+  bio: string;
+  email?: string;
+  instagram?: string;
+  website?: string;
+}
+
 export interface Palette {
   id: string;
   name: string;
   temp: string;
   designer: string;
   designerTitle: string;
+  designerProfile?: DesignerProfile;
   promptSnippet: string;
   materials: Record<string, Material>;
 }
