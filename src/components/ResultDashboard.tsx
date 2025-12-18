@@ -721,8 +721,8 @@ const ResultDashboard = ({
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - only in full mode */}
+      {mode === "full" && <Footer />}
 
       {/* Cost Insight Sheet */}
       <CostInsightSheet
