@@ -8,15 +8,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
-const NAV_ITEMS = [
-  { label: "How it Works", href: "/how-it-works" },
-  { label: "The Mission", href: "/mission" },
-  { label: "Partner with Us", href: "/partner" },
-];
+import LanguageSelector from "./LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const NAV_ITEMS = [
+    { label: t("nav.howItWorks"), href: "/how-it-works" },
+    { label: t("nav.mission"), href: "/mission" },
+    { label: t("nav.partner"), href: "/partner" },
+  ];
 
   return (
     <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -37,7 +40,7 @@ const Header = () => {
                 <nav className="flex flex-col gap-6 mt-8">
                   {NAV_ITEMS.map((item) => (
                     <Link
-                      key={item.label}
+                      key={item.href}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
                       className="font-serif text-lg text-foreground hover:text-primary transition-colors"
@@ -46,6 +49,9 @@ const Header = () => {
                     </Link>
                   ))}
                 </nav>
+                <div className="mt-8 pt-6 border-t border-border">
+                  <LanguageSelector />
+                </div>
               </SheetContent>
             </Sheet>
           </div>
@@ -61,7 +67,7 @@ const Header = () => {
           {/* Mobile: Credit Pill */}
           <div className="md:hidden">
             <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-              3 Credits
+              3 {t("header.credits")}
             </div>
           </div>
           
@@ -69,15 +75,16 @@ const Header = () => {
           <nav className="hidden md:flex items-center gap-8">
             {NAV_ITEMS.map((item) => (
               <Link
-                key={item.label}
+                key={item.href}
                 to={item.href}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.label}
               </Link>
             ))}
+            <LanguageSelector />
             <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-              3 Credits
+              3 {t("header.credits")}
             </div>
           </nav>
         </div>
