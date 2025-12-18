@@ -44,8 +44,6 @@ import fogMaterial3 from "@/assets/materials/fog-in-the-forest/material3.jpg";
 import fogMaterial4 from "@/assets/materials/fog-in-the-forest/material4.jpg";
 import fogMaterial5 from "@/assets/materials/fog-in-the-forest/material5.jpg";
 import fogMaterial6 from "@/assets/materials/fog-in-the-forest/material6.jpg";
-import fogMaterial7 from "@/assets/materials/fog-in-the-forest/material7.jpg";
-import fogMaterial8 from "@/assets/materials/fog-in-the-forest/material8.jpg";
 
 // Map material keys to imported images for fog-in-the-forest
 const fogMaterialImages: Record<string, string> = {
@@ -55,8 +53,6 @@ const fogMaterialImages: Record<string, string> = {
   material4: fogMaterial4,
   material5: fogMaterial5,
   material6: fogMaterial6,
-  material7: fogMaterial7,
-  material8: fogMaterial8,
 };
 
 // Material display names for fog-in-the-forest palette
@@ -67,8 +63,6 @@ const fogMaterialNames: Record<string, string> = {
   material4: "Stone Grey",
   material5: "Matte Nickel",
   material6: "Soft White",
-  material7: "Walnut Grain",
-  material8: "Ribbed Glass",
 };
 
 // Fallback materials if no palette selected or palette has no images
