@@ -136,11 +136,11 @@ const DesignerProfileSheet = ({
 
           {/* My Collections */}
           {otherPalettes.length > 0 && (
-            <div className="pb-8">
-              <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3 px-6">
+            <div className="pb-8 px-6">
+              <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">
                 My Collections
               </h4>
-              <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-6">
+              <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-6 px-6">
                 {otherPalettes.map((palette) => (
                   <button
                     key={palette.id}
@@ -161,6 +161,7 @@ const DesignerProfileSheet = ({
                     <p className="text-[10px] text-muted-foreground">{palette.temp}</p>
                   </button>
                 ))}
+                <div className="flex-shrink-0 w-6" aria-hidden="true" />
               </div>
             </div>
           )}
