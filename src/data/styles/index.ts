@@ -26,9 +26,9 @@ export const styles: Style[] = [
   },
   { 
     id: "contemporary-luxury",
-    name: "Contemporary Luxury", 
-    desc: "Bold statements",
-    promptSnippet: "rich materials, dramatic lighting, sculptural furniture, layered textures, metallic accents, statement art pieces"
+    name: "Silent Luxury", 
+    desc: "Understated elegance",
+    promptSnippet: "Take inspiration from Quiet Luxury interiors that radiate understated elegance through quality and restraint. Focus on timeless materials — fine woods, natural stone, soft wool, cashmere, and linen — paired with impeccable craftsmanship and tailored detailing. Prioritize balance, proportion, and generous negative space to create calm sophistication. Allow each piece to feel curated and intentional rather than excessive. Look at magazines Cereal, Kinfolk, Elle Decoration, and RUM for good examples."
   },
 ];
 

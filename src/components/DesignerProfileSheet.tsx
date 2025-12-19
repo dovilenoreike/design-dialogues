@@ -31,6 +31,14 @@ const defaultDesignerProfiles: Record<string, DesignerProfile> = {
     instagram: "sigita.design",
     website: "https://sigitadesign.com",
   },
+  "Athena Blackbird": {
+    name: "Athena Blackbird",
+    title: "Interior Architect",
+    bio: "Award-winning interior architect specializing in contemporary residential design. With over 15 years of experience, I create spaces that balance functionality with timeless aesthetics, drawing inspiration from natural materials and Scandinavian minimalism.",
+    email: "hello@athenablackbird.com",
+    instagram: "athenablackbird.design",
+    website: "https://athenadesign.com",
+  },
 };
 
 interface DesignerProfileSheetProps {

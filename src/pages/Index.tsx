@@ -12,8 +12,8 @@ import ResultDashboard from "@/components/ResultDashboard";
 import { FormData } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
-import { supabase } from "@/integrations/supabase/client";
 import { buildDetailedMaterialPrompt, loadMaterialImagesAsBase64 } from "@/lib/palette-utils";
+import { generateInteriorDesign } from "@/lib/openai-api";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -63,37 +63,24 @@ const Index = () => {
         console.log(`Loaded ${materialImages.length} material reference images for ${selectedCategory}`);
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-interior', {
-        body: {
-          imageBase64: uploadedImage,
-          roomCategory: selectedCategory,
-          materialPrompt: materialPrompt || null,
-          materialImages: materialImages.length > 0 ? materialImages : null,
-          stylePrompt: style?.promptSnippet,
-          freestyleDescription: freestyleDescription.trim() || null
-        }
-      });
+      // Call GPT-4 Vision + DALL-E 3 to generate the interior design image
+      const generatedImageBase64 = await generateInteriorDesign(
+        uploadedImage,
+        selectedCategory,
+        materialPrompt || null,
+        materialImages.length > 0 ? materialImages : null,
+        style?.promptSnippet || null,
+        freestyleDescription.trim() || null
+      );
 
-      if (error) {
-        console.error("Edge function error:", error);
-        toast.error("Failed to generate interior. Please try again.");
-        setIsGenerating(false);
-        return;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        setIsGenerating(false);
-        return;
-      }
-
-      if (data?.generatedImage) {
-        setGeneratedImage(data.generatedImage);
-        toast.success("Interior visualization generated!", { position: "top-center" });
-      }
-    } catch (err) {
+      // Set the generated image (already in base64 format)
+      setGeneratedImage(generatedImageBase64);
+      toast.success("Interior visualization generated!", { position: "top-center" });
+      
+    } catch (err: any) {
       console.error("Generation error:", err);
-      toast.error("An error occurred. Please try again.");
+      const errorMessage = err?.message || "An error occurred. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
