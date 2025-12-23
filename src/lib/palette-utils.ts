@@ -113,8 +113,7 @@ export async function loadMaterialImagesAsBase64(
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
-    } catch (error) {
-      console.warn(`Failed to load material image: ${key}`, error);
+    } catch {
       return null;
     }
   });

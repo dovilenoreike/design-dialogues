@@ -36,16 +36,7 @@ const MaterialMatchRequestModal = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    console.log("Material Match Request:", {
-      name,
-      email,
-      preferences,
-      freestyleDescription,
-      selectedTier,
-      generatedImage: generatedImage ? "included" : "not included",
-    });
-
+    // TODO: Replace with actual API call
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     setIsSubmitting(false);

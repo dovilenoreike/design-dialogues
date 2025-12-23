@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import TierSelector from "./TierSelector";
 import MaterialCard from "./MaterialCard";
@@ -148,7 +148,7 @@ const ResultDashboard = ({
   const [localWardrobeLength, setLocalWardrobeLength] = useState(formData?.wardrobeLength ?? 3);
 
   // Sync local state when formData changes
-  useState(() => {
+  useEffect(() => {
     if (formData) {
       setLocalArea(formData.area);
       setLocalIsRenovation(formData.isRenovation);
@@ -156,7 +156,7 @@ const ResultDashboard = ({
       setLocalKitchenLength(formData.kitchenLength);
       setLocalWardrobeLength(formData.wardrobeLength);
     }
-  });
+  }, [formData]);
 
   const handleUpdateFormData = (updates: Partial<FormData>) => {
     const newFormData: FormData = {

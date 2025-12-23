@@ -60,7 +60,6 @@ const Index = () => {
         materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
         // Load material reference images
         materialImages = await loadMaterialImagesAsBase64(palette.id, selectedCategory, palette);
-        console.log(`Loaded ${materialImages.length} material reference images for ${selectedCategory}`);
       }
 
       // Call GPT-4 Vision + DALL-E 3 to generate the interior design image
@@ -78,7 +77,6 @@ const Index = () => {
       toast.success("Interior visualization generated!", { position: "top-center" });
       
     } catch (err: any) {
-      console.error("Generation error:", err);
       const errorMessage = err?.message || "An error occurred. Please try again.";
       toast.error(errorMessage);
     } finally {

@@ -2,6 +2,8 @@
  * OpenAI GPT-4 Vision API utility functions
  */
 
+import { API_CONFIG } from "@/config/api";
+
 interface VisionMessage {
   role: "user" | "assistant" | "system";
   content: Array<{
@@ -85,17 +87,17 @@ export async function callGPT4Vision(
   ];
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(API_CONFIG.endpoints.chat, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o", // or "gpt-4-vision-preview" for older models
+        model: API_CONFIG.vision.model,
         messages,
-        max_tokens: 1000,
-        temperature: 0.7,
+        max_tokens: API_CONFIG.vision.maxTokens,
+        temperature: API_CONFIG.vision.temperature,
       }),
     });
 
@@ -118,7 +120,6 @@ export async function callGPT4Vision(
 
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("GPT-4 Vision API error:", error);
     throw error;
   }
 }
@@ -178,8 +179,6 @@ Format: Return ONLY the image generation prompt, nothing else. Make it vivid, sp
     materialImages || undefined
   );
 
-  console.log("Generated image prompt:", imageGenerationPrompt);
-
   // Step 2: Use gpt-image-1.5 (or gpt-image-1) to generate the new interior design image
   const generatedImageUrl = await generateImageWithGPTImage(imageGenerationPrompt, apiKey, false);
 
@@ -190,34 +189,34 @@ Format: Return ONLY the image generation prompt, nothing else. Make it vivid, sp
  * Generates an image using gpt-image-1.5 API (or gpt-image-1 as fallback)
  */
 async function generateImageWithGPTImage(
-  prompt: string, 
-  apiKey: string, 
-  useModel15: boolean = true
+  prompt: string,
+  apiKey: string,
+  usePrimaryModel: boolean = true
 ): Promise<string> {
-  const model = useModel15 ? "gpt-image-1.5" : "gpt-image-1";
-  
+  const { primaryModel, fallbackModel, quality, size } = API_CONFIG.imageGeneration;
+  const model = usePrimaryModel ? primaryModel : fallbackModel;
+
   try {
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
+    const response = await fetch(API_CONFIG.endpoints.images, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: model,
-        prompt: prompt,
-        quality: "low",
+        model,
+        prompt,
+        quality,
         n: 1,
-        size: "1536x1024",
+        size,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       
-      // If gpt-image-1.5 fails, try gpt-image-1 as fallback
-      if (useModel15 && response.status === 400) {
-        console.log("gpt-image-1.5 not available, trying gpt-image-1...");
+      // If primary model fails, try fallback model
+      if (usePrimaryModel && response.status === 400) {
         return generateImageWithGPTImage(prompt, apiKey, false);
       }
       
@@ -229,9 +228,8 @@ async function generateImageWithGPTImage(
     const data = await response.json();
 
     if (data.error) {
-      // If gpt-image-1.5 fails, try gpt-image-1 as fallback
-      if (useModel15 && data.error.message?.includes("model")) {
-        console.log("gpt-image-1.5 not available, trying gpt-image-1...");
+      // If primary model fails, try fallback model
+      if (usePrimaryModel && data.error.message?.includes("model")) {
         return generateImageWithGPTImage(prompt, apiKey, false);
       }
       throw new Error(data.error.message);
@@ -267,7 +265,6 @@ async function generateImageWithGPTImage(
     
     throw new Error("No image data (b64_json or url) returned from GPT-Image API");
   } catch (error) {
-    console.error("GPT-Image API error:", error);
     throw error;
   }
 }

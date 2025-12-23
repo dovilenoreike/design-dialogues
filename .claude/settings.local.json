@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(git -C \"/Users/dovilenoreike/Documents/dizaino dialogai/design-compass\" log --oneline -20)"
+    ]
+  }
+}

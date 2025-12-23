@@ -2,12 +2,7 @@ import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
 import { palettes } from "@/data/palettes";
-
-// Import thumbnail images for palette cards
-import fogInTheForestImg from "@/assets/materials/fog-in-the-forest.jpg";
-import behindTheLightsImg from "@/assets/materials/behind-the-lights.jpg";
-import chocolateWabiSabiImg from "@/assets/materials/chocolate-wabi-sabi.jpg";
-import morningForestImg from "@/assets/materials/morning-forest.jpg";
+import { paletteThumbnails } from "@/data/palettes/thumbnails";
 
 interface MaterialPaletteProps {
   selectedMaterial: string | null;
@@ -15,14 +10,6 @@ interface MaterialPaletteProps {
   freestyleDescription: string;
   onFreestyleChange: (description: string) => void;
 }
-
-// Map palette IDs to thumbnail images
-const paletteThumbnails: Record<string, string> = {
-  "fog-in-the-forest": fogInTheForestImg,
-  "behind-the-lights": behindTheLightsImg,
-  "chocolate-wabi-sabi": chocolateWabiSabiImg,
-  "morning-forest": morningForestImg,
-};
 
 type PaletteMode = "curated" | "freestyle";
 

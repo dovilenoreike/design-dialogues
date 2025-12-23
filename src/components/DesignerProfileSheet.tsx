@@ -1,25 +1,13 @@
-import { User, ChevronRight, Mail, Instagram, Globe } from "lucide-react";
+import { User, Mail, Instagram, Globe } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { palettes, getPaletteById } from "@/data/palettes";
-import type { Palette, DesignerProfile } from "@/types/palette";
-
-// Import palette thumbnails
-import fogInTheForestImg from "@/assets/materials/fog-in-the-forest.jpg";
-import behindTheLightsImg from "@/assets/materials/behind-the-lights.jpg";
-import chocolateWabiSabiImg from "@/assets/materials/chocolate-wabi-sabi.jpg";
-import morningForestImg from "@/assets/materials/morning-forest.jpg";
-
-const paletteThumbnails: Record<string, string> = {
-  "fog-in-the-forest": fogInTheForestImg,
-  "behind-the-lights": behindTheLightsImg,
-  "chocolate-wabi-sabi": chocolateWabiSabiImg,
-  "morning-forest": morningForestImg,
-};
+import { palettes } from "@/data/palettes";
+import type { DesignerProfile } from "@/types/palette";
+import { paletteThumbnails } from "@/data/palettes/thumbnails";
 
 // Default profiles for designers (can be extended)
 const defaultDesignerProfiles: Record<string, DesignerProfile> = {
