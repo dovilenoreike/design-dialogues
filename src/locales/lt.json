@@ -1,0 +1,142 @@
+{
+  "nav": {
+    "howItWorks": "Kaip tai veikia",
+    "mission": "Misija",
+    "partner": "Bendradarbiaukite",
+    "calculator": "Skaičiuoklė"
+  },
+  "header": {
+    "credits": "Kreditai"
+  },
+  "landing": {
+    "title": "Design Dialogues",
+    "subtitle": "Įkelkite savo erdvę. Atraskite savo stilių.",
+    "uploadHint": "Įkelkite kambario nuotrauką",
+    "uploadHelper": "Nuotrauka, eskizas arba planas",
+    "roomTypeDisabled": "Pasirinkite kambario tipą (po įkėlimo)",
+    "roomTypeActive": "Koks tai kambarys?",
+    "estimateBudget": "Tik biudžeto skaičiavimas"
+  },
+  "space": {
+    "kitchen": "Virtuvė",
+    "livingRoom": "Svetainė",
+    "bedroom": "Miegamasis",
+    "bathroom": "Vonios kambarys",
+    "office": "Biuras",
+    "hallway": "Prieškambaris"
+  },
+  "matrix": {
+    "title": "Dizaino Matrica",
+    "materialPalette": "Medžiagų Paletė",
+    "designerCollections": "Dizainerių Kolekcijos",
+    "createYourOwn": "Sukurkite Savo",
+    "describeMaterials": "Aprašykite norimas medžiagas...",
+    "styleCheckbox": "Noriu išbandyti konkretų stilių",
+    "architecturalStyle": "Architektūrinis Stilius",
+    "generateDesign": "Generuoti Dizainą"
+  },
+  "result": {
+    "title": "Projekto Pasas",
+    "conservativeEstimate": "Konservatyvus įvertinimas su 15% rinkos rezervu",
+    "shell": "Apdaila",
+    "joinery": "Baldai",
+    "technics": "Technika",
+    "adjustParameters": "Koreguoti Parametrus",
+    "dimensions": "Matmenys",
+    "totalArea": "Bendras Plotas",
+    "kitchenLength": "Virtuvės Ilgis",
+    "wardrobeLength": "Spintų Ilgis",
+    "conditions": "Sąlygos",
+    "renovationRequired": "Reikalinga Renovacija",
+    "services": "Paslaugos",
+    "costBreakdown": "Kainos Struktūra",
+    "disclaimer": "Visos sumos yra preliminarios sąmatos remiantis tipinėmis projekto kainomis",
+    "visualizeSpace": "Vizualizuoti Erdvę",
+    "tryAnother": "Bandyti Kitą Versiją",
+    "changeStyle": "Keisti Stilių",
+    "startFresh": "Pradėti Iš Naujo",
+    "materialManifest": "Medžiagų Sąrašas",
+    "curatedBy": "Kuruoja",
+    "requestCurated": "Užsakyti Medžiagų Sąrašą",
+    "visualizationDisclaimer": "Konceptuali vizualizacija — tikros erdvės ir medžiagos gali skirtis"
+  },
+  "tier": {
+    "budget": "Ekonominis",
+    "standard": "Standartinis",
+    "premium": "Premium",
+    "budgetDesc": "Protingi sprendimai praktiškai gyvensenai",
+    "standardDesc": "Kokybiškos medžiagos su ilgalaike verte",
+    "premiumDesc": "Išskirtinė apdaila išrankiam skoniui"
+  },
+  "service": {
+    "spacePlanning": "Erdvės Planavimas",
+    "interiorFinishes": "Interjero Apdaila",
+    "furnishingDecor": "Baldai ir Dekoras"
+  },
+  "cost": {
+    "interiorDesign": "Interjero Dizainas",
+    "constructionFinish": "Statybos ir Apdaila",
+    "materials": "Medžiagos",
+    "kitchen": "Virtuvė",
+    "wardrobes": "Spintos",
+    "appliances": "Buitinė Technika",
+    "furniture": "Baldai",
+    "renovationPrep": "Renovacijos Paruošimas",
+    "projectShell": "PROJEKTAS IR APDAILA",
+    "fixedJoinery": "ĮMONTUOTI BALDAI",
+    "movablesTech": "BALDAI IR TECHNIKA"
+  },
+  "processing": {
+    "title": "Kuriame Jūsų Viziją",
+    "generating": "Generuojamas jūsų personalizuotas dizainas...",
+    "refineQuote": "Patikslinti Kainą"
+  },
+  "footer": {
+    "copyright": "Design Dialogues",
+    "allRights": "Visos teisės saugomos."
+  },
+  "howItWorks": {
+    "title": "Kaip tai Veikia",
+    "subtitle": "Trys paprasti žingsniai vizualizuoti svajonių erdvę",
+    "step1Title": "Įkelkite Erdvę",
+    "step1Desc": "Pasidalinkite nuotrauka, eskizu ar planu",
+    "step2Title": "Pasirinkite Stilių",
+    "step2Desc": "Išsirinkite medžiagas ir architektūrinę kryptį",
+    "step3Title": "Gaukite Viziją",
+    "step3Desc": "Gaukite AI vizualizaciją ir detalią kainų sąmatą",
+    "cta": "Pradėti Kurti"
+  },
+  "mission": {
+    "title": "Misija",
+    "subtitle": "Demokratizuojame dizainą, po vieną erdvę"
+  },
+  "partner": {
+    "title": "Bendradarbiaukite",
+    "subtitle": "Prisijunkite prie mūsų dizaino profesionalų tinklo",
+    "name": "Vardas",
+    "website": "Įmonės Svetainė",
+    "profession": "Profesija",
+    "email": "El. paštas",
+    "submit": "Pateikti Paraišką",
+    "architect": "Architektas",
+    "designer": "Interjero Dizaineris",
+    "supplier": "Medžiagų Tiekėjas"
+  },
+  "designer": {
+    "workWithMe": "Dirbkime Kartu",
+    "sendInquiry": "Siųsti Užklausą",
+    "myCollections": "Mano Kolekcijos"
+  },
+  "feedback": {
+    "button": "Atsiliepimas",
+    "mobileButton": "Siųsti Atsiliepimą",
+    "title": "Padėkite mums tobulėti",
+    "description": "Nuolat tobuliname savo kainų ir dizaino sistemą. Radote klaidą ar turite idėją?",
+    "placeholder": "Jūsų atsiliepimas...",
+    "emailPlaceholder": "El. paštas (neprivaloma)",
+    "submit": "Siųsti Žinutę",
+    "sending": "Siunčiama...",
+    "success": "Ačiū už jūsų atsiliepimą!",
+    "errorEmpty": "Prašome įvesti atsiliepimą"
+  }
+}

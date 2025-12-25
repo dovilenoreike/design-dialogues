@@ -10,22 +10,30 @@ import ArchitecturalStyle from "@/components/ArchitecturalStyle";
 import ProcessingOverlay from "@/components/ProcessingOverlay";
 import ResultDashboard from "@/components/ResultDashboard";
 import { FormData } from "@/types/calculator";
+import {
+  DesignSelection,
+  GenerationState,
+  initialDesignSelection,
+  initialGenerationState,
+} from "@/types/design-state";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { buildDetailedMaterialPrompt, loadMaterialImagesAsBase64 } from "@/lib/palette-utils";
 import { generateInteriorDesign } from "@/lib/openai-api";
 
 const Index = () => {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
-  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [freestyleDescription, setFreestyleDescription] = useState<string>("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  // Grouped state for design selections
+  const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
+
+  // Grouped state for generation/processing
+  const [generation, setGeneration] = useState<GenerationState>(initialGenerationState);
+
+  // Form data from calculator (kept separate as it's passed to child)
   const [formData, setFormData] = useState<FormData | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Destructure for convenience
+  const { uploadedImage, selectedCategory, selectedMaterial, selectedStyle, freestyleDescription } = design;
+  const { isProcessing, isGenerating, showResults, generatedImage } = generation;
 
   const showDesignMatrix = uploadedImage && selectedCategory;
   // Allow generation with material selected OR freestyle description
@@ -34,14 +42,13 @@ const Index = () => {
   const handleImageUpload = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setUploadedImage(reader.result as string);
+      setDesign((prev) => ({ ...prev, uploadedImage: reader.result as string }));
     };
     reader.readAsDataURL(file);
   }, []);
 
   const handleGenerate = () => {
-    setIsProcessing(true);
-    setIsGenerating(true);
+    setGeneration((prev) => ({ ...prev, isProcessing: true, isGenerating: true }));
     generateInteriorRender();
   };
 
@@ -73,57 +80,73 @@ const Index = () => {
       );
 
       // Set the generated image (already in base64 format)
-      setGeneratedImage(generatedImageBase64);
+      setGeneration((prev) => ({ ...prev, generatedImage: generatedImageBase64 }));
       toast.success("Interior visualization generated!", { position: "top-center" });
-      
+
     } catch (err: any) {
       const errorMessage = err?.message || "An error occurred. Please try again.";
       toast.error(errorMessage);
     } finally {
-      setIsGenerating(false);
+      setGeneration((prev) => ({ ...prev, isGenerating: false }));
     }
   };
 
   const handleProcessingComplete = (data: FormData) => {
     setFormData(data);
-    setIsProcessing(false);
-    setShowResults(true);
+    setGeneration((prev) => ({ ...prev, isProcessing: false, showResults: true }));
   };
 
   const handleRegenerateVisualization = () => {
-    setShowResults(false);
-    setGeneratedImage(null);
-    setIsProcessing(true);
-    setIsGenerating(true);
+    setGeneration({
+      showResults: false,
+      generatedImage: null,
+      isProcessing: true,
+      isGenerating: true,
+    });
     generateInteriorRender();
   };
 
   const handleChangeStyle = () => {
-    setShowResults(false);
+    setGeneration((prev) => ({ ...prev, showResults: false }));
     setTimeout(() => {
       document.querySelector('#design-matrix')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
   const handleSelectPaletteFromResults = (paletteId: string) => {
-    setSelectedMaterial(paletteId);
-    setFreestyleDescription(""); // Clear freestyle if they pick a curated palette
-    setShowResults(false);
+    setDesign((prev) => ({
+      ...prev,
+      selectedMaterial: paletteId,
+      freestyleDescription: "", // Clear freestyle if they pick a curated palette
+    }));
+    setGeneration((prev) => ({ ...prev, showResults: false }));
     setTimeout(() => {
       document.querySelector('#design-matrix')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
   const handleStartFresh = () => {
-    setShowResults(false);
-    setUploadedImage(null);
-    setSelectedCategory(null);
-    setSelectedMaterial(null);
-    setSelectedStyle(null);
-    setFreestyleDescription("");
+    setDesign(initialDesignSelection);
+    setGeneration(initialGenerationState);
     setFormData(null);
-    setGeneratedImage(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Wrapper setters for child components
+  const handleSelectCategory = (category: string | null) => {
+    setDesign((prev) => ({ ...prev, selectedCategory: category }));
+  };
+
+  const handleSelectMaterial = (material: string | null) => {
+    setDesign((prev) => ({ ...prev, selectedMaterial: material }));
+  };
+
+  const handleSelectStyle = (style: string | null) => {
+    setDesign((prev) => ({ ...prev, selectedStyle: style }));
+  };
+
+  const handleFreestyleChange = (description: string) => {
+    setDesign((prev) => ({ ...prev, freestyleDescription: description }));
   };
 
   return (
@@ -161,9 +184,9 @@ const Index = () => {
             {/* Progressive disclosure: Room pills appear after upload */}
             {uploadedImage && (
               <div className="mt-4 md:mt-6 animate-fade-in">
-                <SpaceCategoryPills 
+                <SpaceCategoryPills
                   selectedCategory={selectedCategory}
-                  onSelectCategory={setSelectedCategory}
+                  onSelectCategory={handleSelectCategory}
                 />
               </div>
             )}
@@ -180,15 +203,15 @@ const Index = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <MaterialPalette 
+                <MaterialPalette
                   selectedMaterial={selectedMaterial}
-                  onSelectMaterial={setSelectedMaterial}
+                  onSelectMaterial={handleSelectMaterial}
                   freestyleDescription={freestyleDescription}
-                  onFreestyleChange={setFreestyleDescription}
+                  onFreestyleChange={handleFreestyleChange}
                 />
-                <ArchitecturalStyle 
+                <ArchitecturalStyle
                   selectedStyle={selectedStyle}
-                  onSelectStyle={setSelectedStyle}
+                  onSelectStyle={handleSelectStyle}
                 />
               </div>
 

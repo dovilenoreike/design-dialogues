@@ -1,0 +1,142 @@
+{
+  "nav": {
+    "howItWorks": "How it Works",
+    "mission": "The Mission",
+    "partner": "Partner with Us",
+    "calculator": "Calculator"
+  },
+  "header": {
+    "credits": "Credits"
+  },
+  "landing": {
+    "title": "Design Dialogues",
+    "subtitle": "Upload your space. Discover your style.",
+    "uploadHint": "Drop your room here",
+    "uploadHelper": "Photo, sketch, or floor plan",
+    "roomTypeDisabled": "Select room type (after upload)",
+    "roomTypeActive": "What room is this?",
+    "estimateBudget": "Estimate budget only"
+  },
+  "space": {
+    "kitchen": "Kitchen",
+    "livingRoom": "Living Room",
+    "bedroom": "Bedroom",
+    "bathroom": "Bathroom",
+    "office": "Office",
+    "hallway": "Hallway"
+  },
+  "matrix": {
+    "title": "The Design Matrix",
+    "materialPalette": "Material Palette",
+    "designerCollections": "Designer Collections",
+    "createYourOwn": "Create Your Own",
+    "describeMaterials": "Describe your ideal materials...",
+    "styleCheckbox": "I want to try a specific style",
+    "architecturalStyle": "Architectural Style",
+    "generateDesign": "Generate Design"
+  },
+  "result": {
+    "title": "Project Passport",
+    "conservativeEstimate": "Conservative estimate incl. 15% market buffer",
+    "shell": "Shell",
+    "joinery": "Joinery",
+    "technics": "Technics",
+    "adjustParameters": "Adjust Parameters & Breakdown",
+    "dimensions": "Dimensions",
+    "totalArea": "Total Area",
+    "kitchenLength": "Kitchen Length",
+    "wardrobeLength": "Wardrobe Length",
+    "conditions": "Conditions",
+    "renovationRequired": "Renovation Required",
+    "services": "Services",
+    "costBreakdown": "Cost Breakdown",
+    "disclaimer": "All figures are preliminary estimates based on typical project costs",
+    "visualizeSpace": "Visualize Your Space",
+    "tryAnother": "Try Another Version",
+    "changeStyle": "Change Style",
+    "startFresh": "Start Fresh",
+    "materialManifest": "Material Manifest",
+    "curatedBy": "Curated by",
+    "requestCurated": "Request Curated Material List",
+    "visualizationDisclaimer": "Conceptual visualization — actual spaces and materials may vary"
+  },
+  "tier": {
+    "budget": "Budget",
+    "standard": "Standard",
+    "premium": "Premium",
+    "budgetDesc": "Smart choices for practical living",
+    "standardDesc": "Quality materials with lasting value",
+    "premiumDesc": "Exceptional finishes for discerning taste"
+  },
+  "service": {
+    "spacePlanning": "Space Planning",
+    "interiorFinishes": "Interior Finishes",
+    "furnishingDecor": "Furnishing & Decor"
+  },
+  "cost": {
+    "interiorDesign": "Interior Design",
+    "constructionFinish": "Construction & Finish",
+    "materials": "Materials",
+    "kitchen": "Kitchen",
+    "wardrobes": "Wardrobes",
+    "appliances": "Appliances",
+    "furniture": "Furniture",
+    "renovationPrep": "Renovation Prep",
+    "projectShell": "PROJECT & SHELL",
+    "fixedJoinery": "FIXED JOINERY",
+    "movablesTech": "MOVABLES & TECH"
+  },
+  "processing": {
+    "title": "Crafting Your Vision",
+    "generating": "Generating your personalized design...",
+    "refineQuote": "Refine Your Quote"
+  },
+  "footer": {
+    "copyright": "Design Dialogues",
+    "allRights": "All rights reserved."
+  },
+  "howItWorks": {
+    "title": "How it Works",
+    "subtitle": "Three simple steps to visualize your dream space",
+    "step1Title": "Upload Your Space",
+    "step1Desc": "Share a photo, sketch, or floor plan of your room",
+    "step2Title": "Choose Your Style",
+    "step2Desc": "Select materials and architectural direction",
+    "step3Title": "Get Your Vision",
+    "step3Desc": "Receive AI visualization and detailed cost estimate",
+    "cta": "Start Designing"
+  },
+  "mission": {
+    "title": "The Mission",
+    "subtitle": "Democratizing design, one space at a time"
+  },
+  "partner": {
+    "title": "Partner with Us",
+    "subtitle": "Join our network of design professionals",
+    "name": "Name",
+    "website": "Company Website",
+    "profession": "Profession",
+    "email": "Email",
+    "submit": "Request Partnership",
+    "architect": "Architect",
+    "designer": "Interior Designer",
+    "supplier": "Material Supplier"
+  },
+  "designer": {
+    "workWithMe": "Work with Me",
+    "sendInquiry": "Send Project Inquiry",
+    "myCollections": "My Collections"
+  },
+  "feedback": {
+    "button": "Feedback",
+    "mobileButton": "Send Feedback",
+    "title": "Help us improve",
+    "description": "We are constantly tuning our pricing and design engine. Did you find a mistake, or do you have an idea?",
+    "placeholder": "Your feedback...",
+    "emailPlaceholder": "Email (optional)",
+    "submit": "Send Message",
+    "sending": "Sending...",
+    "success": "Thank you for your feedback!",
+    "errorEmpty": "Please enter your feedback"
+  }
+}
