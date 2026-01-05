@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UploadZone from "@/components/UploadZone";
@@ -22,6 +23,8 @@ import { buildDetailedMaterialPrompt, loadMaterialImagesAsBase64 } from "@/lib/p
 import { generateInteriorDesign } from "@/lib/openai-api";
 
 const Index = () => {
+  const { t } = useLanguage();
+
   // Grouped state for design selections
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
 
@@ -159,27 +162,28 @@ const Index = () => {
           <section className="max-w-4xl mx-auto mb-10 md:mb-16">
             <div className="text-center mb-8 md:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif headline-editorial mb-3 md:mb-4">
-                Design your space,<br />
-                <span className="italic">dialogue</span> with possibilities.
+                {t("landing.title")}
               </h2>
               <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-2">
-                Upload your room, choose your style, and let our AI generate 
-                personalized design solutions with accurate cost estimates.
-              </p>
-              <p className="mt-4">
-                <Link 
-                  to="/calculator" 
-                  className="inline-block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors min-h-[44px] touch-manipulation"
-                >
-                  Or estimate budget only →
-                </Link>
+                {t("landing.subtitle")}
               </p>
             </div>
 
-            <UploadZone 
+            <UploadZone
               onImageUpload={handleImageUpload}
               uploadedImage={uploadedImage}
             />
+
+            {!uploadedImage && (
+              <p className="text-center mt-6">
+                <Link
+                  to="/calculator"
+                  className="inline-block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors min-h-[44px] touch-manipulation"
+                >
+                  {t("landing.estimateBudget")} →
+                </Link>
+              </p>
+            )}
             
             {/* Progressive disclosure: Room pills appear after upload */}
             {uploadedImage && (

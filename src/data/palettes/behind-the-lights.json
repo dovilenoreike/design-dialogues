@@ -1,42 +1,44 @@
 {
   "id": "behind-the-lights",
   "name": "Behind the Lights",
-  "temp": "Warm",
-  "designer": "Sigita Kulikajeva",
-  "designerTitle": "Interior Designer",
-  "promptSnippet": "warm walnut tones, brass accents, linen textures, golden ambient lighting",
+  "designer": "Impeka komanda",
+  "designerTitle": "Other",
+  "promptSnippet": "Inspired by the lights of the theater. Keep base colour palette neutral but add decorative accents of rich brick-red colour.",
   "materials": {
     "material1": {
+      "description": "Warm smoked oak in a herringbone pattern.",
       "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
       "purpose": { "default": "Flooring", "kitchen": "Flooring" }
     },
     "material2": {
+      "description": "Graphite matte – deep grey surface with a smooth, velvety matte texture",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Vanity Top" }
+      "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinet Fronts" }
     },
     "material3": {
+      "description": "Grey marble with white veining and a calm, honed stone texture.",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+      "purpose": { "default": "Worktops"}
     },
     "material4": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Tiles", "kitchen": "Backsplash" }
+      "description": "Natural warm-toned wood with subtle vertical grain.",
+      "rooms": ["bedroom", "livingRoom", "other"],
+      "purpose": { "default": "Cabinetry"}
     },
     "material5": {
-      "rooms": ["kitchen", "bathroom", "bedroom"],
-      "purpose": { "default": "Hardware" }
+      "description": "Use dark fossil limestone tiles with organic shell inclusions and a muted bluish-grey undertone.",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Floor and wall surfaces" }
     },
     "material6": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Paint", "bedroom": "Wall Color" }
+      "description": "Deep black marble tiles featuring white veining",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas"}
     },
     "material7": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
-    },
-    "material8": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
-      "purpose": { "default": "Lighting" }
+      "description": "Rich brick-red colour matte finish.",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Drawer fronts"}
     }
   }
 }

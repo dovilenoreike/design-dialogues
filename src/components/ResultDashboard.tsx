@@ -16,11 +16,13 @@ import { getPaletteById } from "@/data/palettes";
 import type { Tier } from "@/config/tiers";
 import { tierPhilosophy } from "@/config/tiers";
 import { useCostCalculation } from "@/hooks/useCostCalculation";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   VisualizationSection,
   MaterialManifestSection,
   CostBreakdownPanel,
 } from "./result-dashboard";
+import SpacePlanningWarningModal from "./result-dashboard/SpacePlanningWarningModal";
 
 interface ResultDashboardProps {
   mode?: "full" | "calculator";
@@ -55,12 +57,15 @@ const ResultDashboard = ({
   onStartFresh,
   onSelectPalette,
 }: ResultDashboardProps) => {
+  const { t } = useLanguage();
+
   // UI state
   const [selectedTier, setSelectedTier] = useState<Tier>("Standard");
   const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [activeInsight, setActiveInsight] = useState<string | null>(null);
   const [isDesignerSheetOpen, setIsDesignerSheetOpen] = useState(false);
   const [isMaterialMatchModalOpen, setIsMaterialMatchModalOpen] = useState(false);
+  const [isSpacePlanningWarningOpen, setIsSpacePlanningWarningOpen] = useState(false);
 
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
@@ -90,6 +95,7 @@ const ResultDashboard = ({
     kitchenLength: localKitchenLength,
     wardrobeLength: localWardrobeLength,
     selectedTier,
+    t,
   });
 
   const handleUpdateFormData = (updates: Partial<FormData>) => {
@@ -111,7 +117,27 @@ const ResultDashboard = ({
   };
 
   const handleToggleService = (service: keyof ServiceSelection) => {
+    // Guard: warn if unchecking spacePlanning while interiorFinishes is checked
+    if (
+      service === "spacePlanning" &&
+      localServices.spacePlanning === true &&
+      localServices.interiorFinishes === true
+    ) {
+      setIsSpacePlanningWarningOpen(true);
+      return; // Block the toggle until user confirms
+    }
+
     const newServices = { ...localServices, [service]: !localServices[service] };
+    handleUpdateFormData({ services: newServices });
+  };
+
+  const handleKeepSpacePlanning = () => {
+    setIsSpacePlanningWarningOpen(false);
+  };
+
+  const handleAcceptRisks = () => {
+    setIsSpacePlanningWarningOpen(false);
+    const newServices = { ...localServices, spacePlanning: false };
     handleUpdateFormData({ services: newServices });
   };
 
@@ -149,7 +175,7 @@ const ResultDashboard = ({
 
         {/* Content */}
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
-          <div className={`grid gap-6 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
+          <div className={`grid grid-cols-1 gap-6 md:gap-12 ${mode === "full" ? "lg:grid-cols-2" : "max-w-xl mx-auto"}`}>
             {/* Left - Visualization (only in full mode) */}
             {mode === "full" && (
               <VisualizationSection
@@ -167,9 +193,9 @@ const ResultDashboard = ({
             {/* Right - Project Passport */}
             <div className="slide-up" style={{ animationDelay: "0.1s" }}>
               <div className="lg:sticky lg:top-24">
-                <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">Project Passport</h2>
+                <h2 className="text-2xl md:text-3xl font-serif mb-1 md:mb-2">{t("result.title")}</h2>
                 <p className="text-sm md:text-base text-muted-foreground mb-5 md:mb-8">
-                  Estimated investment for {localArea}m²
+                  {t("result.estimatedInvestment")} {localArea}m²
                 </p>
 
                 {/* Unified Card Container */}
@@ -190,28 +216,44 @@ const ResultDashboard = ({
                         €{calculation.highEstimate.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Conservative estimate incl. 15% market buffer
+                        {t("result.conservativeEstimate")}
                       </p>
+                      {calculation.designTotal > 0 && (
+                        <p className="text-xs text-text-muted mt-1">
+                          {t("result.includesDesignFee")} €{calculation.designTotal.toLocaleString()} {t("cost.interiorDesign").toLowerCase()}
+                        </p>
+                      )}
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-ds-border-subtle my-6" />
+                    <div className="border-t border-ds-border-subtle my-4" />
 
-                    {/* Stat Row - 3 Column Breakdown */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-lg font-semibold text-text-secondary">40%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Shell</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-semibold text-text-secondary">35%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Joinery</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-semibold text-text-secondary">25%</p>
-                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Technics</p>
-                      </div>
-                    </div>
+                    {/* Stat Row - 3 Column Breakdown (percentages exclude design fee) */}
+                    {(() => {
+                      const nonDesignTotal = calculation.shellTotal + calculation.joineryTotal + calculation.equipTotal;
+                      return (
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-lg font-semibold text-text-secondary">
+                              {nonDesignTotal > 0 ? Math.round((calculation.shellTotal / nonDesignTotal) * 100) : 0}%
+                            </p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.shell")}</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-text-secondary">
+                              {nonDesignTotal > 0 ? Math.round((calculation.joineryTotal / nonDesignTotal) * 100) : 0}%
+                            </p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.joinery")}</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-text-secondary">
+                              {nonDesignTotal > 0 ? Math.round((calculation.equipTotal / nonDesignTotal) * 100) : 0}%
+                            </p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.equip")}</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Cost Breakdown Panel */}
                     <CostBreakdownPanel
@@ -233,8 +275,8 @@ const ResultDashboard = ({
                   {/* Subtle Divider */}
                   <div className="border-t border-ds-border-subtle" />
 
-                  {/* Bottom Half - Material Manifest (Muted) */}
-                  <div className="bg-surface-muted p-5 md:p-6">
+                  {/* Bottom Half - Material Manifest */}
+                  <div className="bg-surface-primary p-5 md:p-6">
                     <MaterialManifestSection
                       mode={mode}
                       selectedMaterial={selectedMaterial}
@@ -278,6 +320,13 @@ const ResultDashboard = ({
         generatedImage={generatedImage || null}
         freestyleDescription={freestyleDescription || ""}
         selectedTier={selectedTier}
+      />
+
+      {/* Space Planning Warning Modal */}
+      <SpacePlanningWarningModal
+        isOpen={isSpacePlanningWarningOpen}
+        onKeepSpacePlanning={handleKeepSpacePlanning}
+        onAcceptRisks={handleAcceptRisks}
       />
     </div>
   );

@@ -1,42 +1,39 @@
 {
   "id": "chocolate-wabi-sabi",
   "name": "Chocolate Wabi-Sabi",
-  "temp": "Bold",
   "designer": "Sigita Kulikajeva",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "dark chocolate tones, black marble, brushed brass, smoked oak, imperfect beauty",
+  "promptSnippet": "Warm modern wabi-sabi aesthetic with dark chocolate tones, white marble, natural smoked oak and brushed silver accentscelebrating imperfect beauty",
   "materials": {
     "material1": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Flooring", "kitchen": "Flooring" }
+      "description": "Use a natural smoked oak flooring",
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring" }
     },
     "material2": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Vanity Top" }
+      "description": "Rich walnut veneer with deep chocolate brown tones and matte finish",
+      "rooms": ["all"],
+      "purpose": { "default": "Cabinetry"}
     },
     "material3": {
+      "description": "Soft beige, stone-textured surface",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+      "purpose": { "default": "Worktops"}
     },
     "material4": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Tiles", "kitchen": "Backsplash" }
+      "description": "Vertically milled graphite tiles",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas" }
     },
     "material5": {
-      "rooms": ["kitchen", "bathroom", "bedroom"],
-      "purpose": { "default": "Hardware" }
+      "description": "Dark graphite colour stone-textured surface tiles",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Wall and floor surfaces" }
     },
     "material6": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Paint", "bedroom": "Wall Color" }
-    },
-    "material7": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
-    },
-    "material8": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
-      "purpose": { "default": "Lighting" }
+      "description": "Smooth grey stone finish",
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Worktops"}
     }
   }
 }

@@ -172,12 +172,22 @@ Design transformation requirements:`;
 
 Format: Return ONLY the image generation prompt, nothing else. Make it vivid, specific, and suitable for image generation.`;
 
+  // Log the analysis prompt for debugging
+  console.log("=== STEP 1: GPT-4 Vision Analysis Prompt ===");
+  console.log(analysisPrompt);
+  console.log("\n");
+
   // Analyze image with GPT-4 Vision
   const imageGenerationPrompt = await callGPT4Vision(
     imageBase64,
     analysisPrompt,
     materialImages || undefined
   );
+
+  // Log the generated image prompt
+  console.log("=== STEP 2: Generated Image Prompt (from GPT-4 Vision) ===");
+  console.log(imageGenerationPrompt);
+  console.log("\n");
 
   // Step 2: Use gpt-image-1.5 (or gpt-image-1) to generate the new interior design image
   const generatedImageUrl = await generateImageWithGPTImage(imageGenerationPrompt, apiKey, false);

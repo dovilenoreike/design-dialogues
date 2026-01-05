@@ -1,42 +1,29 @@
 {
   "id": "fog-in-the-forest",
   "name": "Fog in the Forest",
-  "temp": "Cool",
   "designer": "Athena Blackbird",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "Inspired by fog in the forest. Top cabinets: garrison gray colour with blue undertone. cabinet fronts. Bottom cabinets: Matte dark brown cabinet fronts with fine horizontal wood grain. Backsplash: Dark grey marble backsplash with a dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture. Floor: Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+  "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere.",
   "materials": {
     "material1": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Flooring", "kitchen": "Flooring" }
+      "description": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring"}
     },
     "material2": {
+      "description": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Vanity Top" }
+      "purpose": { "default": "Worktop", "bathroom": "Tiles" }
     },
     "material3": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+      "description": "Garrison gray colour with blue undertone.",
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" }
     },
     "material4": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "kitchen": "Backsplash" }
-    },
-    "material5": {
-      "rooms": ["kitchen", "bathroom", "bedroom"],
-      "purpose": { "default": "Paint" }
-    },
-    "material6": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Tiles", "bedroom": "Wall Color" }
-    },
-    "material7": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
-    },
-    "material8": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
-      "purpose": { "default": "Lighting" }
+      "description": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
+      "rooms": ["all"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets" }
     }
   }
 }

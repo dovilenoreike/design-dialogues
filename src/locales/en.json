@@ -9,10 +9,10 @@
     "credits": "Credits"
   },
   "landing": {
-    "title": "Design Dialogues",
-    "subtitle": "Upload your space. Discover your style.",
-    "uploadHint": "Drop your room here",
-    "uploadHelper": "Photo, sketch, or floor plan",
+    "title": "Renovation without the guesswork.",
+    "subtitle": "Instant interior visualization paired with a realistic financial roadmap. Design with confidence, not just imagination.",
+    "uploadHint": "Upload your space",
+    "uploadHelper": "Photo, sketch, or floorplan",
     "roomTypeDisabled": "Select room type (after upload)",
     "roomTypeActive": "What room is this?",
     "estimateBudget": "Estimate budget only"
@@ -22,7 +22,7 @@
     "livingRoom": "Living Room",
     "bedroom": "Bedroom",
     "bathroom": "Bathroom",
-    "office": "Office",
+    "other": "Other",
     "hallway": "Hallway"
   },
   "matrix": {
@@ -37,11 +37,13 @@
   },
   "result": {
     "title": "Project Passport",
-    "conservativeEstimate": "Conservative estimate incl. 15% market buffer",
+    "conservativeEstimate": "Conservative estimate based on typical project costs",
+    "estimatedInvestment": "Estimated investment for",
+    "includesDesignFee": "Includes",
     "shell": "Shell",
     "joinery": "Joinery",
-    "technics": "Technics",
-    "adjustParameters": "Adjust Parameters & Breakdown",
+    "equip": "Equip",
+    "adjustParameters": "Edit Space Size & Scope",
     "dimensions": "Dimensions",
     "totalArea": "Total Area",
     "kitchenLength": "Kitchen Length",
@@ -71,7 +73,16 @@
   "service": {
     "spacePlanning": "Space Planning",
     "interiorFinishes": "Interior Finishes",
-    "furnishingDecor": "Furnishing & Decor"
+    "furnishingDecor": "Furnishing & Decor",
+    "spacePlanningBudget": "Standardized Basics. Application of generic layout rules. Focuses on the fastest, most obvious solutions to keep design time and complexity to a minimum.",
+    "spacePlanningStandard": "Ergonomic Optimization. Flow optimized for specific lifestyle habits. Involves custom zoning and solving specific spatial challenges.",
+    "spacePlanningPremium": "Complete spatial transformation. Includes moving walls, integrated joinery detailing, and advanced lighting architecture.",
+    "interiorFinishesBudget": "Single-Source Selection. Materials selected from consolidated vendors. Optimizes design hours while ensuring a clean result.",
+    "interiorFinishesStandard": "Cross-Supplier Curation. Textures matched across multiple specialized suppliers to create unique aesthetic depth.",
+    "interiorFinishesPremium": "Unrestricted Sourcing. Global procurement scope. Includes rare natural materials, trade-only surfaces, and custom elements.",
+    "furnishingDecorBudget": "Retail Specification. Selection of ready-to-ship, in-stock items from major retailers. Focuses on budget control.",
+    "furnishingDecorStandard": "Semi-Custom Mix. Blends retail items with semi-custom selections. Includes fabric matching and dimension checks.",
+    "furnishingDecorPremium": "Bespoke Commissioning. Specification of trade-only brands. Includes exact sizing, custom upholstery, and made-to-measure detailing."
   },
   "cost": {
     "interiorDesign": "Interior Design",
@@ -82,7 +93,11 @@
     "appliances": "Appliances",
     "furniture": "Furniture",
     "renovationPrep": "Renovation Prep",
+    "prepWork": "Prep Work",
+    "prepWorkTooltip": "Demolition, waste removal, and surface preparation",
+    "designProject": "DESIGN PROJECT",
     "projectShell": "PROJECT & SHELL",
+    "shellFinishes": "SHELL & FINISHES",
     "fixedJoinery": "FIXED JOINERY",
     "movablesTech": "MOVABLES & TECH"
   },

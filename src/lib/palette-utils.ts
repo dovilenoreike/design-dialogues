@@ -61,7 +61,7 @@ export function mapSpaceCategoryToRoom(spaceCategory: string): RoomCategory {
     "Bathroom": "bathroom",
     "Bedroom": "bedroom",
     "Living Room": "livingRoom",
-    "Office": "office",
+    "Other": "other",
     "Whole Home": "all",
   };
   return mapping[spaceCategory] || "all";
@@ -76,18 +76,20 @@ export function buildDetailedMaterialPrompt(
 ): string {
   const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
   const materials = getMaterialsForRoom(palette, roomCategory);
-  
+
   if (materials.length === 0) {
     return palette.promptSnippet;
   }
-  
+
+  // Build detailed material descriptions with purpose + description
   const materialDescriptions = materials.map(({ material }) => {
     const purpose = getMaterialPurpose(material, roomCategory);
-    return purpose;
+    const description = material.description || `${purpose} material`; // Fallback
+    return `- ${purpose}: ${description}`;
   });
-  
-  // Combine palette aesthetic with specific material purposes
-  return `${palette.promptSnippet}. Key materials: ${materialDescriptions.join(", ")}`;
+
+  // Combine palette aesthetic with specific material details in bullet format
+  return `${palette.promptSnippet}\n\nMaterials specification:\n${materialDescriptions.join('\n')}`;
 }
 
 /**

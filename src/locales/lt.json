@@ -9,9 +9,9 @@
     "credits": "Kreditai"
   },
   "landing": {
-    "title": "Design Dialogues",
-    "subtitle": "Įkelkite savo erdvę. Atraskite savo stilių.",
-    "uploadHint": "Įkelkite kambario nuotrauką",
+    "title": "Namų įrengimas – be spėlionių.",
+    "subtitle": "Momentinė vizualizacija ir realus finansinis planas. Kurkite namus užtikrintai, o ne tik vaizduotėje.",
+    "uploadHint": "Įkelkite savo erdvę",
     "uploadHelper": "Nuotrauka, eskizas arba planas",
     "roomTypeDisabled": "Pasirinkite kambario tipą (po įkėlimo)",
     "roomTypeActive": "Koks tai kambarys?",
@@ -22,7 +22,7 @@
     "livingRoom": "Svetainė",
     "bedroom": "Miegamasis",
     "bathroom": "Vonios kambarys",
-    "office": "Biuras",
+    "other": "Kita",
     "hallway": "Prieškambaris"
   },
   "matrix": {
@@ -38,9 +38,11 @@
   "result": {
     "title": "Projekto Pasas",
     "conservativeEstimate": "Konservatyvus įvertinimas su 15% rinkos rezervu",
+    "estimatedInvestment": "Numatoma investicija",
+    "includesDesignFee": "Įskaičiuotas",
     "shell": "Apdaila",
     "joinery": "Baldai",
-    "technics": "Technika",
+    "equip": "Įranga",
     "adjustParameters": "Koreguoti Parametrus",
     "dimensions": "Matmenys",
     "totalArea": "Bendras Plotas",
@@ -71,7 +73,16 @@
   "service": {
     "spacePlanning": "Erdvės Planavimas",
     "interiorFinishes": "Interjero Apdaila",
-    "furnishingDecor": "Baldai ir Dekoras"
+    "furnishingDecor": "Baldai ir Dekoras",
+    "spacePlanningBudget": "Standartizuoti pagrindai. Taikomos bendros išplanavimo taisyklės. Dėmesys skiriamas greičiausiems, akivaizdiems sprendimams, siekiant sumažinti dizaino laiką ir sudėtingumą.",
+    "spacePlanningStandard": "Ergonomikos optimizavimas. Srautai optimizuoti pagal konkretų gyvenimo būdą. Apima individualų zonavimą ir konkrečių erdvinių iššūkių sprendimą.",
+    "spacePlanningPremium": "Visiškas erdvės transformavimas. Apima sienų perkėlimą, integruotų baldų detalizavimą ir pažangią apšvietimo architektūrą.",
+    "interiorFinishesBudget": "Vieno šaltinio pasirinkimas. Medžiagos parenkami iš konsoliduotų tiekėjų. Optimizuoja dizaino valandas, kartu užtikrinant švarų rezultatą.",
+    "interiorFinishesStandard": "Kelių tiekėjų kuracija. Tekstūros derinamos iš kelių specializuotų tiekėjų, siekiant sukurti unikalų estetinį gylį.",
+    "interiorFinishesPremium": "Neriboti šaltiniai. Pasaulinė medžiagų apimtis. Apima retas natūralias medžiagas, prekybinės paskirties paviršius ir individualius elementus.",
+    "furnishingDecorBudget": "Mažmeninė specifikacija. Pasirenkami iš sandėlio turimų prekių iš pagrindinių prekybininkų. Dėmesys skiriamas biudžeto kontrolei.",
+    "furnishingDecorStandard": "Pusiau individualus mišinys. Derina mažmenines prekes su pusiau individualiais pasirinkimais. Apima medžiagų derinimą ir matmenų patikrinimus.",
+    "furnishingDecorPremium": "Individualus užsakymas. Tik prekybinių ženklų specifikacija. Apima tikslius matmenis, individualią apmušalų gamybą ir pagal užsakymą gaminamą detalumą."
   },
   "cost": {
     "interiorDesign": "Interjero Dizainas",
@@ -82,7 +93,11 @@
     "appliances": "Buitinė Technika",
     "furniture": "Baldai",
     "renovationPrep": "Renovacijos Paruošimas",
+    "prepWork": "Paruošiamieji Darbai",
+    "prepWorkTooltip": "Griovimas, šiukšlių šalinimas ir paviršių paruošimas",
+    "designProject": "DIZAINO PROJEKTAS",
     "projectShell": "PROJEKTAS IR APDAILA",
+    "shellFinishes": "APDAILA",
     "fixedJoinery": "ĮMONTUOTI BALDAI",
     "movablesTech": "BALDAI IR TECHNIKA"
   },

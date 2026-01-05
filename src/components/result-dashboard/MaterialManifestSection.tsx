@@ -6,8 +6,8 @@ import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import { getPaletteById } from "@/data/palettes";
-import { getMaterialPurpose } from "@/lib/palette-utils";
-import { fogMaterialImages, fogMaterialNames, defaultMaterials } from "./constants";
+import { getMaterialPurpose, getMaterialImageUrl } from "@/lib/palette-utils";
+import { defaultMaterials } from "./constants";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
@@ -27,10 +27,10 @@ const MaterialManifestSection = ({
   if (mode === "calculator") {
     // Calculator Mode - Show Visualize CTA
     return (
-      <div className="flex flex-col items-center justify-center py-4">
+      <div className="flex flex-col items-center justify-center py-6">
         <Link
           to="/"
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
         >
           <Sparkles size={16} />
           Visualize Your Space
@@ -93,19 +93,25 @@ const MaterialManifestSection = ({
 
       {/* Material List - Unified Container */}
       <div className="bg-surface-primary border border-ds-border-default rounded-xl overflow-hidden divide-y divide-ds-border-subtle">
-        {palette && palette.id === "fog-in-the-forest" ? (
-          // Use actual images for fog-in-the-forest
-          Object.entries(palette.materials).map(([key, material]) => (
-            <MaterialCard
-              key={key}
-              image={fogMaterialImages[key]}
-              title={fogMaterialNames[key] || key}
-              category={getMaterialPurpose(material)}
-              subtext="Natural Finish"
-            />
-          ))
+        {palette ? (
+          // Use dynamic image loading for any palette
+          Object.entries(palette.materials).map(([key, material]) => {
+            const imageUrl = getMaterialImageUrl(palette.id, key);
+            const materialPurpose = getMaterialPurpose(material);
+
+            return (
+              <MaterialCard
+                key={key}
+                image={imageUrl || undefined}
+                swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                title={material.description?.split('.')[0] || materialPurpose}
+                category={materialPurpose}
+                subtext="Natural Finish"
+              />
+            );
+          })
         ) : (
-          // Fallback for other palettes or no selection
+          // Fallback only when no palette is selected
           defaultMaterials.map((material, index) => (
             <MaterialCard
               key={index}

@@ -77,14 +77,14 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
         </div>
       ) : (
         <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer p-4 active:bg-secondary/50 transition-colors">
-          <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-secondary flex items-center justify-center mb-3 md:mb-4">
-            <ImageIcon size={22} className="md:w-7 md:h-7 text-muted-foreground" />
+          <div className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-secondary/60 flex items-center justify-center mb-3 md:mb-4">
+            <ImageIcon size={26} className="md:w-9 md:h-9 text-muted-foreground/60" />
           </div>
           <p className="text-sm md:text-base text-foreground font-medium mb-1 text-center">
-            Drop your room here
+            Upload your space
           </p>
           <p className="text-xs md:text-sm text-muted-foreground text-center">
-            Photo, sketch, or floor plan
+            Photo, sketch, or floorplan
           </p>
           <input
             type="file"

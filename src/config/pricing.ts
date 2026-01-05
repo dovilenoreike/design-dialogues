@@ -71,14 +71,15 @@ export const roundToHundred = (value: number): number => Math.round(value / 100)
 
 /**
  * Service card content with tier-aware descriptions
+ * @deprecated Use getServiceCardContent with translation function instead
  */
 export const serviceCardContent = {
   spacePlanning: {
     title: "Space Planning",
     descriptions: {
-      Budget: "Standardized Efficiency. Application of universal ergonomic principles. Focuses on standard layouts to minimize complexity.",
-      Standard: "Tailored Logic. Flow optimized for specific lifestyle habits. Involves custom zoning and solving specific spatial challenges.",
-      Premium: "Architectural Restructuring. Comprehensive spatial re-imagining. Includes wall reconfiguration, advanced joinery integration, and complex systems.",
+      Budget: "Standardized Basics. Application of generic layout rules. Focuses on the fastest, most obvious solutions to keep design time and complexity to a minimum.",
+      Standard: "Ergonomic Optimization. Flow optimized for specific lifestyle habits. Involves custom zoning and solving specific spatial challenges.",
+      Premium: "Complete spatial transformation. Includes moving walls, integrated joinery detailing, and advanced lighting architecture.",
     } as Record<Tier, string>,
   },
   interiorFinishes: {
@@ -98,3 +99,33 @@ export const serviceCardContent = {
     } as Record<Tier, string>,
   },
 };
+
+/**
+ * Get translated service card content
+ */
+export const getServiceCardContent = (t: (key: string) => string) => ({
+  spacePlanning: {
+    title: t("service.spacePlanning"),
+    descriptions: {
+      Budget: t("service.spacePlanningBudget"),
+      Standard: t("service.spacePlanningStandard"),
+      Premium: t("service.spacePlanningPremium"),
+    } as Record<Tier, string>,
+  },
+  interiorFinishes: {
+    title: t("service.interiorFinishes"),
+    descriptions: {
+      Budget: t("service.interiorFinishesBudget"),
+      Standard: t("service.interiorFinishesStandard"),
+      Premium: t("service.interiorFinishesPremium"),
+    } as Record<Tier, string>,
+  },
+  furnishingDecor: {
+    title: t("service.furnishingDecor"),
+    descriptions: {
+      Budget: t("service.furnishingDecorBudget"),
+      Standard: t("service.furnishingDecorStandard"),
+      Premium: t("service.furnishingDecorPremium"),
+    } as Record<Tier, string>,
+  },
+});

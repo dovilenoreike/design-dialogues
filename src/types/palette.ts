@@ -4,10 +4,11 @@ export interface MaterialPurpose {
   bathroom?: string;
   bedroom?: string;
   livingRoom?: string;
-  office?: string;
+  other?: string;
 }
 
 export interface Material {
+  description: string;
   rooms: string[];
   purpose: MaterialPurpose;
 }
@@ -32,10 +33,10 @@ export interface Palette {
   materials: Record<string, Material>;
 }
 
-export type RoomCategory = 
-  | "kitchen" 
-  | "bathroom" 
-  | "bedroom" 
-  | "livingRoom" 
-  | "office" 
+export type RoomCategory =
+  | "kitchen"
+  | "bathroom"
+  | "bedroom"
+  | "livingRoom"
+  | "other"
   | "all";

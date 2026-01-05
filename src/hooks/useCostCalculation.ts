@@ -34,6 +34,11 @@ export interface CostCalculation {
   highEstimate: number;
   groupedLineItems: CostGroup[];
   renovationCost: number;
+  // Group totals for percentage display
+  designTotal: number;
+  shellTotal: number;
+  joineryTotal: number;
+  equipTotal: number;
 }
 
 interface UseCostCalculationParams {
@@ -43,6 +48,7 @@ interface UseCostCalculationParams {
   kitchenLength: number;
   wardrobeLength: number;
   selectedTier: Tier;
+  t: (key: string) => string;
 }
 
 /**
@@ -93,30 +99,40 @@ export function useCostCalculation({
   kitchenLength,
   wardrobeLength,
   selectedTier,
+  t,
 }: UseCostCalculationParams): CostCalculation {
   return useMemo(() => {
     const tier = selectedTier;
 
     // Calculate costs based on selected services
-    // Space Planning affects Interior Design cost
-    const interiorDesign = services.spacePlanning
-      ? roundToHundred(area * designRates[tier])
+    // Interior Design cost scales with scope (each service adds to the design fee)
+    // spacePlanning = 50%, interiorFinishes = 30%, furnishingDecor = 20%
+    const scopeMultiplier =
+      (services.spacePlanning ? 0.5 : 0) +
+      (services.interiorFinishes ? 0.3 : 0) +
+      (services.furnishingDecor ? 0.2 : 0);
+    const interiorDesign = scopeMultiplier > 0
+      ? roundToHundred(area * designRates[tier] * scopeMultiplier)
       : 0;
 
-    // Interior Finishes affects Construction & Finish, Materials, Kitchen, Wardrobes, Appliances
-    const constructionFinish = services.interiorFinishes
-      ? roundToHundred(area * baseRates[tier] * 0.6)
+    // Construction & Finish: 60/40 split between services
+    // Rough Labor (60%) = wiring, plumbing, structural → Space Planning
+    // Finish Labor (40%) = painting, tiling, trim → Interior Finishes
+    const totalConstructionBase = area * baseRates[tier];
+    const roughLabor = services.spacePlanning
+      ? roundToHundred(totalConstructionBase * 0.6)
       : 0;
-
-    const builtInProducts = services.interiorFinishes
-      ? roundToHundred(area * baseRates[tier] * 0.4)
+    const finishLabor = services.interiorFinishes
+      ? roundToHundred(totalConstructionBase * 0.4)
       : 0;
+    const constructionFinish = roughLabor + finishLabor;
 
     const kitchenJoinery = services.interiorFinishes
       ? roundToHundred(kitchenLength * kitchenRates[tier])
       : 0;
 
-    const appliances = services.interiorFinishes
+    // Furnishing & Decor controls Appliances (the "soft" movables)
+    const appliances = services.furnishingDecor
       ? roundToHundred(appliancePackages[tier])
       : 0;
 
@@ -133,7 +149,6 @@ export function useCostCalculation({
     const subtotal =
       interiorDesign +
       constructionFinish +
-      builtInProducts +
       kitchenJoinery +
       appliances +
       wardrobes +
@@ -154,69 +169,82 @@ export function useCostCalculation({
     // Build grouped line items, filtering out zero-value items
     const groupedLineItems: CostGroup[] = [
       {
-        header: "PROJECT & SHELL",
+        header: t("cost.designProject"),
         items: [
-          ...(interiorDesign > 0
-            ? [
-                {
-                  label: "Interior Design",
-                  value: interiorDesign,
-                  tooltip: tierTooltips["Interior Design Project"][tier],
-                },
-              ]
-            : []),
           {
-            label: "Construction & Finish",
+            label: t("cost.interiorDesign"),
+            value: interiorDesign,
+            tooltip: tierTooltips["Interior Design Project"][tier],
+          },
+        ].filter((item) => item.value > 0),
+      },
+      {
+        header: t("cost.shellFinishes"),
+        items: [
+          {
+            label: t("cost.constructionFinish"),
             value: constructionFinish,
             tooltip: tierTooltips["Construction & Finish"][tier],
           },
-          ...(builtInProducts > 0
+          ...(renovationCost > 0
             ? [
                 {
-                  label: "Materials",
-                  value: builtInProducts,
-                  tooltip: tierTooltips["Built-in Products & Materials"][tier],
+                  label: t("cost.prepWork"),
+                  value: renovationCost,
+                  tooltip: t("cost.prepWorkTooltip"),
                 },
               ]
             : []),
         ].filter((item) => item.value > 0),
       },
       {
-        header: "FIXED JOINERY",
+        header: t("cost.fixedJoinery"),
         items: [
           {
-            label: "Kitchen",
+            label: t("cost.kitchen"),
             value: kitchenJoinery,
             tooltip: tierTooltips["Kitchen & Joinery"][tier],
           },
           {
-            label: "Wardrobes",
+            label: t("cost.wardrobes"),
             value: wardrobes,
             tooltip: tierTooltips["Built-in Wardrobes"][tier],
           },
         ].filter((item) => item.value > 0),
       },
       {
-        header: "MOVABLES & TECH",
+        header: t("cost.movablesTech"),
         items: [
           {
-            label: "Appliances",
+            label: t("cost.appliances"),
             value: appliances,
             tooltip: tierTooltips["Home Appliances"][tier],
           },
-          ...(furniture > 0
-            ? [
-                {
-                  label: "Furniture",
-                  value: furniture,
-                  tooltip: tierTooltips["Furniture (est.)"][tier],
-                },
-              ]
-            : []),
+          {
+            label: t("cost.furniture"),
+            value: furniture,
+            tooltip: tierTooltips["Furniture (est.)"][tier],
+          },
         ].filter((item) => item.value > 0),
       },
     ].filter((group) => group.items.length > 0);
 
-    return { total, lowEstimate, highEstimate, groupedLineItems, renovationCost };
-  }, [area, isRenovation, services, kitchenLength, wardrobeLength, selectedTier]);
+    // Calculate group totals for percentage display
+    const designTotal = interiorDesign;
+    const shellTotal = constructionFinish + renovationCost;
+    const joineryTotal = kitchenJoinery + wardrobes;
+    const equipTotal = appliances + furniture;
+
+    return {
+      total,
+      lowEstimate,
+      highEstimate,
+      groupedLineItems,
+      renovationCost,
+      designTotal,
+      shellTotal,
+      joineryTotal,
+      equipTotal,
+    };
+  }, [area, isRenovation, services, kitchenLength, wardrobeLength, selectedTier, t]);
 }

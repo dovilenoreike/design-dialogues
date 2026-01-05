@@ -8,8 +8,9 @@ import { Switch } from "@/components/ui/switch";
 import ServiceCard from "@/components/ServiceCard";
 import type { ServiceSelection, FormData } from "@/types/calculator";
 import type { Tier } from "@/config/tiers";
-import { serviceCardContent } from "@/config/pricing";
+import { getServiceCardContent } from "@/config/pricing";
 import type { CostCalculation } from "@/hooks/useCostCalculation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CostBreakdownPanelProps {
   isOpen: boolean;
@@ -40,6 +41,9 @@ const CostBreakdownPanel = ({
   onToggleService,
   onOpenInsight,
 }: CostBreakdownPanelProps) => {
+  const { t } = useLanguage();
+  const serviceCardContent = getServiceCardContent(t);
+
   return (
     <>
       {/* Trigger Link */}
@@ -47,7 +51,7 @@ const CostBreakdownPanel = ({
         onClick={onToggle}
         className="mt-6 text-sm text-text-tertiary hover:text-foreground transition-colors flex items-center gap-1 mx-auto touch-manipulation"
       >
-        Adjust Parameters & Breakdown
+        {t("result.adjustParameters")}
         <ChevronDown
           size={14}
           className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
@@ -61,7 +65,7 @@ const CostBreakdownPanel = ({
           {/* Area slider */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="text-xs text-muted-foreground">Total Area</label>
+              <label className="text-xs text-muted-foreground">{t("result.totalArea")}</label>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {localArea} m²
               </span>
@@ -79,7 +83,7 @@ const CostBreakdownPanel = ({
           {/* Kitchen Length slider */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="text-xs text-muted-foreground">Kitchen Length</label>
+              <label className="text-xs text-muted-foreground">{t("result.kitchenLength")}</label>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {localKitchenLength} lm
               </span>
@@ -97,7 +101,7 @@ const CostBreakdownPanel = ({
           {/* Wardrobe Length slider */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="text-xs text-muted-foreground">Built-in Wardrobes</label>
+              <label className="text-xs text-muted-foreground">{t("result.wardrobeLength")}</label>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {localWardrobeLength} lm
               </span>
@@ -115,7 +119,7 @@ const CostBreakdownPanel = ({
           {/* Renovation toggle */}
           <div className="flex items-center justify-between pt-4 mt-4 border-t border-ds-border-subtle">
             <label className="font-medium text-sm text-text-primary">
-              Renovation Required
+              {t("result.renovationRequired")}
             </label>
             <Switch
               checked={localIsRenovation}
@@ -125,7 +129,7 @@ const CostBreakdownPanel = ({
 
           {/* Service Selection Cards */}
           <div className="py-3 border-t border-ds-border-default">
-            <label className="text-xs font-medium mb-3 block">Services Included</label>
+            <label className="text-xs font-medium mb-3 block">{t("result.services")}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <ServiceCard
                 title={serviceCardContent.spacePlanning.title}
@@ -173,30 +177,8 @@ const CostBreakdownPanel = ({
               </div>
             ))}
 
-            {/* Renovation Prep (conditional) */}
-            {calculation.renovationCost > 0 && (
-              <div className="space-y-2 mt-5 pt-2 border-t border-dashed border-ds-border-default">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
-                  RENOVATION
-                </p>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-text-tertiary flex items-center">
-                    Prep Work
-                    <Info
-                      size={11}
-                      className="ml-1 text-text-subtle cursor-pointer hover:text-text-primary transition-colors"
-                      onClick={() => onOpenInsight("Prep Work")}
-                    />
-                  </span>
-                  <span className="font-medium text-text-primary tabular-nums text-right">
-                    €{calculation.renovationCost.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            )}
-
             <p className="text-[10px] text-muted-foreground pt-2 italic">
-              All figures are preliminary estimates based on typical project costs
+              {t("result.disclaimer")}
             </p>
           </div>
         </div>

@@ -1,42 +1,29 @@
 {
   "id": "morning-forest",
   "name": "Morning Forest",
-  "temp": "Clean",
-  "designer": "Sigita Kulikajeva",
+  "designer": "Athena Blackbird",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "bright white marble, light oak, soft neutrals, fresh morning light aesthetic",
+  "promptSnippet": "Inspired by the morning in the forest, colours of dark tree trunks blended with soft muted greens and pastels.",
   "materials": {
     "material1": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Flooring", "kitchen": "Flooring" }
+      "description": "Light warm-oak chevron floor with a matte finish. Soft natural wood grain, gentle colour variation, classic V-shaped pattern.",
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring"}
     },
     "material2": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Vanity Top" }
+      "description": "Matte grey-green color.",
+      "rooms": ["kitchen", "bathroom", "livingRoom"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets", "livingRoom": "Shelving" }
     },
     "material3": {
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Cabinetry", "bathroom": "Vanity" }
+      "description": "Light taupe texture a subtle vertical ribbed texture",
+      "rooms": ["kitchen", "bathroom", "livingRoom", "bedroom"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" }
     },
     "material4": {
+      "description": "Dark grey stone backsplash with a mixed mineral pattern: deep charcoal base, lighter grey veining, and scattered textured stone fragments.",
       "rooms": ["kitchen", "bathroom"],
       "purpose": { "default": "Tiles", "kitchen": "Backsplash" }
-    },
-    "material5": {
-      "rooms": ["kitchen", "bathroom", "bedroom"],
-      "purpose": { "default": "Hardware" }
-    },
-    "material6": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Paint", "bedroom": "Wall Color" }
-    },
-    "material7": {
-      "rooms": ["livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Accent", "livingRoom": "Feature Element" }
-    },
-    "material8": {
-      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "office"],
-      "purpose": { "default": "Lighting" }
     }
   }
 }
