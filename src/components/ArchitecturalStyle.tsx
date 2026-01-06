@@ -77,7 +77,7 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
                     </div>
                   )}
                 </div>
-                <div className="p-2">
+                <div className="p-2 min-h-[68px] flex flex-col justify-start">
                   <p className="font-medium text-xs">{style.name}</p>
                   <p className="text-[10px] text-muted-foreground">{style.desc}</p>
                 </div>

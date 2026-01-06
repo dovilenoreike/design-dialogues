@@ -101,7 +101,7 @@ const MaterialPalette = ({
                     )}
                   </div>
                   {/* Text below image */}
-                  <div className="p-2 text-center">
+                  <div className="p-2 text-center min-h-[60px] flex flex-col justify-start">
                     <p className="font-serif text-sm">{palette.name}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{palette.temp}</p>
                   </div>
