@@ -5,6 +5,7 @@ import artInspiredModernismImg from "@/assets/styles/art-inspired-modernism.jpg"
 import modernBrutalismImg from "@/assets/styles/modern-brutalism.png";
 import quietLuxuryImg from "@/assets/styles/quiet-luxury.jpg";
 import classicModernImg from "@/assets/styles/classic-modern.jpg";
+import scandinavianMinimalismImg from "@/assets/styles/scandinavian-minimalism.jpg";
 
 export const styles: Style[] = [
   { 
@@ -23,7 +24,7 @@ export const styles: Style[] = [
     id: "modern-brutalism",
     name: "Modern Brutalism", 
     desc: "Bold & raw",
-    promptSnippet: "Take inspiration from modern brutalism. Use some elements of exposed concrete, white plaster, stone, metal, and wood. Use concrete carefully, not overdoing. Use different shades of light and darker materials to give contrast and interest to the space.  Include clean-lined, modern furniture. Avoid decorative clutter, but incorporate thoughtful touches like a sculptural lighting, or greenery to make the space feel livable. Inspired by RUM Magazine, Openhouse, and Belgian or Italian minimalism."
+    promptSnippet: "Take inspiration from modern brutalism. Use some elements of exposed concrete, plaster, stone, metal, and wood. Use concrete carefully, not overdoing. Use different shades of light and darker materials to give contrast and interest to the space.  Include clean-lined, modern furniture. Avoid decorative clutter, but incorporate thoughtful touches like a sculptural lighting, or greenery to make the space feel livable. Inspired by RUM Magazine, Openhouse, and Belgian or Italian minimalism."
   },
   { 
     id: "quiet-luxury",
@@ -37,6 +38,12 @@ export const styles: Style[] = [
     desc: "Timeless sophistication",
     promptSnippet: "Take inspiration from classic design, but reinterpret it with a modern sensibility. Focus on timeless elegance expressed through symmetry, refined materials, and sculptural yet contemporary furniture. Use soft fabrics, and layered lighting. Architectural details like wall mouldings or framed art can appear, but in a clean, simplified form rather than ornate reproductions. Choose lighting and accessories that reference heritage without feeling antique. The atmosphere should reflect calm luxury, graceful proportions, and quiet prestige, as seen in updated classic interiors featured in Architectural Digest and Elle Decoration."
   },
+  { 
+    id: "scandinavian-minimalism",
+    name: "Scandinavian", 
+    desc: "Clean lines and natural materials",
+    promptSnippet: "Take inspiration from Scandinavian-style interior with a calm, airy atmosphere. Use natural textures such as wool throws, linen curtains, and matte ceramics. Emphasize clean lines, natural light, and cozy simplicity. Avoid bold patterns or saturated colors, unless user prefer otherwise. Focus on warmth, harmony, and space to breathe. Look at magazines RUM, Bo Bedre, Sköna Hem for good examples."
+  },
 ];
 
 export const styleImages: Record<string, string> = {
@@ -45,6 +52,7 @@ export const styleImages: Record<string, string> = {
   "modern-brutalism": modernBrutalismImg,
   "quiet-luxury": quietLuxuryImg,
   "classic-modern": classicModernImg,
+  "scandinavian-minimalism": scandinavianMinimalismImg,
 };
 
 export const getStyleById = (id: string): Style | undefined => {

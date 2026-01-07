@@ -4,6 +4,12 @@
 
 import { API_CONFIG } from "@/config/api";
 
+/**
+ * Default architectural style guidance used when no specific style is selected
+ * Provides contemporary aesthetic baseline
+ */
+const DEFAULT_STYLE_PROMPT = `Contemporary interior design with clean lines and balanced proportions. Embrace a modern aesthetic that feels current yet timeless, avoiding trends in favor of enduring design principles. Focus on spatial clarity, natural light, and thoughtful material combinations. Create spaces that are comfortable and livable while maintaining visual sophistication. Allow the materials to speak for themselves without over-styling or excessive decoration.`;
+
 interface VisionMessage {
   role: "user" | "assistant" | "system";
   content: Array<{
@@ -28,6 +34,7 @@ interface VisionResponse {
     type: string;
   };
 }
+
 
 /**
  * Calls GPT-4 Vision API to process an image and generate a design
@@ -125,157 +132,153 @@ export async function callGPT4Vision(
 }
 
 /**
- * Generates an interior design image using GPT-4 Vision analysis + gpt-image-1.5 generation
+ * Builds transformation prompt directly from user selections
+ */
+function buildTransformationPrompt(
+  roomCategory: string,
+  materialPrompt?: string,
+  stylePrompt?: string,
+  freestyleDescription?: string
+): string {
+  let prompt = `Create an interior design visualisation for this ${roomCategory}.\n\n`;
+
+  // Use provided style or default to contemporary aesthetic
+  const effectiveStylePrompt = stylePrompt || DEFAULT_STYLE_PROMPT;
+
+  // THE ARCHITECTURE section (now always included)
+  prompt += `THE ARCHITECTURE: ${effectiveStylePrompt}\n\n`;
+
+  // Add material descriptions (pass through unchanged)
+  if (materialPrompt) {
+    prompt += `THE MATERIALITY: ${materialPrompt}\n\n`;
+  }
+
+  // Add freestyle description
+  if (freestyleDescription) {
+    prompt += `${freestyleDescription} `;
+  }
+
+  // THE SYNTHESIS section (now always included)
+  prompt += `THE SYNTHESIS: Create a fusion where the architecture and materiality harmoniously blend together. The design should reflect the chosen style while showcasing the specified materials in a cohesive and visually appealing manner. Focus on balance, contrast, and how the materials enhance the overall architectural concept.`;
+
+  return prompt.trim();
+}
+
+/**
+ * Edits an image using the /v1/images/edits endpoint
+ */
+async function editImageWithGPTImage(
+  imageBase64: string,
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  // Convert base64 data URL to Blob
+  const response = await fetch(imageBase64);
+  const blob = await response.blob();
+
+  // Create File from Blob (required by API)
+  const imageFile = new File([blob], 'room.png', { type: 'image/png' });
+
+  // Build multipart form data
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('prompt', prompt);
+  formData.append('model', API_CONFIG.imageGeneration.model);
+  formData.append('size', API_CONFIG.imageGeneration.size);
+  formData.append('quality', API_CONFIG.imageGeneration.quality);
+  formData.append('n', '1');
+
+  try {
+    const apiResponse = await fetch(API_CONFIG.endpoints.imageEdits, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        // Note: Don't set Content-Type - browser sets it with multipart boundary
+      },
+      body: formData,
+    });
+
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || `Image edits API failed: ${apiResponse.statusText}`
+      );
+    }
+
+    const data = await apiResponse.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    if (!data.data || data.data.length === 0) {
+      throw new Error("No image data returned from API");
+    }
+
+    const imageData = data.data[0];
+
+    // Handle base64 response (gpt-image models return b64_json)
+    if (imageData.b64_json) {
+      return `data:image/png;base64,${imageData.b64_json}`;
+    }
+
+    // Handle URL response (if API returns URL instead)
+    if (imageData.url) {
+      const imageResponse = await fetch(imageData.url);
+      const imageBlob = await imageResponse.blob();
+
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+    }
+
+    throw new Error("No image data (b64_json or url) in API response");
+  } catch (error) {
+    console.error("Image edit failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Generates an interior design using direct prompt + image edits
  */
 export async function generateInteriorDesign(
   imageBase64: string,
   roomCategory: string,
   materialPrompt?: string | null,
-  materialImages?: string[] | null,
+  materialImages?: string[] | null,  // DEPRECATED - no longer used
   stylePrompt?: string | null,
   freestyleDescription?: string | null
 ): Promise<string> {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  
+
   if (!apiKey) {
     throw new Error("OpenAI API key not found. Please set VITE_OPENAI_API_KEY in your .env file.");
   }
 
-  // Step 1: Use GPT-4 Vision to analyze the uploaded image and create a detailed prompt
-  let analysisPrompt = `You are an expert interior designer. Analyze this ${roomCategory} image and create a detailed, specific prompt for generating a new interior design visualization.
+  // Build transformation prompt directly from user selections
+  console.log("=== Building Transformation Prompt ===");
+  const transformPrompt = buildTransformationPrompt(
+    roomCategory,
+    materialPrompt || undefined,
+    stylePrompt || undefined,
+    freestyleDescription || undefined
+  );
+  console.log(transformPrompt);
+  console.log("");
 
-Current room analysis:
-- Describe the room layout, dimensions, architectural features, and current style
-- Note lighting conditions, window placement, and spatial flow
-
-Design transformation requirements:`;
-
-  if (materialPrompt) {
-    analysisPrompt += `\n- Material palette: ${materialPrompt}`;
-  }
-
-  if (stylePrompt) {
-    analysisPrompt += `\n- Architectural style: ${stylePrompt}`;
-  }
-
-  if (freestyleDescription) {
-    analysisPrompt += `\n- Custom requirements: ${freestyleDescription}`;
-  }
-
-  analysisPrompt += `\n\nCreate a detailed, specific prompt (200-300 words) for image generation that describes:
-- The transformed room with exact material specifications
-- Furniture placement and styles
-- Color palette and finishes
-- Lighting design and ambiance
-- Decorative elements and accessories
-- Professional photography style (interior design photography, natural lighting, wide angle)
-
-Format: Return ONLY the image generation prompt, nothing else. Make it vivid, specific, and suitable for image generation.`;
-
-  // Log the analysis prompt for debugging
-  console.log("=== STEP 1: GPT-4 Vision Analysis Prompt ===");
-  console.log(analysisPrompt);
-  console.log("\n");
-
-  // Analyze image with GPT-4 Vision
-  const imageGenerationPrompt = await callGPT4Vision(
+  // Edit image using GPT-Image API
+  console.log("=== Editing Image ===");
+  const editedImage = await editImageWithGPTImage(
     imageBase64,
-    analysisPrompt,
-    materialImages || undefined
+    transformPrompt,
+    apiKey
   );
 
-  // Log the generated image prompt
-  console.log("=== STEP 2: Generated Image Prompt (from GPT-4 Vision) ===");
-  console.log(imageGenerationPrompt);
-  console.log("\n");
-
-  // Step 2: Use gpt-image-1.5 (or gpt-image-1) to generate the new interior design image
-  const generatedImageUrl = await generateImageWithGPTImage(imageGenerationPrompt, apiKey, false);
-
-  return generatedImageUrl;
-}
-
-/**
- * Generates an image using gpt-image-1.5 API (or gpt-image-1 as fallback)
- */
-async function generateImageWithGPTImage(
-  prompt: string,
-  apiKey: string,
-  usePrimaryModel: boolean = true
-): Promise<string> {
-  const { primaryModel, fallbackModel, quality, size } = API_CONFIG.imageGeneration;
-  const model = usePrimaryModel ? primaryModel : fallbackModel;
-
-  try {
-    const response = await fetch(API_CONFIG.endpoints.images, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        quality,
-        n: 1,
-        size,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      
-      // If primary model fails, try fallback model
-      if (usePrimaryModel && response.status === 400) {
-        return generateImageWithGPTImage(prompt, apiKey, false);
-      }
-      
-      throw new Error(
-        errorData.error?.message || `GPT-Image API request failed: ${response.statusText}`
-      );
-    }
-
-    const data = await response.json();
-
-    if (data.error) {
-      // If primary model fails, try fallback model
-      if (usePrimaryModel && data.error.message?.includes("model")) {
-        return generateImageWithGPTImage(prompt, apiKey, false);
-      }
-      throw new Error(data.error.message);
-    }
-
-    // gpt-image models return base64-encoded images, not URLs
-    if (!data.data || data.data.length === 0) {
-      throw new Error("No image data returned from GPT-Image API");
-    }
-
-    const imageData = data.data[0];
-    
-    // Handle base64 response (gpt-image models return b64_json)
-    if (imageData.b64_json) {
-      return `data:image/png;base64,${imageData.b64_json}`;
-    }
-    
-    // Fallback: handle URL response (if supported)
-    if (imageData.url) {
-      const imageResponse = await fetch(imageData.url);
-      const blob = await imageResponse.blob();
-      
-      return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    }
-    
-    throw new Error("No image data (b64_json or url) returned from GPT-Image API");
-  } catch (error) {
-    throw error;
-  }
+  console.log("Image edit completed successfully");
+  return editedImage;
 }
 

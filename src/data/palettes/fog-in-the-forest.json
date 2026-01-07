@@ -8,22 +8,26 @@
     "material1": {
       "description": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
-      "purpose": { "default": "Flooring"}
+      "purpose": { "default": "Flooring"},
+      "materialType": "Vinyl"
     },
     "material2": {
       "description": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Tiles" }
+      "purpose": { "default": "Worktop", "bathroom": "Tiles" },
+      "materialType": "Natural Stone"
     },
     "material3": {
       "description": "Garrison gray colour with blue undertone.",
-      "rooms": ["kitchen"],
-      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" }
+      "rooms": ["kitchen", "bathroom", "livingRoom"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" },
+      "materialType": "Laminate"
     },
     "material4": {
       "description": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
-      "rooms": ["all"],
-      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets" }
+      "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets" },
+      "materialType": "Wood Veneer"
     }
   }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { FormData, ServiceSelection } from "@/types/calculator";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProcessingOverlayProps {
   isVisible: boolean;
@@ -10,6 +11,7 @@ interface ProcessingOverlayProps {
 }
 
 const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOverlayProps) => {
+  const { t } = useLanguage();
   const [progress, setProgress] = useState(0);
   const [area, setArea] = useState(50);
   const [isRenovation, setIsRenovation] = useState(false);
@@ -64,16 +66,16 @@ const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOv
             />
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
-            {isGenerating ? "Generating your interior visualization..." : "Analyzing your space..."}
+            {isGenerating ? t("processing.generating") : t("processing.analyzing")}
           </p>
         </div>
 
         {/* Form card */}
         {formReady && (
           <div className="glass-panel rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 slide-up max-h-[70vh] overflow-y-auto">
-            <h3 className="text-lg sm:text-xl font-serif mb-1">Refine your Quote</h3>
+            <h3 className="text-lg sm:text-xl font-serif mb-1">{t("processing.refineTitle")}</h3>
             <p className="text-xs sm:text-sm text-muted-foreground mb-5 sm:mb-6">
-              Help us calculate accurately
+              {t("processing.refineSubtitle")}
             </p>
 
             {/* Area slider */}

@@ -8,7 +8,7 @@ export const API_CONFIG = {
    */
   vision: {
     model: "gpt-4o",
-    maxTokens: 1000,
+    maxTokens: 500,  // Reduced from 1000 (shorter analysis)
     temperature: 0.7,
   },
 
@@ -16,10 +16,9 @@ export const API_CONFIG = {
    * Image generation settings
    */
   imageGeneration: {
-    primaryModel: "gpt-image-1.5",
-    fallbackModel: "gpt-image-1",
-    quality: "low" as const,
+    model: "gpt-image-1",  // User's tested model
     size: "1536x1024" as const,
+    quality: "low",
   },
 
   /**
@@ -27,6 +26,6 @@ export const API_CONFIG = {
    */
   endpoints: {
     chat: "https://api.openai.com/v1/chat/completions",
-    images: "https://api.openai.com/v1/images/generations",
+    imageEdits: "https://api.openai.com/v1/images/edits",
   },
 } as const;

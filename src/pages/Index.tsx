@@ -19,7 +19,7 @@ import {
 } from "@/types/design-state";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
-import { buildDetailedMaterialPrompt, loadMaterialImagesAsBase64 } from "@/lib/palette-utils";
+import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
 import { generateInteriorDesign } from "@/lib/openai-api";
 
 const Index = () => {
@@ -64,20 +64,17 @@ const Index = () => {
 
       // Build detailed material prompt with room-specific purposes
       let materialPrompt = "";
-      let materialImages: string[] = [];
-      
+
       if (palette) {
         materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
-        // Load material reference images
-        materialImages = await loadMaterialImagesAsBase64(palette.id, selectedCategory, palette);
       }
 
-      // Call GPT-4 Vision + DALL-E 3 to generate the interior design image
+      // Call image generation with controlled Vision analysis + image edits
       const generatedImageBase64 = await generateInteriorDesign(
         uploadedImage,
         selectedCategory,
         materialPrompt || null,
-        materialImages.length > 0 ? materialImages : null,
+        null,  // Material images no longer used
         style?.promptSnippet || null,
         freestyleDescription.trim() || null
       );
@@ -245,12 +242,13 @@ const Index = () => {
       />
 
       {/* Section 4: Result Dashboard */}
-      <ResultDashboard 
+      <ResultDashboard
         isVisible={showResults}
         formData={formData}
         uploadedImage={uploadedImage}
         generatedImage={generatedImage}
         selectedMaterial={selectedMaterial}
+        selectedCategory={selectedCategory}
         selectedStyle={selectedStyle}
         freestyleDescription={freestyleDescription}
         onFormDataChange={setFormData}

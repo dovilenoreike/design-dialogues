@@ -31,6 +31,7 @@ interface ResultDashboardProps {
   uploadedImage: string | null;
   generatedImage?: string | null;
   selectedMaterial: string | null;
+  selectedCategory: string | null;
   selectedStyle: string | null;
   freestyleDescription?: string;
   onClose?: () => void;
@@ -48,6 +49,7 @@ const ResultDashboard = ({
   uploadedImage,
   generatedImage,
   selectedMaterial,
+  selectedCategory,
   selectedStyle,
   freestyleDescription,
   onClose,
@@ -280,6 +282,7 @@ const ResultDashboard = ({
                     <MaterialManifestSection
                       mode={mode}
                       selectedMaterial={selectedMaterial}
+                      selectedCategory={selectedCategory}
                       freestyleDescription={freestyleDescription || ""}
                       onOpenDesignerSheet={() => setIsDesignerSheetOpen(true)}
                       onOpenMaterialMatchModal={() => setIsMaterialMatchModalOpen(true)}

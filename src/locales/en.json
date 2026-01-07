@@ -32,7 +32,7 @@
     "createYourOwn": "Create Your Own",
     "describeMaterials": "Describe your ideal materials...",
     "styleCheckbox": "I want to try a specific style",
-    "architecturalStyle": "Architectural Style",
+    "architecturalStyle": "Interior Style",
     "generateDesign": "Generate Design"
   },
   "result": {
@@ -104,7 +104,10 @@
   "processing": {
     "title": "Crafting Your Vision",
     "generating": "Generating your personalized design...",
-    "refineQuote": "Refine Your Quote"
+    "analyzing": "Analyzing your space...",
+    "refineQuote": "Tell us about your space",
+    "refineTitle": "Tell us about your space",
+    "refineSubtitle": "While we generate your design, help us tailor the budget to your reality"
   },
   "footer": {
     "copyright": "Design Dialogues",

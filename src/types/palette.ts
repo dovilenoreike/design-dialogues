@@ -11,6 +11,7 @@ export interface Material {
   description: string;
   rooms: string[];
   purpose: MaterialPurpose;
+  materialType?: string;
 }
 
 export interface DesignerProfile {

@@ -32,7 +32,7 @@
     "createYourOwn": "Sukurkite Savo",
     "describeMaterials": "Aprašykite norimas medžiagas...",
     "styleCheckbox": "Noriu išbandyti konkretų stilių",
-    "architecturalStyle": "Architektūrinis Stilius",
+    "architecturalStyle": "Interjero Stilius",
     "generateDesign": "Generuoti Dizainą"
   },
   "result": {
@@ -104,7 +104,10 @@
   "processing": {
     "title": "Kuriame Jūsų Viziją",
     "generating": "Generuojamas jūsų personalizuotas dizainas...",
-    "refineQuote": "Patikslinti Kainą"
+    "analyzing": "Analizuojama jūsų erdvė...",
+    "refineQuote": "Papasakokite apie savo erdvę",
+    "refineTitle": "Papasakokite apie savo erdvę",
+    "refineSubtitle": "Kol generuojame jūsų dizainą, padėkite mums pritaikyti biudžetą jūsų realybei"
   },
   "footer": {
     "copyright": "Design Dialogues",

@@ -50,7 +50,7 @@ const ArchitecturalStyle = ({ selectedStyle, onSelectStyle }: ArchitecturalStyle
         <p className="text-xs md:text-sm text-muted-foreground mb-4">Define your shape</p>
         
         {/* Mobile: Horizontal scroll | Desktop: Grid */}
-        <div className="flex md:grid md:grid-cols-2 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
+        <div className="flex md:grid md:grid-cols-3 gap-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-2 md:pb-0">
           {styles.map((style) => {
             const isSelected = selectedStyle === style.id;
             

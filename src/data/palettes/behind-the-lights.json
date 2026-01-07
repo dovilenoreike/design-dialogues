@@ -3,42 +3,49 @@
   "name": "Behind the Lights",
   "designer": "Impeka komanda",
   "designerTitle": "Other",
-  "promptSnippet": "Inspired by the lights of the theater. Keep base colour palette neutral but add decorative accents of rich brick-red colour.",
+  "promptSnippet": "Inspired by the theatrical lighting. Keep base colour palette neutral but add decorative accents of rich brick-red colour.",
   "materials": {
     "material1": {
       "description": "Warm smoked oak in a herringbone pattern.",
       "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
-      "purpose": { "default": "Flooring", "kitchen": "Flooring" }
+      "purpose": { "default": "Flooring", "kitchen": "Flooring" },
+      "materialType": "Engineered Wood"
     },
     "material2": {
-      "description": "Graphite matte – deep grey surface with a smooth, velvety matte texture",
+      "description": "Graphite matte – deep dark grey surface with a smooth, velvety matte texture",
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinet Fronts" }
+      "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinet Fronts" },
+      "materialType": "Laminate"
     },
     "material3": {
       "description": "Grey marble with white veining and a calm, honed stone texture.",
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktops"}
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Worktops"},
+      "materialType": "Laminate"
     },
     "material4": {
       "description": "Natural warm-toned wood with subtle vertical grain.",
       "rooms": ["bedroom", "livingRoom", "other"],
-      "purpose": { "default": "Cabinetry"}
+      "purpose": { "default": "Cabinetry"},
+      "materialType": "Wood Veneer"
     },
     "material5": {
-      "description": "Use dark fossil limestone tiles with organic shell inclusions and a muted bluish-grey undertone.",
+      "description": "Dark fossil limestone tiles with organic shell inclusions and a muted bluish-grey undertone.",
       "rooms": ["bathroom"],
-      "purpose": { "default": "Floor and wall surfaces" }
+      "purpose": { "default": "Floor and wall surfaces" },
+      "materialType": "Ceramic Tile"
     },
     "material6": {
       "description": "Deep black marble tiles featuring white veining",
       "rooms": ["bathroom"],
-      "purpose": { "default": "Accent areas"}
+      "purpose": { "default": "Accent areas"},
+      "materialType": "Natural Stone"
     },
     "material7": {
       "description": "Rich brick-red colour matte finish.",
       "rooms": ["bathroom"],
-      "purpose": { "default": "Drawer fronts"}
+      "purpose": { "default": "Drawer fronts"},
+      "materialType": "Painted MDF"
     }
   }
 }

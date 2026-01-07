@@ -6,12 +6,13 @@ import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import { getPaletteById } from "@/data/palettes";
-import { getMaterialPurpose, getMaterialImageUrl } from "@/lib/palette-utils";
+import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom } from "@/lib/palette-utils";
 import { defaultMaterials } from "./constants";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
   selectedMaterial: string | null;
+  selectedCategory: string | null;
   freestyleDescription: string;
   onOpenDesignerSheet: () => void;
   onOpenMaterialMatchModal: () => void;
@@ -20,6 +21,7 @@ interface MaterialManifestSectionProps {
 const MaterialManifestSection = ({
   mode,
   selectedMaterial,
+  selectedCategory,
   freestyleDescription,
   onOpenDesignerSheet,
   onOpenMaterialMatchModal,
@@ -94,22 +96,29 @@ const MaterialManifestSection = ({
       {/* Material List - Unified Container */}
       <div className="bg-surface-primary border border-ds-border-default rounded-xl overflow-hidden divide-y divide-ds-border-subtle">
         {palette ? (
-          // Use dynamic image loading for any palette
-          Object.entries(palette.materials).map(([key, material]) => {
-            const imageUrl = getMaterialImageUrl(palette.id, key);
-            const materialPurpose = getMaterialPurpose(material);
+          // Filter materials by room category
+          (() => {
+            const roomCategory = selectedCategory
+              ? mapSpaceCategoryToRoom(selectedCategory)
+              : "all";
+            const filteredMaterials = getMaterialsForRoom(palette, roomCategory);
 
-            return (
-              <MaterialCard
-                key={key}
-                image={imageUrl || undefined}
-                swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                title={material.description?.split('.')[0] || materialPurpose}
-                category={materialPurpose}
-                subtext="Natural Finish"
-              />
-            );
-          })
+            return filteredMaterials.map(({ key, material }) => {
+              const imageUrl = getMaterialImageUrl(palette.id, key);
+              const materialPurpose = getMaterialPurpose(material, roomCategory);
+
+              return (
+                <MaterialCard
+                  key={key}
+                  image={imageUrl || undefined}
+                  swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                  title={material.description?.split('.')[0] || materialPurpose}
+                  category={materialPurpose}
+                  subtext={material.materialType || "Natural Finish"}
+                />
+              );
+            });
+          })()
         ) : (
           // Fallback only when no palette is selected
           defaultMaterials.map((material, index) => (
