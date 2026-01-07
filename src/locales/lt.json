@@ -156,5 +156,50 @@
     "sending": "Siunčiama...",
     "success": "Ačiū už jūsų atsiliepimą!",
     "errorEmpty": "Prašome įvesti atsiliepimą"
+  },
+  "timeline": {
+    "title": "Projekto Trukmė: ~{weeks} Savaitės",
+    "subtitle": "Apskaičiuota pradedant nuo šiandien ({date})",
+    "tabFinancial": "Finansinis Pasas",
+    "tabTimeline": "Vykdymo Planas",
+    "phases": {
+      "prep": {
+        "title": "Pasiruošimas",
+        "site": "Leidimai ir Planavimas"
+      },
+      "vision": {
+        "title": "Vizija",
+        "site": "Matavimai"
+      },
+      "logistics": {
+        "title": "Logistika",
+        "site": "Griovimas"
+      },
+      "rough": {
+        "title": "Šiurkštūs Darbai",
+        "site": "Elektra/Vandentiekis"
+      },
+      "finishes": {
+        "title": "Apdaila",
+        "site": "Plytelės/Dažymas"
+      }
+    },
+    "tasks": {
+      "apply-permits": "Prašyti Leidimų",
+      "asbestos-test": "Užsakyti Asbesto Testą",
+      "demo-plan": "Patvirtinti Griovimo Planą",
+      "hire-designer": "Samdyti Dizainerį",
+      "approve-budget": "Patvirtinti Biudžetą",
+      "hire-contractor": "Samdyti Rangovą",
+      "order-tiles": "Užsakyti Plyteles",
+      "order-doors": "Užsakyti Duris",
+      "order-kitchen": "Užsakyti Virtuvę",
+      "hire-carpenter": "Samdyti Dailidę",
+      "book-cleaning": "Rezervuoti Valymą"
+    },
+    "labels": {
+      "onSite": "Objekte",
+      "myTasks": "Mano Užduotys"
+    }
   }
 }

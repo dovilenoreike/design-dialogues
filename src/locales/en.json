@@ -156,5 +156,50 @@
     "sending": "Sending...",
     "success": "Thank you for your feedback!",
     "errorEmpty": "Please enter your feedback"
+  },
+  "timeline": {
+    "title": "Project Duration: ~{weeks} Weeks",
+    "subtitle": "Calculated based on starting today ({date})",
+    "tabFinancial": "Financial Passport",
+    "tabTimeline": "Execution Roadmap",
+    "phases": {
+      "prep": {
+        "title": "Preparation",
+        "site": "Permits & Planning"
+      },
+      "vision": {
+        "title": "The Vision",
+        "site": "Measurements"
+      },
+      "logistics": {
+        "title": "Logistics",
+        "site": "Demolition"
+      },
+      "rough": {
+        "title": "Rough Works",
+        "site": "Electrical/Plumbing"
+      },
+      "finishes": {
+        "title": "Finishes",
+        "site": "Tiling/Painting"
+      }
+    },
+    "tasks": {
+      "apply-permits": "Apply for Permits",
+      "asbestos-test": "Schedule Asbestos Test",
+      "demo-plan": "Finalize Demolition Plan",
+      "hire-designer": "Hire Designer",
+      "approve-budget": "Approve Budget",
+      "hire-contractor": "Hire Contractor",
+      "order-tiles": "Order Tiles",
+      "order-doors": "Order Doors",
+      "order-kitchen": "Order Kitchen",
+      "hire-carpenter": "Hire Carpenter",
+      "book-cleaning": "Book Cleaning"
+    },
+    "labels": {
+      "onSite": "On Site",
+      "myTasks": "My Tasks"
+    }
   }
 }

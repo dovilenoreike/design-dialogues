@@ -6,7 +6,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Download, Share2, X } from "lucide-react";
-import TierSelector from "./TierSelector";
 import { CostInsightSheet } from "./CostInsightSheet";
 import Footer from "./Footer";
 import MaterialMatchRequestModal from "./MaterialMatchRequestModal";
@@ -14,13 +13,15 @@ import DesignerProfileSheet from "./DesignerProfileSheet";
 import { FormData, ServiceSelection } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import type { Tier } from "@/config/tiers";
-import { tierPhilosophy } from "@/config/tiers";
 import { useCostCalculation } from "@/hooks/useCostCalculation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   VisualizationSection,
   MaterialManifestSection,
-  CostBreakdownPanel,
+  PassportTabs,
+  PassportTabPanel,
+  BudgetView,
+  TimelineView,
 } from "./result-dashboard";
 import SpacePlanningWarningModal from "./result-dashboard/SpacePlanningWarningModal";
 
@@ -202,76 +203,35 @@ const ResultDashboard = ({
 
                 {/* Unified Card Container */}
                 <div className="border border-ds-border-default rounded-2xl overflow-hidden">
-                  {/* Top Half - Financials (White) */}
+                  {/* Top Half - Tabs + Content */}
                   <div className="bg-surface-primary p-5 md:p-6">
-                    {/* Tier Selector */}
-                    <TierSelector selectedTier={selectedTier} onSelectTier={setSelectedTier} />
+                    <PassportTabs defaultTab="financial">
+                      <PassportTabPanel value="financial">
+                        <BudgetView
+                          selectedTier={selectedTier}
+                          onSelectTier={setSelectedTier}
+                          localArea={localArea}
+                          localIsRenovation={localIsRenovation}
+                          localServices={localServices}
+                          localKitchenLength={localKitchenLength}
+                          localWardrobeLength={localWardrobeLength}
+                          calculation={calculation}
+                          isRefineOpen={isRefineOpen}
+                          setIsRefineOpen={setIsRefineOpen}
+                          onUpdateFormData={handleUpdateFormData}
+                          onToggleService={handleToggleService}
+                          onOpenInsight={setActiveInsight}
+                        />
+                      </PassportTabPanel>
 
-                    {/* Tier Philosophy */}
-                    <p className="text-sm text-text-muted italic py-6 text-center">
-                      {tierPhilosophy[selectedTier]}
-                    </p>
-
-                    {/* Conservative Estimate */}
-                    <div className="text-center">
-                      <p className="text-4xl md:text-5xl font-serif tabular-nums">
-                        €{calculation.highEstimate.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {t("result.conservativeEstimate")}
-                      </p>
-                      {calculation.designTotal > 0 && (
-                        <p className="text-xs text-text-muted mt-1">
-                          {t("result.includesDesignFee")} €{calculation.designTotal.toLocaleString()} {t("cost.interiorDesign").toLowerCase()}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-ds-border-subtle my-4" />
-
-                    {/* Stat Row - 3 Column Breakdown (percentages exclude design fee) */}
-                    {(() => {
-                      const nonDesignTotal = calculation.shellTotal + calculation.joineryTotal + calculation.equipTotal;
-                      return (
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div>
-                            <p className="text-lg font-semibold text-text-secondary">
-                              {nonDesignTotal > 0 ? Math.round((calculation.shellTotal / nonDesignTotal) * 100) : 0}%
-                            </p>
-                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.shell")}</p>
-                          </div>
-                          <div>
-                            <p className="text-lg font-semibold text-text-secondary">
-                              {nonDesignTotal > 0 ? Math.round((calculation.joineryTotal / nonDesignTotal) * 100) : 0}%
-                            </p>
-                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.joinery")}</p>
-                          </div>
-                          <div>
-                            <p className="text-lg font-semibold text-text-secondary">
-                              {nonDesignTotal > 0 ? Math.round((calculation.equipTotal / nonDesignTotal) * 100) : 0}%
-                            </p>
-                            <p className="text-[10px] text-text-muted uppercase tracking-wide">{t("result.equip")}</p>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Cost Breakdown Panel */}
-                    <CostBreakdownPanel
-                      isOpen={isRefineOpen}
-                      onToggle={() => setIsRefineOpen(!isRefineOpen)}
-                      localArea={localArea}
-                      localIsRenovation={localIsRenovation}
-                      localServices={localServices}
-                      localKitchenLength={localKitchenLength}
-                      localWardrobeLength={localWardrobeLength}
-                      selectedTier={selectedTier}
-                      calculation={calculation}
-                      onUpdateFormData={handleUpdateFormData}
-                      onToggleService={handleToggleService}
-                      onOpenInsight={setActiveInsight}
-                    />
+                      <PassportTabPanel value="timeline">
+                        <TimelineView
+                          selectedTier={selectedTier}
+                          isRenovation={localIsRenovation}
+                          services={localServices}
+                        />
+                      </PassportTabPanel>
+                    </PassportTabs>
                   </div>
 
                   {/* Subtle Divider */}
