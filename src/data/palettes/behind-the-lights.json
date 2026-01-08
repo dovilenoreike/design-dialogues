@@ -3,7 +3,7 @@
   "name": "Behind the Lights",
   "designer": "Impeka komanda",
   "designerTitle": "Other",
-  "promptSnippet": "Inspired by the theatrical lighting. Keep base colour palette neutral but add decorative accents of rich brick-red colour.",
+  "promptSnippet": "Inspired by the theatrical lighting. Keep base colour palette neutral but add decor details of black and rich brick-red colour.",
   "materials": {
     "material1": {
       "description": "Warm smoked oak in a herringbone pattern.",
@@ -13,7 +13,7 @@
     },
     "material2": {
       "description": "Graphite matte – deep dark grey surface with a smooth, velvety matte texture",
-      "rooms": ["kitchen", "bathroom"],
+      "rooms": ["kitchen", "bathroom", "bedroom", "livingRoom", "other"],
       "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinet Fronts" },
       "materialType": "Laminate"
     },
