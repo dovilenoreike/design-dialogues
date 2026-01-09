@@ -5,14 +5,32 @@ interface TimelinePhaseCardProps {
   phase: TimelinePhase;
   isFirst?: boolean;
   isLast?: boolean;
+  phaseState?: { isActive: boolean; isUrgent: boolean };
 }
 
 export const TimelinePhaseCard = ({
   phase,
   isFirst,
-  isLast
+  isLast,
+  phaseState
 }: TimelinePhaseCardProps) => {
   const { t } = useLanguage();
+
+  const getTaskButtonStyle = (task: any, phaseState: any) => {
+    const { isActive } = phaseState || {};
+
+    // Active phase styling (black)
+    if (isActive) {
+      return task.buttonVariant === "solid"
+        ? "bg-foreground text-background hover:opacity-90"  // Black
+        : "border border-foreground text-foreground hover:bg-neutral-50";  // Black border
+    }
+
+    // Future tasks (muted gray)
+    return task.buttonVariant === "solid"
+      ? "bg-neutral-200 text-neutral-600 hover:opacity-90"  // Gray
+      : "border border-ds-border-default text-text-muted hover:bg-neutral-50";  // Gray outline
+  };
 
   return (
     <div className="relative">
@@ -45,13 +63,10 @@ export const TimelinePhaseCard = ({
                 className={`
                   px-3 py-1.5 rounded-full text-xs font-medium transition-all
                   touch-manipulation active:scale-95
-                  ${task.buttonVariant === "solid"
-                    ? "bg-foreground text-background hover:opacity-90"
-                    : "border border-ds-border-default text-foreground hover:bg-neutral-50"
-                  }
+                  ${getTaskButtonStyle(task, phaseState)}
                 `}
               >
-                {task.isCritical && (
+                {phaseState?.isUrgent && (
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-2" />
                 )}
                 {task.label}

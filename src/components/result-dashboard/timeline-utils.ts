@@ -1,4 +1,4 @@
-import { addWeeks, format, startOfDay } from "date-fns";
+import { addWeeks, format, startOfDay, subDays, subWeeks } from "date-fns";
 import type { Tier } from "@/config/tiers";
 import type { ServiceSelection } from "@/types/calculator";
 import type { TimelineCalculation, TimelinePhase, TimelineTask } from "@/types/timeline";
@@ -17,13 +17,32 @@ export function calculateTimeline(
   isRenovation: boolean,
   services: ServiceSelection,
   t: (key: string) => string,
-  startDate: Date = new Date()
+  options?: {
+    startDate?: Date;      // For forward calculation (from start date)
+    moveInDate?: Date;     // For backward calculation (from move-in date)
+  }
 ): TimelineCalculation {
   const config = TIER_DURATIONS[tier];
   const phases: TimelinePhase[] = [];
   let currentWeek = 1;
 
-  const normalizedStart = startOfDay(startDate);
+  // Calculate total weeks including renovation if needed
+  const totalWeeks = isRenovation
+    ? config.totalWeeks + RENOVATION_PREP_WEEKS
+    : config.totalWeeks;
+
+  // Determine start date based on calculation direction
+  let normalizedStart: Date;
+  if (options?.moveInDate) {
+    // Backward calculation: subtract total weeks from move-in date
+    normalizedStart = startOfDay(subWeeks(options.moveInDate, totalWeeks));
+  } else if (options?.startDate) {
+    // Forward calculation: use provided start date
+    normalizedStart = startOfDay(options.startDate);
+  } else {
+    // Default: forward calculation from today
+    normalizedStart = startOfDay(new Date());
+  }
 
   // Phase 0: Renovation Prep (conditional)
   if (isRenovation) {
@@ -90,10 +109,19 @@ export function calculateTimeline(
       t
     )
   );
+  currentWeek += config.phases.phase4Weeks;
 
-  const totalWeeks = isRenovation
-    ? config.totalWeeks + RENOVATION_PREP_WEEKS
-    : config.totalWeeks;
+  // Phase 5: Assembly
+  phases.push(
+    createPhase(
+      PHASE_TEMPLATES.phase5,
+      currentWeek,
+      currentWeek + config.phases.phase5Weeks - 1,
+      normalizedStart,
+      services,
+      t
+    )
+  );
 
   return {
     totalWeeks,
@@ -145,4 +173,30 @@ function createPhase(
  */
 function formatDateRange(start: Date, end: Date): string {
   return `${format(start, "MMM dd")} - ${format(end, "MMM dd")}`;
+}
+
+/**
+ * Calculate phase states based on current date
+ * Returns isActive (current phase) and isUrgent (3 days before or overdue)
+ */
+export function calculatePhaseStates(
+  phases: TimelinePhase[],
+  timelineStartDate: Date,
+  today: Date = new Date()
+): Map<string, { isActive: boolean; isUrgent: boolean }> {
+  const stateMap = new Map();
+  const normalizedToday = startOfDay(today);
+
+  phases.forEach(phase => {
+    const phaseStartDate = addWeeks(timelineStartDate, phase.weekStart - 1);
+    const phaseEndDate = addWeeks(timelineStartDate, phase.weekEnd);
+    const urgentThreshold = subDays(phaseEndDate, 3); // 3 days before end
+
+    const isActive = normalizedToday >= phaseStartDate && normalizedToday <= phaseEndDate;
+    const isUrgent = normalizedToday >= urgentThreshold; // Within 3 days or past end
+
+    stateMap.set(phase.id, { isActive, isUrgent });
+  });
+
+  return stateMap;
 }

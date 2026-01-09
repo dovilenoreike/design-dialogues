@@ -10,27 +10,30 @@ export const TIER_DURATIONS: Record<Tier, TierDurationConfig> = {
     totalWeeks: 10,
     phases: {
       phase1Weeks: 2,
-      phase2Weeks: 2,
+      phase2Weeks: 1,
       phase3Weeks: 3,
-      phase4Weeks: 3
+      phase4Weeks: 2,
+      phase5Weeks: 2
     },
   },
   Standard: {
     totalWeeks: 14,
     phases: {
-      phase1Weeks: 3,
-      phase2Weeks: 3,
+      phase1Weeks: 2,
+      phase2Weeks: 2,
       phase3Weeks: 4,
-      phase4Weeks: 4
+      phase4Weeks: 3,
+      phase5Weeks: 3
     },
   },
   Premium: {
     totalWeeks: 24,
     phases: {
-      phase1Weeks: 5,
-      phase2Weeks: 5,
-      phase3Weeks: 7,
-      phase4Weeks: 7
+      phase1Weeks: 4,
+      phase2Weeks: 3,
+      phase3Weeks: 6,
+      phase4Weeks: 6,
+      phase5Weeks: 5
     },
   },
 };
@@ -54,25 +57,31 @@ export const PHASE_TEMPLATES = {
     id: "phase-1",
     titleKey: "timeline.phases.vision.title",
     siteStatusKey: "timeline.phases.vision.site",
-    tasks: ["hire-designer", "approve-budget"],
+    tasks: ["hire-designer", "approve-concept", "approve-technical"],
   },
   phase2: {
     id: "phase-2",
     titleKey: "timeline.phases.logistics.title",
     siteStatusKey: "timeline.phases.logistics.site",
-    tasks: ["hire-contractor", "order-tiles"],
+    tasks: ["hire-contractor", "order-tiles-plumbing"],
   },
   phase3: {
     id: "phase-3",
-    titleKey: "timeline.phases.rough.title",
-    siteStatusKey: "timeline.phases.rough.site",
-    tasks: ["order-doors", "order-kitchen"],
+    titleKey: "timeline.phases.infrastructure.title",
+    siteStatusKey: "timeline.phases.infrastructure.site",
+    tasks: ["order-doors", "order-kitchen-joinery", "socket-walkthrough"],
   },
   phase4: {
     id: "phase-4",
     titleKey: "timeline.phases.finishes.title",
     siteStatusKey: "timeline.phases.finishes.site",
-    tasks: ["hire-carpenter", "book-cleaning"],
+    tasks: ["order-flooring", "buy-lighting", "schedule-cleaners"],
+  },
+  phase5: {
+    id: "phase-5",
+    titleKey: "timeline.phases.assembly.title",
+    siteStatusKey: "timeline.phases.assembly.site",
+    tasks: ["order-sofa-curtains", "defect-check"],
   },
 };
 
@@ -94,46 +103,69 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
     buttonVariant: "solid"
   },
 
-  // Phase 1
+  // Phase 1: Vision
   "hire-designer": {
     id: "hire-designer",
     buttonVariant: "solid",
     requiresService: "spacePlanning",
   },
-  "approve-budget": {
-    id: "approve-budget",
+  "approve-concept": {
+    id: "approve-concept",
     buttonVariant: "outline"
   },
+  "approve-technical": {
+    id: "approve-technical",
+    buttonVariant: "outline",
+  },
 
-  // Phase 2
+  // Phase 2: Logistics
   "hire-contractor": {
     id: "hire-contractor",
     buttonVariant: "solid",
-    isCritical: true,
   },
-  "order-tiles": {
-    id: "order-tiles",
+  "order-tiles-plumbing": {
+    id: "order-tiles-plumbing",
     buttonVariant: "outline"
   },
 
-  // Phase 3
+  // Phase 3: Infrastructure
   "order-doors": {
     id: "order-doors",
     buttonVariant: "outline"
   },
-  "order-kitchen": {
-    id: "order-kitchen",
-    buttonVariant: "solid"
-  },
-
-  // Phase 4
-  "hire-carpenter": {
-    id: "hire-carpenter",
-    buttonVariant: "outline",
+  "order-kitchen-joinery": {
+    id: "order-kitchen-joinery",
+    buttonVariant: "solid",
     requiresService: "interiorFinishes",
   },
-  "book-cleaning": {
-    id: "book-cleaning",
-    buttonVariant: "solid"
+  "socket-walkthrough": {
+    id: "socket-walkthrough",
+    buttonVariant: "outline",
+  },
+
+  // Phase 4: Finishes
+  "order-flooring": {
+    id: "order-flooring",
+    buttonVariant: "outline"
+  },
+  "buy-lighting": {
+    id: "buy-lighting",
+    buttonVariant: "outline"
+  },
+  "schedule-cleaners": {
+    id: "schedule-cleaners",
+    buttonVariant: "outline"
+  },
+
+  // Phase 5: Assembly
+  "order-sofa-curtains": {
+    id: "order-sofa-curtains",
+    buttonVariant: "outline",
+    requiresService: "furnishingDecor",
+  },
+  "defect-check": {
+    id: "defect-check",
+    buttonVariant: "outline",
+    isCritical: true,
   },
 };

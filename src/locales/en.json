@@ -159,7 +159,7 @@
   },
   "timeline": {
     "title": "Project Duration: ~{weeks} Weeks",
-    "subtitle": "Calculated based on starting today ({date})",
+    "subtitle": "Calculated based on starting on ({date})",
     "tabFinancial": "Financial Passport",
     "tabTimeline": "Execution Roadmap",
     "phases": {
@@ -169,37 +169,54 @@
       },
       "vision": {
         "title": "The Vision",
-        "site": "Measurements"
+        "site": "Key Handover / Site Measurement"
       },
       "logistics": {
         "title": "Logistics",
-        "site": "Demolition"
+        "site": "Demolition / Material Delivery / Site Prep"
       },
-      "rough": {
-        "title": "Rough Works",
-        "site": "Electrical/Plumbing"
+      "infrastructure": {
+        "title": "Infrastructure",
+        "site": "Wall chasing (electrics), Pipe laying, Plastering"
       },
       "finishes": {
         "title": "Finishes",
-        "site": "Tiling/Painting"
+        "site": "Tiling, Priming, Final Painting"
+      },
+      "assembly": {
+        "title": "Assembly",
+        "site": "Flooring install, Door install, Kitchen assembly"
       }
     },
     "tasks": {
       "apply-permits": "Apply for Permits",
       "asbestos-test": "Schedule Asbestos Test",
       "demo-plan": "Finalize Demolition Plan",
-      "hire-designer": "Hire Designer",
-      "approve-budget": "Approve Budget",
-      "hire-contractor": "Hire Contractor",
-      "order-tiles": "Order Tiles",
-      "order-doors": "Order Doors",
-      "order-kitchen": "Order Kitchen",
-      "hire-carpenter": "Hire Carpenter",
-      "book-cleaning": "Book Cleaning"
+      "hire-designer": "Hire Interior Designer",
+      "approve-concept": "Approve Design Concept",
+      "approve-technical": "Approve Technical Plans",
+      "hire-contractor": "Hire General Contractor",
+      "order-tiles-plumbing": "Order Tiles & Plumbing",
+      "order-doors": "Order Interior Doors",
+      "order-kitchen-joinery": "Order Kitchen & Joinery",
+      "socket-walkthrough": "Socket Walkthrough",
+      "order-flooring": "Order Flooring",
+      "buy-lighting": "Buy Lighting & Switches",
+      "schedule-cleaners": "Schedule Cleaners",
+      "order-sofa-curtains": "Order Sofa & Curtains",
+      "defect-check": "Defect Check (Snagging)"
     },
     "labels": {
       "onSite": "On Site",
       "myTasks": "My Tasks"
+    },
+    "moveIn": {
+      "title": "Target Move-In Date",
+      "selectDate": "Select Date",
+      "changeDate": "Change Date",
+      "notSet": "Not set",
+      "warning": "Some tasks are overdue - move-in date may need to shift",
+      "noConflicts": "Timeline aligns with your move-in date"
     }
   }
 }

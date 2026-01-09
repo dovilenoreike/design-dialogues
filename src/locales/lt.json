@@ -159,7 +159,7 @@
   },
   "timeline": {
     "title": "Projekto Trukmė: ~{weeks} Savaitės",
-    "subtitle": "Apskaičiuota pradedant nuo šiandien ({date})",
+    "subtitle": "Apskaičiuota pradedant nuo ({date})",
     "tabFinancial": "Finansinis Pasas",
     "tabTimeline": "Vykdymo Planas",
     "phases": {
@@ -169,37 +169,54 @@
       },
       "vision": {
         "title": "Vizija",
-        "site": "Matavimai"
+        "site": "Raktų perdavimas / Matavimai"
       },
       "logistics": {
         "title": "Logistika",
-        "site": "Griovimas"
+        "site": "Griovimas / Medžiagų pristatymas / Paruošimas"
       },
-      "rough": {
-        "title": "Šiurkštūs Darbai",
-        "site": "Elektra/Vandentiekis"
+      "infrastructure": {
+        "title": "Infrastruktūra",
+        "site": "Sienų gręžimas (elektra), Vamzdžiai, Tinkavimas"
       },
       "finishes": {
         "title": "Apdaila",
-        "site": "Plytelės/Dažymas"
+        "site": "Plytelės, Gruntas, Galutinis dažymas"
+      },
+      "assembly": {
+        "title": "Montavimas",
+        "site": "Grindų klojimas, Durų montavimas, Virtuvės surinkimas"
       }
     },
     "tasks": {
       "apply-permits": "Prašyti Leidimų",
       "asbestos-test": "Užsakyti Asbesto Testą",
       "demo-plan": "Patvirtinti Griovimo Planą",
-      "hire-designer": "Samdyti Dizainerį",
-      "approve-budget": "Patvirtinti Biudžetą",
-      "hire-contractor": "Samdyti Rangovą",
-      "order-tiles": "Užsakyti Plyteles",
-      "order-doors": "Užsakyti Duris",
-      "order-kitchen": "Užsakyti Virtuvę",
-      "hire-carpenter": "Samdyti Dailidę",
-      "book-cleaning": "Rezervuoti Valymą"
+      "hire-designer": "Samdyti Interjero Dizainerį",
+      "approve-concept": "Patvirtinti Dizaino Koncepciją",
+      "approve-technical": "Patvirtinti Techninius Planus",
+      "hire-contractor": "Samdyti Generalinį Rangovą",
+      "order-tiles-plumbing": "Užsakyti Plyteles ir Santechniką",
+      "order-doors": "Užsakyti Vidaus Duris",
+      "order-kitchen-joinery": "Užsakyti Virtuvę ir Baldus",
+      "socket-walkthrough": "Rozetės Apžiūra",
+      "order-flooring": "Užsakyti Grindų dangą",
+      "buy-lighting": "Pirkti Apšvietimą ir Jungiklius",
+      "schedule-cleaners": "Rezervuoti Valytojus",
+      "order-sofa-curtains": "Užsakyti Sofą ir Užuolaidas",
+      "defect-check": "Defektų Patikrinimas"
     },
     "labels": {
       "onSite": "Objekte",
       "myTasks": "Mano Užduotys"
+    },
+    "moveIn": {
+      "title": "Planuojama Įkraustymo Data",
+      "selectDate": "Pasirinkti Datą",
+      "changeDate": "Keisti Datą",
+      "notSet": "Nenustatyta",
+      "warning": "Kai kurios užduotys vėluoja - įkraustymo data gali pasikeisti",
+      "noConflicts": "Grafikas atitinka jūsų įkraustymo datą"
     }
   }
 }

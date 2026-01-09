@@ -44,5 +44,6 @@ export interface TierDurationConfig {
     phase2Weeks: number;
     phase3Weeks: number;
     phase4Weeks: number;
+    phase5Weeks: number;
   };
 }

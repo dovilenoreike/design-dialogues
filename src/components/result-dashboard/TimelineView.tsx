@@ -1,9 +1,10 @@
-import { useMemo } from "react";
-import { format } from "date-fns";
+import { useMemo, useState } from "react";
+import { format, addMonths } from "date-fns";
 import type { Tier } from "@/config/tiers";
 import type { ServiceSelection } from "@/types/calculator";
-import { calculateTimeline } from "./timeline-utils";
+import { calculateTimeline, calculatePhaseStates } from "./timeline-utils";
 import { TimelinePhaseCard } from "./TimelinePhaseCard";
+import { MoveInDateCard } from "./MoveInDateCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TimelineViewProps {
@@ -19,10 +20,28 @@ const TimelineView = ({
 }: TimelineViewProps) => {
   const { t } = useLanguage();
 
+  // Initialize move-in date to 3 months from today
+  const [moveInDate, setMoveInDate] = useState<Date>(() => {
+    const today = new Date();
+    return addMonths(today, 3);
+  });
+
   const timeline = useMemo(
-    () => calculateTimeline(selectedTier, isRenovation, services, t),
-    [selectedTier, isRenovation, services, t]
+    () => calculateTimeline(selectedTier, isRenovation, services, t, { moveInDate }),
+    [selectedTier, isRenovation, services, t, moveInDate]
   );
+
+  // Calculate phase states based on current date
+  const stateMap = useMemo(
+    () => calculatePhaseStates(timeline.phases, timeline.startDate),
+    [timeline.phases, timeline.startDate]
+  );
+
+  // Check if ANY phase is overdue (for move-in date warning)
+  const hasOverdueTasks = Array.from(stateMap.values()).some(state => {
+    // A phase is overdue if it's urgent but NOT active (passed its end date)
+    return state.isUrgent && !state.isActive;
+  });
 
   return (
     <div>
@@ -52,8 +71,17 @@ const TimelineView = ({
               phase={phase}
               isFirst={index === 0}
               isLast={index === timeline.phases.length - 1}
+              phaseState={stateMap.get(phase.id)}
             />
           ))}
+
+          {/* Move-in date milestone */}
+          <MoveInDateCard
+            moveInDate={moveInDate}
+            onDateChange={setMoveInDate}
+            hasConflicts={hasOverdueTasks}
+            minDate={new Date()}
+          />
         </div>
       </div>
     </div>
