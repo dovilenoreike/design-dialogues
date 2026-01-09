@@ -17,9 +17,9 @@ export const TIER_DURATIONS: Record<Tier, TierDurationConfig> = {
     },
   },
   Standard: {
-    totalWeeks: 14,
+    totalWeeks: 15,
     phases: {
-      phase1Weeks: 2,
+      phase1Weeks: 3,
       phase2Weeks: 2,
       phase3Weeks: 4,
       phase4Weeks: 3,
@@ -131,7 +131,7 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
   // Phase 3: Infrastructure
   "order-doors": {
     id: "order-doors",
-    buttonVariant: "outline"
+    buttonVariant: "solid"
   },
   "order-kitchen-joinery": {
     id: "order-kitchen-joinery",
