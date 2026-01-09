@@ -3,7 +3,7 @@
   "name": "Fog in the Forest",
   "designer": "Athena Blackbird",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere.",
+  "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere. Wall in white.",
   "materials": {
     "material1": {
       "description": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
@@ -20,13 +20,13 @@
     "material3": {
       "description": "Garrison gray colour with blue undertone.",
       "rooms": ["kitchen", "bathroom", "livingRoom"],
-      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" },
+      "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
       "materialType": "Laminate"
     },
     "material4": {
       "description": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
       "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
-      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets" },
+      "purpose": { "default": "Cabinet Furniture", "kitchen": "Bottom cabinets" },
       "materialType": "Wood Veneer"
     }
   }
