@@ -6,8 +6,9 @@ import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import { getPaletteById } from "@/data/palettes";
-import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom } from "@/lib/palette-utils";
+import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
 import { defaultMaterials } from "./constants";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
@@ -26,6 +27,8 @@ const MaterialManifestSection = ({
   onOpenDesignerSheet,
   onOpenMaterialMatchModal,
 }: MaterialManifestSectionProps) => {
+  const { language } = useLanguage();
+
   if (mode === "calculator") {
     // Calculator Mode - Show Visualize CTA
     return (
@@ -106,13 +109,14 @@ const MaterialManifestSection = ({
             return filteredMaterials.map(({ key, material }) => {
               const imageUrl = getMaterialImageUrl(palette.id, key);
               const materialPurpose = getMaterialPurpose(material, roomCategory);
+              const description = getMaterialDescription(material, language);
 
               return (
                 <MaterialCard
                   key={key}
                   image={imageUrl || undefined}
                   swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                  title={material.description?.split('.')[0] || materialPurpose}
+                  title={description?.split('.')[0] || materialPurpose}
                   category={materialPurpose}
                   subtext={material.materialType || "Natural Finish"}
                 />

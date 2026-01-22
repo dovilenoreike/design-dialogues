@@ -19,7 +19,7 @@ export const MoveInDateCard = ({
   hasConflicts,
   minDate,
 }: MoveInDateCardProps) => {
-  const { t } = useLanguage();
+  const { t, dateLocale } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -31,19 +31,23 @@ export const MoveInDateCard = ({
 
   return (
     <div className="relative">
-      {/* Timeline dot - green for milestone */}
-      <div className="absolute -left-6 top-2 w-3 h-3 rounded-full bg-green-600 border-2 border-background" />
+      {/* Timeline dot - color based on conflict state */}
+      <div className={`absolute -left-8 top-2 w-3 h-3 rounded-full border-2 border-background ${
+        hasConflicts ? "bg-[#9A3412]" : "bg-[#647d75]"
+      }`} />
 
       {/* Card */}
       <div className="bg-white border border-ds-border-default rounded-xl p-4 md:p-5">
         <div className="space-y-3">
           {/* Icon and Date Display */}
           <div className="flex items-start gap-3">
-            <Home className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+            <Home className={`w-6 h-6 flex-shrink-0 mt-1 ${
+              hasConflicts ? "text-[#9A3412]" : "text-[#647d75]"
+            }`} />
             <div className="flex-1">
               {moveInDate ? (
                 <p className="text-2xl font-serif font-bold text-foreground">
-                  {format(moveInDate, "MMMM dd, yyyy")}
+                  {format(moveInDate, "MMMM dd, yyyy", { locale: dateLocale })}
                 </p>
               ) : (
                 <p className="text-2xl font-serif font-bold text-text-muted">
@@ -74,9 +78,11 @@ export const MoveInDateCard = ({
                 key={moveInDate?.getTime() || "no-date"}
                 mode="single"
                 selected={moveInDate || undefined}
+                defaultMonth={moveInDate || undefined}
                 onSelect={handleDateSelect}
                 disabled={(date) => date < minDate}
                 initialFocus
+                fixedWeeks
               />
             </PopoverContent>
           </Popover>
@@ -86,8 +92,8 @@ export const MoveInDateCard = ({
             <div
               className={`flex items-start gap-2 p-3 rounded-lg ${
                 hasConflicts
-                  ? "bg-red-50 text-red-700"
-                  : "bg-green-50 text-green-700"
+                  ? "bg-red-50 text-[#9A3412]"
+                  : "bg-[#647d75]/10 text-[#647d75]"
               }`}
             >
               {hasConflicts ? (

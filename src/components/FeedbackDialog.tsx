@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { sendEmail } from "@/lib/send-email";
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -31,15 +32,18 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate submission - replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast.success(t("feedback.success"));
-    setFeedback("");
-    setEmail("");
-    setIsSubmitting(false);
-    onOpenChange(false);
+
+    try {
+      await sendEmail("feedback", { feedback, email });
+      toast.success(t("feedback.success"));
+      setFeedback("");
+      setEmail("");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Failed to send. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -13,11 +13,12 @@ export const API_CONFIG = {
   },
 
   /**
+   * 
    * Image generation settings
    */
   imageGeneration: {
     model: "gpt-image-1",  // User's tested model
-    size: "1536x1024" as const,
+    size: "1024x1024" as const,
     quality: "low",
   },
 

@@ -1,0 +1,45 @@
+{
+  "id": "morning-mist",
+  "name": "Morning Mist",
+  "designer": "Athena Blackbird",
+  "designerTitle": "Interior Designer",
+  "promptSnippet": "Inspired by the morning in the forest, colours of dark tree trunks blended with soft muted greens and pastels. Walls in light taupe.",
+  "materials": {
+    "material1": {
+      "description": {
+        "en": "Light warm-oak chevron floor with a matte finish. Soft natural wood grain, gentle colour variation, classic V-shaped pattern.",
+        "lt": "Šviesios šilto ąžuolo eglutės rašto grindys su matiniu paviršiumi. Švelni natūrali medienos tekstūra, subtilus spalvų kitimas, klasikinis V formos raštas."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Engineered Wood"
+    },
+    "material2": {
+      "description": {
+        "en": "Matte grey-green color.",
+        "lt": "Matinė pilkai žalia spalva."
+      },
+      "rooms": ["kitchen", "bathroom", "livingRoom"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets", "livingRoom": "Shelving" },
+      "materialType": "Laminate"
+    },
+    "material3": {
+      "description": {
+        "en": "Light taupe texture a subtle vertical ribbed texture",
+        "lt": "Šviesi pilkšvai ruda tekstūra su subtiliu vertikaliu rievėjimu"
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom"],
+      "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" },
+      "materialType": "Laminate"
+    },
+    "material4": {
+      "description": {
+        "en": "Dark grey stone with a mixed mineral pattern: deep charcoal base, lighter grey veining, and scattered textured stone fragments.",
+        "lt": "Tamsiai pilkas akmuo su mišriu mineraliniu raštu: gili anglies bazė, šviesesnės pilkos gyslelės ir išsibarsčiusios tekstūruoto akmens dalelės."
+      },
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": { "default": "Tiles", "kitchen": "Backsplash" },
+      "materialType": "Ceramic Tile"
+    }
+  }
+}

@@ -6,37 +6,55 @@
   "promptSnippet": "Inspired by warm modern wabi-sabi aesthetic vibe with dark chocolate tones, white marble, natural smoked oak and brushed silver accents",
   "materials": {
     "material1": {
-      "description": "Natural light smoked oak flooring",
+      "description": {
+        "en": "Natural light smoked oak flooring",
+        "lt": "Natūralios šviesiai rūkyto ąžuolo grindys"
+      },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring" },
       "materialType": "Engineered Wood"
     },
     "material2": {
-      "description": "Rich walnut veneer with deep chocolate brown tones and matte finish",
+      "description": {
+        "en": "Rich walnut veneer with deep chocolate brown tones and matte finish",
+        "lt": "Sodrus riešutmedžio lukštas su giliais šokolado rudos tonais ir matiniu paviršiumi"
+      },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry" },
       "materialType": "Wood Veneer"
     },
     "material3": {
-      "description": "Soft beige, stone-textured surface",
+      "description": {
+        "en": "Soft beige, stone-textured surface",
+        "lt": "Švelniai smėlinis, akmens tekstūros paviršius"
+      },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops"},
       "materialType": "Natural Stone"
     },
     "material4": {
-      "description": "Vertically striped graphite tiles",
+      "description": {
+        "en": "Vertically striped graphite tiles",
+        "lt": "Vertikaliai dryžuotos grafito plytelės"
+      },
       "rooms": ["bathroom"],
       "purpose": { "default": "Accent areas" },
       "materialType": "Ceramic Tile"
     },
     "material5": {
-      "description": "Dark graphite colour stone-textured surface tiles",
+      "description": {
+        "en": "Dark graphite colour stone-textured surface tiles",
+        "lt": "Tamsiai grafito spalvos akmens tekstūros paviršiaus plytelės"
+      },
       "rooms": ["bathroom"],
       "purpose": { "default": "Wall and floor surfaces" },
       "materialType": "Ceramic Tile"
     },
     "material6": {
-      "description": "Smooth grey stone finish",
+      "description": {
+        "en": "Smooth grey stone finish",
+        "lt": "Lygus pilko akmens paviršius"
+      },
       "rooms": ["bathroom"],
       "purpose": { "default": "Worktops"},
       "materialType": "Natural Stone"

@@ -7,8 +7,13 @@ export interface MaterialPurpose {
   other?: string;
 }
 
+export interface LocalizedString {
+  en: string;
+  lt: string;
+}
+
 export interface Material {
-  description: string;
+  description: string | LocalizedString;
   rooms: string[];
   purpose: MaterialPurpose;
   materialType?: string;
@@ -18,6 +23,7 @@ export interface DesignerProfile {
   name: string;
   title: string;
   bio: string;
+  styles: string[];
   email?: string;
   instagram?: string;
   website?: string;

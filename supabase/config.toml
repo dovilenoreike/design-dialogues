@@ -1,4 +1,7 @@
-project_id = "ocgbsmaeoauueotddffs"
+project_id = "nimrggpqcvgpgdmcermb"
 
 [functions.generate-interior]
+verify_jwt = false
+
+[functions.send-email]
 verify_jwt = false

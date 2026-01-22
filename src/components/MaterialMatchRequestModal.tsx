@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { sendEmail } from "@/lib/send-email";
 
 interface MaterialMatchRequestModalProps {
   isOpen: boolean;
@@ -36,21 +37,34 @@ const MaterialMatchRequestModal = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    // TODO: Replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      await sendEmail("material-request", {
+        name,
+        email,
+        preferences,
+        freestyleDescription,
+        selectedTier,
+      });
 
-    setIsSubmitting(false);
-    onClose();
-    
-    toast({
-      title: "Request Sent",
-      description: "Our designers will get back to you with a curated material selection.",
-    });
+      toast({
+        title: "Request Sent",
+        description: "Our designers will get back to you with a curated material selection.",
+      });
 
-    // Reset form
-    setName("");
-    setEmail("");
-    setPreferences("");
+      // Reset form
+      setName("");
+      setEmail("");
+      setPreferences("");
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Truncate the freestyle description for display

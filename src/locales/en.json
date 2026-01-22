@@ -19,11 +19,70 @@
   },
   "space": {
     "kitchen": "Kitchen",
+    "kitchenAcc": "Kitchen",
     "livingRoom": "Living Room",
+    "livingRoomAcc": "Living Room",
     "bedroom": "Bedroom",
+    "bedroomAcc": "Bedroom",
     "bathroom": "Bathroom",
+    "bathroomAcc": "Bathroom",
     "other": "Other",
-    "hallway": "Hallway"
+    "otherAcc": "Other",
+    "hallway": "Hallway",
+    "hallwayAcc": "Hallway"
+  },
+  "tabs": {
+    "design": "Design",
+    "specs": "Specs",
+    "budget": "Budget",
+    "plan": "Plan"
+  },
+  "modes": {
+    "rooms": "Rooms",
+    "styles": "Styles",
+    "palettes": "Palettes"
+  },
+  "palette": {
+    "fog-in-the-forest": "Fog in the Forest",
+    "behind-the-lights": "Behind the Lights",
+    "morning-mist": "Morning Mist",
+    "chocolate-wabi-sabi": "Chocolate Wabi-Sabi",
+    "art-inspired-modernism": "Art-Inspired Modernism",
+    "quiet-luxury": "Quiet Luxury",
+    "day-by-the-sea": "Day by the Sea"
+  },
+  "style": {
+    "japandi": "Japandi",
+    "art-inspired-modernism": "Art-Inspired Modernism",
+    "modern-brutalism": "Modern Brutalism",
+    "quiet-luxury": "Quiet Luxury",
+    "classic-modern": "Classic Modern",
+    "scandinavian-minimalism": "Scandinavian"
+  },
+  "specs": {
+    "emptyTitle": "No Materials Selected",
+    "emptyDescription": "Select a palette from the Design tab to see your material specifications here.",
+    "freestyleTitle": "Your Vision",
+    "freestyleSubtitle": "Custom palette",
+    "requestMaterials": "Request Curated Material List"
+  },
+  "material": {
+    "purpose": {
+      "Flooring": "Flooring",
+      "Worktop": "Worktop",
+      "Tiles": "Tiles",
+      "Shelving": "Shelving",
+      "Top cabinets": "Top cabinets",
+      "Bottom cabinets": "Bottom cabinets",
+      "Cabinet Furniture": "Cabinet Furniture"
+    },
+    "type": {
+      "Vinyl": "Vinyl",
+      "Natural Stone": "Natural Stone",
+      "Laminate": "Laminate",
+      "Wood Veneer": "Wood Veneer",
+      "Metal": "Metal"
+    }
   },
   "matrix": {
     "title": "The Design Matrix",
@@ -37,12 +96,12 @@
   },
   "result": {
     "title": "Project Passport",
-    "conservativeEstimate": "Conservative estimate based on typical project costs",
+    "conservativeEstimate": "Estimate of a typical project",
     "estimatedInvestment": "Estimated investment for",
-    "includesDesignFee": "Includes",
+    "includesDesignFee": "Includes designer fee",
     "shell": "Shell",
     "joinery": "Joinery",
-    "equip": "Equip",
+    "equip": "Furniture",
     "adjustParameters": "Edit Space Size & Scope",
     "dimensions": "Dimensions",
     "totalArea": "Total Area",
@@ -60,7 +119,12 @@
     "materialManifest": "Material Manifest",
     "curatedBy": "Curated by",
     "requestCurated": "Request Curated Material List",
-    "visualizationDisclaimer": "Conceptual visualization — actual spaces and materials may vary"
+    "visualizationDisclaimer": "Conceptual visualization — actual spaces and materials may vary",
+    "seeDetails": "See Details",
+    "budgetDetails": "Budget Details",
+    "total": "Total",
+    "whatsIncluded": "What's Included",
+    "notIncluded": "Not included"
   },
   "tier": {
     "budget": "Budget",
@@ -74,15 +138,15 @@
     "spacePlanning": "Space Planning",
     "interiorFinishes": "Interior Finishes",
     "furnishingDecor": "Furnishing & Decor",
-    "spacePlanningBudget": "Standardized Basics. Application of generic layout rules. Focuses on the fastest, most obvious solutions to keep design time and complexity to a minimum.",
-    "spacePlanningStandard": "Ergonomic Optimization. Flow optimized for specific lifestyle habits. Involves custom zoning and solving specific spatial challenges.",
-    "spacePlanningPremium": "Complete spatial transformation. Includes moving walls, integrated joinery detailing, and advanced lighting architecture.",
-    "interiorFinishesBudget": "Single-Source Selection. Materials selected from consolidated vendors. Optimizes design hours while ensuring a clean result.",
-    "interiorFinishesStandard": "Cross-Supplier Curation. Textures matched across multiple specialized suppliers to create unique aesthetic depth.",
-    "interiorFinishesPremium": "Unrestricted Sourcing. Global procurement scope. Includes rare natural materials, trade-only surfaces, and custom elements.",
-    "furnishingDecorBudget": "Retail Specification. Selection of ready-to-ship, in-stock items from major retailers. Focuses on budget control.",
-    "furnishingDecorStandard": "Semi-Custom Mix. Blends retail items with semi-custom selections. Includes fabric matching and dimension checks.",
-    "furnishingDecorPremium": "Bespoke Commissioning. Specification of trade-only brands. Includes exact sizing, custom upholstery, and made-to-measure detailing."
+    "spacePlanningBudget": "Standardized Efficiency. Application of universal ergonomic principles. Focuses on standard layouts to minimize construction complexity and decision time. Estimate Allocation: Basic design documentation fees plus essential rough construction labor (minimal demolition/rewiring).",
+    "spacePlanningStandard": "Ergonomic Optimization. Custom zoning and spatial logic tailored to lifestyle habits. Estimate Allocation: Professional design fees plus rough construction labor (Demolition, Electrics, Plumbing).",
+    "spacePlanningPremium": "Architectural Restructuring. Comprehensive spatial re-imagining. Includes wall reconfiguration, advanced joinery integration, and complex system planning. Estimate Allocation: Architectural design fees plus heavy structural labor (Demolition, new framing, advanced systems).",
+    "interiorFinishesBudget": "Single-Source Selection. Materials selected from consolidated vendors or pre-set palettes to optimize costs and logistics. Estimate Allocation: Specification fees, purchase of standard materials (Laminate, Stock Tiles), and standard installation labor.",
+    "interiorFinishesStandard": "Material Curation & Layouts. Matching textures across suppliers and creating technical tile/flooring schemes. Estimate Allocation: Design documentation fees, purchase of hard materials (Floors, Tiles), and installation labor.",
+    "interiorFinishesPremium": "Unrestricted Sourcing. Global procurement scope. Includes rare natural materials, trade-only surfaces, and complex detailing (e.g., shadow gaps). Estimate Allocation: Detailed technical documentation fees, purchase of luxury materials, and artisan-level installation labor.",
+    "furnishingDecorBudget": "Retail Specification. Selection of ready-to-ship, in-stock items from major retailers. Focuses on budget control and immediate availability. Estimate Allocation: Shopping list creation fees plus purchase costs for retail furniture and lighting.",
+    "furnishingDecorStandard": "Semi-Custom Selection. A cohesive shopping list blending retail items with specific fabric/finish choices. Estimate Allocation: Styling/Sourcing fees plus purchase costs for movable furniture, lighting, and textiles.",
+    "furnishingDecorPremium": "Bespoke Commissioning. Specification of trade-only brands and custom pieces. Includes exact sizing, custom upholstery, and made-to-measure detailing. Estimate Allocation: Procurement & management fees plus purchase costs for trade-only furniture, custom lighting, and fabrics."
   },
   "cost": {
     "interiorDesign": "Interior Design",
@@ -98,8 +162,8 @@
     "designProject": "DESIGN PROJECT",
     "projectShell": "PROJECT & SHELL",
     "shellFinishes": "SHELL & FINISHES",
-    "fixedJoinery": "FIXED JOINERY",
-    "movablesTech": "MOVABLES & TECH"
+    "fixedJoinery": "FIXED JOINERY & TECH",
+    "movablesTech": "MOVABLES"
   },
   "processing": {
     "title": "Crafting Your Vision",
@@ -115,35 +179,72 @@
   },
   "howItWorks": {
     "title": "How it Works",
-    "subtitle": "Three simple steps to visualize your dream space",
-    "step1Title": "Upload Your Space",
-    "step1Desc": "Share a photo, sketch, or floor plan of your room",
-    "step2Title": "Choose Your Style",
-    "step2Desc": "Select materials and architectural direction",
-    "step3Title": "Get Your Vision",
-    "step3Desc": "Receive AI visualization and detailed cost estimate",
+    "heroTitle": "Renovation Without Guesswork",
+    "heroSubtitle": "Interior planning in four simple steps.",
+    "step": "Step",
+    "step1Title": "Design",
+    "step1Desc": "Browse curated palettes and styles. Upload your space to see it transformed with AI visualization.",
+    "step2Title": "Specs",
+    "step2Desc": "View detailed material specifications curated by professional designers. Know exactly what goes where.",
+    "step3Title": "Budget",
+    "step3Desc": "Get a realistic cost breakdown by tier. Adjust parameters to match your space and scope.",
+    "step4Title": "Plan",
+    "step4Desc": "See your project timeline from start to move-in. Track tasks and milestones along the way.",
     "cta": "Start Designing"
   },
   "mission": {
     "title": "The Mission",
-    "subtitle": "Democratizing design, one space at a time"
+    "subtitle": "Democratizing design, one space at a time",
+    "headline": "Democratizing Professional Design.",
+    "paragraph1": "Home renovation is one of the most significant investments a person makes—yet the process remains frustratingly opaque. Budgets spiral without warning. Contractors quote wildly different numbers. Homeowners feel lost before they've even begun.",
+    "paragraph2": "We believe technology can change this. By analyzing thousands of completed projects, material costs, and market rates, we've built a system that brings transparency to what has always been a guessing game.",
+    "paragraph3": "Our tool doesn't replace architects or designers—it empowers homeowners to approach professionals with realistic expectations, clear budgets, and a visual language for what they want. It levels the playing field.",
+    "paragraph4": "This is professional-grade planning, accessible to everyone. No more fear. No more surprises. Just clarity from day one.",
+    "founderNote": "Built by a tech founder obsessed with design."
   },
   "partner": {
     "title": "Partner with Us",
     "subtitle": "Join our network of design professionals",
+    "headline": "Connect with Prepared Clients.",
+    "heroSubtitle": "Join our network of architects, designers, and material suppliers.",
+    "valueProp1": "Receive briefs with verified budgets.",
+    "valueProp2": "Skip the education phase—clients come with technical plans ready.",
+    "valueProp3": "Showcase your materials in our digital palette.",
+    "formTitle": "Request Partnership",
     "name": "Name",
+    "namePlaceholder": "Your name",
     "website": "Company Website",
+    "websitePlaceholder": "https://yourcompany.com",
     "profession": "Profession",
+    "professionPlaceholder": "Select your profession",
     "email": "Email",
+    "emailPlaceholder": "you@company.com",
+    "message": "Message",
+    "messagePlaceholder": "Tell us about your business and how you'd like to collaborate...",
     "submit": "Request Partnership",
-    "architect": "Architect",
+    "submitting": "Submitting...",
+    "successMessage": "Partnership request submitted! We'll be in touch soon.",
+    "contractor": "Contractor",
+    "carpenter": "Carpenter",
     "designer": "Interior Designer",
     "supplier": "Material Supplier"
   },
   "designer": {
     "workWithMe": "Work with Me",
     "sendInquiry": "Send Project Inquiry",
-    "myCollections": "My Collections"
+    "myCollections": "My Collections",
+    "curatedPalettes": "Curated Palettes",
+    "contactForProject": "Contact for Project",
+    "contactTitle": "Contact {name}",
+    "contactDescription": "Send a project inquiry to discuss your interior design needs.",
+    "formName": "Your Name",
+    "formEmail": "Your Email",
+    "formProject": "About Your Project",
+    "formProjectPlaceholder": "Tell us about your space, timeline, and design goals...",
+    "sendInquiryButton": "Send Inquiry",
+    "sending": "Sending...",
+    "successTitle": "Inquiry Sent!",
+    "successDescription": "{name} will get back to you soon."
   },
   "feedback": {
     "button": "Feedback",
@@ -160,6 +261,8 @@
   "timeline": {
     "title": "Project Duration: ~{weeks} Weeks",
     "subtitle": "Calculated based on starting on ({date})",
+    "subtitleFromToday": "Project starts today",
+    "subtitleFromMoveIn": "Calculated based on move-in date {date}",
     "tabFinancial": "Financial Passport",
     "tabTimeline": "Execution Roadmap",
     "phases": {
@@ -217,6 +320,37 @@
       "notSet": "Not set",
       "warning": "Some tasks are overdue - move-in date may need to shift",
       "noConflicts": "Timeline aligns with your move-in date"
+    }
+  },
+  "budget": {
+    "kitchen": "Kitchen",
+    "wardrobe": "Wardrobe",
+    "renovation": "Renovation"
+  },
+  "mobile": {
+    "stage": {
+      "designingThe": "Designing the {room}",
+      "uploadPrompt": "Upload a photo, sketch, or floor plan.",
+      "visualized": "Visualized {room}",
+      "yourRoom": "Your {room}",
+      "generating": "Generating...",
+      "revisualize": "Re-visualize",
+      "visualize": "Visualize",
+      "replace": "Replace"
+    },
+    "switchDialog": {
+      "saveTitle": "Save your visualization?",
+      "roomSwitchWarning": "You have a generated {room} visualization. Switching rooms will clear it.",
+      "styleSwitchWarning": "You have a generated {style} visualization. Switching styles will clear it.",
+      "cancel": "Cancel",
+      "switch": "Switch",
+      "saveAndSwitch": "Save & Switch"
+    },
+    "freestyle": {
+      "title": "Describe Your Vision",
+      "placeholder": "Describe your ideal materials...\ne.g., Black matte kitchen facades, white quartz worktops, warm oak flooring, brass accents",
+      "cancel": "Cancel",
+      "apply": "Apply"
     }
   }
 }

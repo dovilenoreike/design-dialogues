@@ -1,4 +1,5 @@
-import type { Palette, Material, RoomCategory } from "@/types/palette";
+import type { Palette, Material, RoomCategory, LocalizedString } from "@/types/palette";
+import type { Language } from "@/contexts/LanguageContext";
 
 // Import all material images using Vite's glob import
 const materialImages = import.meta.glob<string>(
@@ -38,6 +39,20 @@ export function getMaterialsForRoom(
   return Object.entries(palette.materials)
     .filter(([, material]) => material.rooms.includes(roomCategory))
     .map(([key, material]) => ({ key, material }));
+}
+
+/**
+ * Gets the material description in the specified language
+ * Falls back to English if the requested language is not available
+ */
+export function getMaterialDescription(
+  material: Material,
+  language: Language = "en"
+): string {
+  if (typeof material.description === "string") {
+    return material.description; // backwards compatible with plain strings
+  }
+  return material.description[language] || material.description.en;
 }
 
 /**
@@ -82,9 +97,10 @@ export function buildDetailedMaterialPrompt(
   }
 
   // Build detailed material descriptions with purpose + description
+  // Always use English for AI prompts
   const materialDescriptions = materials.map(({ material }) => {
     const purpose = getMaterialPurpose(material, roomCategory);
-    const description = material.description || `${purpose} material`; // Fallback
+    const description = getMaterialDescription(material, "en") || `${purpose} material`;
     return `- ${purpose}: ${description}`;
   });
 

@@ -6,28 +6,40 @@
   "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere. Wall in white.",
   "materials": {
     "material1": {
-      "description": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+      "description": {
+        "en": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+        "lt": "Pilkšva ažuolo tekstūra."
+      },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring"},
       "materialType": "Vinyl"
     },
     "material2": {
-      "description": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
+      "description": {
+        "en": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
+        "lt": "Tamsiai pilkas akmens raštas."
+      },
       "rooms": ["kitchen", "bathroom"],
       "purpose": { "default": "Worktop", "bathroom": "Tiles" },
-      "materialType": "Natural Stone"
+      "materialType": "Tiles"
     },
     "material3": {
-      "description": "Garrison gray colour with blue undertone.",
+      "description": {
+        "en": "Garrison gray colour with blue undertone.",
+        "lt": "Rūką primenanti melsvai pilka."
+      },
       "rooms": ["kitchen", "bathroom", "livingRoom"],
       "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
-      "materialType": "Laminate"
+      "materialType": "LMDP"
     },
     "material4": {
-      "description": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
+      "description": {
+        "en": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
+        "lt": "Matinė tamsiai rudi medienos tekstūra"
+      },
       "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
       "purpose": { "default": "Cabinet Furniture", "kitchen": "Bottom cabinets" },
-      "materialType": "Wood Veneer"
+      "materialType": "LMDP"
     }
   }
 }

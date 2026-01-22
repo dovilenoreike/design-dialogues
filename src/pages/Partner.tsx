@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -13,35 +14,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
-const valueProps = [
-  "Receive briefs with verified budgets.",
-  "Skip the education phase—clients come with technical plans ready.",
-  "Showcase your materials in our digital palette.",
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import { sendEmail } from "@/lib/send-email";
 
 const Partner = () => {
+  const { t } = useLanguage();
+
+  const valueProps = [
+    t("partner.valueProp1"),
+    t("partner.valueProp2"),
+    t("partner.valueProp3"),
+  ];
   const [formData, setFormData] = useState({
     name: "",
     website: "",
     profession: "",
     email: "",
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Partnership request submitted! We'll be in touch soon.", {
-      position: "top-center",
-    });
-    
-    setFormData({ name: "", website: "", profession: "", email: "" });
-    setIsSubmitting(false);
+
+    try {
+      await sendEmail("partner", formData);
+      toast.success(t("partner.successMessage"), {
+        position: "top-center",
+      });
+      setFormData({ name: "", website: "", profession: "", email: "", message: "" });
+    } catch (error) {
+      toast.error("Failed to send. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,10 +60,10 @@ const Partner = () => {
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4 md:px-6 max-w-4xl text-center">
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium text-foreground mb-6">
-              Connect with Prepared Clients.
+              {t("partner.headline")}
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join our network of architects, designers, and material suppliers.
+              {t("partner.heroSubtitle")}
             </p>
           </div>
         </section>
@@ -79,70 +86,82 @@ const Partner = () => {
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4 md:px-6 max-w-md">
             <h2 className="font-serif text-2xl font-medium text-foreground mb-8 text-center">
-              Request Partnership
+              {t("partner.formTitle")}
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{t("partner.name")}</Label>
                 <Input
                   id="name"
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Your name"
+                  placeholder={t("partner.namePlaceholder")}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="website">Company Website</Label>
+                <Label htmlFor="website">{t("partner.website")}</Label>
                 <Input
                   id="website"
                   type="url"
                   required
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://yourcompany.com"
+                  placeholder={t("partner.websitePlaceholder")}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="profession">Profession</Label>
+                <Label htmlFor="profession">{t("partner.profession")}</Label>
                 <Select
                   value={formData.profession}
                   onValueChange={(value) => setFormData({ ...formData, profession: value })}
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your profession" />
+                    <SelectValue placeholder={t("partner.professionPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="architect">Architect</SelectItem>
-                    <SelectItem value="designer">Interior Designer</SelectItem>
-                    <SelectItem value="supplier">Material Supplier</SelectItem>
+                    <SelectItem value="designer">{t("partner.designer")}</SelectItem>
+                    <SelectItem value="supplier">{t("partner.supplier")}</SelectItem>
+                    <SelectItem value="contractor">{t("partner.contractor")}</SelectItem>
+                    <SelectItem value="carpenter">{t("partner.carpenter")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("partner.email")}</Label>
                 <Input
                   id="email"
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="you@company.com"
+                  placeholder={t("partner.emailPlaceholder")}
                 />
               </div>
-              
-              <Button 
-                type="submit" 
+
+              <div className="space-y-2">
+                <Label htmlFor="message">{t("partner.message")}</Label>
+                <Textarea
+                  id="message"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder={t("partner.messagePlaceholder")}
+                  rows={4}
+                />
+              </div>
+
+              <Button
+                type="submit"
                 className="w-full h-12"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Request Partnership"}
+                {isSubmitting ? t("partner.submitting") : t("partner.submit")}
               </Button>
             </form>
           </div>

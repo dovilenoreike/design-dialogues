@@ -150,6 +150,8 @@ function createPhase(
     title: t(template.titleKey),
     weekStart,
     weekEnd,
+    startDate,
+    endDate,
     dateRange: formatDateRange(startDate, endDate),
     siteStatus: t(template.siteStatusKey),
     tasks: template.tasks

@@ -19,11 +19,71 @@
   },
   "space": {
     "kitchen": "Virtuvė",
+    "kitchenAcc": "Virtuvę",
     "livingRoom": "Svetainė",
+    "livingRoomAcc": "Svetainę",
     "bedroom": "Miegamasis",
-    "bathroom": "Vonios kambarys",
+    "bedroomAcc": "Miegamąjį",
+    "bathroom": "Vonia",
+    "bathroomAcc": "Vonią",
     "other": "Kita",
-    "hallway": "Prieškambaris"
+    "otherAcc": "Kitą",
+    "hallway": "Prieškambaris",
+    "hallwayAcc": "Prieškambarį"
+  },
+  "tabs": {
+    "design": "Dizainas",
+    "specs": "Medžiagos",
+    "budget": "Biudžetas",
+    "plan": "Planas"
+  },
+  "modes": {
+    "rooms": "Kambariai",
+    "styles": "Stiliai",
+    "palettes": "Paletės"
+  },
+  "palette": {
+    "fog-in-the-forest": "Miškas rūke",
+    "behind-the-lights": "Šviesų užkulisiai",
+    "morning-mist": "Ryto migla",
+    "chocolate-wabi-sabi": "Wabi-sabi šokolade",
+    "day-by-the-sea": "Diena prie jūros"
+  },
+  "style": {
+    "japandi": "Japandi",
+    "art-inspired-modernism": "Meno įkvėptas modernizmas",
+    "modern-brutalism": "Modernus brutalizmas",
+    "quiet-luxury": "Tyli prabanga",
+    "classic-modern": "Moderni klasika",
+    "scandinavian-minimalism": "Skandinaviškas"
+  },
+  "specs": {
+    "emptyTitle": "Medžiagos nepasirinktos",
+    "emptyDescription": "Pasirinkite paletę Dizaino skirtuke, kad čia matytumėte medžiagų specifikacijas.",
+    "freestyleTitle": "Jūsų Vizija",
+    "freestyleSubtitle": "Individuali paletė",
+    "requestMaterials": "Užsakyti medžiagų sąrašą"
+  },
+  "material": {
+    "purpose": {
+      "Flooring": "Grindys",
+      "Worktop": "Stalviršis",
+      "Tiles": "Plytelės",
+      "Shelving": "Lentynos",
+      "Top cabinets": "Viršutinės spintelės",
+      "Bottom cabinets": "Apatinės spintelės",
+      "Cabinet Furniture": "Spintelės",
+      "Fixtures and fittings": "Furnitūros detalės",
+      "Plumbing fixtures": "Santechnika"
+    },
+    "type": {
+      "Vinyl": "Vinilas",
+      "Natural Stone": "Natūralus akmuo",
+      "Laminate": "Laminatas",
+      "Wood Veneer": "Medienos lukštas",
+      "Metal": "Metalas",
+      "Tiles": "Plytelės"
+    }
   },
   "matrix": {
     "title": "Dizaino Matrica",
@@ -37,12 +97,11 @@
   },
   "result": {
     "title": "Projekto Pasas",
-    "conservativeEstimate": "Konservatyvus įvertinimas su 15% rinkos rezervu",
-    "estimatedInvestment": "Numatoma investicija",
-    "includesDesignFee": "Įskaičiuotas",
-    "shell": "Apdaila",
-    "joinery": "Baldai",
-    "equip": "Įranga",
+    "conservativeEstimate": "Orientacinė sąmata",
+    "includesDesignFee": "Įskaitant dizainerio paslaugas",
+    "shell": "Įrengimas",
+    "joinery": "Virtuvė+",
+    "equip": "Baldai",
     "adjustParameters": "Koreguoti Parametrus",
     "dimensions": "Matmenys",
     "totalArea": "Bendras Plotas",
@@ -60,33 +119,38 @@
     "materialManifest": "Medžiagų Sąrašas",
     "curatedBy": "Kuruoja",
     "requestCurated": "Užsakyti Medžiagų Sąrašą",
-    "visualizationDisclaimer": "Konceptuali vizualizacija — tikros erdvės ir medžiagos gali skirtis"
+    "visualizationDisclaimer": "Konceptuali vizualizacija — tikros erdvės ir medžiagos gali skirtis",
+    "seeDetails": "Žiūrėti detales",
+    "budgetDetails": "Biudžeto Detalės",
+    "total": "Viso",
+    "whatsIncluded": "Kas Įtraukta",
+    "notIncluded": "Neįtraukta"
   },
   "tier": {
-    "budget": "Ekonominis",
-    "standard": "Standartinis",
+    "budget": "Taupus",
+    "standard": "Optimalus",
     "premium": "Premium",
-    "budgetDesc": "Protingi sprendimai praktiškai gyvensenai",
-    "standardDesc": "Kokybiškos medžiagos su ilgalaike verte",
-    "premiumDesc": "Išskirtinė apdaila išrankiam skoniui"
+    "budgetDesc": "Paprastesnės medžiagos ir sprendimai, tinka mažai naudojamoms erdvėms ar nuomai.",
+    "standardDesc": "Subalansuota kaina, kokybė ir estetika kasdieniam naudojimui.",
+    "premiumDesc": "Aukščiausios kokybės medžiagos ir išskirtinė patirties erdvėje."
   },
-  "service": {
-    "spacePlanning": "Erdvės Planavimas",
-    "interiorFinishes": "Interjero Apdaila",
+"service": {
+    "spacePlanning": "Erdvės Išplanavimas",
+    "interiorFinishes": "Apdaila ir Medžiagos",
     "furnishingDecor": "Baldai ir Dekoras",
-    "spacePlanningBudget": "Standartizuoti pagrindai. Taikomos bendros išplanavimo taisyklės. Dėmesys skiriamas greičiausiems, akivaizdiems sprendimams, siekiant sumažinti dizaino laiką ir sudėtingumą.",
-    "spacePlanningStandard": "Ergonomikos optimizavimas. Srautai optimizuoti pagal konkretų gyvenimo būdą. Apima individualų zonavimą ir konkrečių erdvinių iššūkių sprendimą.",
-    "spacePlanningPremium": "Visiškas erdvės transformavimas. Apima sienų perkėlimą, integruotų baldų detalizavimą ir pažangią apšvietimo architektūrą.",
-    "interiorFinishesBudget": "Vieno šaltinio pasirinkimas. Medžiagos parenkami iš konsoliduotų tiekėjų. Optimizuoja dizaino valandas, kartu užtikrinant švarų rezultatą.",
-    "interiorFinishesStandard": "Kelių tiekėjų kuracija. Tekstūros derinamos iš kelių specializuotų tiekėjų, siekiant sukurti unikalų estetinį gylį.",
-    "interiorFinishesPremium": "Neriboti šaltiniai. Pasaulinė medžiagų apimtis. Apima retas natūralias medžiagas, prekybinės paskirties paviršius ir individualius elementus.",
-    "furnishingDecorBudget": "Mažmeninė specifikacija. Pasirenkami iš sandėlio turimų prekių iš pagrindinių prekybininkų. Dėmesys skiriamas biudžeto kontrolei.",
-    "furnishingDecorStandard": "Pusiau individualus mišinys. Derina mažmenines prekes su pusiau individualiais pasirinkimais. Apima medžiagų derinimą ir matmenų patikrinimus.",
-    "furnishingDecorPremium": "Individualus užsakymas. Tik prekybinių ženklų specifikacija. Apima tikslius matmenis, individualią apmušalų gamybą ir pagal užsakymą gaminamą detalumą."
+    "spacePlanningBudget": "Greitai ir praktiškai. Parenkami baldai ir šviestuvai iš didžiųjų prekybos centrų asortimento, orientuojantis į biudžeto kontrolę ir greitą įgyvendinimą. Sąmata apima: pirkinių sąrašo sudarymo mokesčius ir išlaidas baldams bei apšvietimui.",
+    "spacePlanningStandard": "Erdvės, pritaikytos jūsų gyvenimo būdui. Kuriamas individualus zonavimas ir logiškas erdvių ryšys, atsižvelgiant į kasdienius įpročius ir poreikius. Sąmata apima: profesionalius projektavimo mokesčius ir pagrindinius statybos darbus (griovimą, elektros ir santechnikos korekcijas).",
+    "spacePlanningPremium": "Visapusiškas architektūrinis pertvarkymas. Kompleksinis erdvės perplanavimas: keičiamos sienos, projektuojami integruoti baldai, sprendžiamos sudėtingesnės inžinerinės užduotys. Sąmata apima: architektūrinio projektavimo mokesčius ir kapitalinius struktūrinius darbus (griovimą, naują karkasą, pažangias sistemas).",
+    "interiorFinishesBudget": "Standartinės apdailos medžiagos iš sandėlio. Naudojamos lengvai prieinamos, iš anksto parinktos medžiagos iš fizinių parduotuvių ar sandėlių, orientuojantis į funkcionalumą ir kainos kontrolę. Sąmata apima: specifikavimo mokesčius, standartinių apdailos medžiagų (pvz., laminato, sandėlio plytelių) įsigijimą ir tipinius įrengimo darbus.",
+    "interiorFinishesStandard": "Apdaila su aiškia kryptimi ir detalėmis. Derinamos skirtingų gamintojų medžiagos, rengiamos grindų ir plytelių klojimo schemos, užtikrinant vientisą vaizdą. Sąmata apima: techninės dokumentacijos parengimą, apdailos medžiagų įsigijimą ir įrengimo darbus.",
+    "interiorFinishesPremium": "Išskirtinės medžiagos ir preciziški sprendimai. Naudojamos retos natūralios medžiagos, specialūs paviršiai ir sudėtingi mazgai (pvz., šešėlinės siūlės). Sąmata apima: išsamią techninę dokumentaciją, aukštos klasės medžiagų įsigijimą ir patyrusių meistrų darbą.",
+    "furnishingDecorBudget": "Paruošti baldai ir šviestuvai iš prekybos tinklų. Parenkami gaminiai iš esamo prekybos centrų asortimento, be individualizavimo ar gamybos pagal užsakymą. Akcentas – bazinė funkcija ir greitas prieinamumas. Sąmata apima: pirkinių sąrašo sudarymo mokesčius ir išlaidas mažmeniniams baldams bei apšvietimui.",
+    "furnishingDecorStandard": "Subalansuotas individualumas. Derinami prekybos centrų baldai su pusiau individualiais sprendimais – pasirenkami audiniai, apdailos ir detalės. Sąmata apima: stilistinio parinkimo mokesčius ir išlaidas baldams, apšvietimui bei tekstilei.",
+    "furnishingDecorPremium": "Unikalūs sprendimai pagal užsakymą. Parenkami tik profesionalams prieinami prekių ženklai, kuriami nestandartiniai baldai ir individualūs apmušalai. Sąmata apima: pirkimų ir gamybos valdymo mokesčius bei išlaidas užsakomiesiems baldams, autoriniam apšvietimui ir audiniams."
   },
   "cost": {
     "interiorDesign": "Interjero Dizainas",
-    "constructionFinish": "Statybos ir Apdaila",
+    "constructionFinish": "Įrengimas ir Apdaila",
     "materials": "Medžiagos",
     "kitchen": "Virtuvė",
     "wardrobes": "Spintos",
@@ -98,8 +162,8 @@
     "designProject": "DIZAINO PROJEKTAS",
     "projectShell": "PROJEKTAS IR APDAILA",
     "shellFinishes": "APDAILA",
-    "fixedJoinery": "ĮMONTUOTI BALDAI",
-    "movablesTech": "BALDAI IR TECHNIKA"
+    "fixedJoinery": "ĮMONTUOTI BALDAI IR TECHNIKA",
+    "movablesTech": "BALDAI"
   },
   "processing": {
     "title": "Kuriame Jūsų Viziją",
@@ -115,35 +179,72 @@
   },
   "howItWorks": {
     "title": "Kaip tai Veikia",
-    "subtitle": "Trys paprasti žingsniai vizualizuoti svajonių erdvę",
-    "step1Title": "Įkelkite Erdvę",
-    "step1Desc": "Pasidalinkite nuotrauka, eskizu ar planu",
-    "step2Title": "Pasirinkite Stilių",
-    "step2Desc": "Išsirinkite medžiagas ir architektūrinę kryptį",
-    "step3Title": "Gaukite Viziją",
-    "step3Desc": "Gaukite AI vizualizaciją ir detalią kainų sąmatą",
-    "cta": "Pradėti Kurti"
+    "heroTitle": "Renovacija be spėlionių",
+    "heroSubtitle": "Interjero planavimas keturiais paprastais žingsniais.",
+    "step": "Žingsnis",
+    "step1Title": "Dizainas",
+    "step1Desc": "Naršykite kuruotas paletes ir stilius. Įkelkite savo erdvę ir pamatykite ją transformuotą su AI vizualizacija.",
+    "step2Title": "Medžiagos",
+    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, kuruotas profesionalių dizainerių. Žinokite tiksliai, kas kur eina.",
+    "step3Title": "Biudžetas",
+    "step3Desc": "Gaukite realų kainos suskirstymą pagal lygį. Koreguokite parametrus pagal savo erdvę ir apimtį.",
+    "step4Title": "Planas",
+    "step4Desc": "Matykite projekto grafiką nuo pradžios iki įsikraustymo. Sekite užduotis ir etapus.",
+    "cta": "Pradėti kurti"
   },
   "mission": {
     "title": "Misija",
-    "subtitle": "Demokratizuojame dizainą, po vieną erdvę"
+    "subtitle": "Demokratizuojame dizainą, po vieną erdvę",
+    "headline": "Profesionalus dizainas – visiems.",
+    "paragraph1": "Namų renovacija yra viena reikšmingiausių investicijų gyvenime, tačiau šis procesas išlieka neaiškus. Biudžetai auga be perspėjimo. Rangovai siūlo kardinaliai skirtingas kainas. Namų savininkai pasimeta dar nepradėję.",
+    "paragraph2": "Mes tikime, kad technologijos gali tai pakeisti. Išanalizavę tūkstančius įgyvendintų projektų, medžiagų kainas ir rinkos įkainius, sukūrėme sistemą, kuri suteikia skaidrumą tam, kas visada buvo spėlionių žaidimas.",
+    "paragraph3": "Mūsų įrankis nepakeičia architektų ar dizainerių – jis įgalina namų savininkus kreiptis į profesionalus su realistiškais lūkesčiais, aiškiais biudžetais ir vizualine kalba to, ko jie nori. Jis sulygina galimybes.",
+    "paragraph4": "Tai profesionalaus lygio planavimas, prieinamas visiems. Daugiau jokios baimės. Daugiau jokių netikėtumų. Tik aiškumas nuo pirmos dienos.",
+    "founderNote": "Sukurta technologijų kūrėjų, pamišusių dėl dizaino."
   },
   "partner": {
     "title": "Bendradarbiaukite",
     "subtitle": "Prisijunkite prie mūsų dizaino profesionalų tinklo",
+    "headline": "Susisiekite su pasiruošusiais klientais.",
+    "heroSubtitle": "Prisijunkite prie mūsų architektų, dizainerių ir medžiagų tiekėjų tinklo.",
+    "valueProp1": "Gaukite užklausas su patvirtintais biudžetais.",
+    "valueProp2": "Praleiskite švietimo etapą – klientai ateina apsispręndę.",
+    "valueProp3": "Pristatykite savo medžiagas mūsų skaitmeninėje paletėje.",
+    "formTitle": "Pateikti Paraišką",
     "name": "Vardas",
+    "namePlaceholder": "Jūsų vardas",
     "website": "Įmonės Svetainė",
+    "websitePlaceholder": "https://jusuimone.lt",
     "profession": "Profesija",
+    "professionPlaceholder": "Pasirinkite profesiją",
     "email": "El. paštas",
+    "emailPlaceholder": "jus@imone.lt",
+    "message": "Žinutė",
+    "messagePlaceholder": "Papasakokite apie savo verslą ir kaip norėtumėte bendradarbiauti...",
     "submit": "Pateikti Paraišką",
-    "architect": "Architektas",
+    "submitting": "Siunčiama...",
+    "successMessage": "Partnerystės paraiška pateikta! Netrukus susisieksime.",
+    "contractor": "Rangovas",
+    "carpenter": "Stalius",
     "designer": "Interjero Dizaineris",
     "supplier": "Medžiagų Tiekėjas"
   },
   "designer": {
     "workWithMe": "Dirbkime Kartu",
     "sendInquiry": "Siųsti Užklausą",
-    "myCollections": "Mano Kolekcijos"
+    "myCollections": "Mano Kolekcijos",
+    "curatedPalettes": "Kuruotos Paletės",
+    "contactForProject": "Susisiekti dėl Projekto",
+    "contactTitle": "Susisiekti su {name}",
+    "contactDescription": "Siųskite užklausą aptarti jūsų interjero dizaino poreikius.",
+    "formName": "Jūsų Vardas",
+    "formEmail": "Jūsų El. Paštas",
+    "formProject": "Apie Jūsų Projektą",
+    "formProjectPlaceholder": "Papasakokite apie savo erdvę, terminus ir dizaino tikslus...",
+    "sendInquiryButton": "Siųsti Užklausą",
+    "sending": "Siunčiama...",
+    "successTitle": "Užklausa Išsiųsta!",
+    "successDescription": "{name} netrukus su jumis susisieks."
   },
   "feedback": {
     "button": "Atsiliepimas",
@@ -160,6 +261,8 @@
   "timeline": {
     "title": "Projekto Trukmė: ~{weeks} Savaitės",
     "subtitle": "Apskaičiuota pradedant nuo ({date})",
+    "subtitleFromToday": "Paskaičiuota projektą pradedant šiandien",
+    "subtitleFromMoveIn": "Apskaičiuota pagal įsikraustymo datą {date}",
     "tabFinancial": "Finansinis Pasas",
     "tabTimeline": "Vykdymo Planas",
     "phases": {
@@ -217,6 +320,37 @@
       "notSet": "Nenustatyta",
       "warning": "Kai kurios užduotys vėluoja - įkraustymo data gali pasikeisti",
       "noConflicts": "Grafikas atitinka jūsų įkraustymo datą"
+    }
+  },
+  "budget": {
+    "kitchen": "Virtuvė",
+    "wardrobe": "Spinta",
+    "renovation": "Renovacija"
+  },
+  "mobile": {
+    "stage": {
+      "designingThe": "Kuriame {room}",
+      "uploadPrompt": "Įkelkite nuotrauką, eskizą arba planą.",
+      "visualized": "Vizualizuota {room}",
+      "yourRoom": "Jūsų {room}",
+      "generating": "Generuojama...",
+      "revisualize": "Pergeneruoti",
+      "visualize": "Vizualizuoti",
+      "replace": "Pakeisti"
+    },
+    "switchDialog": {
+      "saveTitle": "Išsaugoti vizualizaciją?",
+      "roomSwitchWarning": "Turite sugeneruotą {room} vizualizaciją. Pakeitus kambarį ji bus ištrinta.",
+      "styleSwitchWarning": "Turite sugeneruotą {style} vizualizaciją. Pakeitus stilių ji bus ištrinta.",
+      "cancel": "Atšaukti",
+      "switch": "Perjungti",
+      "saveAndSwitch": "Išsaugoti ir perjungti"
+    },
+    "freestyle": {
+      "title": "Aprašykite Savo Viziją",
+      "placeholder": "Aprašykite norimas medžiagas...\npvz., Juodos matinės virtuvės fasadai, baltas kvarcinis stalviršis, šiltas ąžuolo parketas, žalvariniai akcentai",
+      "cancel": "Atšaukti",
+      "apply": "Taikyti"
     }
   }
 }

@@ -1,0 +1,81 @@
+{
+  "id": "day-by-the-sea",
+  "name": "Day by the Sea",
+  "designer": "Sigita Kulikajeva",
+  "designerTitle": "Interior Designer",
+  "promptSnippet": "Inspired by a day by the sea. Colours of the sea, sand, white and brown. Wall in white. ",
+  "materials": {
+    "material1": {
+      "description": {
+        "en": "Light, warm-toned natural oak texture",
+        "lt": "Šviesi, šilto atspalvio natūralaus ąžuolo tekstūra"
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Vinyl"
+    },
+    "material2": {
+      "description": {
+        "en": "Fjord Green flat texture",
+        "lt": "Fjordo žalia plokščia tekstūra"
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Cabinet Furniture"},
+      "materialType": "LMDP"
+    },
+    "material3": {
+      "description": {
+        "en": "Stone-textured warm white",
+        "lt": "Šilta balta su akmens tekstūra"
+      },
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": { "default": "Worktop"},
+      "materialType": "Laminate"
+    },
+    "material4": {
+      "description": {
+        "en": "Light taupe matte flat finish",
+        "lt": "Šviesiai pilkšvai ruda matinė apdaila"
+      },
+      "rooms": ["livingRoom", "bedroom","bathroom", "other"],
+      "purpose": { "default": "Cabinet Furniture"},
+      "materialType": "LMDP"
+    },
+    "material5": {
+      "description": {
+        "en": "Rich, deep, earthy brown flat texture",
+        "lt": "Sodri, gili, žemiška ruda tekstūra"
+      },
+      "rooms": ["bedroom","bathroom", "other"],
+      "purpose": { "default": "Shelving", "bathroom": "Vanity unit"},
+      "materialType": "MDF"
+    },
+    "material6": {
+      "description": {
+        "en": "Ribbed tiles as subtle vertical accents of white stone texture",
+        "lt": "Rievėtos plytelės kaip subtilūs vertikalūs balto akmens tekstūros akcentai"
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas"},
+      "materialType": "Tiles"
+    },
+    "material7": {
+      "description": {
+        "en": "Warm beige limestone-look tiles with a soft sandy texture",
+        "lt": "Šiltos smėlio spalvos kalkakmenio imitacijos plytelės"
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Floor and wall surfaces"},
+      "materialType": "Tiles"
+    },
+    "material8": {
+      "description": {
+        "en": "Brushed bronze or muted brass texture",
+        "lt": "Šlifuotos bronzos arba švelnios žalvario tekstūra"
+      },
+      "rooms": ["kitchen","bathroom", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Fixtures and fittings", "bathroom": "Plumbing fixtures"},
+      "materialType": "Metal"
+    }
+  }
+}

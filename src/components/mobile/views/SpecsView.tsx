@@ -1,0 +1,162 @@
+import { useState } from "react";
+import { Sparkles, MessageSquare } from "lucide-react";
+import { useDesign } from "@/contexts/DesignContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getPaletteById } from "@/data/palettes";
+import { getMaterialsForRoom, getMaterialPurpose, getMaterialImageUrl, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
+import MaterialCard from "@/components/MaterialCard";
+import RoomPillBar from "../controls/RoomPillBar";
+import TierPill from "../controls/TierPill";
+import DesignerCompactCard from "../DesignerCompactCard";
+import DesignerProfileSheet from "@/components/DesignerProfileSheet";
+
+export default function SpecsView() {
+  const { design, handleSelectMaterial } = useDesign();
+  const { t, language } = useLanguage();
+  const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+  const { selectedMaterial, selectedCategory, freestyleDescription } = design;
+
+  const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+  const roomCategory = selectedCategory ? mapSpaceCategoryToRoom(selectedCategory) : "all";
+
+  // No selection state
+  if (!selectedMaterial && !freestyleDescription) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-4">
+          {/* Sticky Room Pills + Tier */}
+          <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                <RoomPillBar />
+              </div>
+              <div className="flex-shrink-0">
+                <TierPill />
+              </div>
+            </div>
+          </div>
+
+          {/* Empty State */}
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+              <Sparkles className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-serif text-center mb-2">{t("specs.emptyTitle")}</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              {t("specs.emptyDescription")}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Freestyle mode
+  if (freestyleDescription) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-4">
+          {/* Sticky Room Pills + Tier */}
+          <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                <RoomPillBar />
+              </div>
+              <div className="flex-shrink-0">
+                <TierPill />
+              </div>
+            </div>
+          </div>
+
+          {/* Editorial Headline */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-serif mb-1">{t("specs.freestyleTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("specs.freestyleSubtitle")}</p>
+          </div>
+          <blockquote className="text-sm text-muted-foreground italic border-l-2 border-foreground pl-4 mb-6">
+            "{freestyleDescription}"
+          </blockquote>
+          <button className="w-full py-3 border border-foreground rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted transition-all active:scale-[0.98]">
+            <MessageSquare size={16} />
+            {t("specs.requestMaterials")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Curated palette mode
+  const filteredMaterials = palette ? getMaterialsForRoom(palette, roomCategory) : [];
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      <div className="px-4 py-4">
+        {/* Sticky Room Pills + Tier */}
+        <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
+          <div className="flex items-center justify-between gap-3">
+            <RoomPillBar />
+            <TierPill />
+          </div>
+        </div>
+
+        {/* Editorial Headline */}
+        {palette && (
+          <div className="mb-6">
+            <h2 className="text-2xl font-serif mb-1">{t(`palette.${palette.id}`) || palette.name}</h2>
+            <p className="text-sm text-muted-foreground">{t("result.curatedBy")} {palette.designer}</p>
+          </div>
+        )}
+
+        {/* Material Cards */}
+        <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
+          {filteredMaterials.map(({ key, material }) => {
+            const imageUrl = palette ? getMaterialImageUrl(palette.id, key) : null;
+            const materialPurpose = getMaterialPurpose(material, roomCategory);
+
+            const purposeKey = `material.purpose.${materialPurpose}`;
+            const translatedPurpose = t(purposeKey) === purposeKey ? materialPurpose : t(purposeKey);
+
+            const typeKey = `material.type.${material.materialType}`;
+            const translatedType = material.materialType
+              ? (t(typeKey) === typeKey ? material.materialType : t(typeKey))
+              : t("material.type.Natural Stone");
+
+            const description = getMaterialDescription(material, language);
+
+            return (
+              <MaterialCard
+                key={key}
+                image={imageUrl || undefined}
+                swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                title={description?.split('.')[0] || translatedPurpose}
+                category={translatedPurpose}
+                subtext={translatedType}
+              />
+            );
+          })}
+        </div>
+
+        {/* Designer Compact Card */}
+        {palette && (
+          <DesignerCompactCard
+            designerName={palette.designer}
+            designerTitle={palette.designerTitle}
+            onOpenProfile={() => setIsProfileSheetOpen(true)}
+          />
+        )}
+      </div>
+
+      {/* Designer Profile Sheet */}
+      {palette && (
+        <DesignerProfileSheet
+          isOpen={isProfileSheetOpen}
+          onClose={() => setIsProfileSheetOpen(false)}
+          designerName={palette.designer}
+          designerTitle={palette.designerTitle}
+          currentPaletteId={palette.id}
+          onSelectPalette={handleSelectMaterial}
+        />
+      )}
+    </div>
+  );
+}

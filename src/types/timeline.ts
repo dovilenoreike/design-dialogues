@@ -8,6 +8,8 @@ export interface TimelinePhase {
   title: string;
   weekStart: number;
   weekEnd: number;
+  startDate: Date;
+  endDate: Date;
   dateRange: string;
   siteStatus: string;
   tasks: TimelineTask[];
@@ -22,6 +24,7 @@ export interface TimelineTask {
   isCritical?: boolean;
   buttonVariant: "solid" | "outline";
   requiresService?: keyof ServiceSelection;
+  isHireTask?: boolean;
 }
 
 /**

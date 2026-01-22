@@ -18,7 +18,7 @@ const TimelineView = ({
   isRenovation,
   services
 }: TimelineViewProps) => {
-  const { t } = useLanguage();
+  const { t, dateLocale } = useLanguage();
 
   // Initialize move-in date to 3 months from today
   const [moveInDate, setMoveInDate] = useState<Date>(() => {
@@ -53,7 +53,7 @@ const TimelineView = ({
         <p className="text-sm text-text-muted mt-2">
           {t("timeline.subtitle").replace(
             "{date}",
-            format(timeline.startDate, "MMMM d, yyyy")
+            format(timeline.startDate, "MMMM d, yyyy", { locale: dateLocale })
           )}
         </p>
       </div>

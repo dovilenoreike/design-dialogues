@@ -131,8 +131,8 @@ export function useCostCalculation({
       ? roundToHundred(kitchenLength * kitchenRates[tier])
       : 0;
 
-    // Furnishing & Decor controls Appliances (the "soft" movables)
-    const appliances = services.furnishingDecor
+    // Interior Finishes controls Appliances
+    const appliances = services.interiorFinishes
       ? roundToHundred(appliancePackages[tier])
       : 0;
 
@@ -210,16 +210,16 @@ export function useCostCalculation({
             value: wardrobes,
             tooltip: tierTooltips["Built-in Wardrobes"][tier],
           },
-        ].filter((item) => item.value > 0),
-      },
-      {
-        header: t("cost.movablesTech"),
-        items: [
           {
             label: t("cost.appliances"),
             value: appliances,
             tooltip: tierTooltips["Home Appliances"][tier],
           },
+        ].filter((item) => item.value > 0),
+      },
+      {
+        header: t("cost.movablesTech"),
+        items: [
           {
             label: t("cost.furniture"),
             value: furniture,
@@ -232,8 +232,8 @@ export function useCostCalculation({
     // Calculate group totals for percentage display
     const designTotal = interiorDesign;
     const shellTotal = constructionFinish + renovationCost;
-    const joineryTotal = kitchenJoinery + wardrobes;
-    const equipTotal = appliances + furniture;
+    const joineryTotal = kitchenJoinery + wardrobes + appliances;
+    const equipTotal = furniture;
 
     return {
       total,

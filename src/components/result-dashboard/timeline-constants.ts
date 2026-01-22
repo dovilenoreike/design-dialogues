@@ -108,6 +108,7 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
     id: "hire-designer",
     buttonVariant: "solid",
     requiresService: "spacePlanning",
+    isHireTask: true,
   },
   "approve-concept": {
     id: "approve-concept",
@@ -122,6 +123,7 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
   "hire-contractor": {
     id: "hire-contractor",
     buttonVariant: "solid",
+    isHireTask: true,
   },
   "order-tiles-plumbing": {
     id: "order-tiles-plumbing",

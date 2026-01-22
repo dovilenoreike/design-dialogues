@@ -4,7 +4,7 @@
  */
 
 export interface DesignSelection {
-  uploadedImage: string | null;
+  uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name
   selectedCategory: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;
@@ -16,13 +16,17 @@ export interface GenerationState {
   isGenerating: boolean;
   showResults: boolean;
   generatedImage: string | null;
+  pendingRoomSwitch: string | null;
+  showRoomSwitchDialog: boolean;
+  pendingStyleSwitch: string | null;
+  showStyleSwitchDialog: boolean;
 }
 
 export const initialDesignSelection: DesignSelection = {
-  uploadedImage: null,
-  selectedCategory: null,
-  selectedMaterial: null,
-  selectedStyle: null,
+  uploadedImages: {},  // Empty - no uploads initially
+  selectedCategory: "Kitchen",
+  selectedMaterial: "fog-in-the-forest",
+  selectedStyle: "scandinavian-minimalism",
   freestyleDescription: "",
 };
 
@@ -31,4 +35,8 @@ export const initialGenerationState: GenerationState = {
   isGenerating: false,
   showResults: false,
   generatedImage: null,
+  pendingRoomSwitch: null,
+  showRoomSwitchDialog: false,
+  pendingStyleSwitch: null,
+  showStyleSwitchDialog: false,
 };

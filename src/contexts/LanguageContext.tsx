@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { Locale } from "date-fns";
+import { enUS, lt } from "date-fns/locale";
 import enTranslations from "@/locales/en.json";
 import ltTranslations from "@/locales/lt.json";
 
@@ -8,7 +10,13 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  dateLocale: Locale;
 }
+
+const dateLocales: Record<Language, Locale> = {
+  en: enUS,
+  lt: lt,
+};
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
@@ -54,8 +62,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return translations[language][key] || key;
   };
 
+  const dateLocale = dateLocales[language];
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, dateLocale }}>
       {children}
     </LanguageContext.Provider>
   );
