@@ -3,7 +3,7 @@
   "name": "Day by the Sea",
   "designer": "Sigita Kulikajeva",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "Inspired by a day by the sea. Colours of the sea, sand, white and brown. Wall in white. ",
+"promptSnippet": "Inspired by the calm of the sea. Add decor details in beige and chocolate brown. Walls in warm white.",
   "materials": {
     "material1": {
       "description": {
@@ -17,10 +17,10 @@
     "material2": {
       "description": {
         "en": "Fjord Green flat texture",
-        "lt": "Fjordo žalia plokščia tekstūra"
+        "lt": "Jūros žalia"
       },
       "rooms": ["kitchen"],
-      "purpose": { "default": "Cabinet Furniture"},
+      "purpose": { "default": "Cabinet furniture"},
       "materialType": "LMDP"
     },
     "material3": {
@@ -29,22 +29,22 @@
         "lt": "Šilta balta su akmens tekstūra"
       },
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop"},
+      "purpose": { "default": "Worktops"},
       "materialType": "Laminate"
     },
     "material4": {
       "description": {
         "en": "Light taupe matte flat finish",
-        "lt": "Šviesiai pilkšvai ruda matinė apdaila"
+        "lt": "Šviesiai pilkšvai ruda matinis paviršius"
       },
       "rooms": ["livingRoom", "bedroom","bathroom", "other"],
-      "purpose": { "default": "Cabinet Furniture"},
+      "purpose": { "default": "Cabinet furniture"},
       "materialType": "LMDP"
     },
     "material5": {
       "description": {
         "en": "Rich, deep, earthy brown flat texture",
-        "lt": "Sodri, gili, žemiška ruda tekstūra"
+        "lt": "Šokolado, žemiška ruda tekstūra"
       },
       "rooms": ["bedroom","bathroom", "other"],
       "purpose": { "default": "Shelving", "bathroom": "Vanity unit"},
@@ -65,7 +65,7 @@
         "lt": "Šiltos smėlio spalvos kalkakmenio imitacijos plytelės"
       },
       "rooms": ["bathroom"],
-      "purpose": { "default": "Floor and wall surfaces"},
+      "purpose": { "default": "Sienos ir grindys"},
       "materialType": "Tiles"
     },
     "material8": {

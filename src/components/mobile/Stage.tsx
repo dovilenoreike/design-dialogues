@@ -2,6 +2,8 @@ import { useRef, useCallback } from "react";
 import { Upload, Sparkles, Loader2, Camera, X, Download } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCredits } from "@/contexts/CreditsContext";
+import { toast } from "sonner";
 import { getVisualization } from "@/data/visualisations";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
@@ -33,9 +35,32 @@ export default function Stage() {
     handleGenerate,
     handleSaveImage,
   } = useDesign();
+  const { credits, useCredit, refetchCredits } = useCredits();
 
   const { uploadedImages, selectedCategory, selectedMaterial } = design;
   const { generatedImage, isGenerating } = generation;
+
+  // Wrapper that deducts credit before generating
+  const handleGenerateWithCredits = useCallback(async () => {
+    try {
+      // Try to deduct credit - server is the source of truth
+      const result = await useCredit();
+
+      if (!result.success) {
+        // Server says no credits - show error (state already updated by useCredit)
+        toast.error(t("credits.noCredits") || "No credits remaining. Please purchase more credits.");
+        return;
+      }
+
+      // Credit deducted successfully, now generate
+      handleGenerate();
+    } catch (err) {
+      console.error("Failed to use credit:", err);
+      toast.error(t("credits.error") || "Failed to process credit. Please try again.");
+      // Refetch to ensure UI shows correct state after error
+      refetchCredits();
+    }
+  }, [useCredit, handleGenerate, refetchCredits, t]);
 
   // Get current room's uploaded image
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
@@ -153,7 +178,7 @@ export default function Stage() {
             </button>
           ) : (
             <button
-              onClick={handleGenerate}
+              onClick={handleGenerateWithCredits}
               disabled={!canGenerate}
               className={`flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] transition-all ${
                 canGenerate

@@ -155,7 +155,7 @@ function buildTransformationPrompt(
 
   // Add freestyle description
   if (freestyleDescription) {
-    prompt += `${freestyleDescription} `;
+    prompt += `THE MATERIALITY: ${freestyleDescription}\n\n`;
   }
 
   // THE SYNTHESIS section (now always included)

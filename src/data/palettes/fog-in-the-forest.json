@@ -3,7 +3,7 @@
   "name": "Fog in the Forest",
   "designer": "Athena Blackbird",
   "designerTitle": "Interior Designer",
-  "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere. Wall in white.",
+  "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere. Colours of dark trunks, buish fog, dark branches. Wall in white.",
   "materials": {
     "material1": {
       "description": {
@@ -20,8 +20,8 @@
         "lt": "Tamsiai pilkas akmens raštas."
       },
       "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktop", "bathroom": "Tiles" },
-      "materialType": "Tiles"
+      "purpose": { "default": "Worktops", "bathroom": "Tiles" },
+      "materialType": "Ceramic Tile"
     },
     "material3": {
       "description": {
@@ -38,7 +38,7 @@
         "lt": "Matinė tamsiai rudi medienos tekstūra"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
-      "purpose": { "default": "Cabinet Furniture", "kitchen": "Bottom cabinets" },
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets" },
       "materialType": "LMDP"
     }
   }

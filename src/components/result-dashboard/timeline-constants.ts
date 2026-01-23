@@ -63,19 +63,19 @@ export const PHASE_TEMPLATES = {
     id: "phase-2",
     titleKey: "timeline.phases.logistics.title",
     siteStatusKey: "timeline.phases.logistics.site",
-    tasks: ["hire-contractor", "order-tiles-plumbing"],
+    tasks: ["hire-contractor", "order-tiles", "order-plumbing"],
   },
   phase3: {
     id: "phase-3",
     titleKey: "timeline.phases.infrastructure.title",
     siteStatusKey: "timeline.phases.infrastructure.site",
-    tasks: ["order-doors", "order-kitchen-joinery", "socket-walkthrough"],
+    tasks: ["socket-walkthrough", "order-doors", "order-flooring","order-plumbing-fixtures", "order-kitchen-joinery", "order-appliances"],
   },
   phase4: {
     id: "phase-4",
     titleKey: "timeline.phases.finishes.title",
     siteStatusKey: "timeline.phases.finishes.site",
-    tasks: ["order-flooring", "buy-lighting", "schedule-cleaners"],
+    tasks: ["buy-lighting", "schedule-cleaners"],
   },
   phase5: {
     id: "phase-5",
@@ -125,8 +125,13 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
     buttonVariant: "solid",
     isHireTask: true,
   },
-  "order-tiles-plumbing": {
-    id: "order-tiles-plumbing",
+  "order-tiles": {
+    id: "order-tiles",
+    buttonVariant: "outline"
+  },
+
+  "order-plumbing": {
+    id: "order-plumbing",
     buttonVariant: "outline"
   },
 
@@ -143,6 +148,14 @@ export const TASK_DEFINITIONS: Record<string, Omit<TimelineTask, "label">> = {
   "socket-walkthrough": {
     id: "socket-walkthrough",
     buttonVariant: "outline",
+  },
+  "order-plumbing-fixtures": {
+    id: "order-plumbing-fixtures",
+    buttonVariant: "outline"
+  },
+  "order-appliances": {
+    id: "order-appliances",
+    buttonVariant: "outline"
   },
 
   // Phase 4: Finishes

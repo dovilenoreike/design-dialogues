@@ -8,6 +8,15 @@
   "header": {
     "credits": "Credits"
   },
+  "credits": {
+    "purchaseSuccess": "Payment Successful",
+    "creditsAdded": "10 credits have been added to your account",
+    "purchaseCancelled": "Payment Cancelled",
+    "purchaseError": "Payment Error",
+    "noCredits": "No Credits Remaining",
+    "buyMore": "Buy More Credits",
+    "error": "Failed to process credit. Please try again."
+  },
   "landing": {
     "title": "Renovation without the guesswork.",
     "subtitle": "Instant interior visualization paired with a realistic financial roadmap. Design with confidence, not just imagination.",
@@ -69,12 +78,13 @@
   "material": {
     "purpose": {
       "Flooring": "Flooring",
-      "Worktop": "Worktop",
+      "Worktops": "Worktops",
+      "Worktops and backsplash": "Worktops and backsplash",
       "Tiles": "Tiles",
       "Shelving": "Shelving",
       "Top cabinets": "Top cabinets",
       "Bottom cabinets": "Bottom cabinets",
-      "Cabinet Furniture": "Cabinet Furniture"
+      "Cabinet furniture": "Cabinet furniture"
     },
     "type": {
       "Vinyl": "Vinyl",
@@ -299,11 +309,14 @@
       "approve-concept": "Approve Design Concept",
       "approve-technical": "Approve Technical Plans",
       "hire-contractor": "Hire General Contractor",
-      "order-tiles-plumbing": "Order Tiles & Plumbing",
+      "order-tiles": "Order Tiles",
+      "order-plumbing": "Order Plumbing",
       "order-doors": "Order Interior Doors",
       "order-kitchen-joinery": "Order Kitchen & Joinery",
       "socket-walkthrough": "Socket Walkthrough",
       "order-flooring": "Order Flooring",
+      "order-plumbing-fixtures": "Order Plumbing Fixtures",
+      "order-appliances": "Order Appliances",
       "buy-lighting": "Buy Lighting & Switches",
       "schedule-cleaners": "Schedule Cleaners",
       "order-sofa-curtains": "Order Sofa & Curtains",

@@ -12,7 +12,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
       "purpose": { "default": "Flooring", "kitchen": "Flooring" },
-      "materialType": "Engineered Wood"
+      "materialType": "Laminate"
     },
     "material2": {
       "description": {
@@ -20,8 +20,8 @@
         "lt": "Grafito matinis – gilus tamsiai pilkas paviršius su lygia, aksominio matiškumo tekstūra"
       },
       "rooms": ["kitchen", "bathroom", "bedroom", "livingRoom", "other"],
-      "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinet Fronts" },
-      "materialType": "Laminate"
+      "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinetry" },
+      "materialType": "MDF"
     },
     "material3": {
       "description": {
@@ -29,8 +29,8 @@
         "lt": "Pilkas marmuras su baltomis gyslelėmis ir rami, šlifuoto akmens tekstūra."
       },
       "rooms": ["kitchen"],
-      "purpose": { "default": "Worktops"},
-      "materialType": "Laminate"
+      "purpose": { "default": "Worktops and backsplash"},
+      "materialType": "HPL"
     },
     "material4": {
       "description": {
@@ -38,8 +38,8 @@
         "lt": "Natūralus šilto atspalvio medis su subtilia vertikalia tekstūra."
       },
       "rooms": ["bedroom", "livingRoom", "other"],
-      "purpose": { "default": "Cabinetry"},
-      "materialType": "Wood Veneer"
+      "purpose": { "default": "Cabinet furniture"},
+      "materialType": "LMDP"
     },
     "material5": {
       "description": {
@@ -47,7 +47,7 @@
         "lt": "Tamsios fosilijų kalkakmenio plytelės su organiniais kriauklių intarpais ir prislopintu melsvai pilku atspalviu."
       },
       "rooms": ["bathroom"],
-      "purpose": { "default": "Floor and wall surfaces" },
+      "purpose": { "default": "Sienos ir grindys" },
       "materialType": "Ceramic Tile"
     },
     "material6": {
@@ -57,7 +57,7 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Accent areas"},
-      "materialType": "Natural Stone"
+      "materialType": "Ceramic Tile"
     },
     "material7": {
       "description": {
@@ -66,7 +66,7 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Drawer fronts"},
-      "materialType": "Painted MDF"
+      "materialType": "LMDP"
     }
   }
 }

@@ -12,7 +12,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring" },
-      "materialType": "Engineered Wood"
+      "materialType": "Vinyl"
     },
     "material2": {
       "description": {
@@ -21,7 +21,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry" },
-      "materialType": "Wood Veneer"
+      "materialType": "LMDP"
     },
     "material3": {
       "description": {
@@ -30,7 +30,7 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops"},
-      "materialType": "Natural Stone"
+      "materialType": "HPL"
     },
     "material4": {
       "description": {
@@ -57,7 +57,7 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Worktops"},
-      "materialType": "Natural Stone"
+      "materialType": "HPL"
     }
   }
 }

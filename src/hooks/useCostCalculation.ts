@@ -103,16 +103,17 @@ export function useCostCalculation({
 }: UseCostCalculationParams): CostCalculation {
   return useMemo(() => {
     const tier = selectedTier;
+    const areaAdjustment = 20 / area + 0.9; // Adjustment factor for small/big areas
 
     // Calculate costs based on selected services
     // Interior Design cost scales with scope (each service adds to the design fee)
     // spacePlanning = 50%, interiorFinishes = 30%, furnishingDecor = 20%
     const scopeMultiplier =
-      (services.spacePlanning ? 0.5 : 0) +
-      (services.interiorFinishes ? 0.3 : 0) +
-      (services.furnishingDecor ? 0.2 : 0);
+      (services.spacePlanning ? 0.40 : 0) +
+      (services.interiorFinishes ? 0.35 : 0) +
+      (services.furnishingDecor ? 0.25 : 0);
     const interiorDesign = scopeMultiplier > 0
-      ? roundToHundred(area * designRates[tier] * scopeMultiplier)
+      ? roundToHundred(area * designRates[tier] * scopeMultiplier * areaAdjustment)
       : 0;
 
     // Construction & Finish: 60/40 split between services

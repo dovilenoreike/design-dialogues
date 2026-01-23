@@ -8,6 +8,15 @@
   "header": {
     "credits": "Kreditai"
   },
+  "credits": {
+    "purchaseSuccess": "Mokėjimas sėkmingas",
+    "creditsAdded": "10 kreditų pridėta į jūsų paskyrą",
+    "purchaseCancelled": "Mokėjimas atšauktas",
+    "purchaseError": "Mokėjimo klaida",
+    "noCredits": "Nebeliko kreditų",
+    "buyMore": "Pirkti daugiau kreditų",
+    "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
+  },
   "landing": {
     "title": "Namų įrengimas – be spėlionių.",
     "subtitle": "Momentinė vizualizacija ir realus finansinis planas. Kurkite namus užtikrintai, o ne tik vaizduotėje.",
@@ -67,14 +76,21 @@
   "material": {
     "purpose": {
       "Flooring": "Grindys",
-      "Worktop": "Stalviršis",
+      "Worktops": "Stalviršiai",
+      "Worktops and backsplash": "Stalviršis ir sienelė",
+      "Wall and floor surfaces": "Sienos ir grindys",
       "Tiles": "Plytelės",
       "Shelving": "Lentynos",
       "Top cabinets": "Viršutinės spintelės",
       "Bottom cabinets": "Apatinės spintelės",
-      "Cabinet Furniture": "Spintelės",
+      "Cabinetry": "Spintelės",
+      "Cabinet furniture": "Korpusiniai baldai",
       "Fixtures and fittings": "Furnitūros detalės",
-      "Plumbing fixtures": "Santechnika"
+      "Plumbing fixtures": "Santechnika",
+      "Drawer fronts": "Stalčių fasadai",
+      "Other cabinet surfaces": "Kitos spintelių dalys",
+      "Accent areas": "Akcentinės zonos",
+      "Vanity unit": "Praustuvo spintelė"
     },
     "type": {
       "Vinyl": "Vinilas",
@@ -82,7 +98,7 @@
       "Laminate": "Laminatas",
       "Wood Veneer": "Medienos lukštas",
       "Metal": "Metalas",
-      "Tiles": "Plytelės"
+      "Ceramic Tile": "Keraminės plytelės"
     }
   },
   "matrix": {
@@ -183,11 +199,11 @@
     "heroSubtitle": "Interjero planavimas keturiais paprastais žingsniais.",
     "step": "Žingsnis",
     "step1Title": "Dizainas",
-    "step1Desc": "Naršykite kuruotas paletes ir stilius. Įkelkite savo erdvę ir pamatykite ją transformuotą su AI vizualizacija.",
+    "step1Desc": "Naršykite paruoštas paletes ir stilius. Įkelkite savo erdvę ir pamatykite ją transformuotą su AI vizualizacija.",
     "step2Title": "Medžiagos",
-    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, kuruotas profesionalių dizainerių. Žinokite tiksliai, kas kur eina.",
+    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, kuruotas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
     "step3Title": "Biudžetas",
-    "step3Desc": "Gaukite realų kainos suskirstymą pagal lygį. Koreguokite parametrus pagal savo erdvę ir apimtį.",
+    "step3Desc": "Gaukite orientacines kainas pagal Jūsų poreikius. Koreguokite parametrus pagal savo erdvę ir apimtį.",
     "step4Title": "Planas",
     "step4Desc": "Matykite projekto grafiką nuo pradžios iki įsikraustymo. Sekite užduotis ir etapus.",
     "cta": "Pradėti kurti"
@@ -195,7 +211,7 @@
   "mission": {
     "title": "Misija",
     "subtitle": "Demokratizuojame dizainą, po vieną erdvę",
-    "headline": "Profesionalus dizainas – visiems.",
+    "headline": "Dizainas – prieinamas visiems.",
     "paragraph1": "Namų renovacija yra viena reikšmingiausių investicijų gyvenime, tačiau šis procesas išlieka neaiškus. Biudžetai auga be perspėjimo. Rangovai siūlo kardinaliai skirtingas kainas. Namų savininkai pasimeta dar nepradėję.",
     "paragraph2": "Mes tikime, kad technologijos gali tai pakeisti. Išanalizavę tūkstančius įgyvendintų projektų, medžiagų kainas ir rinkos įkainius, sukūrėme sistemą, kuri suteikia skaidrumą tam, kas visada buvo spėlionių žaidimas.",
     "paragraph3": "Mūsų įrankis nepakeičia architektų ar dizainerių – jis įgalina namų savininkus kreiptis į profesionalus su realistiškais lūkesčiais, aiškiais biudžetais ir vizualine kalba to, ko jie nori. Jis sulygina galimybes.",
@@ -299,12 +315,15 @@
       "approve-concept": "Patvirtinti Dizaino Koncepciją",
       "approve-technical": "Patvirtinti Techninius Planus",
       "hire-contractor": "Samdyti Generalinį Rangovą",
-      "order-tiles-plumbing": "Užsakyti Plyteles ir Santechniką",
+      "order-tiles": "Užsakyti Plyteles",
+      "order-plumbing": "Užsakyti Potinkinę Santechniką",
       "order-doors": "Užsakyti Vidaus Duris",
       "order-kitchen-joinery": "Užsakyti Virtuvę ir Baldus",
-      "socket-walkthrough": "Rozetės Apžiūra",
+      "socket-walkthrough": "Patikrinti elektros instaliaciją",
       "order-flooring": "Užsakyti Grindų dangą",
-      "buy-lighting": "Pirkti Apšvietimą ir Jungiklius",
+      "order-plumbing-fixtures": "Užsakyti santechnikos įrangą",
+      "order-appliances": "Užsakyti buitinius prietaisus",
+      "buy-lighting": "Pirkti šviestuvus, jungiklius",
       "schedule-cleaners": "Rezervuoti Valytojus",
       "order-sofa-curtains": "Užsakyti Sofą ir Užuolaidas",
       "defect-check": "Defektų Patikrinimas"
@@ -314,12 +333,12 @@
       "myTasks": "Mano Užduotys"
     },
     "moveIn": {
-      "title": "Planuojama Įkraustymo Data",
+      "title": "Planuojama Įsikraustymo Data",
       "selectDate": "Pasirinkti Datą",
       "changeDate": "Keisti Datą",
       "notSet": "Nenustatyta",
-      "warning": "Kai kurios užduotys vėluoja - įkraustymo data gali pasikeisti",
-      "noConflicts": "Grafikas atitinka jūsų įkraustymo datą"
+      "warning": "Kai kurios užduotys vėluoja - įsikraustymo data gali pasikeisti",
+      "noConflicts": "Grafikas atitinka jūsų įsikraustymo datą"
     }
   },
   "budget": {

@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Menu, Plus, Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,11 +11,50 @@ import {
 import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
+import { useCredits } from "@/contexts/CreditsContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [buyingCredits, setBuyingCredits] = useState(false);
   const { t } = useLanguage();
+  const { credits, loading, buyCredits, refetchCredits } = useCredits();
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle payment return
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment === "success") {
+      toast({
+        title: t("credits.purchaseSuccess"),
+        description: t("credits.creditsAdded"),
+      });
+      refetchCredits();
+      setSearchParams({});
+    } else if (payment === "cancelled") {
+      toast({
+        title: t("credits.purchaseCancelled"),
+        variant: "destructive",
+      });
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams, toast, t, refetchCredits]);
+
+  const handleBuyCredits = async () => {
+    try {
+      setBuyingCredits(true);
+      await buyCredits();
+    } catch (err) {
+      toast({
+        title: t("credits.purchaseError"),
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+      setBuyingCredits(false);
+    }
+  };
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
@@ -33,10 +72,10 @@ const Header = () => {
       <header className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
           {/* Mobile Layout */}
-          <div className="flex md:hidden items-center justify-between">
+          <div className="flex md:hidden items-center gap-2">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <button className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors">
+                <button className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors shrink-0">
                   <Menu size={22} />
                 </button>
               </SheetTrigger>
@@ -56,7 +95,7 @@ const Header = () => {
                     </Link>
                   ))}
                 </nav>
-                
+
                 {/* Mobile drawer footer */}
                 <div className="mt-auto pt-6 border-t border-border space-y-4">
                   <FeedbackMobileItem onClick={handleMobileFeedback} />
@@ -64,17 +103,28 @@ const Header = () => {
                 </div>
               </SheetContent>
             </Sheet>
-            
-            <Link 
-              to="/" 
-              className="text-xl font-serif font-medium tracking-tight text-foreground absolute left-1/2 -translate-x-1/2"
+
+            <Link
+              to="/"
+              className="flex-1 text-center text-lg font-serif font-medium tracking-tight text-foreground truncate px-2"
             >
               Design Dialogues
             </Link>
-            
-            <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-              3 {t("header.credits")}
-            </div>
+
+            <button
+              onClick={handleBuyCredits}
+              disabled={buyingCredits || loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50 shrink-0"
+            >
+              {loading || buyingCredits ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <>
+                  <span>{credits ?? 0} {t("header.credits")}</span>
+                  <Plus size={12} />
+                </>
+              )}
+            </button>
           </div>
           
           {/* Desktop Layout - 3-part grid */}
@@ -106,9 +156,20 @@ const Header = () => {
             <div className="justify-self-end flex items-center gap-4">
               <LanguageSelector />
               <FeedbackTrigger onClick={() => setFeedbackOpen(true)} />
-              <div className="px-3 py-1.5 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-                3 {t("header.credits")}
-              </div>
+              <button
+                onClick={handleBuyCredits}
+                disabled={buyingCredits || loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
+              >
+                {loading || buyingCredits ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <>
+                    <span>{credits ?? 0} {t("header.credits")}</span>
+                    <Plus size={12} />
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

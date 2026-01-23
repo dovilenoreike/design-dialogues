@@ -39,7 +39,7 @@
     --accent: var(--ds-hue) var(--ds-sat) 96%;
     --accent-foreground: var(--ds-hue) var(--ds-sat) 10%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 15 65% 34%;
     --destructive-foreground: 0 0% 100%;
     
     /* Borders */

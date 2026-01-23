@@ -12,7 +12,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring"},
-      "materialType": "Engineered Wood"
+      "materialType": "Vinyl"
     },
     "material2": {
       "description": {
@@ -21,7 +21,7 @@
       },
       "rooms": ["kitchen", "bathroom", "livingRoom"],
       "purpose": { "default": "Cabinetry", "kitchen": "Bottom cabinets", "livingRoom": "Shelving" },
-      "materialType": "Laminate"
+      "materialType": "LMDP"
     },
     "material3": {
       "description": {
@@ -30,7 +30,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom"],
       "purpose": { "default": "Cabinetry", "kitchen": "Top cabinets" },
-      "materialType": "Laminate"
+      "materialType": "LMDP"
     },
     "material4": {
       "description": {

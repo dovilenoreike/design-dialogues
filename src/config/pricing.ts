@@ -17,9 +17,9 @@ export const baseRates: Record<Tier, number> = {
  * Interior Design Project rates per m² by tier
  */
 export const designRates: Record<Tier, number> = {
-  Budget: 30,
+  Budget: 40,
   Standard: 50,
-  Premium: 80,
+  Premium: 60,
 };
 
 /**
@@ -44,8 +44,8 @@ export const appliancePackages: Record<Tier, number> = {
  * Built-in Wardrobes rates per linear meter
  */
 export const wardrobeRates: Record<Tier, number> = {
-  Budget: 400,
-  Standard: 650,
+  Budget: 600,
+  Standard: 800,
   Premium: 1000,
 };
 
