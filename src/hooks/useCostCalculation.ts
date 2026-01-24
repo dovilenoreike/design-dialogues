@@ -13,7 +13,9 @@ import {
   wardrobeRates,
   renovationRate,
   furniturePercentage,
+  furnitureRates,
   priceVariance,
+  urgencyMultiplier,
   roundToHundred,
 } from "@/config/pricing";
 
@@ -44,6 +46,7 @@ export interface CostCalculation {
 interface UseCostCalculationParams {
   area: number;
   isRenovation: boolean;
+  isUrgent: boolean;
   services: ServiceSelection;
   kitchenLength: number;
   wardrobeLength: number;
@@ -95,6 +98,7 @@ const tierTooltips: Record<string, Record<Tier, string>> = {
 export function useCostCalculation({
   area,
   isRenovation,
+  isUrgent,
   services,
   kitchenLength,
   wardrobeLength,
@@ -155,13 +159,24 @@ export function useCostCalculation({
       wardrobes +
       renovationCost;
 
-    // Furnishing & Decor affects Furniture cost
+    // Determine if only furnishing is selected (no construction services)
+    const onlyFurnishing =
+      services.furnishingDecor &&
+      !services.spacePlanning &&
+      !services.interiorFinishes;
+
+    // Furniture cost calculation:
+    // - Flat rate per m² when only Furnishing & Decor is selected
+    // - Percentage of subtotal when other services are included
     const furniture = services.furnishingDecor
-      ? roundToHundred(subtotal * furniturePercentage)
+      ? onlyFurnishing
+        ? roundToHundred(area * furnitureRates[tier])
+        : roundToHundred(subtotal * furniturePercentage)
       : 0;
 
-    // Total
-    const total = subtotal + furniture;
+    // Total (with urgency premium if applicable)
+    const baseTotal = subtotal + furniture;
+    const total = isUrgent ? roundToHundred(baseTotal * urgencyMultiplier) : baseTotal;
 
     // Calculate ±15% range for total (also rounded)
     const lowEstimate = roundToHundred(total * (1 - priceVariance));
@@ -247,5 +262,5 @@ export function useCostCalculation({
       joineryTotal,
       equipTotal,
     };
-  }, [area, isRenovation, services, kitchenLength, wardrobeLength, selectedTier, t]);
+  }, [area, isRenovation, isUrgent, services, kitchenLength, wardrobeLength, selectedTier, t]);
 }

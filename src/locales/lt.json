@@ -125,6 +125,8 @@
     "wardrobeLength": "Spintų Ilgis",
     "conditions": "Sąlygos",
     "renovationRequired": "Reikalinga Renovacija",
+    "urgentProject": "Skubus Projektas",
+    "urgentProjectHint": "+20% už pagreitintą terminą",
     "services": "Paslaugos",
     "costBreakdown": "Kainos Struktūra",
     "disclaimer": "Visos sumos yra preliminarios sąmatos remiantis tipinėmis projekto kainomis",
@@ -344,7 +346,8 @@
   "budget": {
     "kitchen": "Virtuvė",
     "wardrobe": "Spinta",
-    "renovation": "Renovacija"
+    "renovation": "Renovacija",
+    "urgent": "Skubu"
   },
   "mobile": {
     "stage": {

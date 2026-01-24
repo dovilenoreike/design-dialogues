@@ -16,6 +16,7 @@ interface BudgetEditSheetProps {
   onClose: () => void;
   localArea: number;
   localIsRenovation: boolean;
+  localIsUrgent: boolean;
   localKitchenLength: number;
   localWardrobeLength: number;
   calculation: CostCalculation;
@@ -27,6 +28,7 @@ export default function BudgetEditSheet({
   onClose,
   localArea,
   localIsRenovation,
+  localIsUrgent,
   localKitchenLength,
   localWardrobeLength,
   calculation,
@@ -104,6 +106,22 @@ export default function BudgetEditSheet({
             <Switch
               checked={localIsRenovation}
               onCheckedChange={(checked) => onUpdateFormData({ isRenovation: checked })}
+            />
+          </div>
+
+          {/* Urgency toggle */}
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div>
+              <label className="font-medium text-sm">
+                {t("result.urgentProject")}
+              </label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t("result.urgentProjectHint")}
+              </p>
+            </div>
+            <Switch
+              checked={localIsUrgent}
+              onCheckedChange={(checked) => onUpdateFormData({ isUrgent: checked })}
             />
           </div>
 

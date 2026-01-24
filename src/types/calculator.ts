@@ -11,6 +11,7 @@ export interface ServiceSelection {
 export interface FormData {
   area: number;
   isRenovation: boolean;
+  isUrgent: boolean;
   services: ServiceSelection;
   kitchenLength: number;
   wardrobeLength: number;
@@ -25,6 +26,7 @@ export {
   wardrobeRates,
   renovationRate,
   furniturePercentage,
+  furnitureRates,
   priceVariance,
   roundToHundred,
   serviceCardContent,

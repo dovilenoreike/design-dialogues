@@ -73,6 +73,7 @@ const ResultDashboard = ({
   // Local state for refine inputs
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
   const [localIsRenovation, setLocalIsRenovation] = useState(formData?.isRenovation ?? false);
+  const [localIsUrgent, setLocalIsUrgent] = useState(formData?.isUrgent ?? false);
   const [localServices, setLocalServices] = useState<ServiceSelection>(
     formData?.services ?? { spacePlanning: true, interiorFinishes: true, furnishingDecor: true }
   );
@@ -84,6 +85,7 @@ const ResultDashboard = ({
     if (formData) {
       setLocalArea(formData.area);
       setLocalIsRenovation(formData.isRenovation);
+      setLocalIsUrgent(formData.isUrgent);
       setLocalServices(formData.services);
       setLocalKitchenLength(formData.kitchenLength);
       setLocalWardrobeLength(formData.wardrobeLength);
@@ -94,6 +96,7 @@ const ResultDashboard = ({
   const calculation = useCostCalculation({
     area: localArea,
     isRenovation: localIsRenovation,
+    isUrgent: localIsUrgent,
     services: localServices,
     kitchenLength: localKitchenLength,
     wardrobeLength: localWardrobeLength,
@@ -105,6 +108,7 @@ const ResultDashboard = ({
     const newFormData: FormData = {
       area: updates.area ?? localArea,
       isRenovation: updates.isRenovation ?? localIsRenovation,
+      isUrgent: updates.isUrgent ?? localIsUrgent,
       services: updates.services ?? localServices,
       kitchenLength: updates.kitchenLength ?? localKitchenLength,
       wardrobeLength: updates.wardrobeLength ?? localWardrobeLength,
@@ -112,6 +116,7 @@ const ResultDashboard = ({
 
     if (updates.area !== undefined) setLocalArea(updates.area);
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
+    if (updates.isUrgent !== undefined) setLocalIsUrgent(updates.isUrgent);
     if (updates.services !== undefined) setLocalServices(updates.services);
     if (updates.kitchenLength !== undefined) setLocalKitchenLength(updates.kitchenLength);
     if (updates.wardrobeLength !== undefined) setLocalWardrobeLength(updates.wardrobeLength);
@@ -212,6 +217,7 @@ const ResultDashboard = ({
                           onSelectTier={setSelectedTier}
                           localArea={localArea}
                           localIsRenovation={localIsRenovation}
+                          localIsUrgent={localIsUrgent}
                           localServices={localServices}
                           localKitchenLength={localKitchenLength}
                           localWardrobeLength={localWardrobeLength}

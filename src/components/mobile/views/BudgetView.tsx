@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Wrench, UtensilsCrossed, Shirt, Compass, Paintbrush, Sofa } from "lucide-react";
+import { Home, Wrench, UtensilsCrossed, Shirt, Compass, Paintbrush, Sofa, Zap } from "lucide-react";
 import { useDesign, Tier } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCostCalculation } from "@/hooks/useCostCalculation";
@@ -28,6 +28,7 @@ const services = [
 const defaultFormData: FormData = {
   area: 60,
   isRenovation: false,
+  isUrgent: false,
   services: {
     spacePlanning: true,
     interiorFinishes: true,
@@ -51,6 +52,7 @@ export default function BudgetView() {
   // Local state for form inputs
   const [localArea, setLocalArea] = useState(data.area);
   const [localIsRenovation, setLocalIsRenovation] = useState(data.isRenovation);
+  const [localIsUrgent, setLocalIsUrgent] = useState(data.isUrgent);
   const [localServices, setLocalServices] = useState<ServiceSelection>(data.services);
   const [localKitchenLength, setLocalKitchenLength] = useState(data.kitchenLength);
   const [localWardrobeLength, setLocalWardrobeLength] = useState(data.wardrobeLength);
@@ -59,6 +61,7 @@ export default function BudgetView() {
   const calculation = useCostCalculation({
     area: localArea,
     isRenovation: localIsRenovation,
+    isUrgent: localIsUrgent,
     services: localServices,
     kitchenLength: localKitchenLength,
     wardrobeLength: localWardrobeLength,
@@ -69,6 +72,7 @@ export default function BudgetView() {
   const handleUpdateFormData = (updates: Partial<FormData>) => {
     if (updates.area !== undefined) setLocalArea(updates.area);
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
+    if (updates.isUrgent !== undefined) setLocalIsUrgent(updates.isUrgent);
     if (updates.services !== undefined) setLocalServices(updates.services);
     if (updates.kitchenLength !== undefined) setLocalKitchenLength(updates.kitchenLength);
     if (updates.wardrobeLength !== undefined) setLocalWardrobeLength(updates.wardrobeLength);
@@ -154,6 +158,12 @@ export default function BudgetView() {
               icon={Wrench}
               label={t("budget.renovation")}
               active={localIsRenovation}
+              onClick={openEditSheet}
+            />
+            <BudgetChip
+              icon={Zap}
+              label={t("budget.urgent")}
+              active={localIsUrgent}
               onClick={openEditSheet}
             />
           </div>
@@ -254,6 +264,7 @@ export default function BudgetView() {
         onClose={() => setIsEditSheetOpen(false)}
         localArea={localArea}
         localIsRenovation={localIsRenovation}
+        localIsUrgent={localIsUrgent}
         localKitchenLength={localKitchenLength}
         localWardrobeLength={localWardrobeLength}
         calculation={calculation}

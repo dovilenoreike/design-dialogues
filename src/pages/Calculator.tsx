@@ -8,6 +8,7 @@ const Calculator = () => {
   const [formData, setFormData] = useState<FormData>({
     area: 50,
     isRenovation: false,
+    isUrgent: false,
     services: { spacePlanning: true, interiorFinishes: true, furnishingDecor: true },
     kitchenLength: 4,
     wardrobeLength: 3,

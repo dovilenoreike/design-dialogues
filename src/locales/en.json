@@ -119,6 +119,8 @@
     "wardrobeLength": "Wardrobe Length",
     "conditions": "Conditions",
     "renovationRequired": "Renovation Required",
+    "urgentProject": "Urgent Project",
+    "urgentProjectHint": "+20% for expedited timeline",
     "services": "Services",
     "costBreakdown": "Cost Breakdown",
     "disclaimer": "All figures are preliminary estimates based on typical project costs",
@@ -338,7 +340,8 @@
   "budget": {
     "kitchen": "Kitchen",
     "wardrobe": "Wardrobe",
-    "renovation": "Renovation"
+    "renovation": "Renovation",
+    "urgent": "Urgent"
   },
   "mobile": {
     "stage": {

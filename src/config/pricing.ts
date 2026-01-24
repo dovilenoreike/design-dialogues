@@ -55,14 +55,28 @@ export const wardrobeRates: Record<Tier, number> = {
 export const renovationRate = 150;
 
 /**
- * Furniture estimate as percentage of subtotal
+ * Furniture estimate as percentage of subtotal (used when other services are selected)
  */
 export const furniturePercentage = 0.20;
+
+/**
+ * Furniture rates per m² by tier (used when only Furnishing & Decor is selected)
+ */
+export const furnitureRates: Record<Tier, number> = {
+  Budget: 80,
+  Standard: 150,
+  Premium: 300,
+};
 
 /**
  * Price range variance (±15%)
  */
 export const priceVariance = 0.15;
+
+/**
+ * Urgency multiplier (20% premium for rush projects)
+ */
+export const urgencyMultiplier = 1.20;
 
 /**
  * Round to nearest hundred for cleaner estimates

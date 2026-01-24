@@ -17,6 +17,7 @@ interface CostBreakdownPanelProps {
   onToggle: () => void;
   localArea: number;
   localIsRenovation: boolean;
+  localIsUrgent: boolean;
   localServices: ServiceSelection;
   localKitchenLength: number;
   localWardrobeLength: number;
@@ -32,6 +33,7 @@ const CostBreakdownPanel = ({
   onToggle,
   localArea,
   localIsRenovation,
+  localIsUrgent,
   localServices,
   localKitchenLength,
   localWardrobeLength,
@@ -124,6 +126,22 @@ const CostBreakdownPanel = ({
             <Switch
               checked={localIsRenovation}
               onCheckedChange={(checked) => onUpdateFormData({ isRenovation: checked })}
+            />
+          </div>
+
+          {/* Urgency toggle */}
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-ds-border-subtle">
+            <div>
+              <label className="font-medium text-sm text-text-primary">
+                {t("result.urgentProject")}
+              </label>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t("result.urgentProjectHint")}
+              </p>
+            </div>
+            <Switch
+              checked={localIsUrgent}
+              onCheckedChange={(checked) => onUpdateFormData({ isUrgent: checked })}
             />
           </div>
 
