@@ -1,12 +1,10 @@
 import type { DesignerProfile } from "@/types/palette";
 
 const ALL_STYLES = [
-  "scandinavian-minimalism",
-  "japandi",
-  "art-inspired-modernism",
-  "modern-brutalism",
-  "quiet-luxury",
-  "classic-modern",
+  "minimalist",
+  "organic",
+  "classic",
+  "industrial",
 ];
 
 export const designers: Record<string, DesignerProfile> = {
@@ -14,7 +12,7 @@ export const designers: Record<string, DesignerProfile> = {
     name: "Sigita Kulikajeva",
     title: "Interior Architect",
     bio: "Award-winning interior architect specializing in contemporary residential design. With over 15 years of experience, I create spaces that balance functionality with timeless aesthetics, drawing inspiration from natural materials and Scandinavian minimalism.",
-    styles: [ "scandinavian-minimalism", "japandi", "art-inspired-modernism", "modern-brutalism", "quiet-luxury",],
+    styles: ["minimalist", "organic", "industrial"],
     email: "hello@sigitadesign.com",
     instagram: "sigita.design",
     website: "https://sigitadesign.com",

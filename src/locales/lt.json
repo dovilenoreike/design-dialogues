@@ -59,12 +59,10 @@
     "day-by-the-sea": "Diena prie jūros"
   },
   "style": {
-    "japandi": "Japandi",
-    "art-inspired-modernism": "Meno įkvėptas modernizmas",
-    "modern-brutalism": "Modernus brutalizmas",
-    "quiet-luxury": "Tyli prabanga",
-    "classic-modern": "Moderni klasika",
-    "scandinavian-minimalism": "Skandinaviškas"
+    "minimalist": "Minimalistinis",
+    "organic": "Organinis",
+    "classic": "Klasikinis",
+    "industrial": "Industrinis"
   },
   "specs": {
     "emptyTitle": "Medžiagos nepasirinktos",

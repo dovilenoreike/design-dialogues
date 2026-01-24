@@ -26,7 +26,7 @@ export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
   selectedCategory: "Kitchen",
   selectedMaterial: "fog-in-the-forest",
-  selectedStyle: "scandinavian-minimalism",
+  selectedStyle: "minimalist",
   freestyleDescription: "",
 };
 

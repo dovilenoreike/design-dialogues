@@ -61,12 +61,10 @@
     "day-by-the-sea": "Day by the Sea"
   },
   "style": {
-    "japandi": "Japandi",
-    "art-inspired-modernism": "Art-Inspired Modernism",
-    "modern-brutalism": "Modern Brutalism",
-    "quiet-luxury": "Quiet Luxury",
-    "classic-modern": "Classic Modern",
-    "scandinavian-minimalism": "Scandinavian"
+    "minimalist": "Minimalist",
+    "organic": "Organic",
+    "classic": "Classic",
+    "industrial": "Industrial"
   },
   "specs": {
     "emptyTitle": "No Materials Selected",
