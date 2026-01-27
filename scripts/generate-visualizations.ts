@@ -4,7 +4,8 @@
  * Batch Image Generation Script for Visualizations
  *
  * Generates visualization images for all palette × room × style combinations
- * using OpenAI's image edits API.
+ * using OpenAI's image edits API. Images are converted to WebP format for
+ * optimal compression (requires cwebp to be installed).
  *
  * Usage:
  *   npm run generate:visuals -- --palette=fog-in-the-forest --quality=medium
@@ -16,6 +17,10 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { execFile } from "child_process";
+import { promisify } from "util";
+
+const execFileAsync = promisify(execFile);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -486,6 +491,11 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+async function convertToWebP(pngPath: string, webpPath: string): Promise<void> {
+  await execFileAsync("cwebp", ["-q", "80", pngPath, "-o", webpPath]);
+  await fs.unlink(pngPath); // Remove the temporary PNG
+}
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -589,6 +599,13 @@ async function main() {
           "public/visualisations",
           paletteId,
           style.id,
+          `${room.id}.webp`
+        );
+        const tempPngPath = path.join(
+          PROJECT_ROOT,
+          "public/visualisations",
+          paletteId,
+          style.id,
           `${room.id}.png`
         );
 
@@ -663,8 +680,9 @@ async function main() {
           // Ensure output directory exists
           await ensureDir(path.dirname(outputPath));
 
-          // Save image
-          await fs.writeFile(outputPath, resultBuffer);
+          // Save PNG temporarily, then convert to WebP
+          await fs.writeFile(tempPngPath, resultBuffer);
+          await convertToWebP(tempPngPath, outputPath);
 
           console.log(`         ✅ Saved to ${outputPath}`);
           generated++;

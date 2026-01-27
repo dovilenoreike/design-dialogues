@@ -5,6 +5,7 @@
 import { RefreshCw, Palette, RotateCcw, Sparkles } from "lucide-react";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VisualizationSectionProps {
   uploadedImage: string | null;
@@ -27,6 +28,8 @@ const VisualizationSection = ({
   onChangeStyle,
   onStartFresh,
 }: VisualizationSectionProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="slide-up">
       <div className="aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden bg-secondary">
@@ -51,7 +54,7 @@ const VisualizationSection = ({
 
       {/* Visualization Disclaimer */}
       <p className="text-[10px] md:text-xs text-muted-foreground italic mt-2 text-center">
-        Conceptual visualization — actual spaces and materials may vary
+        {t("result.visualizationDisclaimer")}
       </p>
 
       {/* Style Badges */}

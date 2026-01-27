@@ -146,17 +146,23 @@ export default function Stage() {
 
       {/* Status badge and action buttons - show when user has uploaded/generated */}
       {hasUserImage && (
-        <div className="absolute inset-x-0 top-4 flex items-center justify-center px-4">
+        <div className="absolute inset-x-0 top-4 flex flex-col items-center px-4">
           <p className="inline-block px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full text-xs text-white/90">
             {generatedImage
               ? t("mobile.stage.visualized").replace("{room}", roomName)
               : t("mobile.stage.yourRoom").replace("{room}", roomName)}
           </p>
+          {/* Visualization disclaimer - only after generation */}
+          {generatedImage && (
+            <p className="mt-1.5 text-[10px] text-white/70 italic">
+              {t("result.visualizationDisclaimer")}
+            </p>
+          )}
           {/* Save button - visible when generated image exists */}
           {generatedImage && !isGenerating && (
             <button
               onClick={handleSaveImage}
-              className="absolute right-14 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
+              className="absolute top-0 right-14 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
             >
               <Download className="w-4 h-4" strokeWidth={2} />
             </button>
@@ -165,7 +171,7 @@ export default function Stage() {
           {!isGenerating && (
             <button
               onClick={clearUploadedImage}
-              className="absolute right-4 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
+              className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
             >
               <X className="w-4 h-4" strokeWidth={2} />
             </button>

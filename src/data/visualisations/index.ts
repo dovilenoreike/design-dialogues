@@ -1,7 +1,7 @@
 /**
  * Visualization URL utilities
  *
- * Images are stored in public/visualisations/{palette}/{style}/{room}.png
+ * Images are stored in public/visualisations/{palette}/{style}/{room}.webp
  * and served directly as static assets (no bundler processing needed).
  */
 
@@ -40,5 +40,5 @@ export function getVisualization(
   const room = roomName ? roomNameToId(roomName) : DEFAULT_ROOM;
   const style = styleId || DEFAULT_STYLE;
 
-  return `/visualisations/${palette}/${style}/${room}.png`;
+  return `/visualisations/${palette}/${style}/${room}.webp`;
 }
