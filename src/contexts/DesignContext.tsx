@@ -50,7 +50,7 @@ interface DesignContextValue {
   handleFreestyleChange: (description: string) => void;
 
   // Generation actions
-  handleGenerate: () => void;
+  handleGenerate: () => Promise<boolean>;
   handleStartFresh: () => void;
 
   // Room switch dialog actions
@@ -180,9 +180,9 @@ export function DesignProvider({ children }: DesignProviderProps) {
     }));
   }, []);
 
-  // Generate interior render
-  const generateInteriorRender = useCallback(async () => {
-    if (!uploadedImage || !selectedCategory) return;
+  // Generate interior render - returns true if successful
+  const generateInteriorRender = useCallback(async (): Promise<boolean> => {
+    if (!uploadedImage || !selectedCategory) return false;
 
     try {
       const palette = design.selectedMaterial ? getPaletteById(design.selectedMaterial) : null;
@@ -237,17 +237,19 @@ export function DesignProvider({ children }: DesignProviderProps) {
         isGenerating: false,
       }));
       toast.success("Interior visualization generated!", { position: "top-center" });
+      return true;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again.";
       toast.error(errorMessage);
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
+      return false;
     }
   }, [uploadedImage, selectedCategory, design.selectedMaterial, design.selectedStyle, design.freestyleDescription]);
 
-  // Handle generate button click
-  const handleGenerate = useCallback(() => {
+  // Handle generate button click - returns true if successful
+  const handleGenerate = useCallback(async (): Promise<boolean> => {
     setGeneration((prev) => ({ ...prev, isProcessing: true, isGenerating: true }));
-    generateInteriorRender();
+    return generateInteriorRender();
   }, [generateInteriorRender]);
 
   // Start fresh - reset all state

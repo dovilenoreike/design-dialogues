@@ -40,27 +40,34 @@ export default function Stage() {
   const { uploadedImages, selectedCategory, selectedMaterial } = design;
   const { generatedImage, isGenerating } = generation;
 
-  // Wrapper that deducts credit before generating
+  // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
-    try {
-      // Try to deduct credit - server is the source of truth
-      const result = await useCredit();
-
-      if (!result.success) {
-        // Server says no credits - show error (state already updated by useCredit)
-        toast.error(t("credits.noCredits") || "No credits remaining. Please purchase more credits.");
-        return;
-      }
-
-      // Credit deducted successfully, now generate
-      handleGenerate();
-    } catch (err) {
-      console.error("Failed to use credit:", err);
-      toast.error(t("credits.error") || "Failed to process credit. Please try again.");
-      // Refetch to ensure UI shows correct state after error
-      refetchCredits();
+    // Check if user has credits before attempting generation
+    if (credits !== null && credits <= 0) {
+      toast.error(t("credits.noCredits") || "No credits remaining. Please purchase more credits.");
+      return;
     }
-  }, [useCredit, handleGenerate, refetchCredits, t]);
+
+    try {
+      // Generate the image first
+      const success = await handleGenerate();
+
+      // Only deduct credit if generation was successful
+      if (success) {
+        try {
+          await useCredit();
+        } catch (creditErr) {
+          console.error("Failed to deduct credit after successful generation:", creditErr);
+          // Don't show error to user - image was generated successfully
+          // Just refetch to sync credit state
+          refetchCredits();
+        }
+      }
+    } catch (err) {
+      console.error("Generation failed:", err);
+      // No credit deducted since generation failed
+    }
+  }, [credits, handleGenerate, useCredit, refetchCredits, t]);
 
   // Get current room's uploaded image
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
