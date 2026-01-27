@@ -11,7 +11,7 @@ export const designers: Record<string, DesignerProfile> = {
   "heya_studio": {
     name: "HEYA Studio",
     title: "Interjero dizaino studija",
-    bio: "Award-winning interior architect specializing in contemporary residential design. With over 15 years of experience, I create spaces that balance functionality with timeless aesthetics, drawing inspiration from natural materials and Scandinavian minimalism.",
+    bio: "Gyvenamųjų ir komercinių erdvių projektavimas. Interjero techniniai brėžiniai, online konsultacijos, vizualizacijos.",
     styles: ["minimalist", "organic", "industrial"],
     cities:["klaipeda"],
     email: "hello@heyastudio.com",
