@@ -12,7 +12,7 @@ import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
 import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
-import { generateInteriorDesign } from "@/lib/openai-api";
+import { supabase } from "@/integrations/supabase/client";
 
 export type BottomTab = "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -206,15 +206,30 @@ export function DesignProvider({ children }: DesignProviderProps) {
       const architecturePrompt = architecture?.promptSnippet || null;
       const atmospherePrompt = atmosphere?.promptSnippet || null;
 
-      // Call image generation with separate architecture and atmosphere
-      const generatedImageBase64 = await generateInteriorDesign(
-        uploadedImage,
-        selectedCategory,
-        materialPrompt || null,
-        architecturePrompt,
-        atmospherePrompt,
-        design.freestyleDescription.trim() || null
-      );
+      // Combine style prompts for the Supabase function
+      const stylePrompt = [architecturePrompt, atmospherePrompt]
+        .filter(Boolean)
+        .join(" ") || null;
+
+      // Call Supabase Edge Function for secure server-side generation
+      const { data, error } = await supabase.functions.invoke("generate-interior", {
+        body: {
+          imageBase64: uploadedImage,
+          roomCategory: selectedCategory,
+          materialPrompt: materialPrompt || null,
+          stylePrompt,
+          freestyleDescription: design.freestyleDescription.trim() || null,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to generate interior");
+      }
+
+      const generatedImageBase64 = data?.generatedImage;
+      if (!generatedImageBase64) {
+        throw new Error("No image returned from generation service");
+      }
 
       setGeneration((prev) => ({
         ...prev,
