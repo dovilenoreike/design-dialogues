@@ -126,13 +126,56 @@ export function DesignProvider({ children }: DesignProviderProps) {
     setGeneration((prev) => ({ ...prev, generatedImage: null }));
   }, [design.selectedCategory]);
 
-  // Save/download generated image
-  const handleSaveImage = useCallback(() => {
-    if (generation.generatedImage) {
-      const link = document.createElement("a");
-      link.href = generation.generatedImage;
-      link.download = `${design.selectedCategory}-${design.selectedStyle || 'custom'}-visualization.png`;
-      link.click();
+  // Save/download generated image - mobile compatible
+  const handleSaveImage = useCallback(async () => {
+    if (!generation.generatedImage) return;
+
+    const filename = `${design.selectedCategory}-${design.selectedStyle || 'custom'}-visualization.png`;
+
+    try {
+      // Check if it's a data URL or a remote URL
+      const isDataUrl = generation.generatedImage.startsWith('data:');
+
+      let blob: Blob;
+
+      if (isDataUrl) {
+        // Convert base64 data URL to blob
+        const response = await fetch(generation.generatedImage);
+        blob = await response.blob();
+      } else {
+        // Fetch remote URL and convert to blob
+        const response = await fetch(generation.generatedImage);
+        blob = await response.blob();
+      }
+
+      // Create object URL from blob
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Check if it's iOS (Safari on iOS doesn't support download attribute)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS) {
+        // On iOS, open image in new tab - user can long-press to save
+        window.open(blobUrl, '_blank');
+        toast.info("Long-press the image to save it to your device", { position: "top-center" });
+      } else {
+        // Standard download for other browsers
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Image saved!", { position: "top-center" });
+      }
+
+      // Clean up object URL after a delay
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (error) {
+      console.error("Failed to save image:", error);
+      // Fallback: open image in new tab
+      window.open(generation.generatedImage, '_blank');
+      toast.info("Image opened in new tab - save from there", { position: "top-center" });
     }
   }, [generation.generatedImage, design.selectedCategory, design.selectedStyle]);
 
