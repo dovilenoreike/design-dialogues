@@ -5,6 +5,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Convert base64 data URL to Blob
+function base64ToBlob(base64DataUrl: string): Blob {
+  // Extract the base64 content and mime type
+  const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!matches) {
+    throw new Error("Invalid base64 data URL format");
+  }
+
+  const mimeType = matches[1];
+  const base64Data = matches[2];
+
+  // Decode base64 to binary
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,60 +56,31 @@ serve(async (req) => {
       designPrompt += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
     }
 
-    // Add instruction about reference images if provided
+    // Note: images/edits doesn't support multiple reference images, but we include context in prompt
     if (materialImages && materialImages.length > 0) {
-      designPrompt += ` Use the provided material reference images as exact visual guides for textures, colors, and finishes. Match these materials precisely in the generated interior.`;
+      designPrompt += ` Match the specified material selections precisely in textures, colors, and finishes.`;
     }
 
-    designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout. Generate an image of the redesigned room.";
+    designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
 
     console.log("Generating interior with prompt:", designPrompt);
-    console.log("Number of material reference images:", materialImages?.length || 0);
 
-    // Build content array with room image and optional material reference images
-    const contentArray: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
-      {
-        type: "text",
-        text: designPrompt
-      },
-      {
-        type: "image_url",
-        image_url: {
-          url: imageBase64
-        }
-      }
-    ];
+    // Convert base64 image to Blob for FormData
+    const imageBlob = base64ToBlob(imageBase64);
 
-    // Add material reference images if provided (limit to 4 to avoid token limits)
-    if (materialImages && Array.isArray(materialImages)) {
-      const limitedImages = materialImages.slice(0, 4);
-      for (const materialImage of limitedImages) {
-        contentArray.push({
-          type: "image_url",
-          image_url: {
-            url: materialImage
-          }
-        });
-      }
-    }
+    // Build FormData for images/edits endpoint
+    const formData = new FormData();
+    formData.append("image", imageBlob, "room.png");
+    formData.append("prompt", designPrompt);
+    formData.append("model", "gpt-image-1");
+    formData.append("size", "1024x1024");
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: contentArray
-          }
-        ],
-        modalities: ["text", "image"],
-        max_tokens: 4096
-      }),
+      body: formData,
     });
 
     if (!response.ok) {
@@ -114,28 +106,21 @@ serve(async (req) => {
     const data = await response.json();
     console.log("OpenAI response received");
 
-    // Extract the generated image from OpenAI's response format
-    const messageContent = data.choices?.[0]?.message?.content;
+    // Extract the generated image from images/edits response format
+    // Response format: { data: [{ url: "..." } or { b64_json: "..." }] }
     let generatedImage = null;
 
-    // Check for image in the content array (OpenAI's image generation format)
-    if (Array.isArray(messageContent)) {
-      for (const item of messageContent) {
-        if (item.type === "image_url" && item.image_url?.url) {
-          generatedImage = item.image_url.url;
-          break;
-        }
+    if (data.data && data.data[0]) {
+      if (data.data[0].url) {
+        generatedImage = data.data[0].url;
+      } else if (data.data[0].b64_json) {
+        generatedImage = `data:image/png;base64,${data.data[0].b64_json}`;
       }
-    }
-
-    // Also check for images in the message directly
-    if (!generatedImage && data.choices?.[0]?.message?.images?.[0]) {
-      generatedImage = data.choices[0].message.images[0].url || data.choices[0].message.images[0].image_url?.url;
     }
 
     if (!generatedImage) {
       console.error("No image in response:", JSON.stringify(data));
-      throw new Error("No image generated. The AI model may not support image generation.");
+      throw new Error("No image generated in response");
     }
 
     return new Response(
