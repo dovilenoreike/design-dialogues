@@ -36,9 +36,9 @@ serve(async (req) => {
             currency: "eur",
             product_data: {
               name: "Design Dialogues Credits",
-              description: "10 image generation credits",
+              description: "20 image generation credits",
             },
-            unit_amount: 500, // €5.00 in cents
+            unit_amount: 200, // €2.00 in cents
           },
           quantity: 1,
         },
@@ -48,7 +48,7 @@ serve(async (req) => {
       cancel_url: cancel_url || "https://example.com/cancel",
       metadata: {
         device_id: device_id,
-        credits_to_add: "10",
+        credits_to_add: "20",
       },
     });
 
