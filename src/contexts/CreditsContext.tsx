@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import { supabase } from "@/integrations/supabase/client";
 
 const DEVICE_ID_KEY = "design_dialogues_device_id";
+const CREDITS_CACHE_KEY = "design_dialogues_credits";
 
 function getDeviceId(): string {
   let deviceId = localStorage.getItem(DEVICE_ID_KEY);
@@ -10,6 +11,31 @@ function getDeviceId(): string {
     localStorage.setItem(DEVICE_ID_KEY, deviceId);
   }
   return deviceId;
+}
+
+// Save credits to localStorage cache
+function cacheCredits(credits: number) {
+  localStorage.setItem(CREDITS_CACHE_KEY, JSON.stringify({
+    credits,
+    timestamp: Date.now()
+  }));
+}
+
+// Load cached credits (returns null if expired or missing)
+function getCachedCredits(): number | null {
+  const cached = localStorage.getItem(CREDITS_CACHE_KEY);
+  if (!cached) return null;
+
+  try {
+    const { credits, timestamp } = JSON.parse(cached);
+    // Cache valid for 24 hours
+    if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+      return credits;
+    }
+  } catch {
+    // Invalid cache data
+  }
+  return null;
 }
 
 interface CreditsContextValue {
@@ -29,7 +55,8 @@ interface CreditsProviderProps {
 }
 
 export function CreditsProvider({ children }: CreditsProviderProps) {
-  const [credits, setCredits] = useState<number | null>(null);
+  // Initialize from cache for instant display
+  const [credits, setCredits] = useState<number | null>(getCachedCredits());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +76,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       }
 
       setCredits(data.credits);
+      cacheCredits(data.credits);
     } catch (err) {
       console.error("Failed to fetch credits:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch credits");
@@ -97,9 +125,10 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
         throw fnError;
       }
 
-      // Always update local state with server value
+      // Always update local state and cache with server value
       const serverCredits = data.credits ?? 0;
       setCredits(serverCredits);
+      cacheCredits(serverCredits);
 
       if (data.success) {
         return { success: true, credits: serverCredits };

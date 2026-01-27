@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download } from "lucide-react";
+import { Upload, Sparkles, Loader2, Camera, X, Download, LayoutGrid, Palette } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
@@ -83,17 +83,18 @@ export default function Stage() {
     fileInputRef.current?.click();
   };
 
+  // Get palette and style info for glass pills
+  const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+  const style = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+
   // Get the appropriate image to display (palette × room × style)
-  const visualizationImage = getVisualization(selectedMaterial, selectedCategory, design.selectedStyle);
+  const styleId = design.selectedStyle || null;
+  const visualizationImage = getVisualization(selectedMaterial, selectedCategory, styleId);
   const displayImage = generatedImage || uploadedImage || visualizationImage;
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(roomTranslationKey[roomNameRaw] || roomNameRaw);
   const roomNameAcc = t(roomTranslationKeyAcc[roomNameRaw] || roomTranslationKey[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
-
-  // Get palette and style info for glass pills
-  const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
-  const style = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
 
   return (
     <div className="relative w-full h-full bg-surface-muted">
@@ -208,12 +209,14 @@ export default function Stage() {
       {!hasUserImage && (style || palette) && (
         <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2 pointer-events-none">
           {style && (
-            <span className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white/90">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+              <LayoutGrid className="w-3 h-3" strokeWidth={2} />
               {t(`style.${style.id}`) || style.name}
             </span>
           )}
           {palette && (
-            <span className="px-2.5 py-1 bg-white/15 backdrop-blur-sm rounded-full text-[10px] text-white/70">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10">
+              <Palette className="w-3 h-3" strokeWidth={2} />
               {t(`palette.${palette.id}`) || palette.name}
             </span>
           )}
@@ -224,12 +227,14 @@ export default function Stage() {
       {hasUserImage && (style || palette) && (
         <div className="absolute top-14 inset-x-0 flex justify-center items-center gap-2 pointer-events-none">
           {style && (
-            <span className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white/90">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+              <LayoutGrid className="w-3 h-3" strokeWidth={2} />
               {t(`style.${style.id}`) || style.name}
             </span>
           )}
           {palette && (
-            <span className="px-2.5 py-1 bg-white/15 backdrop-blur-sm rounded-full text-[10px] text-white/70">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10">
+              <Palette className="w-3 h-3" strokeWidth={2} />
               {t(`palette.${palette.id}`) || palette.name}
             </span>
           )}

@@ -106,7 +106,7 @@ const Header = () => {
 
             <Link
               to="/"
-              className="flex-1 text-center text-lg font-serif font-medium tracking-tight text-foreground truncate px-2"
+              className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
             >
               Design Dialogues
             </Link>

@@ -4,6 +4,7 @@ import behindTheLightsImg from "@/assets/materials/behind-the-lights.jpg";
 import chocolateWabiSabiImg from "@/assets/materials/chocolate-wabi-sabi.jpg";
 import morningMistImg from "@/assets/materials/morning-mist.jpg";
 import dayByTheSeaImg from "@/assets/materials/day-by-the-sea.jpg";
+import caramelMorningImg from "@/assets/materials/caramel-morning.jpg";
 
 /**
  * Map of palette IDs to their thumbnail images
@@ -14,6 +15,7 @@ export const paletteThumbnails: Record<string, string> = {
   "chocolate-wabi-sabi": chocolateWabiSabiImg,
   "morning-mist": morningMistImg,
   "day-by-the-sea": dayByTheSeaImg,
+  "caramel-morning": caramelMorningImg,
 };
 
 /**

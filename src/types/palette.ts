@@ -17,6 +17,7 @@ export interface Material {
   rooms: string[];
   purpose: MaterialPurpose;
   materialType?: string;
+  technicalCode?: string;
 }
 
 export interface DesignerProfile {
@@ -24,6 +25,7 @@ export interface DesignerProfile {
   title: string;
   bio: string;
   styles: string[];
+  cities?: string[];
   email?: string;
   instagram?: string;
   website?: string;
@@ -32,7 +34,6 @@ export interface DesignerProfile {
 export interface Palette {
   id: string;
   name: string;
-  temp: string;
   designer: string;
   designerTitle: string;
   designerProfile?: DesignerProfile;

@@ -56,20 +56,46 @@
     "behind-the-lights": "Šviesų užkulisiai",
     "morning-mist": "Ryto migla",
     "chocolate-wabi-sabi": "Wabi-sabi šokolade",
-    "day-by-the-sea": "Diena prie jūros"
+    "day-by-the-sea": "Diena prie jūros",
+    "caramel-morning": "Karamelinis rytas"
   },
   "style": {
+    "scandinavian-minimalism": "Skandinaviškas",
+    "japandi": "Japandi",
+    "modern-classic": "Šiuolaikinė Klasika",
+    "soft-industrial": "Švelnus Industrinis",
+    "art-inspired-modernism": "Meno Įkvėptas Modernizmas",
+    "quiet-luxury": "Santūri Prabanga"
+  },
+  "architecture": {
     "minimalist": "Minimalistinis",
     "organic": "Organinis",
     "classic": "Klasikinis",
     "industrial": "Industrinis"
+  },
+  "atmosphere": {
+    "title": "Pridėti Atmosferą",
+    "add": "Pridėti atmosferą",
+    "none": "Be atmosferos",
+    "scandi": "Scandi",
+    "scandi.desc": "Jaukumas ir natūrali šviesa",
+    "japandi": "Japandi",
+    "japandi.desc": "Wabi-sabi ir skandinaviškas ramumas",
+    "the-curator": "Kuratorius",
+    "the-curator.desc": "Kolekcionuoti objektai su istorija",
+    "chiaroscuro": "Chiaroscuro",
+    "chiaroscuro.desc": "Dramatiška šviesa ir šešėliai",
+    "bauhaus": "Bauhaus",
+    "bauhaus.desc": "Ryški geometrija ir pirminės spalvos"
   },
   "specs": {
     "emptyTitle": "Medžiagos nepasirinktos",
     "emptyDescription": "Pasirinkite paletę Dizaino skirtuke, kad čia matytumėte medžiagų specifikacijas.",
     "freestyleTitle": "Jūsų Vizija",
     "freestyleSubtitle": "Individuali paletė",
-    "requestMaterials": "Užsakyti medžiagų sąrašą"
+    "requestMaterials": "Užsakyti medžiagų sąrašą",
+    "tierComingSoon": "Jau greitai!",
+    "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus."
   },
   "material": {
     "purpose": {
@@ -77,6 +103,7 @@
       "Worktops": "Stalviršiai",
       "Worktops and backsplash": "Stalviršis ir sienelė",
       "Wall and floor surfaces": "Sienos ir grindys",
+      "Walls": "Sienos",
       "Tiles": "Plytelės",
       "Shelving": "Lentynos",
       "Top cabinets": "Viršutinės spintelės",
@@ -96,7 +123,7 @@
       "Laminate": "Laminatas",
       "Wood Veneer": "Medienos lukštas",
       "Metal": "Metalas",
-      "Ceramic Tile": "Keraminės plytelės"
+      "Tiles": "Plytelės"
     }
   },
   "matrix": {
@@ -133,7 +160,7 @@
     "changeStyle": "Keisti Stilių",
     "startFresh": "Pradėti Iš Naujo",
     "materialManifest": "Medžiagų Sąrašas",
-    "curatedBy": "Kuruoja",
+    "curatedBy": "Sukurė",
     "requestCurated": "Užsakyti Medžiagų Sąrašą",
     "visualizationDisclaimer": "Konceptuali vizualizacija — tikros erdvės ir medžiagos gali skirtis",
     "seeDetails": "Žiūrėti detales",
@@ -201,7 +228,7 @@
     "step1Title": "Dizainas",
     "step1Desc": "Naršykite paruoštas paletes ir stilius. Įkelkite savo erdvę ir pamatykite ją transformuotą su AI vizualizacija.",
     "step2Title": "Medžiagos",
-    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, kuruotas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
+    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, parinktas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
     "step3Title": "Biudžetas",
     "step3Desc": "Gaukite orientacines kainas pagal Jūsų poreikius. Koreguokite parametrus pagal savo erdvę ir apimtį.",
     "step4Title": "Planas",
@@ -249,7 +276,7 @@
     "workWithMe": "Dirbkime Kartu",
     "sendInquiry": "Siųsti Užklausą",
     "myCollections": "Mano Kolekcijos",
-    "curatedPalettes": "Kuruotos Paletės",
+    "curatedPalettes": "Sukurtos Paletės",
     "contactForProject": "Susisiekti dėl Projekto",
     "contactTitle": "Susisiekti su {name}",
     "contactDescription": "Siųskite užklausą aptarti jūsų interjero dizaino poreikius.",
@@ -372,5 +399,18 @@
       "cancel": "Atšaukti",
       "apply": "Taikyti"
     }
+  },
+  "sourcing": {
+    "title": "Medžiagos Detalės",
+    "whereToBuy": "Kur Įsigyti",
+    "findCarpenter": "Rasti baldų meistrus",
+    "findFlooringInstaller": "Rasti grindų dangos klojėją",
+    "findTileInstaller": "Rasti plytelių klojėją",
+    "comingSoon": "Jau greitai",
+    "availableIn": "Galima įsigyti",
+    "noShowrooms": "Salonų sąrašas ruošiamas",
+    "noProviders": "Sąrašas ruošiamas",
+    "selectCity": "Pasirinkite miestą",
+    "code": "Kodas"
   }
 }

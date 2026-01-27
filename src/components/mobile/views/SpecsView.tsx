@@ -3,17 +3,21 @@ import { Sparkles, MessageSquare } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPaletteById } from "@/data/palettes";
+import { getDesignerWithFallback } from "@/data/designers";
 import { getMaterialsForRoom, getMaterialPurpose, getMaterialImageUrl, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
 import MaterialCard from "@/components/MaterialCard";
+import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
 import TierPill from "../controls/TierPill";
 import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 
 export default function SpecsView() {
-  const { design, handleSelectMaterial } = useDesign();
+  const { design, handleSelectMaterial, selectedTier } = useDesign();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+  const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
+  const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const { selectedMaterial, selectedCategory, freestyleDescription } = design;
 
   const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
@@ -103,13 +107,22 @@ export default function SpecsView() {
         {palette && (
           <div className="mb-6">
             <h2 className="text-2xl font-serif mb-1">{t(`palette.${palette.id}`) || palette.name}</h2>
-            <p className="text-sm text-muted-foreground">{t("result.curatedBy")} {palette.designer}</p>
+            <p className="text-sm text-muted-foreground">{t("result.curatedBy")} {getDesignerWithFallback(palette.designer, palette.designerTitle).name}</p>
           </div>
         )}
 
         {/* Material Cards */}
-        <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
-          {filteredMaterials.map(({ key, material }) => {
+        <div className="relative">
+          {selectedTier !== "Standard" && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-xl">
+              <p className="text-lg font-serif mb-1">{t("specs.tierComingSoon")}</p>
+              <p className="text-sm text-muted-foreground text-center px-4">
+                {t("specs.tierComingSoonDescription")}
+              </p>
+            </div>
+          )}
+          <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
+            {filteredMaterials.map(({ key, material }) => {
             const imageUrl = palette ? getMaterialImageUrl(palette.id, key) : null;
             const materialPurpose = getMaterialPurpose(material, roomCategory);
 
@@ -123,6 +136,18 @@ export default function SpecsView() {
 
             const description = getMaterialDescription(material, language);
 
+
+            const handleMaterialClick = () => {
+              setSelectedMaterialInfo({
+                name: description?.split('.')[0] || translatedPurpose,
+                materialType: material.materialType,
+                technicalCode: material.technicalCode,
+                imageUrl: imageUrl || undefined,
+                showroomIds: material.showroomIds,
+              });
+              setIsSourcingSheetOpen(true);
+            };
+
             return (
               <MaterialCard
                 key={key}
@@ -130,16 +155,19 @@ export default function SpecsView() {
                 swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
                 title={description?.split('.')[0] || translatedPurpose}
                 category={translatedPurpose}
-                subtext={translatedType}
+                materialType={translatedType}
+                technicalCode={material.technicalCode}
+                onClick={handleMaterialClick}
               />
             );
-          })}
+            })}
+          </div>
         </div>
 
         {/* Designer Compact Card */}
         {palette && (
           <DesignerCompactCard
-            designerName={palette.designer}
+            designerId={palette.designer}
             designerTitle={palette.designerTitle}
             onOpenProfile={() => setIsProfileSheetOpen(true)}
           />
@@ -151,12 +179,19 @@ export default function SpecsView() {
         <DesignerProfileSheet
           isOpen={isProfileSheetOpen}
           onClose={() => setIsProfileSheetOpen(false)}
-          designerName={palette.designer}
+          designerId={palette.designer}
           designerTitle={palette.designerTitle}
           currentPaletteId={palette.id}
           onSelectPalette={handleSelectMaterial}
         />
       )}
+
+      {/* Material Sourcing Sheet */}
+      <MaterialSourcingSheet
+        isOpen={isSourcingSheetOpen}
+        onClose={() => setIsSourcingSheetOpen(false)}
+        material={selectedMaterialInfo}
+      />
     </div>
   );
 }

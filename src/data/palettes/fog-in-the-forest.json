@@ -1,7 +1,7 @@
 {
   "id": "fog-in-the-forest",
   "name": "Fog in the Forest",
-  "designer": "Athena Blackbird",
+  "designer": "athena_blackbird",
   "designerTitle": "Interior Designer",
   "promptSnippet": "Inspired by fog in the forest, mysterious but calm atmosphere. Colours of dark trunks, buish fog, dark branches. Wall in white.",
   "materials": {
@@ -12,7 +12,9 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring"},
-      "materialType": "Vinyl"
+      "materialType": "Vinyl",
+      "technicalCode": "Constance-Chevrone",
+      "showroomIds":["solido-grindys"]
     },
     "material2": {
       "description": {
@@ -21,7 +23,9 @@
       },
       "rooms": ["kitchen", "bathroom"],
       "purpose": { "default": "Worktops", "bathroom": "Tiles" },
-      "materialType": "Ceramic Tile"
+      "materialType": "Tiles",
+      "technicalCode": "Marazzi Grande Marble Look Blue Grey",
+      "showroomIds":["linea"]
     },
     "material3": {
       "description": {
@@ -30,7 +34,9 @@
       },
       "rooms": ["kitchen", "bathroom", "livingRoom"],
       "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Velvet 3301",
+      "showroomIds":["impeka"]
     },
     "material4": {
       "description": {
@@ -39,7 +45,9 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets" },
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Egger H3198 ST19",
+      "showroomIds":["impeka"]
     }
   }
 }

@@ -137,29 +137,33 @@ export async function callGPT4Vision(
 function buildTransformationPrompt(
   roomCategory: string,
   materialPrompt?: string,
-  stylePrompt?: string,
+  architecturePrompt?: string,
+  atmospherePrompt?: string,
   freestyleDescription?: string
 ): string {
   let prompt = `Create an interior design visualisation for this ${roomCategory}.\n\n`;
 
-  // Use provided style or default to contemporary aesthetic
-  const effectiveStylePrompt = stylePrompt || DEFAULT_STYLE_PROMPT;
+  // THE ARCHITECTURE section - spatial/structural principles
+  const effectiveArchitecturePrompt = architecturePrompt || DEFAULT_STYLE_PROMPT;
+  prompt += `THE ARCHITECTURE: ${effectiveArchitecturePrompt}\n\n`;
 
-  // THE ARCHITECTURE section (now always included)
-  prompt += `THE ARCHITECTURE: ${effectiveStylePrompt}\n\n`;
+  // THE ATMOSPHERE section - mood/styling/decor (only if provided)
+  if (atmospherePrompt) {
+    prompt += `THE ATMOSPHERE: ${atmospherePrompt}\n\n`;
+  }
 
-  // Add material descriptions (pass through unchanged)
+  // THE MATERIALITY section - material descriptions
   if (materialPrompt) {
     prompt += `THE MATERIALITY: ${materialPrompt}\n\n`;
   }
 
-  // Add freestyle description
+  // Add freestyle description as materiality
   if (freestyleDescription) {
     prompt += `THE MATERIALITY: ${freestyleDescription}\n\n`;
   }
 
-  // THE SYNTHESIS section (now always included)
-  prompt += `THE SYNTHESIS: Create a fusion where the architecture and materiality harmoniously blend together. The design should reflect the chosen style while showcasing the specified materials in a cohesive and visually appealing manner. Focus on balance, contrast, and how the materials enhance the overall architectural concept.`;
+  // THE SYNTHESIS section - how to blend everything together
+  prompt += `THE SYNTHESIS: Create a fusion where the architecture, atmosphere, and materiality harmoniously blend together. The design should reflect the chosen architectural style with the specified atmosphere while focus on showcasing the materials accurately in a cohesive and visually appealing manner. Keep balance, contrast, and how all elements enhance the overall design concept.`;
 
   return prompt.trim();
 }
@@ -249,8 +253,8 @@ export async function generateInteriorDesign(
   imageBase64: string,
   roomCategory: string,
   materialPrompt?: string | null,
-  materialImages?: string[] | null,  // DEPRECATED - no longer used
-  stylePrompt?: string | null,
+  architecturePrompt?: string | null,
+  atmospherePrompt?: string | null,
   freestyleDescription?: string | null
 ): Promise<string> {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -264,7 +268,8 @@ export async function generateInteriorDesign(
   const transformPrompt = buildTransformationPrompt(
     roomCategory,
     materialPrompt || undefined,
-    stylePrompt || undefined,
+    architecturePrompt || undefined,
+    atmospherePrompt || undefined,
     freestyleDescription || undefined
   );
   console.log(transformPrompt);

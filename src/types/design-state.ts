@@ -7,7 +7,7 @@ export interface DesignSelection {
   uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name
   selectedCategory: string | null;
   selectedMaterial: string | null;
-  selectedStyle: string | null;
+  selectedStyle: string | null;  // Combined style ID (architecture + atmosphere)
   freestyleDescription: string;
 }
 
@@ -26,7 +26,7 @@ export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
   selectedCategory: "Kitchen",
   selectedMaterial: "fog-in-the-forest",
-  selectedStyle: "minimalist",
+  selectedStyle: "scandinavian-minimalism",  // Default combined style
   freestyleDescription: "",
 };
 

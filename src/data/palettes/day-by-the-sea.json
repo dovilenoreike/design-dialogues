@@ -1,8 +1,8 @@
 {
   "id": "day-by-the-sea",
   "name": "Day by the Sea",
-  "designer": "Sigita Kulikajeva",
-  "designerTitle": "Interior Designer",
+  "designer": "heya_studio",
+  "designerTitle": "Interjero dizaino studija",
 "promptSnippet": "Inspired by the calm of the sea. Add decor details in beige and chocolate brown. Walls in warm white.",
   "materials": {
     "material1": {
@@ -12,7 +12,9 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring"},
-      "materialType": "Vinyl"
+      "materialType": "Vinyl",
+    "technicalCode": "Baron",
+    "showroomIds":["solido-grindys"]
     },
     "material2": {
       "description": {
@@ -21,7 +23,9 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Cabinet furniture"},
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Velvet 4246",
+      "showroomIds":["impeka"]
     },
     "material3": {
       "description": {
@@ -30,7 +34,9 @@
       },
       "rooms": ["kitchen", "bathroom"],
       "purpose": { "default": "Worktops"},
-      "materialType": "Laminate"
+      "materialType": "HPL",
+      "technicalCode": "ICONO C43 Eleganza Bianco",
+      "showroomIds":["impeka"]
     },
     "material4": {
       "description": {
@@ -39,7 +45,9 @@
       },
       "rooms": ["livingRoom", "bedroom","bathroom", "other"],
       "purpose": { "default": "Cabinet furniture"},
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Egger U750 ST9",
+      "showroomIds":["impeka"]
     },
     "material5": {
       "description": {
@@ -48,7 +56,9 @@
       },
       "rooms": ["bedroom","bathroom", "other"],
       "purpose": { "default": "Shelving", "bathroom": "Vanity unit"},
-      "materialType": "MDF"
+      "materialType": "MDF",
+      "technicalCode": "Valchromat Chocolate",
+      "showroomIds":["impeka"]
     },
     "material6": {
       "description": {
@@ -57,7 +67,9 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Accent areas"},
-      "materialType": "Tiles"
+      "materialType": "Tiles",
+      "technicalCode": "Living Ceramics Oda Ductile Ice Coast",
+      "showroomIds":["linea"]
     },
     "material7": {
       "description": {
@@ -66,7 +78,9 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Sienos ir grindys"},
-      "materialType": "Tiles"
+      "materialType": "Tiles",
+      "technicalCode": "Florim Sensi Lithos Grey",
+      "showroomIds":["linea"]
     },
     "material8": {
       "description": {
@@ -75,7 +89,9 @@
       },
       "rooms": ["kitchen","bathroom", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Fixtures and fittings", "bathroom": "Plumbing fixtures"},
-      "materialType": "Metal"
+      "materialType": "Metal",
+      "technicalCode": "Brushed Bronze",
+      "showroomIds":["impeka"]
     }
   }
 }

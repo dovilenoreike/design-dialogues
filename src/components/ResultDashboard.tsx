@@ -276,7 +276,7 @@ const ResultDashboard = ({
       <DesignerProfileSheet
         isOpen={isDesignerSheetOpen}
         onClose={() => setIsDesignerSheetOpen(false)}
-        designerName={palette?.designer || "Design Dialogues"}
+        designerId={palette?.designer || "design_dialogues"}
         designerTitle={palette?.designerTitle || "Interior Designer"}
         currentPaletteId={selectedMaterial || undefined}
         onSelectPalette={onSelectPalette}

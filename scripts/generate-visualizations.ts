@@ -31,6 +31,7 @@ const PALETTES = [
   "chocolate-wabi-sabi",
   "morning-mist",
   "day-by-the-sea",
+  "caramel-morning",
 ];
 
 const ROOMS = [
@@ -42,35 +43,55 @@ const ROOMS = [
 
 // Style IDs for validation (actual data loaded from src/data/styles)
 const STYLE_IDS = [
-  "japandi",
-  "art-inspired-modernism",
-  "modern-brutalism",
-  "quiet-luxury",
-  "classic-modern",
   "scandinavian-minimalism",
+  "japandi",
+  "modern-classic",
+  "soft-industrial",
+  "art-inspired-modernism",
+  "quiet-luxury",
 ];
 
+interface StyleConfig {
+  architecture: string;
+  atmosphere: string | null;
+}
+
 interface StyleData {
+  id: string;
+  name: string;
+  config: StyleConfig;
+}
+
+interface ArchitectureData {
   id: string;
   name: string;
   promptSnippet: string;
 }
 
-// Load styles from shared data source
+interface AtmosphereData {
+  id: string;
+  name: string;
+  promptSnippet: string;
+}
+
+// Load styles from shared data source (new structure with config)
 async function loadStyles(): Promise<StyleData[]> {
   const stylesPath = path.join(PROJECT_ROOT, "src/data/styles/index.ts");
   const content = await fs.readFile(stylesPath, "utf-8");
 
-  // Parse the styles array from the TypeScript file
+  // Parse the styles array from the TypeScript file (new structure)
   const styles: StyleData[] = [];
-  const styleRegex = /{\s*id:\s*"([^"]+)",\s*name:\s*"([^"]+)",\s*desc:\s*"[^"]*",\s*promptSnippet:\s*"([^"]+)"/g;
+  const styleRegex = /{\s*id:\s*"([^"]+)",\s*name:\s*"([^"]+)",\s*config:\s*{\s*architecture:\s*"([^"]+)",\s*atmosphere:\s*(?:"([^"]+)"|null)\s*}/g;
 
   let match;
   while ((match = styleRegex.exec(content)) !== null) {
     styles.push({
       id: match[1],
       name: match[2],
-      promptSnippet: match[3],
+      config: {
+        architecture: match[3],
+        atmosphere: match[4] || null,
+      },
     });
   }
 
@@ -79,6 +100,54 @@ async function loadStyles(): Promise<StyleData[]> {
   }
 
   return styles;
+}
+
+// Load architectures from shared data source
+async function loadArchitectures(): Promise<ArchitectureData[]> {
+  const archPath = path.join(PROJECT_ROOT, "src/data/architectures/index.ts");
+  const content = await fs.readFile(archPath, "utf-8");
+
+  const architectures: ArchitectureData[] = [];
+  const archRegex = /{\s*id:\s*"([^"]+)",\s*name:\s*"([^"]+)",\s*desc:\s*"[^"]*",\s*promptSnippet:\s*"([^"]+)"/g;
+
+  let match;
+  while ((match = archRegex.exec(content)) !== null) {
+    architectures.push({
+      id: match[1],
+      name: match[2],
+      promptSnippet: match[3],
+    });
+  }
+
+  if (architectures.length === 0) {
+    throw new Error("Failed to load architectures from src/data/architectures/index.ts");
+  }
+
+  return architectures;
+}
+
+// Load atmospheres from shared data source
+async function loadAtmospheres(): Promise<AtmosphereData[]> {
+  const atmPath = path.join(PROJECT_ROOT, "src/data/atmospheres/index.ts");
+  const content = await fs.readFile(atmPath, "utf-8");
+
+  const atmospheres: AtmosphereData[] = [];
+  const atmRegex = /{\s*id:\s*"([^"]+)",\s*name:\s*"([^"]+)",\s*promptSnippet:\s*"([^"]*)"/g;
+
+  let match;
+  while ((match = atmRegex.exec(content)) !== null) {
+    atmospheres.push({
+      id: match[1],
+      name: match[2],
+      promptSnippet: match[3],
+    });
+  }
+
+  if (atmospheres.length === 0) {
+    throw new Error("Failed to load atmospheres from src/data/atmospheres/index.ts");
+  }
+
+  return atmospheres;
 }
 
 // API config loaded dynamically from src/config/api.ts
@@ -119,7 +188,7 @@ interface Palette {
   materials: Record<
     string,
     {
-      description: string;
+      description: string | { en: string; lt: string };
       rooms: string[];
       purpose: Record<string, string>;
       materialType: string;
@@ -292,7 +361,11 @@ function buildMaterialPrompt(palette: Palette, roomId: string): string {
   const materialDescriptions = filteredMaterials.map(([, material]) => {
     const purpose =
       material.purpose[roomCategory] || material.purpose.default || "Material";
-    return `- ${purpose}: ${material.description}`;
+    // Handle both string and i18n object descriptions
+    const description = typeof material.description === "string"
+      ? material.description
+      : material.description.en;
+    return `- ${purpose}: ${description}`;
   });
 
   return `${palette.promptSnippet}\n\nMaterials specification:\n${materialDescriptions.join("\n")}`;
@@ -301,15 +374,26 @@ function buildMaterialPrompt(palette: Palette, roomId: string): string {
 function buildFullPrompt(
   roomName: string,
   materialPrompt: string,
-  stylePrompt: string
+  architecturePrompt: string,
+  atmospherePrompt: string | null
 ): string {
-  return `Create an interior design visualisation for this ${roomName}.
+  let prompt = `Create an interior design visualisation for this ${roomName}.\n\n`;
 
-THE ARCHITECTURE: ${stylePrompt}
+  // THE ARCHITECTURE section - spatial/structural principles
+  prompt += `THE ARCHITECTURE: ${architecturePrompt}\n\n`;
 
-THE MATERIALITY: ${materialPrompt}
+  // THE ATMOSPHERE section - mood/styling/decor (only if provided)
+  if (atmospherePrompt) {
+    prompt += `THE ATMOSPHERE: ${atmospherePrompt}\n\n`;
+  }
 
-THE SYNTHESIS: Create a fusion where the architecture and materiality harmoniously blend together. The design should reflect the chosen style while showcasing the specified materials in a cohesive and visually appealing manner. Focus on balance, contrast, and how the materials enhance the overall architectural concept.`;
+  // THE MATERIALITY section - material descriptions
+  prompt += `THE MATERIALITY: ${materialPrompt}\n\n`;
+
+  // THE SYNTHESIS section - how to blend everything together
+  prompt += `THE SYNTHESIS: Create a fusion where the architecture, atmosphere, and materiality harmoniously blend together. The design should reflect the chosen architectural style with the specified atmosphere while showcasing the materials in a cohesive and visually appealing manner. Focus on balance, contrast, and how all elements enhance the overall design concept.`;
+
+  return prompt;
 }
 
 async function loadImageAsBuffer(imagePath: string): Promise<Buffer> {
@@ -424,13 +508,32 @@ async function main() {
     console.log("✓ API key loaded\n");
   }
 
-  // Load styles from shared data source
+  // Load styles, architectures, and atmospheres from shared data sources
   const STYLES = await loadStyles();
   console.log(`✓ Loaded ${STYLES.length} styles from src/data/styles`);
+
+  const ARCHITECTURES = await loadArchitectures();
+  console.log(`✓ Loaded ${ARCHITECTURES.length} architectures from src/data/architectures`);
+
+  const ATMOSPHERES = await loadAtmospheres();
+  console.log(`✓ Loaded ${ATMOSPHERES.length} atmospheres from src/data/atmospheres`);
 
   // Load API config from shared source
   const apiConfig = await loadApiConfig();
   console.log(`✓ Loaded API config: model=${apiConfig.model}, size=${apiConfig.size}, quality=${apiConfig.quality}\n`);
+
+  // Helper to resolve architecture prompt
+  const getArchitecturePrompt = (archId: string): string => {
+    const arch = ARCHITECTURES.find((a) => a.id === archId);
+    return arch?.promptSnippet || "";
+  };
+
+  // Helper to resolve atmosphere prompt
+  const getAtmospherePrompt = (atmId: string | null): string | null => {
+    if (!atmId) return null;
+    const atm = ATMOSPHERES.find((a) => a.id === atmId);
+    return atm?.promptSnippet || null;
+  };
 
   // Determine what to generate
   const palettesToGenerate =
@@ -502,10 +605,13 @@ async function main() {
 
         // Build prompts (needed for both dry-run verbose and actual generation)
         const materialPrompt = buildMaterialPrompt(palette, room.id);
+        const architecturePrompt = getArchitecturePrompt(style.config.architecture);
+        const atmospherePrompt = getAtmospherePrompt(style.config.atmosphere);
         const fullPrompt = buildFullPrompt(
           room.name,
           materialPrompt,
-          style.promptSnippet
+          architecturePrompt,
+          atmospherePrompt
         );
 
         if (options.dryRun) {

@@ -1,18 +1,20 @@
 import { User, ChevronRight } from "lucide-react";
 import { getDesignerWithFallback } from "@/data/designers";
+import { getDesignerImage } from "@/data/designers/images";
 
 interface DesignerCompactCardProps {
-  designerName: string;
+  designerId: string;
   designerTitle: string;
   onOpenProfile: () => void;
 }
 
 export default function DesignerCompactCard({
-  designerName,
+  designerId,
   designerTitle,
   onOpenProfile,
 }: DesignerCompactCardProps) {
-  const profile = getDesignerWithFallback(designerName, designerTitle);
+  const profile = getDesignerWithFallback(designerId, designerTitle);
+  const profileImage = getDesignerImage(designerId);
 
   return (
     <button
@@ -21,8 +23,16 @@ export default function DesignerCompactCard({
     >
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center flex-shrink-0">
-          <User size={20} className="text-muted-foreground" />
+        <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User size={20} className="text-muted-foreground" />
+          )}
         </div>
 
         {/* Content */}

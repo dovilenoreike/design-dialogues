@@ -61,17 +61,42 @@
     "day-by-the-sea": "Day by the Sea"
   },
   "style": {
+    "scandinavian-minimalism": "Scandinavian Minimalism",
+    "japandi": "Japandi",
+    "modern-classic": "Modern Classic",
+    "soft-industrial": "Soft Industrial",
+    "art-inspired-modernism": "Art-Inspired Modernism",
+    "quiet-luxury": "Quiet Luxury"
+  },
+  "architecture": {
     "minimalist": "Minimalist",
     "organic": "Organic",
     "classic": "Classic",
     "industrial": "Industrial"
+  },
+  "atmosphere": {
+    "title": "Add Atmosphere",
+    "add": "Add atmosphere",
+    "none": "None",
+    "scandi": "Scandi",
+    "scandi.desc": "Cozy warmth and natural light",
+    "japandi": "Japandi",
+    "japandi.desc": "Wabi-sabi meets Nordic calm",
+    "the-curator": "The Curator",
+    "the-curator.desc": "Collected objects that tell a story",
+    "chiaroscuro": "Chiaroscuro",
+    "chiaroscuro.desc": "Dramatic light and shadow",
+    "bauhaus": "Bauhaus",
+    "bauhaus.desc": "Bold geometry and primary colors"
   },
   "specs": {
     "emptyTitle": "No Materials Selected",
     "emptyDescription": "Select a palette from the Design tab to see your material specifications here.",
     "freestyleTitle": "Your Vision",
     "freestyleSubtitle": "Custom palette",
-    "requestMaterials": "Request Curated Material List"
+    "requestMaterials": "Request Curated Material List",
+    "tierComingSoon": "Coming soon!",
+    "tierComingSoonDescription": "Explore our Standard selection in the meantime."
   },
   "material": {
     "purpose": {
@@ -366,5 +391,18 @@
       "cancel": "Cancel",
       "apply": "Apply"
     }
+  },
+  "sourcing": {
+    "title": "Material Details",
+    "whereToBuy": "Where to Buy",
+    "findCarpenter": "Find Carpenter",
+    "findFlooringInstaller": "Find Flooring Installer",
+    "findTileInstaller": "Find Tile Installer",
+    "comingSoon": "Coming soon",
+    "availableIn": "Available in",
+    "noShowrooms": "No showrooms listed yet",
+    "noProviders": "No providers listed yet",
+    "selectCity": "Select city",
+    "code": "Code"
   }
 }

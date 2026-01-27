@@ -1,9 +1,9 @@
 {
   "id": "behind-the-lights",
   "name": "Behind the Lights",
-  "designer": "Impeka komanda",
+  "designer": "impeka",
   "designerTitle": "Other",
-  "promptSnippet": "Inspired by the theatrical lighting. Keep base colour palette neutral but add decor details of black and rich brick-red colour.",
+  "promptSnippet": "Inspired by the theatrical lighting. Keep base colour palette neutral but add decor details of black and brick-red colour.",
   "materials": {
     "material1": {
       "description": {
@@ -12,16 +12,20 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "office"],
       "purpose": { "default": "Flooring", "kitchen": "Flooring" },
-      "materialType": "Laminate"
+      "materialType": "Laminate",
+      "technicalCode": "525 Calisson oak",
+      "showroomIds":["impeka"]
     },
     "material2": {
       "description": {
         "en": "Graphite matte – deep dark grey surface with a smooth, velvety matte texture",
-        "lt": "Grafito matinis – gilus tamsiai pilkas paviršius su lygia, aksominio matiškumo tekstūra"
+        "lt": "Grafito matinis – gilus tamsiai pilkas paviršius"
       },
       "rooms": ["kitchen", "bathroom", "bedroom", "livingRoom", "other"],
       "purpose": { "default": "Shelving", "bathroom": "Other cabinet surfaces", "kitchen": "Cabinetry" },
-      "materialType": "MDF"
+      "materialType": "MDF",
+      "technicalCode": "Valchromat Black",
+      "showroomIds":["impeka"]
     },
     "material3": {
       "description": {
@@ -30,25 +34,31 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops and backsplash"},
-      "materialType": "HPL"
+      "materialType": "HPL",
+      "technicalCode": "Fondi 40 Peperino Marmo",
+      "showroomIds":["impeka"]
     },
     "material4": {
       "description": {
         "en": "Natural warm-toned wood with subtle vertical grain.",
-        "lt": "Natūralus šilto atspalvio medis su subtilia vertikalia tekstūra."
+        "lt": "Natūralus šilto atspalvio medis."
       },
       "rooms": ["bedroom", "livingRoom", "other"],
       "purpose": { "default": "Cabinet furniture"},
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Egger H1385 ST40",
+      "showroomIds":["impeka"]
     },
     "material5": {
       "description": {
         "en": "Dark fossil limestone tiles with organic shell inclusions and a muted bluish-grey undertone.",
-        "lt": "Tamsios fosilijų kalkakmenio plytelės su organiniais kriauklių intarpais ir prislopintu melsvai pilku atspalviu."
+        "lt": "Tamsios fosilijų kalkakmenio raštas."
       },
       "rooms": ["bathroom"],
-      "purpose": { "default": "Sienos ir grindys" },
-      "materialType": "Ceramic Tile"
+      "purpose": { "default": "Wall and floor surfaces" },
+      "materialType": "Tiles",
+      "technicalCode": "Oda Classic Soft Textured",
+      "showroomIds":["linea"]
     },
     "material6": {
       "description": {
@@ -57,7 +67,9 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Accent areas"},
-      "materialType": "Ceramic Tile"
+      "materialType": "Tiles",
+      "technicalCode": "Atlas Concorde Marvel Stone Nero Marquina",
+      "showroomIds":["linea"]
     },
     "material7": {
       "description": {
@@ -66,7 +78,9 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Drawer fronts"},
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Velvet 5983",
+      "showroomIds":["impeka"]
     }
   }
 }

@@ -7,7 +7,7 @@
 
 // Default values
 export const DEFAULT_PALETTE = "fog-in-the-forest";
-export const DEFAULT_STYLE = "organic";
+export const DEFAULT_STYLE = "japandi";
 export const DEFAULT_ROOM = "kitchen";
 
 /**

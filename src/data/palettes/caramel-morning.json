@@ -1,0 +1,75 @@
+{
+  "id": "caramel-morning",
+  "name": "Caramel Morning",
+  "designer": "gn_interiordesign",
+  "designerTitle": "Interjero dizaino studija",
+  "promptSnippet": "Inspired by the uplifting energy of the morning. Sweet contrast of chaki-browns, warm beiges, soft off-whites. Walls in warm white.",
+  "materials": {
+    "material1": {
+      "description": {
+        "en": "Natural oak texture.",
+        "lt": "Natūralus ąžuolo tekstūra."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Vinyl",
+      "technicalCode": "Baron",
+      "showroomIds":["solido-grindys"]
+    },
+    "material2": {
+      "description": {
+        "en": "Matte khaki-brown small ribbed tiles with horizontal oval reliefs",
+        "lt": "Reljefinės chaki-rudos spalvos plytelės"
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas"},
+      "materialType": "Tiles",
+      "technicalCode": "Marazzi Confetto Kaki Str. 3D Savoiardo MEUZ",
+      "showroomIds":["linea"]
+    },
+    "material3": {
+      "description": {
+        "en": "Matte terrazzo-look stone tiles with beige and warm grey base and mixed stone fragments",
+        "lt": "Šiltos terazo stiliaus plytelės."
+      },
+      "rooms": ["bathroom", "kitchen"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Tiles",
+      "technicalCode": "Ragno Eterna Mix Multicolor",
+      "showroomIds":["linea"]
+    },
+    "material4": {
+      "description": {
+        "en": "Matte off-white handmade-look tiles with slightly uneven edges and soft warm-white tone",
+        "lt": "Baltos rankų darbo stiliaus plytelės."
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Walls" },
+      "materialType": "Tiles",
+      "technicalCode": "Vaniglia Lux MPLQ Terramater",
+      "showroomIds":["linea"]
+    },
+    "material5": {
+      "description": {
+        "en": "Flat matte off-white.",
+        "lt": "Šila balta spalva."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
+      "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
+      "materialType": "LMDP",
+      "technicalCode": "Velvet 1648",
+      "showroomIds":["impeka"]
+    },
+    "material6": {
+      "description": {
+        "en": "Dark khaki-brow fronts with a subtle linear texture.",
+        "lt": "Chaki-ruda su subtilia linijine tekstūra."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets" },
+      "materialType": "LMDP",
+      "technicalCode": "Alvis Elitis 02 DY",
+      "showroomIds":["impeka"]
+    }
+  }
+}

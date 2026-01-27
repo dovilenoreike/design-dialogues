@@ -9,6 +9,8 @@ import {
 import { FormData } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
+import { getArchitectureById } from "@/data/architectures";
+import { getAtmosphereById } from "@/data/atmospheres";
 import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
 import { generateInteriorDesign } from "@/lib/openai-api";
 
@@ -184,7 +186,15 @@ export function DesignProvider({ children }: DesignProviderProps) {
 
     try {
       const palette = design.selectedMaterial ? getPaletteById(design.selectedMaterial) : null;
+
+      // Get combined style and derive architecture + atmosphere from config
       const style = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+      const architecture = style?.config.architecture
+        ? getArchitectureById(style.config.architecture)
+        : null;
+      const atmosphere = style?.config.atmosphere
+        ? getAtmosphereById(style.config.atmosphere)
+        : null;
 
       // Build detailed material prompt with room-specific purposes
       let materialPrompt = "";
@@ -192,13 +202,17 @@ export function DesignProvider({ children }: DesignProviderProps) {
         materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
       }
 
-      // Call image generation
+      // Get architecture and atmosphere prompts separately
+      const architecturePrompt = architecture?.promptSnippet || null;
+      const atmospherePrompt = atmosphere?.promptSnippet || null;
+
+      // Call image generation with separate architecture and atmosphere
       const generatedImageBase64 = await generateInteriorDesign(
         uploadedImage,
         selectedCategory,
         materialPrompt || null,
-        null,
-        style?.promptSnippet || null,
+        architecturePrompt,
+        atmospherePrompt,
         design.freestyleDescription.trim() || null
       );
 

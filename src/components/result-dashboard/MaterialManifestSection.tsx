@@ -2,9 +2,11 @@
  * MaterialManifestSection - Bottom panel showing material palette or freestyle vision
  */
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
+import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import { getPaletteById } from "@/data/palettes";
 import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
 import { defaultMaterials } from "./constants";
@@ -28,6 +30,8 @@ const MaterialManifestSection = ({
   onOpenMaterialMatchModal,
 }: MaterialManifestSectionProps) => {
   const { language } = useLanguage();
+  const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
+  const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
 
   if (mode === "calculator") {
     // Calculator Mode - Show Visualize CTA
@@ -111,6 +115,19 @@ const MaterialManifestSection = ({
               const materialPurpose = getMaterialPurpose(material, roomCategory);
               const description = getMaterialDescription(material, language);
 
+              const materialTypeDisplay = material.materialType || "Natural Finish";
+
+              const handleMaterialClick = () => {
+                setSelectedMaterialInfo({
+                  name: description?.split('.')[0] || materialPurpose,
+                  materialType: material.materialType,
+                  technicalCode: material.technicalCode,
+                  imageUrl: imageUrl || undefined,
+                  showroomIds: material.showroomIds,
+                });
+                setIsSourcingSheetOpen(true);
+              };
+
               return (
                 <MaterialCard
                   key={key}
@@ -118,7 +135,9 @@ const MaterialManifestSection = ({
                   swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
                   title={description?.split('.')[0] || materialPurpose}
                   category={materialPurpose}
-                  subtext={material.materialType || "Natural Finish"}
+                  materialType={materialTypeDisplay}
+                  technicalCode={material.technicalCode}
+                  onClick={handleMaterialClick}
                 />
               );
             });
@@ -131,11 +150,18 @@ const MaterialManifestSection = ({
               swatchColors={material.swatchColors}
               title={material.title}
               category={material.category}
-              subtext="Standard Finish"
+              materialType="Standard Finish"
             />
           ))
         )}
       </div>
+
+      {/* Material Sourcing Sheet */}
+      <MaterialSourcingSheet
+        isOpen={isSourcingSheetOpen}
+        onClose={() => setIsSourcingSheetOpen(false)}
+        material={selectedMaterialInfo}
+      />
     </>
   );
 };

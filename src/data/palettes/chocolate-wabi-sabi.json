@@ -1,54 +1,64 @@
 {
   "id": "chocolate-wabi-sabi",
   "name": "Chocolate Wabi-Sabi",
-  "designer": "Sigita Kulikajeva",
+  "designer": "heya_studio",
   "designerTitle": "Interior Designer",
   "promptSnippet": "Inspired by warm modern wabi-sabi aesthetic vibe with dark chocolate tones, white marble, natural smoked oak and brushed silver accents",
   "materials": {
     "material1": {
       "description": {
         "en": "Natural light smoked oak flooring",
-        "lt": "Natūralios šviesiai rūkyto ąžuolo grindys"
+        "lt": "Natūralios šviesiai rūkyto ąžuolo tesktūra"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring" },
-      "materialType": "Vinyl"
+      "materialType": "Vinyl",
+      "technicalCode": "Baron",
+      "showroomIds":["solido-grindys"]
     },
     "material2": {
       "description": {
         "en": "Rich walnut veneer with deep chocolate brown tones and matte finish",
-        "lt": "Sodrus riešutmedžio lukštas su giliais šokolado rudos tonais ir matiniu paviršiumi"
+        "lt": "Sodrus riešutmedžio tekstūra"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry" },
-      "materialType": "LMDP"
+      "materialType": "LMDP",
+      "technicalCode": "Egger H3710 ST12",
+      "showroomIds":["impeka"]
     },
     "material3": {
       "description": {
         "en": "Soft beige, stone-textured surface",
-        "lt": "Švelniai smėlinis, akmens tekstūros paviršius"
+        "lt": "Švelniai smėlinė, akmens tekstūra"
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops"},
-      "materialType": "HPL"
+      "materialType": "HPL",
+      "technicalCode": "Egger U702 ST78",
+      "showroomIds":["impeka"]
     },
     "material4": {
       "description": {
         "en": "Vertically striped graphite tiles",
-        "lt": "Vertikaliai dryžuotos grafito plytelės"
+        "lt": "Vertikaliai frezuotos grafito plytelės"
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Accent areas" },
-      "materialType": "Ceramic Tile"
+      "materialType": "Tiles",
+      "technicalCode": "Living Ceramics Oda Ductile Classic",
+      "showroomIds":["linea"]
     },
     "material5": {
       "description": {
         "en": "Dark graphite colour stone-textured surface tiles",
-        "lt": "Tamsiai grafito spalvos akmens tekstūros paviršiaus plytelės"
+        "lt": "Grafito spalvos akmens tekstūra"
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Wall and floor surfaces" },
-      "materialType": "Ceramic Tile"
+      "materialType": "Tiles",
+      "technicalCode": "Living Ceramics Oda Classic Soft",
+      "showroomIds":["linea"]
     },
     "material6": {
       "description": {
@@ -57,7 +67,9 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Worktops"},
-      "materialType": "HPL"
+      "materialType": "HPL",
+      "technicalCode": "Egger U702 ST75",
+      "showroomIds":["impeka"]
     }
   }
 }

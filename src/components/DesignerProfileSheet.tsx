@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Mail, Instagram, Globe, Check } from "lucide-react";
+import { User, Mail, Instagram, Globe, Check, MapPin } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -9,13 +9,14 @@ import {
 import { palettes } from "@/data/palettes";
 import { paletteThumbnails } from "@/data/palettes/thumbnails";
 import { getDesignerWithFallback } from "@/data/designers";
+import { getDesignerImage } from "@/data/designers/images";
 import DesignerContactModal from "@/components/mobile/DesignerContactModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DesignerProfileSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  designerName: string;
+  designerId: string;
   designerTitle: string;
   currentPaletteId?: string;
   onSelectPalette?: (paletteId: string) => void;
@@ -24,7 +25,7 @@ interface DesignerProfileSheetProps {
 const DesignerProfileSheet = ({
   isOpen,
   onClose,
-  designerName,
+  designerId,
   designerTitle,
   currentPaletteId,
   onSelectPalette,
@@ -33,11 +34,12 @@ const DesignerProfileSheet = ({
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   // Get designer profile from centralized data
-  const profile = getDesignerWithFallback(designerName, designerTitle);
+  const profile = getDesignerWithFallback(designerId, designerTitle);
+  const profileImage = getDesignerImage(designerId);
 
   // Get all palettes by this designer
   const designerPalettes = palettes.filter(
-    (p) => p.designer === designerName
+    (p) => p.designer === designerId
   );
 
   const handleContactClick = () => {
@@ -50,13 +52,27 @@ const DesignerProfileSheet = ({
         <div className="overflow-y-auto pb-safe">
           {/* Header with Avatar */}
           <DrawerHeader className="flex flex-col items-center pt-6 pb-4">
-            <div className="w-20 h-20 rounded-full bg-surface-sunken flex items-center justify-center mb-4">
-              <User size={32} className="text-text-muted" />
+            <div className="w-20 h-20 rounded-full bg-surface-sunken flex items-center justify-center mb-4 overflow-hidden">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt={profile.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={32} className="text-text-muted" />
+              )}
             </div>
             <DrawerTitle className="text-2xl font-serif text-center">
               {profile.name}
             </DrawerTitle>
             <p className="text-sm text-muted-foreground mt-1">{profile.title}</p>
+            {profile.cities && profile.cities.length > 0 && (
+              <p className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                <MapPin size={12} />
+                {profile.cities.map(city => city.charAt(0).toUpperCase() + city.slice(1)).join(", ")}
+              </p>
+            )}
           </DrawerHeader>
 
           {/* Bio */}
@@ -66,49 +82,51 @@ const DesignerProfileSheet = ({
             </p>
           </div>
 
-          {/* Work with Me Section */}
-          <div className="px-6 pb-6">
-            <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">
-              {t("designer.workWithMe")}
-            </h4>
+          {/* Work with Me Section - only show if email is available */}
+          {profile.email && (
+            <div className="px-6 pb-6">
+              <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">
+                {t("designer.workWithMe")}
+              </h4>
 
-            {/* Primary CTA */}
-            <button
-              onClick={handleContactClick}
-              className="w-full py-3.5 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
-            >
-              <Mail size={16} />
-              {t("designer.contactForProject")}
-            </button>
+              {/* Primary CTA */}
+              <button
+                onClick={handleContactClick}
+                className="w-full py-3.5 bg-foreground text-background rounded-full font-medium text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+              >
+                <Mail size={16} />
+                {t("designer.contactForProject")}
+              </button>
 
-            {/* Social Links */}
-            {(profile.instagram || profile.website) && (
-              <div className="flex items-center justify-center gap-4 mt-4">
-                {profile.instagram && (
-                  <a
-                    href={`https://instagram.com/${profile.instagram}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3 rounded-full bg-surface-muted hover:bg-surface-sunken transition-colors"
-                    aria-label="Instagram"
-                  >
-                    <Instagram size={20} className="text-text-secondary" />
-                  </a>
-                )}
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3 rounded-full bg-surface-muted hover:bg-surface-sunken transition-colors"
-                    aria-label="Website"
-                  >
-                    <Globe size={20} className="text-text-secondary" />
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
+              {/* Social Links */}
+              {(profile.instagram || profile.website) && (
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  {profile.instagram && (
+                    <a
+                      href={`https://instagram.com/${profile.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full bg-surface-muted hover:bg-surface-sunken transition-colors"
+                      aria-label="Instagram"
+                    >
+                      <Instagram size={20} className="text-text-secondary" />
+                    </a>
+                  )}
+                  {profile.website && (
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 rounded-full bg-surface-muted hover:bg-surface-sunken transition-colors"
+                      aria-label="Website"
+                    >
+                      <Globe size={20} className="text-text-secondary" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Curated Palettes */}
           {designerPalettes.length > 0 && (
