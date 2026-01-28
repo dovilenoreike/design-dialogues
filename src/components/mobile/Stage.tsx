@@ -34,6 +34,7 @@ export default function Stage() {
     clearUploadedImage,
     handleGenerate,
     handleSaveImage,
+    setActiveMode,
   } = useDesign();
   const { credits, useCredit, refetchCredits } = useCredits();
 
@@ -220,36 +221,48 @@ export default function Stage() {
 
       {/* Glass Pills - bottom when browsing */}
       {!hasUserImage && (style || palette) && (
-        <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2 pointer-events-none">
+        <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
           {style && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+            <button
+              onClick={() => setActiveMode("styles")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium active:scale-95 transition-transform"
+            >
               <LayoutGrid className="w-3 h-3" strokeWidth={2} />
               {t(`style.${style.id}`) || style.name}
-            </span>
+            </button>
           )}
           {palette && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10">
+            <button
+              onClick={() => setActiveMode("palettes")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10 active:scale-95 transition-transform"
+            >
               <Palette className="w-3 h-3" strokeWidth={2} />
               {t(`palette.${palette.id}`) || palette.name}
-            </span>
+            </button>
           )}
         </div>
       )}
 
       {/* Glass Pills - centered below status badge after upload/generation */}
       {hasUserImage && (style || palette) && (
-        <div className="absolute top-14 inset-x-0 flex justify-center items-center gap-2 pointer-events-none">
+        <div className="absolute top-14 inset-x-0 flex justify-center items-center gap-2">
           {style && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+            <button
+              onClick={() => setActiveMode("styles")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium active:scale-95 transition-transform"
+            >
               <LayoutGrid className="w-3 h-3" strokeWidth={2} />
               {t(`style.${style.id}`) || style.name}
-            </span>
+            </button>
           )}
           {palette && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10">
+            <button
+              onClick={() => setActiveMode("palettes")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10 active:scale-95 transition-transform"
+            >
               <Palette className="w-3 h-3" strokeWidth={2} />
               {t(`palette.${palette.id}`) || palette.name}
-            </span>
+            </button>
           )}
         </div>
       )}
