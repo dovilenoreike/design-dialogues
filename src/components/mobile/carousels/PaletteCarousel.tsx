@@ -7,6 +7,7 @@ import { paletteThumbnails } from "@/data/palettes/thumbnails";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -90,6 +91,9 @@ export default function PaletteCarousel() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif">{t("mobile.freestyle.title")}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t("mobile.freestyle.placeholder")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <textarea

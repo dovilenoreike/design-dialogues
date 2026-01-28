@@ -38,7 +38,7 @@ export default function BudgetEditSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
         <SheetHeader className="mb-4">
           <SheetTitle className="font-serif">{t("result.adjustParameters")}</SheetTitle>
         </SheetHeader>

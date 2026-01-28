@@ -87,7 +87,7 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="bottom" className="rounded-t-2xl px-5 pb-8 pt-6">
+        <SheetContent side="bottom" className="rounded-t-2xl px-5 pb-8 pt-6" aria-describedby={undefined}>
           {content}
         </SheetContent>
       </Sheet>
@@ -96,7 +96,7 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-6 gap-0" hideCloseButton>
+      <DialogContent className="max-w-md p-6 gap-0" hideCloseButton aria-describedby={undefined}>
         {content}
       </DialogContent>
     </Dialog>

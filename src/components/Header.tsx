@@ -79,7 +79,7 @@ const Header = () => {
                   <Menu size={22} />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] flex flex-col">
+              <SheetContent side="left" className="w-[280px] flex flex-col" aria-describedby={undefined}>
                 <SheetHeader className="text-left">
                   <SheetTitle className="font-serif text-xl">Menu</SheetTitle>
                 </SheetHeader>
