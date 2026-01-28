@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, MessageSquare } from "lucide-react";
+import { Sparkles, MessageSquare, ChevronDown } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPaletteById } from "@/data/palettes";
@@ -11,12 +11,14 @@ import RoomPillBar from "../controls/RoomPillBar";
 import TierPill from "../controls/TierPill";
 import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
+import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
 
 export default function SpecsView() {
   const { design, handleSelectMaterial, selectedTier } = useDesign();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
+  const [isPaletteSelectorOpen, setIsPaletteSelectorOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const { selectedMaterial, selectedCategory, freestyleDescription } = design;
 
@@ -106,8 +108,16 @@ export default function SpecsView() {
         {/* Editorial Headline */}
         {palette && (
           <div className="mb-6">
-            <h2 className="text-2xl font-serif mb-1">{t(`palette.${palette.id}`) || palette.name}</h2>
-            <p className="text-sm text-muted-foreground">{t("result.curatedBy")} {getDesignerWithFallback(palette.designer, palette.designerTitle).name}</p>
+            <button
+              onClick={() => setIsPaletteSelectorOpen(true)}
+              className="flex items-center gap-1.5 group"
+            >
+              <h2 className="text-2xl font-serif group-hover:text-foreground/80 transition-colors">
+                {t(`palette.${palette.id}`) || palette.name}
+              </h2>
+              <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" strokeWidth={1.5} />
+            </button>
+            <p className="text-sm text-muted-foreground mt-1">{t("result.curatedBy")} {getDesignerWithFallback(palette.designer, palette.designerTitle).name}</p>
           </div>
         )}
 
@@ -191,6 +201,14 @@ export default function SpecsView() {
         isOpen={isSourcingSheetOpen}
         onClose={() => setIsSourcingSheetOpen(false)}
         material={selectedMaterialInfo}
+      />
+
+      {/* Palette Selector Sheet */}
+      <PaletteSelectorSheet
+        isOpen={isPaletteSelectorOpen}
+        onClose={() => setIsPaletteSelectorOpen(false)}
+        selectedPaletteId={selectedMaterial}
+        onSelectPalette={handleSelectMaterial}
       />
     </div>
   );

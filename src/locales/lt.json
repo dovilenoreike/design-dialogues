@@ -95,7 +95,8 @@
     "freestyleSubtitle": "Individuali paletė",
     "requestMaterials": "Užsakyti medžiagų sąrašą",
     "tierComingSoon": "Jau greitai!",
-    "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus."
+    "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus.",
+    "selectPalette": "Pasirinkti Paletę"
   },
   "material": {
     "purpose": {

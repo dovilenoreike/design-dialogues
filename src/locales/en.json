@@ -97,7 +97,8 @@
     "freestyleSubtitle": "Custom palette",
     "requestMaterials": "Request Curated Material List",
     "tierComingSoon": "Coming soon!",
-    "tierComingSoonDescription": "Explore our Standard selection in the meantime."
+    "tierComingSoonDescription": "Explore our Standard selection in the meantime.",
+    "selectPalette": "Select Palette"
   },
   "material": {
     "purpose": {
