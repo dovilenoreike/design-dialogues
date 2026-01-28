@@ -413,5 +413,10 @@
     "noProviders": "Sąrašas ruošiamas",
     "selectCity": "Pasirinkite miestą",
     "code": "Kodas"
+  },
+  "error": {
+    "pageNotFound": "Puslapis nerastas",
+    "pageNotFoundDescription": "Puslapis, kurio ieškote, neegzistuoja arba buvo perkeltas.",
+    "returnHome": "Grįžti į pradžią"
   }
 }

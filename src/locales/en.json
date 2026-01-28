@@ -406,5 +406,10 @@
     "noProviders": "No providers listed yet",
     "selectCity": "Select city",
     "code": "Code"
+  },
+  "error": {
+    "pageNotFound": "Page Not Found",
+    "pageNotFoundDescription": "The page you're looking for doesn't exist or has been moved.",
+    "returnHome": "Return Home"
   }
 }
