@@ -154,11 +154,11 @@ export default function Stage() {
               : t("mobile.stage.yourRoom").replace("{room}", roomName)}
           </p>
           {/* Visualization disclaimer - only after generation */}
-          {generatedImage && (
+          {/* {generatedImage && (
             <p className="mt-1.5 text-[10px] text-white/70 italic">
               {t("result.visualizationDisclaimer")}
             </p>
-          )}
+          )} */}
           {/* Save button - visible when generated image exists */}
           {generatedImage && !isGenerating && (
             <button

@@ -18,8 +18,8 @@
     },
     "material2": {
       "description": {
-        "en": "Fjord Green flat texture",
-        "lt": "Jūros žalia"
+        "en": "Fjord Green flat texture a pastel grey blue with green undertones",
+        "lt": "Jūros šviesiai mėlyna matinė tekstūra"
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Cabinet furniture"},
