@@ -55,11 +55,6 @@ export const wardrobeRates: Record<Tier, number> = {
 export const renovationRate = 150;
 
 /**
- * Furniture estimate as percentage of subtotal (used when other services are selected)
- */
-export const furniturePercentage = 0.20;
-
-/**
  * Furniture rates per m² by tier (used when only Furnishing & Decor is selected)
  */
 export const furnitureRates: Record<Tier, number> = {

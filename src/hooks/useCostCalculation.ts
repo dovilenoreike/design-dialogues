@@ -12,7 +12,6 @@ import {
   appliancePackages,
   wardrobeRates,
   renovationRate,
-  furniturePercentage,
   furnitureRates,
   priceVariance,
   urgencyMultiplier,
@@ -167,12 +166,7 @@ export function useCostCalculation({
 
     // Furniture cost calculation:
     // - Flat rate per m² when only Furnishing & Decor is selected
-    // - Percentage of subtotal when other services are included
-    const furniture = services.furnishingDecor
-      ? onlyFurnishing
-        ? roundToHundred(area * furnitureRates[tier])
-        : roundToHundred(subtotal * furniturePercentage)
-      : 0;
+    const furniture = area * furnitureRates[tier]
 
     // Total (with urgency premium if applicable)
     const baseTotal = subtotal + furniture;

@@ -25,7 +25,6 @@ export {
   appliancePackages,
   wardrobeRates,
   renovationRate,
-  furniturePercentage,
   furnitureRates,
   priceVariance,
   roundToHundred,
