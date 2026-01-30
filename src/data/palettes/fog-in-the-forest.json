@@ -34,7 +34,7 @@
       },
       "rooms": ["kitchen", "bathroom", "livingRoom"],
       "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
-      "materialType": "LMDP",
+      "materialType": "MDF",
       "technicalCode": "Velvet 3301",
       "showroomIds":["impeka"]
     },

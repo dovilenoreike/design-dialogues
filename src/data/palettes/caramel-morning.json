@@ -56,7 +56,7 @@
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
       "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
-      "materialType": "LMDP",
+      "materialType": "MDF",
       "technicalCode": "Velvet 1648",
       "showroomIds":["impeka"]
     },

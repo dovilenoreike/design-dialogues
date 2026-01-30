@@ -29,8 +29,8 @@
     },
     "material3": {
       "description": {
-        "en": "Grey marble with white veining and a calm, honed stone texture.",
-        "lt": "Pilkas marmuras su baltomis gyslelėmis ir rami, šlifuoto akmens tekstūra."
+        "en": "Warm grey-brown medium tone marble with white veining and a calm, honed stone texture.",
+        "lt": "Šilta pilka marmuro tekstūta."
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops and backsplash"},
@@ -78,7 +78,7 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Drawer fronts"},
-      "materialType": "LMDP",
+      "materialType": "MDF",
       "technicalCode": "Velvet 5983",
       "showroomIds":["impeka"]
     }

@@ -23,7 +23,7 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Cabinet furniture"},
-      "materialType": "LMDP",
+      "materialType": "MDF",
       "technicalCode": "Velvet 4246",
       "showroomIds":["impeka"]
     },
