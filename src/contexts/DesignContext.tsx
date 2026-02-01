@@ -703,3 +703,8 @@ export function useDesign() {
   }
   return context;
 }
+
+// Optional hook that returns null if not inside DesignProvider (for use in Header on static pages)
+export function useDesignOptional() {
+  return useContext(DesignContext);
+}

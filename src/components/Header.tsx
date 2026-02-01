@@ -12,7 +12,7 @@ import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
 import { useCredits } from "@/contexts/CreditsContext";
-import { useDesign } from "@/contexts/DesignContext";
+import { useDesignOptional } from "@/contexts/DesignContext";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
@@ -22,7 +22,9 @@ const Header = () => {
   const [buyingCredits, setBuyingCredits] = useState(false);
   const { t } = useLanguage();
   const { credits, loading, buyCredits, refetchCredits } = useCredits();
-  const { shareSession, isSharing } = useDesign();
+  const designContext = useDesignOptional();
+  const shareSession = designContext?.shareSession;
+  const isSharing = designContext?.isSharing ?? false;
   const { toast: toastUI } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -61,6 +63,7 @@ const Header = () => {
 
   // Share handler - native share on mobile, clipboard fallback on desktop
   const handleShare = async () => {
+    if (!shareSession) return;
     const shareId = await shareSession();
     if (shareId) {
       const shareUrl = `${window.location.origin}/share/${shareId}`;
@@ -143,17 +146,19 @@ const Header = () => {
               Design Dialogues
             </Link>
 
-            <button
-              onClick={handleShare}
-              disabled={isSharing}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50 shrink-0"
-            >
-              {isSharing ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Share2 size={18} />
-              )}
-            </button>
+            {designContext && (
+              <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50 shrink-0"
+              >
+                {isSharing ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Share2 size={18} />
+                )}
+              </button>
+            )}
 
             <button
               onClick={handleBuyCredits}
@@ -201,17 +206,19 @@ const Header = () => {
             <div className="justify-self-end flex items-center gap-4">
               <LanguageSelector />
               <FeedbackTrigger onClick={() => setFeedbackOpen(true)} />
-              <button
-                onClick={handleShare}
-                disabled={isSharing}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isSharing ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Share2 size={16} />
-                )}
-              </button>
+              {designContext && (
+                <button
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isSharing ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Share2 size={16} />
+                  )}
+                </button>
+              )}
               <button
                 onClick={handleBuyCredits}
                 disabled={buyingCredits || loading}
