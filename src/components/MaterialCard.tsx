@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface MaterialCardProps {
   image?: string;
@@ -59,11 +59,11 @@ const MaterialCard = ({ image, swatchColors, title, category, materialType, tech
         )}
       </div>
       
-      {/* External Link Icon */}
+      {/* Chevron Icon */}
       <div className="flex-shrink-0">
-        <ExternalLink 
-          size={16} 
-          className="text-text-subtle group-hover:text-text-primary transition-colors" 
+        <ChevronRight
+          size={16}
+          className="text-text-subtle group-hover:text-text-primary transition-colors"
         />
       </div>
     </div>

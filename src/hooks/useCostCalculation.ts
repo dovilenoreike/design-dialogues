@@ -149,28 +149,33 @@ export function useCostCalculation({
       ? roundToHundred(area * renovationRate)
       : 0;
 
-    // Subtotal before furniture
-    const subtotal =
-      interiorDesign +
-      constructionFinish +
-      kitchenJoinery +
-      appliances +
-      wardrobes +
-      renovationCost;
-
-    // Determine if only furnishing is selected (no construction services)
-    const onlyFurnishing =
-      services.furnishingDecor &&
-      !services.spacePlanning &&
-      !services.interiorFinishes;
-
     // Furniture cost calculation:
-    // - Flat rate per m² when only Furnishing & Decor is selected
-    const furniture = area * furnitureRates[tier]
+    // Only included when Furnishing & Decor service is selected
+    const furnitureBase = services.furnishingDecor
+      ? roundToHundred(area * furnitureRates[tier])
+      : 0;
 
-    // Total (with urgency premium if applicable)
-    const baseTotal = subtotal + furniture;
-    const total = isUrgent ? roundToHundred(baseTotal * urgencyMultiplier) : baseTotal;
+    // Apply urgency multiplier to all line items if urgent
+    const applyUrgency = (value: number) =>
+      isUrgent ? roundToHundred(value * urgencyMultiplier) : value;
+
+    const interiorDesignFinal = applyUrgency(interiorDesign);
+    const constructionFinishFinal = applyUrgency(constructionFinish);
+    const kitchenJoineryFinal = applyUrgency(kitchenJoinery);
+    const appliancesFinal = applyUrgency(appliances);
+    const wardrobesFinal = applyUrgency(wardrobes);
+    const renovationCostFinal = applyUrgency(renovationCost);
+    const furnitureFinal = applyUrgency(furnitureBase);
+
+    // Total (sum of all urgency-adjusted values)
+    const total =
+      interiorDesignFinal +
+      constructionFinishFinal +
+      kitchenJoineryFinal +
+      appliancesFinal +
+      wardrobesFinal +
+      renovationCostFinal +
+      furnitureFinal;
 
     // Calculate ±15% range for total (also rounded)
     const lowEstimate = roundToHundred(total * (1 - priceVariance));
@@ -183,7 +188,7 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.interiorDesign"),
-            value: interiorDesign,
+            value: interiorDesignFinal,
             tooltip: tierTooltips["Interior Design Project"][tier],
           },
         ].filter((item) => item.value > 0),
@@ -193,14 +198,14 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.constructionFinish"),
-            value: constructionFinish,
+            value: constructionFinishFinal,
             tooltip: tierTooltips["Construction & Finish"][tier],
           },
-          ...(renovationCost > 0
+          ...(renovationCostFinal > 0
             ? [
                 {
                   label: t("cost.prepWork"),
-                  value: renovationCost,
+                  value: renovationCostFinal,
                   tooltip: t("cost.prepWorkTooltip"),
                 },
               ]
@@ -212,17 +217,17 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.kitchen"),
-            value: kitchenJoinery,
+            value: kitchenJoineryFinal,
             tooltip: tierTooltips["Kitchen & Joinery"][tier],
           },
           {
             label: t("cost.wardrobes"),
-            value: wardrobes,
+            value: wardrobesFinal,
             tooltip: tierTooltips["Built-in Wardrobes"][tier],
           },
           {
             label: t("cost.appliances"),
-            value: appliances,
+            value: appliancesFinal,
             tooltip: tierTooltips["Home Appliances"][tier],
           },
         ].filter((item) => item.value > 0),
@@ -232,25 +237,25 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.furniture"),
-            value: furniture,
+            value: furnitureFinal,
             tooltip: tierTooltips["Furniture (est.)"][tier],
           },
         ].filter((item) => item.value > 0),
       },
     ].filter((group) => group.items.length > 0);
 
-    // Calculate group totals for percentage display
-    const designTotal = interiorDesign;
-    const shellTotal = constructionFinish + renovationCost;
-    const joineryTotal = kitchenJoinery + wardrobes + appliances;
-    const equipTotal = furniture;
+    // Calculate group totals for percentage display (with urgency applied)
+    const designTotal = interiorDesignFinal;
+    const shellTotal = constructionFinishFinal + renovationCostFinal;
+    const joineryTotal = kitchenJoineryFinal + wardrobesFinal + appliancesFinal;
+    const equipTotal = furnitureFinal;
 
     return {
       total,
       lowEstimate,
       highEstimate,
       groupedLineItems,
-      renovationCost,
+      renovationCost: renovationCostFinal,
       designTotal,
       shellTotal,
       joineryTotal,

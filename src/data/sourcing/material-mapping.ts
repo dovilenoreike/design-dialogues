@@ -7,6 +7,7 @@ export const materialTypeToSpecialty: Record<string, string> = {
   LMDP: "Cabinetry",
   MDF: "Cabinetry",
   HPL: "Cabinetry",
+  "Compact HPL": "Cabinetry",
 
   // Flooring - installed by flooring specialists
   Vinyl: "Flooring",

@@ -34,7 +34,7 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops and backsplash"},
-      "materialType": "HPL",
+      "materialType": "Compact HPL",
       "technicalCode": "Fondi 40 Peperino Marmo",
       "showroomIds":["impeka"]
     },

@@ -34,7 +34,7 @@
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops"},
-      "materialType": "HPL",
+      "materialType": "LMDP",
       "technicalCode": "Egger U702 ST78",
       "showroomIds":["impeka"]
     },
@@ -67,7 +67,7 @@
       },
       "rooms": ["bathroom"],
       "purpose": { "default": "Worktops"},
-      "materialType": "HPL",
+      "materialType": "LMDP",
       "technicalCode": "Egger U702 ST75",
       "showroomIds":["impeka"]
     }

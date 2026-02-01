@@ -43,11 +43,22 @@
         "en": "Dark grey stone with a mixed mineral pattern: deep charcoal base, lighter grey veining, and scattered textured stone fragments.",
         "lt": "Tamsiai pilkas akmuo su mišriu mineraliniu raštu."
       },
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Tiles", "kitchen": "Backsplash" },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Tiles" },
       "materialType": "Tiles",
       "technicalCode": "Anthology dark natural",
       "showroomIds":["linea"]
+    },
+  "material5": {
+      "description": {
+        "en": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
+        "lt": "Tamsiai pilkas akmens raštas."
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Worktops and backsplash"},
+      "materialType": "Compact HPL",
+      "technicalCode": "Egger F244 ST76",
+      "showroomIds":["impeka"]
     }
   }
 }

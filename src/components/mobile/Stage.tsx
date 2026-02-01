@@ -208,15 +208,17 @@ export default function Stage() {
         </div>
       )}
 
-      {/* Replace button - show when user has uploaded */}
+      {/* Bottom left action buttons - show when user has uploaded */}
       {hasUserImage && !isGenerating && (
-        <button
-          onClick={handleUploadClick}
-          className="absolute bottom-4 left-4 flex items-center gap-2 px-5 py-3 bg-white/90 backdrop-blur-sm text-foreground rounded-full text-sm font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
-        >
-          <Camera className="w-4 h-4" strokeWidth={1.5} />
-          {t("mobile.stage.replace")}
-        </button>
+        <div className="absolute bottom-4 left-4 flex items-center gap-2">
+          <button
+            onClick={handleUploadClick}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/90 backdrop-blur-sm text-foreground rounded-full text-sm font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
+          >
+            <Camera className="w-4 h-4" strokeWidth={1.5} />
+            {t("mobile.stage.replace")}
+          </button>
+        </div>
       )}
 
       {/* Glass Pills - bottom when browsing */}

@@ -21,13 +21,24 @@
         "en": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
         "lt": "Tamsiai pilkas akmens raštas."
       },
-      "rooms": ["kitchen", "bathroom"],
-      "purpose": { "default": "Worktops", "bathroom": "Tiles" },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Tiles" },
       "materialType": "Tiles",
       "technicalCode": "Marazzi Grande Marble Look Blue Grey",
       "showroomIds":["linea"]
     },
     "material3": {
+      "description": {
+        "en": "Dark grey marble with dramatic, busy pattern: mixed charcoal, grey, and subtle warm inclusions, irregular mineral texture",
+        "lt": "Tamsiai pilkas akmens raštas."
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Worktops"},
+      "materialType": "Compact HPL",
+      "technicalCode": "Egger F244 ST76",
+      "showroomIds":["impeka"]
+    },
+    "material4": {
       "description": {
         "en": "Garrison gray colour with blue undertone.",
         "lt": "Rūką primenanti melsvai pilka."
@@ -38,7 +49,7 @@
       "technicalCode": "Velvet 3301",
       "showroomIds":["impeka"]
     },
-    "material4": {
+    "material5": {
       "description": {
         "en": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
         "lt": "Matinė tamsiai rudi medienos tekstūra"
@@ -49,5 +60,6 @@
       "technicalCode": "Egger H3198 ST19",
       "showroomIds":["impeka"]
     }
+
   }
 }

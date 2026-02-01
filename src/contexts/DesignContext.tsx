@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   DesignSelection,
@@ -13,6 +14,8 @@ import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
 import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
+import { saveSession, loadSession, clearSession, SessionData } from "@/lib/session-storage";
+import { parseUrlState, buildUrl } from "@/lib/url-state";
 
 export type BottomTab = "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -31,6 +34,7 @@ interface DesignContextValue {
 
   // Plan state
   userMoveInDate: Date | null;
+  completedTasks: Set<string>;
 
   // Computed values
   canGenerate: boolean;
@@ -40,6 +44,7 @@ interface DesignContextValue {
   setActiveMode: (mode: ControlMode) => void;
   setSelectedTier: (tier: Tier) => void;
   setUserMoveInDate: (date: Date | null) => void;
+  toggleTask: (taskId: string) => void;
 
   // Design actions
   handleImageUpload: (file: File) => void;
@@ -66,27 +71,252 @@ interface DesignContextValue {
 
   // Form actions
   setFormData: (data: FormData | null) => void;
+
+  // Sharing
+  shareSession: () => Promise<string | null>;
+  isSharing: boolean;
+  isSharedSession: boolean;
 }
 
 const DesignContext = createContext<DesignContextValue | undefined>(undefined);
 
-interface DesignProviderProps {
-  children: ReactNode;
+interface SharedSessionData {
+  uploadedImage: string | null;
+  generatedImage: string | null;
+  selectedCategory: string | null;
+  selectedMaterial: string | null;
+  selectedStyle: string | null;
+  freestyleDescription: string;
+  selectedTier: Tier;
+  formData: FormData | null;
+  userMoveInDate: string | null;
+  completedTasks: string[];
 }
 
-export function DesignProvider({ children }: DesignProviderProps) {
+interface DesignProviderProps {
+  children: ReactNode;
+  initialSharedSession?: SharedSessionData;
+}
+
+export function DesignProvider({ children, initialSharedSession }: DesignProviderProps) {
+  // Router hooks for URL sync
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Design state
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
   const [generation, setGeneration] = useState<GenerationState>(initialGenerationState);
   const [formData, setFormData] = useState<FormData | null>(null);
 
   // Navigation state
-  const [activeTab, setActiveTab] = useState<BottomTab>("design");
+  const [activeTab, setActiveTabState] = useState<BottomTab>("design");
   const [activeMode, setActiveMode] = useState<ControlMode>("rooms");
-  const [selectedTier, setSelectedTier] = useState<Tier>("Standard");
+  const [selectedTier, setSelectedTierState] = useState<Tier>("Standard");
 
   // Plan state
   const [userMoveInDate, setUserMoveInDate] = useState<Date | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // Session persistence
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUrlSyncEnabled = useRef(false); // Prevent URL update during initial load
+
+  // Track if this is a shared session view
+  const isSharedSession = !!initialSharedSession;
+
+  // Load session from shared data, localStorage, or URL on mount
+  useEffect(() => {
+    // If we have a shared session, use that as initial state
+    if (initialSharedSession) {
+      const currentRoom = initialSharedSession.selectedCategory || "Kitchen";
+      setDesign({
+        uploadedImages: initialSharedSession.uploadedImage
+          ? { [currentRoom]: initialSharedSession.uploadedImage }
+          : {},
+        selectedCategory: initialSharedSession.selectedCategory,
+        selectedMaterial: initialSharedSession.selectedMaterial,
+        selectedStyle: initialSharedSession.selectedStyle,
+        freestyleDescription: initialSharedSession.freestyleDescription || "",
+      });
+      if (initialSharedSession.generatedImage) {
+        setGeneration((prev) => ({ ...prev, generatedImage: initialSharedSession.generatedImage }));
+      }
+      setFormData(initialSharedSession.formData);
+      setSelectedTierState(initialSharedSession.selectedTier);
+      if (initialSharedSession.userMoveInDate) {
+        setUserMoveInDate(new Date(initialSharedSession.userMoveInDate));
+      }
+      if (initialSharedSession.completedTasks?.length) {
+        setCompletedTasks(new Set(initialSharedSession.completedTasks));
+      }
+      setIsInitialized(true);
+      return; // Don't load from localStorage or URL for shared sessions
+    }
+
+    // First load from localStorage
+    const session = loadSession();
+    if (session) {
+      setDesign(session.design);
+      if (session.generatedImage) {
+        setGeneration((prev) => ({ ...prev, generatedImage: session.generatedImage }));
+      }
+      setFormData(session.formData);
+      setSelectedTierState(session.selectedTier);
+      setActiveTabState(session.activeTab);
+      setActiveMode(session.activeMode);
+      if (session.userMoveInDate) {
+        setUserMoveInDate(new Date(session.userMoveInDate));
+      }
+      if (session.completedTasks?.length) {
+        setCompletedTasks(new Set(session.completedTasks));
+      }
+    }
+
+    // Then apply URL params (URL overrides localStorage for shared links)
+    const urlState = parseUrlState(location.pathname, location.search);
+
+    if (urlState.tab) {
+      setActiveTabState(urlState.tab);
+    }
+    if (urlState.palette) {
+      // Validate palette exists
+      const palette = getPaletteById(urlState.palette);
+      if (palette) {
+        setDesign((prev) => ({ ...prev, selectedMaterial: urlState.palette }));
+      }
+    }
+    if (urlState.room) {
+      setDesign((prev) => ({ ...prev, selectedCategory: urlState.room }));
+    }
+    if (urlState.style) {
+      // Validate style exists
+      const style = getStyleById(urlState.style);
+      if (style) {
+        setDesign((prev) => ({ ...prev, selectedStyle: urlState.style }));
+      }
+    }
+    if (urlState.tier) {
+      setSelectedTierState(urlState.tier);
+    }
+
+    setIsInitialized(true);
+    // Enable URL sync after initial load completes
+    setTimeout(() => {
+      isUrlSyncEnabled.current = true;
+    }, 100);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update URL when state changes (after initialization)
+  useEffect(() => {
+    if (!isUrlSyncEnabled.current) return;
+
+    const newUrl = buildUrl(
+      activeTab,
+      design.selectedMaterial,
+      design.selectedCategory,
+      design.selectedStyle,
+      selectedTier
+    );
+
+    // Only update if URL actually changed
+    const currentUrl = location.pathname + location.search;
+    if (newUrl !== currentUrl) {
+      navigate(newUrl, { replace: true });
+    }
+  }, [activeTab, design.selectedMaterial, design.selectedCategory, design.selectedStyle, selectedTier, navigate, location.pathname, location.search]);
+
+  // Wrapped setters that update both state and trigger URL sync
+  const setActiveTab = useCallback((tab: BottomTab) => {
+    setActiveTabState(tab);
+  }, []);
+
+  const setSelectedTier = useCallback((tier: Tier) => {
+    setSelectedTierState(tier);
+  }, []);
+
+  // Track latest state in a ref for beforeunload handler
+  const latestStateRef = useRef({
+    design,
+    generatedImage: generation.generatedImage,
+    formData,
+    selectedTier,
+    activeTab,
+    activeMode,
+    userMoveInDate,
+    completedTasks,
+  });
+
+  // Keep ref updated
+  useEffect(() => {
+    latestStateRef.current = {
+      design,
+      generatedImage: generation.generatedImage,
+      formData,
+      selectedTier,
+      activeTab,
+      activeMode,
+      userMoveInDate,
+      completedTasks,
+    };
+  }, [design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
+
+  // Save immediately when user leaves the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const state = latestStateRef.current;
+      saveSession({
+        design: state.design,
+        generatedImage: state.generatedImage,
+        formData: state.formData,
+        selectedTier: state.selectedTier,
+        activeTab: state.activeTab,
+        activeMode: state.activeMode,
+        userMoveInDate: state.userMoveInDate?.toISOString() ?? null,
+        completedTasks: Array.from(state.completedTasks),
+      });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Debounced save to localStorage on state changes
+  useEffect(() => {
+    // Don't save until we've loaded the initial session
+    if (!isInitialized) return;
+
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    const currentState = {
+      design,
+      generatedImage: generation.generatedImage,
+      formData,
+      selectedTier,
+      activeTab,
+      activeMode,
+      userMoveInDate: userMoveInDate?.toISOString() ?? null,
+      completedTasks: Array.from(completedTasks),
+    };
+
+    // Debounce save by 1 second (reduced from 2 for better UX)
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSession(currentState);
+    }, 1000);
+
+    // On cleanup, save immediately if there's a pending save
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        // Save the current state immediately on cleanup
+        saveSession(currentState);
+      }
+    };
+  }, [isInitialized, design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
 
   // Destructure for convenience
   const { uploadedImages, selectedCategory, selectedMaterial, freestyleDescription } = design;
@@ -96,6 +326,19 @@ export function DesignProvider({ children }: DesignProviderProps) {
 
   // Computed: can generate if material selected OR freestyle description provided
   const canGenerate = !!(selectedMaterial || freestyleDescription.trim().length > 0);
+
+  // Toggle task completion status
+  const toggleTask = useCallback((taskId: string) => {
+    setCompletedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  }, []);
 
   // Image upload handler - saves per room
   const handleImageUpload = useCallback((file: File) => {
@@ -279,6 +522,19 @@ export function DesignProvider({ children }: DesignProviderProps) {
         generatedImage: generatedImageBase64,
         isGenerating: false,
       }));
+
+      // Save session immediately after successful generation
+      saveSession({
+        design,
+        generatedImage: generatedImageBase64,
+        formData,
+        selectedTier,
+        activeTab,
+        activeMode,
+        userMoveInDate: userMoveInDate?.toISOString() ?? null,
+        completedTasks: Array.from(completedTasks),
+      });
+
       toast.success("Interior visualization generated!", { position: "top-center" });
       return true;
     } catch (err: unknown) {
@@ -287,7 +543,7 @@ export function DesignProvider({ children }: DesignProviderProps) {
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
       return false;
     }
-  }, [uploadedImage, selectedCategory, design.selectedMaterial, design.selectedStyle, design.freestyleDescription]);
+  }, [uploadedImage, selectedCategory, design, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
 
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
@@ -295,7 +551,7 @@ export function DesignProvider({ children }: DesignProviderProps) {
     return generateInteriorRender();
   }, [generateInteriorRender]);
 
-  // Start fresh - reset all state
+  // Start fresh - reset all state and clear session
   const handleStartFresh = useCallback(() => {
     setDesign(initialDesignSelection);
     setGeneration(initialGenerationState);
@@ -303,7 +559,49 @@ export function DesignProvider({ children }: DesignProviderProps) {
     setActiveTab("design");
     setActiveMode("rooms");
     setUserMoveInDate(null);
+    setCompletedTasks(new Set());
+    clearSession();
   }, []);
+
+  // Share session with partner - returns share ID or null on error
+  const shareSession = useCallback(async (): Promise<string | null> => {
+    setIsSharing(true);
+    try {
+      const currentRoom = design.selectedCategory || "Kitchen";
+      const uploadedImage = design.uploadedImages[currentRoom] || null;
+
+      const { data, error } = await supabase.functions.invoke("share-session", {
+        body: {
+          uploadedImage,
+          generatedImage: generation.generatedImage,
+          selectedCategory: design.selectedCategory,
+          selectedMaterial: design.selectedMaterial,
+          selectedStyle: design.selectedStyle,
+          freestyleDescription: design.freestyleDescription,
+          selectedTier,
+          formData,
+          userMoveInDate: userMoveInDate?.toISOString() ?? null,
+          completedTasks: Array.from(completedTasks),
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to share session");
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return data?.shareId || null;
+    } catch (err) {
+      console.error("Share session error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to share design");
+      return null;
+    } finally {
+      setIsSharing(false);
+    }
+  }, [design, generation.generatedImage, selectedTier, formData, userMoveInDate, completedTasks]);
 
   // Confirm room switch - optionally save image first
   const confirmRoomSwitch = useCallback((saveFirst: boolean) => {
@@ -365,11 +663,13 @@ export function DesignProvider({ children }: DesignProviderProps) {
     activeMode,
     selectedTier,
     userMoveInDate,
+    completedTasks,
     canGenerate,
     setActiveTab,
     setActiveMode,
     setSelectedTier,
     setUserMoveInDate,
+    toggleTask,
     handleImageUpload,
     clearUploadedImage,
     handleSelectCategory,
@@ -384,6 +684,9 @@ export function DesignProvider({ children }: DesignProviderProps) {
     cancelStyleSwitch,
     handleSaveImage,
     setFormData,
+    shareSession,
+    isSharing,
+    isSharedSession,
   };
 
   return (

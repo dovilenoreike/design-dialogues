@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { format } from "date-fns";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -15,27 +15,12 @@ const defaultServices: ServiceSelection = {
 };
 
 export default function PlanView() {
-  const { formData, selectedTier, userMoveInDate, setUserMoveInDate } = useDesign();
+  const { formData, selectedTier, userMoveInDate, setUserMoveInDate, completedTasks, toggleTask } = useDesign();
   const { t, dateLocale } = useLanguage();
 
   // Use formData if available, otherwise use defaults
   const isRenovation = formData?.isRenovation ?? false;
   const services = formData?.services ?? defaultServices;
-
-  // Track completed tasks
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
-
-  const handleToggleTask = (taskId: string) => {
-    setCompletedTasks(prev => {
-      const next = new Set(prev);
-      if (next.has(taskId)) {
-        next.delete(taskId);
-      } else {
-        next.add(taskId);
-      }
-      return next;
-    });
-  };
 
   // Calculate timeline based on direction
   const timeline = useMemo(() => {
@@ -99,7 +84,7 @@ export default function PlanView() {
                 isLast={index === timeline.phases.length - 1}
                 phaseState={stateMap.get(phase.id)}
                 completedTasks={completedTasks}
-                onToggleTask={handleToggleTask}
+                onToggleTask={toggleTask}
               />
             ))}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Menu, Plus, Loader2 } from "lucide-react";
+import { Menu, Plus, Loader2, Share2, Sparkles } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,9 @@ import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
 import { useCredits } from "@/contexts/CreditsContext";
+import { useDesign } from "@/contexts/DesignContext";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,39 +22,69 @@ const Header = () => {
   const [buyingCredits, setBuyingCredits] = useState(false);
   const { t } = useLanguage();
   const { credits, loading, buyCredits, refetchCredits } = useCredits();
-  const { toast } = useToast();
+  const { shareSession, isSharing } = useDesign();
+  const { toast: toastUI } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle payment return
   useEffect(() => {
     const payment = searchParams.get("payment");
     if (payment === "success") {
-      toast({
+      toastUI({
         title: t("credits.purchaseSuccess"),
         description: t("credits.creditsAdded"),
       });
       refetchCredits();
       setSearchParams({});
     } else if (payment === "cancelled") {
-      toast({
+      toastUI({
         title: t("credits.purchaseCancelled"),
         variant: "destructive",
       });
       setSearchParams({});
     }
-  }, [searchParams, setSearchParams, toast, t, refetchCredits]);
+  }, [searchParams, setSearchParams, toastUI, t, refetchCredits]);
 
   const handleBuyCredits = async () => {
     try {
       setBuyingCredits(true);
       await buyCredits();
     } catch (err) {
-      toast({
+      toastUI({
         title: t("credits.purchaseError"),
         description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
       setBuyingCredits(false);
+    }
+  };
+
+  // Share handler - native share on mobile, clipboard fallback on desktop
+  const handleShare = async () => {
+    const shareId = await shareSession();
+    if (shareId) {
+      const shareUrl = `${window.location.origin}/share/${shareId}`;
+
+      // Try native share API on mobile first
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: t("share.title") || "My Design",
+            text: t("share.text") || "Check out my interior design",
+            url: shareUrl,
+          });
+        } catch (err) {
+          // User cancelled or share failed, fall back to clipboard
+          if ((err as Error).name !== "AbortError") {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success(t("share.copied") || "Link copied to clipboard!");
+          }
+        }
+      } else {
+        // Desktop: copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success(t("share.copied") || "Link copied to clipboard!");
+      }
     }
   };
 
@@ -112,16 +144,29 @@ const Header = () => {
             </Link>
 
             <button
+              onClick={handleShare}
+              disabled={isSharing}
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50 shrink-0"
+            >
+              {isSharing ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Share2 size={18} />
+              )}
+            </button>
+
+            <button
               onClick={handleBuyCredits}
               disabled={buyingCredits || loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50 shrink-0"
+              className="flex items-center gap-1 px-2 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50 shrink-0"
             >
               {loading || buyingCredits ? (
                 <Loader2 size={12} className="animate-spin" />
               ) : (
                 <>
-                  <span>{credits ?? 0} {t("header.credits")}</span>
-                  <Plus size={12} />
+                  <Sparkles size={14} />
+                  <span>{credits ?? 0}</span>
+                  <Plus size={10} />
                 </>
               )}
             </button>
@@ -157,16 +202,28 @@ const Header = () => {
               <LanguageSelector />
               <FeedbackTrigger onClick={() => setFeedbackOpen(true)} />
               <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isSharing ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Share2 size={16} />
+                )}
+              </button>
+              <button
                 onClick={handleBuyCredits}
                 disabled={buyingCredits || loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
+                className="flex items-center gap-1 px-2 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
               >
                 {loading || buyingCredits ? (
                   <Loader2 size={12} className="animate-spin" />
                 ) : (
                   <>
-                    <span>{credits ?? 0} {t("header.credits")}</span>
-                    <Plus size={12} />
+                    <Sparkles size={14} />
+                    <span>{credits ?? 0}</span>
+                    <Plus size={10} />
                   </>
                 )}
               </button>

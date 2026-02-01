@@ -34,7 +34,7 @@
       },
       "rooms": ["kitchen", "bathroom"],
       "purpose": { "default": "Worktops"},
-      "materialType": "HPL",
+      "materialType": "LMDP",
       "technicalCode": "ICONO C43 Eleganza Bianco",
       "showroomIds":["impeka"]
     },

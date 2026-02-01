@@ -384,7 +384,8 @@
       "generating": "Generuojama...",
       "revisualize": "Pergeneruoti",
       "visualize": "Vizualizuoti",
-      "replace": "Pakeisti"
+      "replace": "Pakeisti",
+      "share": "Dalintis"
     },
     "switchDialog": {
       "saveTitle": "Išsaugoti vizualizaciją?",
@@ -418,5 +419,13 @@
     "pageNotFound": "Puslapis nerastas",
     "pageNotFoundDescription": "Puslapis, kurio ieškote, neegzistuoja arba buvo perkeltas.",
     "returnHome": "Grįžti į pradžią"
+  },
+  "share": {
+    "title": "Mano Dizainas",
+    "text": "Pažiūrėkite mano interjero dizainą",
+    "copied": "Nuoroda nukopijuota!",
+    "loading": "Kraunamas bendrinamas dizainas...",
+    "notFound": "Dizainas nerastas arba pasibaigė jo galiojimas",
+    "startFresh": "Pradėti iš naujo"
   }
 }
