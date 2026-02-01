@@ -65,11 +65,11 @@ export default function ServiceDetailsSheet({
             <div className="flex justify-between items-center">
               <span className="font-medium">{t("result.total")}</span>
               <span className="text-lg font-serif tabular-nums">
-                €{calculation.highEstimate.toLocaleString()}
+                €{calculation.total.toLocaleString('lt-LT')}
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-              {t("result.conservativeEstimate")}
+              ±15% {t("budget.varianceNote")}
             </p>
           </div>
         </div>

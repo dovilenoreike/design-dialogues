@@ -163,7 +163,7 @@
     "materialManifest": "Medžiagų Sąrašas",
     "curatedBy": "Sukurė",
     "requestCurated": "Užsakyti Medžiagų Sąrašą",
-    "visualizationDisclaimer": "Konceptuali vizualizacija — tikros erdvės ir medžiagos gali skirtis",
+    "visualizationDisclaimer": "AI konceptas",
     "seeDetails": "Žiūrėti detales",
     "budgetDetails": "Biudžeto Detalės",
     "total": "Viso",
@@ -373,7 +373,8 @@
     "kitchen": "Virtuvė",
     "wardrobe": "Spinta",
     "renovation": "Renovacija",
-    "urgent": "Skubu"
+    "urgent": "Skubu",
+    "varianceNote": "priklausomai nuo galutinių specifikacijų"
   },
   "mobile": {
     "stage": {

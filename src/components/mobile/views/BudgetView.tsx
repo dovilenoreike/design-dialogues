@@ -168,13 +168,13 @@ export default function BudgetView() {
             />
           </div>
 
-          {/* Main Price */}
+          {/* Main Price Range */}
           <div className="text-center py-6 mb-8">
             <p className="text-4xl font-serif tabular-nums">
-              €{calculation.highEstimate.toLocaleString()}
+              €{(Math.round(calculation.lowEstimate / 1000) * 1000).toLocaleString('lt-LT')} – €{(Math.round(calculation.highEstimate / 1000) * 1000).toLocaleString('lt-LT')}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              {t("result.conservativeEstimate")} · {t("result.includesDesignFee")} €{calculation.designTotal.toLocaleString()}
+              {t("result.includesDesignFee")} €{calculation.designTotal.toLocaleString('lt-LT')}
             </p>
           </div>
 

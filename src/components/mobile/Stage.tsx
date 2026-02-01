@@ -124,6 +124,13 @@ export default function Stage() {
         />
       </div>
 
+      {/* Disclaimer - always visible at bottom right */}
+      <div className="absolute right-3 bottom-3 z-10">
+        <p className="text-[10px] text-white/50 tracking-wider uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
+          {t("result.visualizationDisclaimer")}
+        </p>
+      </div>
+
       {/* Upload overlay - show when no user image */}
       {!hasUserImage && (
         <button
@@ -153,13 +160,7 @@ export default function Stage() {
               ? t("mobile.stage.visualized").replace("{room}", roomName)
               : t("mobile.stage.yourRoom").replace("{room}", roomName)}
           </p>
-          {/* Visualization disclaimer - only after generation */}
-          {/* {generatedImage && (
-            <p className="mt-1.5 text-[10px] text-white/70 italic">
-              {t("result.visualizationDisclaimer")}
-            </p>
-          )} */}
-          {/* Save button - visible when generated image exists */}
+                    {/* Save button - visible when generated image exists */}
           {generatedImage && !isGenerating && (
             <button
               onClick={handleSaveImage}

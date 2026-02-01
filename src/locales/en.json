@@ -156,7 +156,7 @@
     "materialManifest": "Material Manifest",
     "curatedBy": "Curated by",
     "requestCurated": "Request Curated Material List",
-    "visualizationDisclaimer": "Conceptual visualization — actual spaces and materials may vary",
+    "visualizationDisclaimer": "AI Concept",
     "seeDetails": "See Details",
     "budgetDetails": "Budget Details",
     "total": "Total",
@@ -366,7 +366,8 @@
     "kitchen": "Kitchen",
     "wardrobe": "Wardrobe",
     "renovation": "Renovation",
-    "urgent": "Urgent"
+    "urgent": "Urgent",
+    "varianceNote": "depending on final specifications"
   },
   "mobile": {
     "stage": {
