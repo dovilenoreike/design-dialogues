@@ -45,8 +45,8 @@ export const appliancePackages: Record<Tier, number> = {
  */
 export const wardrobeRates: Record<Tier, number> = {
   Budget: 600,
-  Standard: 800,
-  Premium: 1000,
+  Standard: 850,
+  Premium: 1300,
 };
 
 /**
