@@ -124,10 +124,10 @@ export function useCostCalculation({
     // Finish Labor (40%) = painting, tiling, trim → Interior Finishes
     const totalConstructionBase = area * baseRates[tier];
     const roughLabor = services.spacePlanning
-      ? roundToHundred(totalConstructionBase * 0.6)
+      ? roundToHundred(totalConstructionBase * 0.2)
       : 0;
     const finishLabor = services.interiorFinishes
-      ? roundToHundred(totalConstructionBase * 0.4)
+      ? roundToHundred(totalConstructionBase * 0.8)
       : 0;
     const constructionFinish = roughLabor + finishLabor;
 
