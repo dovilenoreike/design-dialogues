@@ -197,6 +197,7 @@ interface Palette {
       rooms: string[];
       purpose: Record<string, string>;
       materialType: string;
+      includeInPrompt?: boolean; // defaults to true if omitted
     }
   >;
 }
@@ -353,9 +354,12 @@ function mapRoomNameToCategory(
 function buildMaterialPrompt(palette: Palette, roomId: string): string {
   const roomCategory = mapRoomNameToCategory(roomId);
 
-  // Filter materials for this room
+  // Filter materials for this room and only include those meant for prompts
+  // (include if true or undefined, exclude only if explicitly false)
   const filteredMaterials = Object.entries(palette.materials).filter(
-    ([, material]) => material.rooms.includes(roomCategory)
+    ([, material]) =>
+      material.rooms.includes(roomCategory) &&
+      material.includeInPrompt !== false
   );
 
   if (filteredMaterials.length === 0) {

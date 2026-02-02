@@ -24,18 +24,18 @@
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry" },
       "materialType": "LMDP",
-      "technicalCode": "Egger H3710 ST12",
+      "technicalCode": "Alvis Velazques 05",
       "showroomIds":["impeka"]
     },
     "material3": {
       "description": {
-        "en": "Soft beige, stone-textured surface",
-        "lt": "Švelniai smėlinė, akmens tekstūra"
+        "en": "Soft beige worktops, stone-textured surface",
+        "lt": "Šilta balta akmens tekstūra"
       },
       "rooms": ["kitchen"],
-      "purpose": { "default": "Worktops"},
+      "purpose": { "default": "Worktops & backsplash" },
       "materialType": "LMDP",
-      "technicalCode": "Egger U702 ST78",
+      "technicalCode": "Egger F229 ST75",
       "showroomIds":["impeka"]
     },
     "material4": {

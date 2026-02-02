@@ -92,13 +92,19 @@ export function buildDetailedMaterialPrompt(
   const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
   const materials = getMaterialsForRoom(palette, roomCategory);
 
-  if (materials.length === 0) {
+  // Filter to only include materials that should be in the prompt
+  // (include if true or undefined, exclude only if explicitly false)
+  const promptMaterials = materials.filter(
+    ({ material }) => material.includeInPrompt !== false
+  );
+
+  if (promptMaterials.length === 0) {
     return palette.promptSnippet;
   }
 
   // Build detailed material descriptions with purpose + description
   // Always use English for AI prompts
-  const materialDescriptions = materials.map(({ material }) => {
+  const materialDescriptions = promptMaterials.map(({ material }) => {
     const purpose = getMaterialPurpose(material, roomCategory);
     const description = getMaterialDescription(material, "en") || `${purpose} material`;
     return `- ${purpose}: ${description}`;

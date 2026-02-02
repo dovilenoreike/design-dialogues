@@ -18,6 +18,7 @@ export interface Material {
   purpose: MaterialPurpose;
   materialType?: string;
   technicalCode?: string;
+  includeInPrompt?: boolean; // defaults to true if omitted
 }
 
 export interface DesignerProfile {
