@@ -428,5 +428,198 @@
     "loading": "Kraunamas bendrinamas dizainas...",
     "notFound": "Dizainas nerastas arba pasibaigė jo galiojimas",
     "startFresh": "Pradėti iš naujo"
+  },
+  "audit": {
+    "title": "Plano Auditas",
+    "subtitle": "Įvertinkite savo planą pagal ergonomikos standartus",
+    "layoutHealth": "Plano Sveikata",
+    "progress": "{answered}/{total} atsakyta",
+    "startAudit": "Pradėti Auditą",
+    "continueAudit": "Tęsti",
+    "reviewAudit": "Peržiūrėti",
+    "currentScore": "Dabartinis Balas",
+    "summary": {
+      "notStarted": "Nepradėta",
+      "notStartedDetail": "35 ergonomikos patikrinimai",
+      "excellent": "Puiku",
+      "noIssues": "Visi patikrinimai praeiti",
+      "needsAttention": "Atkreipkite dėmesį",
+      "focusCategory": "{category}",
+      "progressDetail": "{answered} iš {total} atlikta"
+    },
+    "adults": "Suaugusieji",
+    "children": "Vaikai",
+    "workFromHome": "Darbas namuose",
+    "whyItMatters": "Kodėl tai svarbu",
+    "notRelevant": "Neaktualu",
+    "undo": "Atšaukti",
+    "yes": "Taip",
+    "no": "Ne",
+    "conclusion": {
+      "green": "Gerai Optimizuota",
+      "amber": "Patartina Optimizuoti",
+      "red": "Būtina Optimizuoti"
+    },
+    "category": {
+      "storage": {
+        "title": "Daiktų Laikymas",
+        "description": "Daiktų Testas",
+        "importance": "Optimalūs daiktų laikymo sprendimai leidžia išlaikyti tvarką namuose"
+      },
+      "social": {
+        "title": "Socialinė ir Valgymo Erdvė",
+        "description": "Susibūrimo Testas",
+        "importance": "Patogios susibūrimo erdvės stiprina santykius"
+      },
+      "kitchen": {
+        "title": "Virtuvės Ergonomika",
+        "description": "Virėjo Testas",
+        "importance": "Gerai suprojektuota virtuvė daro gaminimą malonų"
+      },
+      "bedroom": {
+        "title": "Miegamasis ir Miegas",
+        "description": "Šventovės Testas",
+        "importance": "Kokybiškas miegas priklauso nuo miegamojo komforto"
+      },
+      "bathroom": {
+        "title": "Vonia ir Higiena",
+        "description": "Rytinio Skubėjimo Testas",
+        "importance": "Sklandūs rytai prasideda nuo funkcionalios vonios"
+      },
+      "homeOffice": {
+        "title": "Namų Biuras",
+        "description": "Produktyvumo Testas",
+        "importance": "Atskira darbo erdvė saugo darbo ir gyvenimo balansą"
+      },
+      "power": {
+        "title": "Elektra ir Apšvietimas",
+        "description": "Nematomo Komforto Testas",
+        "importance": "Tinkamas elektros planavimas išvengia kasdienių nepatogumų"
+      },
+      "doors": {
+        "title": "Durų ir Prietaisų Konfliktai",
+        "description": "Trinties Testas",
+        "importance": "Nekonfltuojančios durys palengvina kasdienį gyvenimą"
+      }
+    },
+    "item": {
+      "storage": {
+        "hallwayWardrobe": "Ar prieškambaryje yra drabužinė bent {value}m (paltams, batams, svečiams)?",
+        "masterWardrobe": "Ar pagrindiniame miegamajame yra bent {value}m ilgio drabužinė?",
+        "kidsWardrobe": "Ar vaikų drabužinė yra bent {value}m ilgio?",
+        "general": "Ar bendra saugykla (ūkinė spinta) yra bent {value}m?",
+        "utility": "Ar yra atskira vieta dulkių siurbliui/šluotai (min 60×60cm) ne miegamajame?",
+        "entryDrop": "Ar prie įėjimo durų yra konsolė ar lentyna raktams/telefonams?"
+      },
+      "social": {
+        "diningCount": "Ar prie valgomojo stalo telpa bent {value} žmonės (su svečiais)?",
+        "chairClearance": "Ar už kiekvienos kėdės yra bent 80cm, kad ją atitrauktumėte?",
+        "sofaCapacity": "Ar svetainėje telpa bent {value} žmonės (įskaitant patogų gulėjimą)?",
+        "conversation": "Ar foteliai/sofos nukreipti vienas į kitą (socialiai), o ne visi į TV?",
+        "trafficPaths": "Ar galite pasiekti virtuvę nepereidami TV zonos?"
+      },
+      "kitchen": {
+        "linear": "Ar bendra virtuvės linija (apatinės + aukštosios spintelės) yra bent {value}m?",
+        "tallUnits": "Ar yra bent {value} aukšt. spintelė(-ės) (maisto, šaldytuvo bokštas)?",
+        "triangle": "Ar atstumų tarp Kriauklės, Šaldytuvo ir Kaitlentės suma mažesnė nei 6m?",
+        "prepZone": "Ar tarp Kriauklės ir Kaitlentės yra bent 60cm laisvo stalviršio?",
+        "aisleWidth": "Jei yra sala, ar praėjimas yra bent 90cm pločio?",
+        "dishwasherTrap": "Ar atidarius indaplovę ji neužblokuoja stovinčio prie kriauklės?",
+        "fridgeDoor": "Ar šaldytuvo durys atsidaro link darbo zonos (neblokuodamos srauto)?",
+        "fridgeOven": "Ar tarp šaldytuvo ir orkaitės yra bent 15cm atstumas?"
+      },
+      "bedroom": {
+        "bedAccess": "Ar abiejose dvigulės lovos pusėse yra bent 50cm praėjimas?",
+        "nightstands": "Ar abiejose lovos pusėse yra paviršiai telefonams/knygoms?",
+        "doorConflict": "Ar atidarius miegamojo durys nekonfliktuoja su spintų durimis?",
+        "sightlines": "Ar pravėrus miegamojo duris nėra iš kart matomas besiilsintis žmogus?",
+        "acoustics": "Ar pagrindinis miegamasis nesidalina siena su TV ar virtuve?"
+      },
+      "bathroom": {
+        "ratio": "Ar jūsų namų ūkyje yra bent {value} vonia(-os)?",
+        "laundry": "Ar yra {value} skalbimui?",
+        "laundryIntegrated": "skalbyklė vonios kambaryje",
+        "laundryNiche": "atskira skalbimo niša",
+        "laundryRoom": "atskiras skalbimo kambarys",
+        "doorSwing": "Ar vonios durys neblokuoja prie praustuvo stovinčio žmogaus?",
+        "elbowRoom": "Ar abiejose tualeto pusėse yra bent 15cm tarpas?",
+        "showerHead": "Ar galite įjungti dušą nesušlapdami iš karto?"
+      },
+      "homeOffice": {
+        "workZone": "Ar darbo stalas yra atskiroje zonoje (ne ant valgomojo stalo)?",
+        "naturalLight": "Ar pagrindinis darbo paviršius gauna šoninę šviesą ar žiūri į langą?"
+      },
+      "power": {
+        "bedCharging": "Ar rozetės pasiekiamos iš abiejų lovos pusių?",
+        "sofaPower": "Ar yra bent viena rozetė 1.5m atstumu nuo pagrindinės sofos?",
+        "entryCharging": "Ar prie įėjimo/daiktų padėjimo zonos yra rozetė?",
+        "workPower": "Ar prie darbo stalo yra bent 2 lengvai pasiekiamos rozetės?",
+        "taskLighting": "Ar virtuvę, darbo stalą ir veidrodį galima apšviesti ne tik lubų šviestuvais?"
+      },
+      "doors": {
+        "doorToDoor": "Ar kambario, spintos ir vonios durys nesusiduria atidaromos?",
+        "applianceToPerson": "Ar atidaromi prietaisai neužblokuoja juos naudojančio žmogaus?",
+        "applianceToAppliance": "Ar šaldytuvas, indaplovė, orkaitė ir stalčiai gali būti atidaryti vienu metu?",
+        "circulationBlocking": "Ar atidarytos durys neužblokuoja pagrindinio praėjimo?"
+      }
+    },
+    "tooltip": {
+      "storage": {
+        "hallwayWardrobe": "Be pakankamos saugyklos prieškambaryje, paltai kaupiasi ant kėdžių. Planuokite 0.6m suaugusiajam + 0.4m vaikui + 0.6m svečiams.",
+        "masterWardrobe": "Vienam suaugusiajam reikia 1.8m; porai – 2.4m kabinimo vietos, kad išvengtumėte rytinių konfliktų.",
+        "kidsWardrobe": "Vaikams reikia atskiros saugyklos drabužiams, sporto įrangai, sezoniniams daiktams. Planuokite 0.8m vaikui + 0.4m bendrai.",
+        "general": "Bendra saugykla siurbliui, sezoniniams daiktams, atsargoms. Planuokite 1.0m bazė + 0.4m asmeniui.",
+        "utility": "Be atskiros vietos, valymo įranga atsiduria miegamuosiuose arba matoma gyvenamose erdvėse.",
+        "entryDrop": "Be daiktų padėjimo zonos, raktai ir telefonai išsibarsto po visus namus, sukeldami kasdienę frustraciją."
+      },
+      "social": {
+        "diningCount": "Planuokite namų ūkį + 2 svečių vietas. Per mažai sėdimų vietų reiškia nepatogius susibūrimus.",
+        "chairClearance": "Be 80cm už kėdžių, svečiams sunku atsisėsti ir blokuojamas judėjimas.",
+        "sofaCapacity": "Svetainės sėdimos vietos turi talpinti visus + 1 patogiam gulėjimui.",
+        "conversation": "Visos sėdimos vietos, nukreiptos į TV, sukuria antisocialų išplanavimą, kuris neskatina pokalbių.",
+        "trafficPaths": "Ėjimas per TV zoną pertraukia žiūrėjimą ir sukuria nuolatinę namų ūkio trintį."
+      },
+      "kitchen": {
+        "linear": "Virtuvės linija 3.0m bazė (2 žmonėms) + 0.6m papildomam suaugusiajam + 0.4m vaikui užtikrina paruošimo, gaminimo ir saugojimo erdvę.",
+        "tallUnits": "Planuokite 1 aukštą spintelę (maisto/šaldytuvo bokštas) 2 žmonėms maisto saugojimui.",
+        "triangle": "Darbo trikampis virš 6m reiškia varginančius papildomus žingsnius gaminant. Efektyvumas smarkiai sumažėja.",
+        "prepZone": "Be paruošimo vietos šalia kaitlentės, žongliruosite karštomis keptuvėmis ir pjaustymo lentomis nesaugiai.",
+        "aisleWidth": "Siauri praėjimai sukuria kamščius, kai keli žmonės naudojasi virtuve.",
+        "dishwasherTrap": "Indaplovė, blokuojanti kriauklę, sukuria kasdienę trintį gaminant ir tvarkant.",
+        "fridgeDoor": "Šaldytuvo durys, atsiveriančios nuo darbo zonos, nuolat trikdo gaminimo srautą.",
+        "fridgeOven": "Šaldytuvas šalia orkaitės eikvoja energiją ir gali pažeisti šaldytuvo kompresorių."
+      },
+      "bedroom": {
+        "bedAccess": "Prieiga tik iš vienos pusės apsunkina lovos klojimą ir trikdo miegantį partnerį.",
+        "nightstands": "Be paviršių abiejose pusėse, vienas žmogus deda telefoną ant grindų.",
+        "doorConflict": "Susidūriančios durys sukelia kasdienį erzulį ir gali pažeisti baldus.",
+        "sightlines": "Tiesioginis matymas į tualetą iš lovos veikia privatumą ir ramų miegą.",
+        "acoustics": "Bendros sienos su TV ar virtuve reiškia triukšmo perdavimą, trikdantį miegą."
+      },
+      "bathroom": {
+        "ratio": "Daugiau nei 3 žmonės, besidalinantys viena vonia, sukelia rytinio skubėjimo konfliktus.",
+        "laundry": "1-3 žmonėms: vonioje. 4-5 žmonėms: atskira niša. 6+ žmonėms: atskiras kambarys.",
+        "doorSwing": "Į vidų atsiveriančios durys gali įkalinti nukritusį žmogų ir atsitrenkti į įrangą.",
+        "elbowRoom": "Tualetas, prispaustas prie sienos, yra nepatogus naudoti ir sunkiai valomas.",
+        "showerHead": "Sušlapimas reguliuojant vandens temperatūrą yra nemaloni kasdienė patirtis."
+      },
+      "homeOffice": {
+        "workZone": "Darbas prie valgomojo stalo veda prie psichinio išsekimo – nėra atskyrimo tarp darbo ir gyvenimo.",
+        "naturalLight": "Ekranai nugarą į langą sukelia akinimą; šoninė šviesa yra optimali darbo paviršiams."
+      },
+      "power": {
+        "bedCharging": "Be rozetių abiejose pusėse, įkrovimo laidai kerta lovą arba reikia ilgintuvų.",
+        "sofaPower": "Be rozetės šalia sofos, laidai driekiasi arba nuolat reikia eiti pakrauti įrenginių.",
+        "entryCharging": "Be elektros prie įėjimo, įrenginiai negali krautis ten, kur natūraliai dedami.",
+        "workPower": "Per mažai darbo stalo rozetių reiškia ilgintuvus ir laidų netvarką.",
+        "taskLighting": "Pasikliovimas tik lubų šviestuvais sukuria šešėlius, kurie apsunkina užduotis ir vargina akis."
+      },
+      "doors": {
+        "doorToDoor": "Susidūriančios durys sukuria kasdienį erzulį, triukšmą ir pažeidžia apdailą.",
+        "applianceToPerson": "Prietaisai, blokuojantys naudotoją, sukuria trintį gaminant ir tvarkant.",
+        "applianceToAppliance": "Prietaisai, kurie negali atsidaryti vienu metu, verčia dirbti neefektyviai nuosekliai.",
+        "circulationBlocking": "Durys, blokuojančios praėjimus, sukuria nuolatinį naršymą aplink kliūtis."
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@
 import { DesignSelection } from "@/types/design-state";
 import { FormData } from "@/types/calculator";
 import { BottomTab, ControlMode, Tier } from "@/contexts/DesignContext";
+import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 
 const STORAGE_KEY = "design_dialogues_session";
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -26,6 +27,10 @@ export interface SessionData {
   // Plan state
   userMoveInDate: string | null; // ISO string for Date serialization
   completedTasks: string[]; // Array of completed task IDs
+
+  // Layout audit state
+  layoutAuditResponses?: Record<string, AuditResponse>;
+  layoutAuditVariables?: AuditVariables;
 
   // Metadata
   savedAt: number;

@@ -421,5 +421,198 @@
     "loading": "Loading shared design...",
     "notFound": "Design not found or expired",
     "startFresh": "Start Fresh"
+  },
+  "audit": {
+    "title": "Layout Audit",
+    "subtitle": "Evaluate your floorplan against professional ergonomic standards",
+    "layoutHealth": "Layout Health",
+    "progress": "{answered}/{total} answered",
+    "startAudit": "Start Audit",
+    "continueAudit": "Continue",
+    "reviewAudit": "Review",
+    "currentScore": "Current Score",
+    "summary": {
+      "notStarted": "Not Started",
+      "notStartedDetail": "35 ergonomic checks",
+      "excellent": "Excellent",
+      "noIssues": "All checks passed",
+      "needsAttention": "Pay Attention",
+      "focusCategory": "{category}",
+      "progressDetail": "{answered} of {total} completed"
+    },
+    "adults": "Adults",
+    "children": "Children",
+    "workFromHome": "WFH",
+    "whyItMatters": "Why it matters",
+    "notRelevant": "Not relevant",
+    "undo": "Undo",
+    "yes": "Yes",
+    "no": "No",
+    "conclusion": {
+      "green": "Well Optimized",
+      "amber": "Requires Optimization",
+      "red": "Needs Attention"
+    },
+    "category": {
+      "storage": {
+        "title": "Storage Capacity",
+        "description": "The \"Stuff\" Test",
+        "importance": "Enough storage keeps your home clutter-free"
+      },
+      "social": {
+        "title": "Social & Dining",
+        "description": "The \"Gathering\" Test",
+        "importance": "Comfortable gathering spaces strengthen relationships"
+      },
+      "kitchen": {
+        "title": "Kitchen Ergonomics",
+        "description": "The \"Cook\" Test",
+        "importance": "A well-designed kitchen makes cooking enjoyable"
+      },
+      "bedroom": {
+        "title": "Bedroom & Sleep",
+        "description": "The \"Sanctuary\" Test",
+        "importance": "Quality sleep depends on bedroom comfort"
+      },
+      "bathroom": {
+        "title": "Bathroom & Hygiene",
+        "description": "The \"Morning Rush\" Test",
+        "importance": "Smooth mornings start with functional bathrooms"
+      },
+      "homeOffice": {
+        "title": "Home Office",
+        "description": "The \"Productivity\" Test",
+        "importance": "A dedicated workspace protects work-life balance"
+      },
+      "power": {
+        "title": "Power & Lighting",
+        "description": "The \"Invisible Comfort\" Test",
+        "importance": "Proper power planning prevents daily frustrations"
+      },
+      "doors": {
+        "title": "Door & Appliance Collision",
+        "description": "The \"Friction\" Test",
+        "importance": "Collision-free doors make daily life smoother"
+      }
+    },
+    "item": {
+      "storage": {
+        "hallwayWardrobe": "Is there an entrance wardrobe of at least {value}m (for coats, shoes, guests)?",
+        "masterWardrobe": "Is there a wardrobe run of at least {value}m in the master bedroom?",
+        "kidsWardrobe": "Is there a kids wardrobe run of at least {value}m?",
+        "general": "Is the general storage (utility wardrobe) at least {value}m?",
+        "utility": "Is there a dedicated spot for vacuum/mop (min 60×60cm) outside bedrooms?",
+        "entryDrop": "Is there a console or shelf near the front door for keys/phones?"
+      },
+      "social": {
+        "diningCount": "Does the dining table seat at least {value} people (including guests)?",
+        "chairClearance": "Is there at least 80cm behind each dining chair to pull it out?",
+        "sofaCapacity": "Does the living room seat at least {value} people (including lounging)?",
+        "conversation": "Are armchairs/sofas facing each other (social) rather than all facing TV?",
+        "trafficPaths": "Can you reach the kitchen/balcony without walking through the TV zone?"
+      },
+      "kitchen": {
+        "linear": "Is the total kitchen run (base + tall units) at least {value}m?",
+        "tallUnits": "Are there at least {value} tall storage unit(s) (pantry, fridge tower)?",
+        "triangle": "Is the sum of distances between Sink, Fridge, and Hob less than 6m?",
+        "prepZone": "Is there at least 60cm of clear countertop between the Sink and the Hob?",
+        "aisleWidth": "If there is an island, is the walkway at least 90cm wide?",
+        "dishwasherTrap": "When the dishwasher door opens, does it avoid blocking the sink user?",
+        "fridgeDoor": "Does the fridge door open towards the work zone (not blocking flow)?",
+        "fridgeOven": "Is there at least 15cm distance between the fridge and the oven?"
+      },
+      "bedroom": {
+        "bedAccess": "Is there at least 50cm of walking space on both sides of a double bed?",
+        "nightstands": "Are there surfaces on both sides of the bed for phones/books?",
+        "doorConflict": "When the bedroom door is open, does it avoid blocking the wardrobe?",
+        "sightlines": "When lying in bed, is the bathroom/toilet not directly visible?",
+        "acoustics": "Does the master bedroom avoid sharing a wall with the TV or kitchen?"
+      },
+      "bathroom": {
+        "ratio": "Is there at least {value} bathroom(s) for your household?",
+        "laundry": "Is there a {value} for laundry?",
+        "laundryIntegrated": "bathroom-integrated washer/dryer",
+        "laundryNiche": "dedicated laundry niche",
+        "laundryRoom": "separate laundry room",
+        "doorSwing": "Does the bathroom door swing outwards or slide (not inwards hitting fixtures)?",
+        "elbowRoom": "Is there at least 15cm clearance on either side of the toilet?",
+        "showerHead": "Can you turn the water on without getting wet immediately?"
+      },
+      "homeOffice": {
+        "workZone": "Is the desk in a dedicated zone (not on the dining table)?",
+        "naturalLight": "Is the primary work surface receiving side-light or facing a window?"
+      },
+      "power": {
+        "bedCharging": "Are there power outlets reachable from both sides of the bed?",
+        "sofaPower": "Is there at least one outlet within 1.5m of main sofa seating?",
+        "entryCharging": "Is there a power outlet near the entry/drop zone?",
+        "workPower": "Does the desk area have at least 2 accessible outlets?",
+        "taskLighting": "Can kitchen prep, desk, and mirror be lit without only ceiling lights?"
+      },
+      "doors": {
+        "doorToDoor": "Do room, wardrobe, and bathroom doors avoid colliding when opened?",
+        "applianceToPerson": "Does opening appliances avoid blocking the person using the space?",
+        "applianceToAppliance": "Can fridge, dishwasher, oven, and drawers open simultaneously?",
+        "circulationBlocking": "Does any open door avoid blocking a primary walking path?"
+      }
+    },
+    "tooltip": {
+      "storage": {
+        "hallwayWardrobe": "Without adequate entrance storage, coats pile on chairs and the entry feels cluttered. Plan 0.6m per adult + 0.4m per child + 0.6m buffer for guests.",
+        "masterWardrobe": "Single adults need 1.8m; couples need 2.4m of hanging space to avoid morning conflicts and cluttered bedrooms.",
+        "kidsWardrobe": "Children need dedicated storage for clothes, sports gear, and seasonal items. Plan 0.8m per child + 0.4m shared buffer.",
+        "general": "General storage holds vacuum, seasonal items, bulk supplies. Plan 1.0m base + 0.4m per person.",
+        "utility": "Without a dedicated utility spot, cleaning equipment ends up in bedrooms or visible in living spaces.",
+        "entryDrop": "Without a drop zone, keys and phones scatter throughout the home, causing daily frustration."
+      },
+      "social": {
+        "diningCount": "Plan for household members + 2 guest seats. Too little seating means uncomfortable gatherings.",
+        "chairClearance": "Without 80cm behind chairs, guests struggle to sit down and traffic flow is blocked.",
+        "sofaCapacity": "Living seating should accommodate everyone + 1 for comfortable lounging.",
+        "conversation": "All seating facing the TV creates an antisocial layout that discourages conversation.",
+        "trafficPaths": "Walking through the TV zone interrupts viewing and creates constant household friction."
+      },
+      "kitchen": {
+        "linear": "Kitchen run of 3.0m base (for 2 people) + 0.6m per extra adult + 0.4m per child provides adequate prep, cooking, and storage space.",
+        "tallUnits": "Plan 1 tall unit (pantry/fridge tower) per 2 people for food storage and bulk shopping.",
+        "triangle": "A work triangle over 6m means exhausting extra steps while cooking. Efficiency drops significantly.",
+        "prepZone": "Without prep space near the hob, you'll be juggling hot pans and chopping boards unsafely.",
+        "aisleWidth": "Narrow aisles create traffic jams when multiple people use the kitchen.",
+        "dishwasherTrap": "A dishwasher that blocks the sink creates daily friction during cooking and cleaning.",
+        "fridgeDoor": "A fridge door that opens away from the work zone disrupts cooking flow constantly.",
+        "fridgeOven": "Placing the fridge next to the oven wastes energy and can damage the fridge compressor."
+      },
+      "bedroom": {
+        "bedAccess": "Single-side access makes bed-making difficult and disturbs sleeping partners.",
+        "nightstands": "Without surfaces on both sides, one person ends up putting their phone on the floor.",
+        "doorConflict": "Doors that collide create daily annoyance and can damage furniture.",
+        "sightlines": "Direct sightline to the toilet from bed affects privacy and restful sleep.",
+        "acoustics": "Shared walls with TV or kitchen mean noise transfer disrupts sleep."
+      },
+      "bathroom": {
+        "ratio": "More than 3 people sharing one bathroom creates morning rush conflicts.",
+        "laundry": "1-3 people: bathroom-integrated. 4-5 people: dedicated niche. 6+ people: separate room.",
+        "doorSwing": "An inward-swinging door can trap someone who falls and hit fixtures.",
+        "elbowRoom": "A toilet wedged against a wall is uncomfortable to use and difficult to clean.",
+        "showerHead": "Getting wet while adjusting water temperature is an unpleasant daily experience."
+      },
+      "homeOffice": {
+        "workZone": "Working at the dining table leads to mental burnout—no separation between work and life.",
+        "naturalLight": "Back-to-window screens cause glare; side-light is optimal for work surfaces."
+      },
+      "power": {
+        "bedCharging": "Without outlets on both sides, charging cables cross the bed or require extension cords.",
+        "sofaPower": "No outlet near the sofa means trailing cables or constantly moving to charge devices.",
+        "entryCharging": "Without entry power, devices can't charge where they're naturally dropped.",
+        "workPower": "Too few desk outlets means extension cords and cable clutter at the workspace.",
+        "taskLighting": "Relying only on ceiling lights creates shadows that make tasks difficult and straining."
+      },
+      "doors": {
+        "doorToDoor": "Colliding doors create daily annoyance, noise, and damage to finishes.",
+        "applianceToPerson": "Appliances that block the user create friction during cooking and chores.",
+        "applianceToAppliance": "Appliances that can't open together force inefficient sequential workflows.",
+        "circulationBlocking": "Doors blocking walkways create constant navigation around obstacles."
+      }
+    }
   }
 }

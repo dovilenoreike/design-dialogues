@@ -16,6 +16,8 @@ import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { saveSession, loadSession, clearSession, SessionData } from "@/lib/session-storage";
 import { parseUrlState, buildUrl } from "@/lib/url-state";
+import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
+import { defaultAuditVariables } from "@/data/layout-audit-rules";
 
 export type BottomTab = "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -36,6 +38,10 @@ interface DesignContextValue {
   userMoveInDate: Date | null;
   completedTasks: Set<string>;
 
+  // Layout audit state
+  layoutAuditResponses: Record<string, AuditResponse>;
+  layoutAuditVariables: AuditVariables;
+
   // Computed values
   canGenerate: boolean;
 
@@ -45,6 +51,10 @@ interface DesignContextValue {
   setSelectedTier: (tier: Tier) => void;
   setUserMoveInDate: (date: Date | null) => void;
   toggleTask: (taskId: string) => void;
+  setLayoutAuditResponse: (itemId: string, response: AuditResponse | undefined) => void;
+  setLayoutAuditAdults: (count: number) => void;
+  setLayoutAuditChildren: (count: number) => void;
+  setLayoutAuditWorkFromHome: (value: boolean) => void;
 
   // Design actions
   handleImageUpload: (file: File) => void;
@@ -91,6 +101,8 @@ interface SharedSessionData {
   formData: FormData | null;
   userMoveInDate: string | null;
   completedTasks: string[];
+  layoutAuditResponses?: Record<string, AuditResponse>;
+  layoutAuditVariables?: AuditVariables;
 }
 
 interface DesignProviderProps {
@@ -116,6 +128,10 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Plan state
   const [userMoveInDate, setUserMoveInDate] = useState<Date | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // Layout audit state
+  const [layoutAuditResponses, setLayoutAuditResponses] = useState<Record<string, AuditResponse>>({});
+  const [layoutAuditVariables, setLayoutAuditVariables] = useState<AuditVariables>(defaultAuditVariables);
 
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
@@ -151,6 +167,23 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       if (initialSharedSession.completedTasks?.length) {
         setCompletedTasks(new Set(initialSharedSession.completedTasks));
       }
+      if (initialSharedSession.layoutAuditResponses) {
+        setLayoutAuditResponses(initialSharedSession.layoutAuditResponses);
+      }
+      if (initialSharedSession.layoutAuditVariables) {
+        // Migrate old format (only numberOfPeople) to new format (adults + children)
+        const vars = initialSharedSession.layoutAuditVariables;
+        if (vars.numberOfAdults === undefined || vars.numberOfChildren === undefined) {
+          setLayoutAuditVariables({
+            numberOfAdults: vars.numberOfPeople || 2,
+            numberOfChildren: 0,
+            numberOfPeople: vars.numberOfPeople || 2,
+            workFromHome: vars.workFromHome ?? false,
+          });
+        } else {
+          setLayoutAuditVariables(vars);
+        }
+      }
       setIsInitialized(true);
       return; // Don't load from localStorage or URL for shared sessions
     }
@@ -171,6 +204,24 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }
       if (session.completedTasks?.length) {
         setCompletedTasks(new Set(session.completedTasks));
+      }
+      if (session.layoutAuditResponses) {
+        setLayoutAuditResponses(session.layoutAuditResponses);
+      }
+      if (session.layoutAuditVariables) {
+        // Migrate old format (only numberOfPeople) to new format (adults + children)
+        const vars = session.layoutAuditVariables;
+        if (vars.numberOfAdults === undefined || vars.numberOfChildren === undefined) {
+          // Old format - convert numberOfPeople to adults, assume 0 children
+          setLayoutAuditVariables({
+            numberOfAdults: vars.numberOfPeople || 2,
+            numberOfChildren: 0,
+            numberOfPeople: vars.numberOfPeople || 2,
+            workFromHome: vars.workFromHome ?? false,
+          });
+        } else {
+          setLayoutAuditVariables(vars);
+        }
       }
     }
 
@@ -246,6 +297,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     activeMode,
     userMoveInDate,
     completedTasks,
+    layoutAuditResponses,
+    layoutAuditVariables,
   });
 
   // Keep ref updated
@@ -259,8 +312,10 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       activeMode,
       userMoveInDate,
       completedTasks,
+      layoutAuditResponses,
+      layoutAuditVariables,
     };
-  }, [design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
+  }, [design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Save immediately when user leaves the page
   useEffect(() => {
@@ -275,6 +330,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         activeMode: state.activeMode,
         userMoveInDate: state.userMoveInDate?.toISOString() ?? null,
         completedTasks: Array.from(state.completedTasks),
+        layoutAuditResponses: state.layoutAuditResponses,
+        layoutAuditVariables: state.layoutAuditVariables,
       });
     };
 
@@ -301,6 +358,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       activeMode,
       userMoveInDate: userMoveInDate?.toISOString() ?? null,
       completedTasks: Array.from(completedTasks),
+      layoutAuditResponses,
+      layoutAuditVariables,
     };
 
     // Debounce save by 1 second (reduced from 2 for better UX)
@@ -316,7 +375,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         saveSession(currentState);
       }
     };
-  }, [isInitialized, design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
+  }, [isInitialized, design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Destructure for convenience
   const { uploadedImages, selectedCategory, selectedMaterial, freestyleDescription } = design;
@@ -338,6 +397,44 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }
       return next;
     });
+  }, []);
+
+  // Layout audit setters
+  const setLayoutAuditResponse = useCallback((itemId: string, response: AuditResponse | undefined) => {
+    setLayoutAuditResponses((prev) => {
+      if (response === undefined) {
+        // Remove the response (for undo/clear)
+        const { [itemId]: _, ...rest } = prev;
+        return rest;
+      }
+      return {
+        ...prev,
+        [itemId]: response,
+      };
+    });
+  }, []);
+
+  const setLayoutAuditAdults = useCallback((count: number) => {
+    setLayoutAuditVariables((prev) => ({
+      ...prev,
+      numberOfAdults: count,
+      numberOfPeople: count + prev.numberOfChildren,
+    }));
+  }, []);
+
+  const setLayoutAuditChildren = useCallback((count: number) => {
+    setLayoutAuditVariables((prev) => ({
+      ...prev,
+      numberOfChildren: count,
+      numberOfPeople: prev.numberOfAdults + count,
+    }));
+  }, []);
+
+  const setLayoutAuditWorkFromHome = useCallback((value: boolean) => {
+    setLayoutAuditVariables((prev) => ({
+      ...prev,
+      workFromHome: value,
+    }));
   }, []);
 
   // Image upload handler - saves per room
@@ -533,6 +630,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         activeMode,
         userMoveInDate: userMoveInDate?.toISOString() ?? null,
         completedTasks: Array.from(completedTasks),
+        layoutAuditResponses,
+        layoutAuditVariables,
       });
 
       toast.success("Interior visualization generated!", { position: "top-center" });
@@ -543,7 +642,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
       return false;
     }
-  }, [uploadedImage, selectedCategory, design, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks]);
+  }, [uploadedImage, selectedCategory, design, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
@@ -560,6 +659,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setActiveMode("rooms");
     setUserMoveInDate(null);
     setCompletedTasks(new Set());
+    setLayoutAuditResponses({});
+    setLayoutAuditVariables(defaultAuditVariables);
     clearSession();
   }, []);
 
@@ -664,12 +765,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     selectedTier,
     userMoveInDate,
     completedTasks,
+    layoutAuditResponses,
+    layoutAuditVariables,
     canGenerate,
     setActiveTab,
     setActiveMode,
     setSelectedTier,
     setUserMoveInDate,
     toggleTask,
+    setLayoutAuditResponse,
+    setLayoutAuditAdults,
+    setLayoutAuditChildren,
+    setLayoutAuditWorkFromHome,
     handleImageUpload,
     clearUploadedImage,
     handleSelectCategory,

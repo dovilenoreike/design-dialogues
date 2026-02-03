@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { calculateTimeline, calculatePhaseStates } from "@/components/result-dashboard/timeline-utils";
 import { TimelinePhaseCard } from "@/components/result-dashboard/TimelinePhaseCard";
 import { MoveInDateCard } from "@/components/result-dashboard/MoveInDateCard";
+import { AuditScoreWidget } from "@/components/result-dashboard/LayoutAuditCard";
 import type { ServiceSelection } from "@/types/calculator";
 
 // Default values when no form data exists
@@ -68,6 +69,9 @@ export default function PlanView() {
         <p className="text-sm text-muted-foreground mb-6">
           {subtitleText}
         </p>
+
+        {/* Layout Audit Widget */}
+        <AuditScoreWidget />
 
         {/* Timeline Phases */}
         <div className="relative">
