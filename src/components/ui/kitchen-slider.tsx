@@ -47,7 +47,7 @@ const KitchenSlider = React.forwardRef<
     const recommended = parseFloat(calculateKitchenLinear(safeAdults, safeChildren)) || 3.0;
 
     // Calculate ergonomic standard range (recommended ± tolerance)
-    const rangeStart = Math.max(min, recommended - 1.2);
+    const rangeStart = Math.max(3, recommended - 0.9);
     const rangeEnd = Math.min(max, recommended + 1.2);
 
     // Calculate percentages for positioning
@@ -111,8 +111,8 @@ export const getKitchenStatus = (
   const safeChildren = (typeof numberOfChildren === 'number' && !isNaN(numberOfChildren)) ? numberOfChildren : 0;
   const recommended = parseFloat(calculateKitchenLinear(safeAdults, safeChildren)) || 3.0;
 
-  if (value < recommended - 1.2) return 'underbuilt';
-  if (value > recommended + 1.2) return 'overbuilt';
+  if (value < recommended - 0.9) return 'underbuilt';
+  if (value > recommended + 1.5) return 'overbuilt';
   return 'optimal';
 };
 

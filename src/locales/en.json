@@ -376,7 +376,11 @@
     "storageDeficit": "Storage Deficit",
     "storageDeficitKitchen": "Kitchen dimensions are below ergonomic standards for household size.",
     "storageDeficitStorage": "Total storage dimensions are below ergonomic standards for household size.",
-    "storageDeficitBoth": "Kitchen and storage dimensions are below ergonomic standards for household size."
+    "storageDeficitBoth": "Kitchen and storage dimensions are below ergonomic standards for household size.",
+    "projectScope": "Project Scope",
+    "fullScope": "Full Scope",
+    "partialScope": "Partial Scope",
+    "noScope": "No Services"
   },
   "mobile": {
     "stage": {

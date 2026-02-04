@@ -383,7 +383,11 @@
     "storageDeficit": "Vietos daiktų laikymui trūkumas",
     "storageDeficitKitchen": "Virtuvės matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui.",
     "storageDeficitStorage": "Bendri spintų matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui.",
-    "storageDeficitBoth": "Virtuvės ir Bendri spintų matmenys matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui."
+    "storageDeficitBoth": "Virtuvės ir Bendri spintų matmenys matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui.",
+    "projectScope": "Projekto Apimtis",
+    "fullScope": "Visa Apimtis",
+    "partialScope": "Dalinė Apimtis",
+    "noScope": "Be Paslaugų"
   },
   "mobile": {
     "stage": {
