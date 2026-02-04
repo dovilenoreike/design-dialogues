@@ -177,7 +177,7 @@
     "premium": "Premium",
     "budgetDesc": "Paprastesnės medžiagos ir sprendimai, tinka mažai naudojamoms erdvėms ar nuomai.",
     "standardDesc": "Subalansuota kaina, kokybė ir estetika kasdieniam naudojimui.",
-    "premiumDesc": "Aukščiausios kokybės medžiagos ir išskirtinė patirties erdvėje."
+    "premiumDesc": "Aukščiausios kokybės medžiagos ir išskirtinė patirtis erdvėje."
   },
 "service": {
     "spacePlanning": "Erdvės Išplanavimas",
@@ -517,10 +517,10 @@
     },
     "item": {
       "storage": {
-        "hallwayWardrobe": "Ar prieškambaryje yra drabužinė bent {value}m (paltams, batams, svečiams)?",
+        "hallwayWardrobe": "Ar prieškambaryje yra kabykla ar drabužinė bent {value}m (paltams, batams, svečiams)?",
         "masterWardrobe": "Ar pagrindiniame miegamajame yra bent {value}m ilgio drabužinė?",
         "kidsWardrobe": "Ar vaikų drabužinė yra bent {value}m ilgio?",
-        "general": "Ar bendra saugykla (ūkinė spinta) yra bent {value}m?",
+        "general": "Ar bendra ūkinė spinta yra bent {value}m?",
         "utility": "Ar yra atskira vieta dulkių siurbliui/šluotai (min 60×60cm) ne miegamajame?",
         "entryDrop": "Ar prie įėjimo durų yra konsolė ar lentyna raktams/telefonams?"
       },
@@ -581,7 +581,7 @@
         "hallwayWardrobe": "Be pakankamos saugyklos prieškambaryje, paltai kaupiasi ant kėdžių. Planuokite 0.6m suaugusiajam + 0.4m vaikui + 0.6m svečiams.",
         "masterWardrobe": "Vienam suaugusiajam reikia 1.8m; porai – 2.4m kabinimo vietos, kad išvengtumėte rytinių konfliktų.",
         "kidsWardrobe": "Vaikams reikia atskiros saugyklos drabužiams, sporto įrangai, sezoniniams daiktams. Planuokite 0.8m vaikui + 0.4m bendrai.",
-        "general": "Bendra saugykla siurbliui, sezoniniams daiktams, atsargoms. Planuokite 1.0m bazė + 0.4m asmeniui.",
+        "general": "Bendra ūkinė spinta siurbliui, sezoniniams daiktams, atsargoms. Planuokite 1.0m bazė + 0.4m asmeniui.",
         "utility": "Be atskiros vietos, valymo įranga atsiduria miegamuosiuose arba matoma gyvenamose erdvėse.",
         "entryDrop": "Be daiktų padėjimo zonos, raktai ir telefonai išsibarsto po visus namus, sukeldami kasdienę frustraciją."
       },
