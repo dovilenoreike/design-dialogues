@@ -10,6 +10,8 @@ export interface ServiceSelection {
 
 export interface FormData {
   area: number;
+  numberOfAdults: number;
+  numberOfChildren: number;
   isRenovation: boolean;
   isUrgent: boolean;
   services: ServiceSelection;

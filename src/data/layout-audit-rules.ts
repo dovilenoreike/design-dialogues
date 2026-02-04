@@ -46,12 +46,60 @@ export const calculateGeneralStorage = (people: number): string => {
 };
 
 /**
+ * Total storage wardrobe length (Combined Formula)
+ * Sum of: Entrance + Master Bedroom + Kids (if any) + General Storage
+ */
+export const calculateTotalStorage = (adults: number, children: number): string => {
+  const people = adults + children;
+
+  // Entrance: 0.6m/adult + 0.4m/child + 0.6m buffer
+  const entrance = adults * 0.6 + children * 0.4 + 0.6;
+
+  // Master bedroom: 1.8m for 1 adult, 2.4m for 2+ adults
+  const masterBedroom = adults >= 2 ? 2.4 : 1.8;
+
+  // Kids: 0.8m/child + 0.4m buffer (only if children > 0)
+  const kids = children > 0 ? children * 0.8 + 0.4 : 0;
+
+  // General storage: 1.0m base + 0.4m/person
+  const general = 1.0 + people * 0.4;
+
+  const total = entrance + masterBedroom + kids + general;
+  return total.toFixed(1);
+};
+
+/**
+ * Get breakdown of storage components
+ */
+export const getStorageBreakdown = (adults: number, children: number): {
+  entrance: number;
+  masterBedroom: number;
+  kids: number;
+  general: number;
+  total: number;
+} => {
+  const people = adults + children;
+
+  const entrance = adults * 0.6 + children * 0.4 + 0.6;
+  const masterBedroom = adults >= 2 ? 2.4 : 1.8;
+  const kids = children > 0 ? children * 0.8 + 0.4 : 0;
+  const general = 1.0 + people * 0.4;
+
+  return {
+    entrance: parseFloat(entrance.toFixed(1)),
+    masterBedroom: parseFloat(masterBedroom.toFixed(1)),
+    kids: parseFloat(kids.toFixed(1)),
+    general: parseFloat(general.toFixed(1)),
+    total: parseFloat((entrance + masterBedroom + kids + general).toFixed(1)),
+  };
+};
+
+/**
  * Kitchen linear length (Formula #1)
- * Rule: 3.0m base for 2 people + 0.6m per extra adult + 0.4m per child
+ * Rule: 3.0m base + 0.6m per adult + 0.4m per child
  */
 export const calculateKitchenLinear = (adults: number, children: number): string => {
-  const extraAdults = Math.max(0, adults - 2);
-  const length = 3.0 + extraAdults * 0.6 + children * 0.4;
+  const length = 3.0 + adults * 0.6 + children * 0.4;
   return length.toFixed(1);
 };
 

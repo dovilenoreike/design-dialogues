@@ -2,8 +2,9 @@
  * CostBreakdownPanel - Expandable panel with sliders, service toggles, and cost breakdown
  */
 
-import { ChevronDown, Info } from "lucide-react";
+import { ChevronDown, Info, Minus, Plus, User, Baby } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { KitchenSlider } from "@/components/ui/kitchen-slider";
 import { Switch } from "@/components/ui/switch";
 import ServiceCard from "@/components/ServiceCard";
 import type { ServiceSelection, FormData } from "@/types/calculator";
@@ -16,6 +17,8 @@ interface CostBreakdownPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   localArea: number;
+  localNumberOfAdults: number;
+  localNumberOfChildren: number;
   localIsRenovation: boolean;
   localIsUrgent: boolean;
   localServices: ServiceSelection;
@@ -32,6 +35,8 @@ const CostBreakdownPanel = ({
   isOpen,
   onToggle,
   localArea,
+  localNumberOfAdults,
+  localNumberOfChildren,
   localIsRenovation,
   localIsUrgent,
   localServices,
@@ -64,6 +69,60 @@ const CostBreakdownPanel = ({
       {isOpen && (
         <div className="mt-4 bg-surface-muted/50 rounded-xl p-4 space-y-5 animate-fade-in">
           {/* SECTION A: INPUTS */}
+          {/* Household Size - Pill Steppers */}
+          <div className="pb-4 border-b border-ds-border-subtle">
+            <label className="text-xs text-muted-foreground mb-3 block">{t("budget.household")}</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Adults Stepper Pill */}
+              <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-full px-1 py-1">
+                <button
+                  onClick={() => onUpdateFormData({ numberOfAdults: Math.max(1, localNumberOfAdults - 1) })}
+                  disabled={localNumberOfAdults <= 1}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <div className="flex items-center gap-1.5 px-2">
+                  <User className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
+                    {localNumberOfAdults}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onUpdateFormData({ numberOfAdults: Math.min(10, localNumberOfAdults + 1) })}
+                  disabled={localNumberOfAdults >= 10}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Children Stepper Pill */}
+              <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-full px-1 py-1">
+                <button
+                  onClick={() => onUpdateFormData({ numberOfChildren: Math.max(0, localNumberOfChildren - 1) })}
+                  disabled={localNumberOfChildren <= 0}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <div className="flex items-center gap-1.5 px-2">
+                  <Baby className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
+                    {localNumberOfChildren}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onUpdateFormData({ numberOfChildren: Math.min(10, localNumberOfChildren + 1) })}
+                  disabled={localNumberOfChildren >= 10}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Area slider */}
           <div>
             <div className="flex justify-between items-center mb-3">
@@ -82,7 +141,7 @@ const CostBreakdownPanel = ({
             />
           </div>
 
-          {/* Kitchen Length slider */}
+          {/* Kitchen Length slider with recommendations */}
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs text-muted-foreground">{t("result.kitchenLength")}</label>
@@ -90,13 +149,15 @@ const CostBreakdownPanel = ({
                 {localKitchenLength} lm
               </span>
             </div>
-            <Slider
-              value={[localKitchenLength]}
-              onValueChange={(value) => onUpdateFormData({ kitchenLength: value[0] })}
+            <KitchenSlider
+              value={localKitchenLength}
+              onValueChange={(value) => onUpdateFormData({ kitchenLength: value })}
+              numberOfAdults={localNumberOfAdults}
+              numberOfChildren={localNumberOfChildren}
               min={2}
               max={8}
               step={0.5}
-              className="w-full"
+              recommendedLabel={t("budget.recommended")}
             />
           </div>
 

@@ -15,6 +15,8 @@ interface BudgetViewProps {
   selectedTier: Tier;
   onSelectTier: (tier: Tier) => void;
   localArea: number;
+  localNumberOfAdults: number;
+  localNumberOfChildren: number;
   localIsRenovation: boolean;
   localIsUrgent: boolean;
   localServices: ServiceSelection;
@@ -32,6 +34,8 @@ const BudgetView = ({
   selectedTier,
   onSelectTier,
   localArea,
+  localNumberOfAdults,
+  localNumberOfChildren,
   localIsRenovation,
   localIsUrgent,
   localServices,
@@ -106,6 +110,8 @@ const BudgetView = ({
         isOpen={isRefineOpen}
         onToggle={() => setIsRefineOpen(!isRefineOpen)}
         localArea={localArea}
+        localNumberOfAdults={localNumberOfAdults}
+        localNumberOfChildren={localNumberOfChildren}
         localIsRenovation={localIsRenovation}
         localIsUrgent={localIsUrgent}
         localServices={localServices}

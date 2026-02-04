@@ -420,6 +420,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       numberOfAdults: count,
       numberOfPeople: count + prev.numberOfChildren,
     }));
+    // Sync with formData
+    setFormData((prev) => prev ? { ...prev, numberOfAdults: count } : prev);
   }, []);
 
   const setLayoutAuditChildren = useCallback((count: number) => {
@@ -428,6 +430,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       numberOfChildren: count,
       numberOfPeople: prev.numberOfAdults + count,
     }));
+    // Sync with formData
+    setFormData((prev) => prev ? { ...prev, numberOfChildren: count } : prev);
   }, []);
 
   const setLayoutAuditWorkFromHome = useCallback((value: boolean) => {

@@ -27,6 +27,8 @@ const services = [
 // Default form data when none exists
 const defaultFormData: FormData = {
   area: 60,
+  numberOfAdults: 2,
+  numberOfChildren: 0,
   isRenovation: false,
   isUrgent: false,
   services: {
@@ -39,7 +41,7 @@ const defaultFormData: FormData = {
 };
 
 export default function BudgetView() {
-  const { formData, setFormData, selectedTier, setSelectedTier } = useDesign();
+  const { formData, setFormData, selectedTier, setSelectedTier, setLayoutAuditAdults, setLayoutAuditChildren } = useDesign();
   const { t } = useLanguage();
   const haptic = useHaptic();
 
@@ -49,8 +51,14 @@ export default function BudgetView() {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isServiceSheetOpen, setIsServiceSheetOpen] = useState(false);
 
-  // Local state for form inputs
+  // Local state for form inputs (with fallbacks for migration from old formData without household fields)
   const [localArea, setLocalArea] = useState(data.area);
+  const [localNumberOfAdults, setLocalNumberOfAdults] = useState(
+    typeof data.numberOfAdults === 'number' && !isNaN(data.numberOfAdults) ? data.numberOfAdults : 2
+  );
+  const [localNumberOfChildren, setLocalNumberOfChildren] = useState(
+    typeof data.numberOfChildren === 'number' && !isNaN(data.numberOfChildren) ? data.numberOfChildren : 0
+  );
   const [localIsRenovation, setLocalIsRenovation] = useState(data.isRenovation);
   const [localIsUrgent, setLocalIsUrgent] = useState(data.isUrgent);
   const [localServices, setLocalServices] = useState<ServiceSelection>(data.services);
@@ -71,6 +79,14 @@ export default function BudgetView() {
 
   const handleUpdateFormData = (updates: Partial<FormData>) => {
     if (updates.area !== undefined) setLocalArea(updates.area);
+    if (updates.numberOfAdults !== undefined) {
+      setLocalNumberOfAdults(updates.numberOfAdults);
+      setLayoutAuditAdults(updates.numberOfAdults); // Sync with audit
+    }
+    if (updates.numberOfChildren !== undefined) {
+      setLocalNumberOfChildren(updates.numberOfChildren);
+      setLayoutAuditChildren(updates.numberOfChildren); // Sync with audit
+    }
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
     if (updates.isUrgent !== undefined) setLocalIsUrgent(updates.isUrgent);
     if (updates.services !== undefined) setLocalServices(updates.services);
@@ -263,6 +279,8 @@ export default function BudgetView() {
         isOpen={isEditSheetOpen}
         onClose={() => setIsEditSheetOpen(false)}
         localArea={localArea}
+        localNumberOfAdults={localNumberOfAdults}
+        localNumberOfChildren={localNumberOfChildren}
         localIsRenovation={localIsRenovation}
         localIsUrgent={localIsUrgent}
         localKitchenLength={localKitchenLength}

@@ -142,6 +142,7 @@
     "totalArea": "Total Area",
     "kitchenLength": "Kitchen Length",
     "wardrobeLength": "Wardrobe Length",
+    "totalStorage": "Total Storage",
     "conditions": "Conditions",
     "renovationRequired": "Renovation Required",
     "urgentProject": "Urgent Project",
@@ -367,7 +368,15 @@
     "wardrobe": "Wardrobe",
     "renovation": "Renovation",
     "urgent": "Urgent",
-    "varianceNote": "depending on final specifications"
+    "varianceNote": "depending on final specifications",
+    "adults": "Adults",
+    "children": "Children",
+    "recommended": "Recommended",
+    "household": "Household",
+    "storageDeficit": "Storage Deficit",
+    "storageDeficitKitchen": "Kitchen dimensions are below ergonomic standards for household size.",
+    "storageDeficitStorage": "Total storage dimensions are below ergonomic standards for household size.",
+    "storageDeficitBoth": "Kitchen and storage dimensions are below ergonomic standards for household size."
   },
   "mobile": {
     "stage": {

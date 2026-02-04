@@ -22,15 +22,15 @@
 
 | Component | Value |
 |-----------|-------|
-| **Base (for 2 people)** | 3.0 m |
+| **Base (1 person)** | 3.0 m |
 | **Per extra adult** | +0.6 m |
 | **Per extra child** | +0.4 m |
 
-**Formula:** 3.0m + max(0, adults − 2) × 0.6m + children × 0.4m
+**Formula:** 3.0m + max(0, adults − 1) × 0.6m + children × 0.4m
 
 **Ranges:**
-- **Underbuilt:** < formula − 0.6 m
-- **Overbuilt:** > formula + 0.7 m
+- **Underbuilt:** < formula − 1.2 m
+- **Overbuilt:** > formula + 1.2 m
 
 **Rationale:** LT cooking culture requires more counter space for meal prep, larger fridges, and bulk shopping habits.
 

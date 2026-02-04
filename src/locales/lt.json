@@ -149,6 +149,7 @@
     "totalArea": "Bendras Plotas",
     "kitchenLength": "Virtuvės Ilgis",
     "wardrobeLength": "Spintų Ilgis",
+    "totalStorage": "Bendras spintų ilgis",
     "conditions": "Sąlygos",
     "renovationRequired": "Reikalinga Renovacija",
     "urgentProject": "Skubus Projektas",
@@ -374,7 +375,15 @@
     "wardrobe": "Spinta",
     "renovation": "Renovacija",
     "urgent": "Skubu",
-    "varianceNote": "priklausomai nuo galutinių specifikacijų"
+    "varianceNote": "priklausomai nuo galutinių specifikacijų",
+    "adults": "Suaugusieji",
+    "children": "Vaikai",
+    "recommended": "Rekomenduojama",
+    "household": "Namų ūkis",
+    "storageDeficit": "Vietos daiktų laikymui trūkumas",
+    "storageDeficitKitchen": "Virtuvės matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui.",
+    "storageDeficitStorage": "Bendri spintų matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui.",
+    "storageDeficitBoth": "Virtuvės ir Bendri spintų matmenys matmenys yra mažesni nei ergonominiai standartai šiam namų ūkio dydžiui."
   },
   "mobile": {
     "stage": {

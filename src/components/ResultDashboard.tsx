@@ -70,8 +70,14 @@ const ResultDashboard = ({
   const [isMaterialMatchModalOpen, setIsMaterialMatchModalOpen] = useState(false);
   const [isSpacePlanningWarningOpen, setIsSpacePlanningWarningOpen] = useState(false);
 
-  // Local state for refine inputs
+  // Local state for refine inputs (with robust fallbacks for NaN/undefined)
   const [localArea, setLocalArea] = useState(formData?.area ?? 50);
+  const [localNumberOfAdults, setLocalNumberOfAdults] = useState(
+    typeof formData?.numberOfAdults === 'number' && !isNaN(formData.numberOfAdults) ? formData.numberOfAdults : 2
+  );
+  const [localNumberOfChildren, setLocalNumberOfChildren] = useState(
+    typeof formData?.numberOfChildren === 'number' && !isNaN(formData.numberOfChildren) ? formData.numberOfChildren : 0
+  );
   const [localIsRenovation, setLocalIsRenovation] = useState(formData?.isRenovation ?? false);
   const [localIsUrgent, setLocalIsUrgent] = useState(formData?.isUrgent ?? false);
   const [localServices, setLocalServices] = useState<ServiceSelection>(
@@ -84,6 +90,12 @@ const ResultDashboard = ({
   useEffect(() => {
     if (formData) {
       setLocalArea(formData.area);
+      setLocalNumberOfAdults(
+        typeof formData.numberOfAdults === 'number' && !isNaN(formData.numberOfAdults) ? formData.numberOfAdults : 2
+      );
+      setLocalNumberOfChildren(
+        typeof formData.numberOfChildren === 'number' && !isNaN(formData.numberOfChildren) ? formData.numberOfChildren : 0
+      );
       setLocalIsRenovation(formData.isRenovation);
       setLocalIsUrgent(formData.isUrgent);
       setLocalServices(formData.services);
@@ -107,6 +119,8 @@ const ResultDashboard = ({
   const handleUpdateFormData = (updates: Partial<FormData>) => {
     const newFormData: FormData = {
       area: updates.area ?? localArea,
+      numberOfAdults: updates.numberOfAdults ?? localNumberOfAdults,
+      numberOfChildren: updates.numberOfChildren ?? localNumberOfChildren,
       isRenovation: updates.isRenovation ?? localIsRenovation,
       isUrgent: updates.isUrgent ?? localIsUrgent,
       services: updates.services ?? localServices,
@@ -115,6 +129,8 @@ const ResultDashboard = ({
     };
 
     if (updates.area !== undefined) setLocalArea(updates.area);
+    if (updates.numberOfAdults !== undefined) setLocalNumberOfAdults(updates.numberOfAdults);
+    if (updates.numberOfChildren !== undefined) setLocalNumberOfChildren(updates.numberOfChildren);
     if (updates.isRenovation !== undefined) setLocalIsRenovation(updates.isRenovation);
     if (updates.isUrgent !== undefined) setLocalIsUrgent(updates.isUrgent);
     if (updates.services !== undefined) setLocalServices(updates.services);
@@ -216,6 +232,8 @@ const ResultDashboard = ({
                           selectedTier={selectedTier}
                           onSelectTier={setSelectedTier}
                           localArea={localArea}
+                          localNumberOfAdults={localNumberOfAdults}
+                          localNumberOfChildren={localNumberOfChildren}
                           localIsRenovation={localIsRenovation}
                           localIsUrgent={localIsUrgent}
                           localServices={localServices}

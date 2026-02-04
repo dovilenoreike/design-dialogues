@@ -7,6 +7,8 @@ import { FormData } from "@/types/calculator";
 const Calculator = () => {
   const [formData, setFormData] = useState<FormData>({
     area: 50,
+    numberOfAdults: 2,
+    numberOfChildren: 0,
     isRenovation: false,
     isUrgent: false,
     services: { spacePlanning: true, interiorFinishes: true, furnishingDecor: true },
