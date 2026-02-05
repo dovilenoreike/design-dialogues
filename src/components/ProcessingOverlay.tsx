@@ -47,7 +47,16 @@ const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOv
   }, [isVisible]);
 
   const handleSubmit = () => {
-    onComplete({ area, isRenovation, services, kitchenLength, wardrobeLength });
+    onComplete({
+      area,
+      numberOfAdults: 2,
+      numberOfChildren: 0,
+      isRenovation,
+      isUrgent: false,
+      services,
+      kitchenLength,
+      wardrobeLength,
+    });
   };
 
   if (!isVisible) return null;

@@ -8,9 +8,9 @@ import type { Tier } from "./tiers";
  * Base rates per m² by tier
  */
 export const baseRates: Record<Tier, number> = {
-  Budget: 350,
-  Standard: 550,
-  Premium: 990,
+  Budget: 300,
+  Standard: 500,
+  Premium: 800,
 };
 
 /**

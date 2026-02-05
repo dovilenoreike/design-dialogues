@@ -52,14 +52,15 @@ const getRecommendedTotalStorage = (adults: number, children: number): number =>
 };
 
 /**
- * Get storage status
+ * Get storage status based on ergonomic-standards.md:
+ * - Underbuilt: < formula × 0.75
+ * - Minimal/Optimal: formula × 0.75 to formula × 1.15 (covered by sage)
+ * - Overbuilt: > formula × 1.35
  */
 const getStorageStatus = (value: number, adults: number, children: number): 'optimal' | 'underbuilt' | 'overbuilt' => {
   const recommended = getRecommendedTotalStorage(adults, children);
-  const toleranceLow = recommended * 0.25;
-  const toleranceHigh = recommended * 0.35;
-  if (value < recommended - toleranceLow) return 'underbuilt';
-  if (value > recommended + toleranceHigh) return 'overbuilt';
+  if (value < recommended * 0.75) return 'underbuilt';
+  if (value > recommended * 1.35) return 'overbuilt';
   return 'optimal';
 };
 
@@ -174,27 +175,45 @@ export default function BudgetView() {
 
   // Track previous deficit state to avoid duplicate toasts
   const prevHasStorageDeficit = useRef(hasStorageDeficit);
+  const deficitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Show floating toast when storage deficit detected
+  // Show floating toast when storage deficit detected (debounced)
   useEffect(() => {
-    if (hasStorageDeficit && !prevHasStorageDeficit.current) {
-      const deficitMessage = kitchenStatus === 'underbuilt' && storageStatus === 'underbuilt'
-        ? t("budget.storageDeficitBoth")
-        : kitchenStatus === 'underbuilt'
-        ? t("budget.storageDeficitKitchen")
-        : t("budget.storageDeficitStorage");
-
-      const { id } = toast({
-        title: t("budget.storageDeficit"),
-        description: deficitMessage,
-        duration: 4000,
-        className: "!bg-amber-50 !border-amber-200 !text-amber-900 shadow-lg",
-      });
-
-      // Auto-dismiss after 4 seconds
-      setTimeout(() => dismiss(id), 4000);
+    // Clear any pending toast when deficit state changes
+    if (deficitTimeoutRef.current) {
+      clearTimeout(deficitTimeoutRef.current);
+      deficitTimeoutRef.current = null;
     }
+
+    if (hasStorageDeficit && !prevHasStorageDeficit.current) {
+      // Debounce: only show toast if user stays in deficit zone for 500ms
+      deficitTimeoutRef.current = setTimeout(() => {
+        const deficitMessage = kitchenStatus === 'underbuilt' && storageStatus === 'underbuilt'
+          ? t("budget.storageDeficitBoth")
+          : kitchenStatus === 'underbuilt'
+          ? t("budget.storageDeficitKitchen")
+          : t("budget.storageDeficitStorage");
+
+        const { id } = toast({
+          title: t("budget.storageDeficit"),
+          description: deficitMessage,
+          duration: 4000,
+          className: "!bg-amber-50 !border-amber-200 !text-amber-900 shadow-lg",
+        });
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => dismiss(id), 4000);
+      }, 500);
+    }
+
     prevHasStorageDeficit.current = hasStorageDeficit;
+
+    // Cleanup on unmount
+    return () => {
+      if (deficitTimeoutRef.current) {
+        clearTimeout(deficitTimeoutRef.current);
+      }
+    };
   }, [hasStorageDeficit, kitchenStatus, storageStatus, toast, dismiss, t]);
 
   const handleUpdateFormData = (updates: Partial<FormData>) => {
@@ -403,8 +422,8 @@ export default function BudgetView() {
               </div>
               {(() => {
                 const people = localNumberOfAdults + localNumberOfChildren;
-                const minComfortable = Math.max(30, people * 20);
-                const maxComfortable = Math.max(55, people * 35);
+                const minComfortable = Math.max(30, localNumberOfAdults * 20 + localNumberOfChildren * 10);
+                const maxComfortable = Math.max(60, people * 40);
                 const midpoint = (minComfortable + maxComfortable) / 2;
                 return (
                   <ArchitecturalSlider
@@ -437,7 +456,7 @@ export default function BudgetView() {
                 numberOfChildren={localNumberOfChildren}
                 min={2}
                 max={8}
-                step={0.5}
+                step={0.2}
               />
               {kitchenStatus === 'underbuilt' && (
                 <div className="flex justify-center mt-1.5">
@@ -464,7 +483,7 @@ export default function BudgetView() {
                 step={0.5}
                 recommended={recommendedStorage}
                 toleranceLow={recommendedStorage * 0.25}
-                toleranceHigh={recommendedStorage * 0.35}
+                toleranceHigh={recommendedStorage * 0.15}
               />
               {storageStatus === 'underbuilt' && (
                 <div className="flex justify-center mt-1.5">

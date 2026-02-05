@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { User, Baby, Home, Minus, Plus, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { auditCategories, calculateAuditScore, getAllItemIds, getCategoryStats } from "@/data/layout-audit-rules";
+import { auditCategories, calculateAuditScore, calculateCategoryScore, getAllItemIds, getCategoryStats } from "@/data/layout-audit-rules";
 import { AuditCategory } from "./AuditCategory";
 import {
   Drawer,
@@ -21,7 +21,8 @@ const getProgressStats = (responses: Record<string, string>, variables: AuditVar
   const allItemIds = getAllItemIds(variables);
   const total = allItemIds.length;
   const answered = allItemIds.filter(
-    (id) => responses[id] === "pass" || responses[id] === "fail" || responses[id] === "unknown" || responses[id] === "na"
+    (id) => responses[id] === "underbuilt" || responses[id] === "minimal" || responses[id] === "optimal" ||
+            responses[id] === "yes" || responses[id] === "no" || responses[id] === "unknown" || responses[id] === "na"
   ).length;
   return { answered, total };
 };
@@ -38,13 +39,11 @@ const getScoreLevel = (
 ): "green" | "amber" | "red" | null => {
   if (score === null) return null;
 
-  // Calculate worst category score
-  const categoryScores = auditCategories.map(cat => {
-    const stats = getCategoryStats(cat.id, responses, variables);
-    const answered = stats.pass + stats.fail;
-    if (answered === 0) return null; // Not started
-    return Math.round((stats.pass / answered) * 100);
-  }).filter((s): s is number => s !== null);
+  // Calculate worst category score with proper weights
+  const categoryScores = auditCategories
+    .filter(cat => !cat.showIf || cat.showIf(variables))
+    .map(cat => calculateCategoryScore(cat.id, responses, variables))
+    .filter((s): s is number => s !== null);
 
   const worstCategoryScore = categoryScores.length > 0
     ? Math.min(...categoryScores)
@@ -101,8 +100,7 @@ const generateSummary = (
     .filter(cat => !cat.showIf || cat.showIf(variables)) // Only visible categories
     .map(cat => {
       const stats = getCategoryStats(cat.id, responses, variables);
-      const answeredCount = stats.pass + stats.fail;
-      const score = answeredCount > 0 ? Math.round((stats.pass / answeredCount) * 100) : null;
+      const score = calculateCategoryScore(cat.id, responses, variables);
       return {
         id: cat.id,
         title: t(cat.titleKey),
@@ -148,7 +146,6 @@ const generateSummary = (
 export const AuditScoreWidget = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const {
-    formData,
     layoutAuditResponses,
     layoutAuditVariables,
     setLayoutAuditResponse,
@@ -157,14 +154,6 @@ export const AuditScoreWidget = () => {
     setLayoutAuditWorkFromHome,
   } = useDesign();
   const { t } = useLanguage();
-
-  // Pre-fill from formData if available (on first load)
-  useEffect(() => {
-    if (formData?.numberOfPeople && layoutAuditVariables.numberOfAdults === 2 && layoutAuditVariables.numberOfChildren === 0) {
-      // Assume all people are adults if we only have numberOfPeople
-      setLayoutAuditAdults(formData.numberOfPeople);
-    }
-  }, [formData?.numberOfPeople]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const score = calculateAuditScore(layoutAuditResponses, layoutAuditVariables);
   const { answered, total } = getProgressStats(layoutAuditResponses, layoutAuditVariables);

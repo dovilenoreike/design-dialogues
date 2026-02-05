@@ -468,6 +468,10 @@
     "undo": "Atšaukti",
     "yes": "Taip",
     "no": "Ne",
+    "underbuilt": "−",
+    "minimal": "Min",
+    "optimal": "✓",
+    "overbuilt": "+",
     "conclusion": {
       "green": "Gerai Optimizuota",
       "amber": "Patartina Optimizuoti",
@@ -492,7 +496,7 @@
       "bedroom": {
         "title": "Miegamasis ir Miegas",
         "description": "Šventovės Testas",
-        "importance": "Kokybiškas miegas priklauso nuo miegamojo komforto"
+        "importance": "Kokybiškas poilsis priklauso nuo miegamojo komforto"
       },
       "bathroom": {
         "title": "Vonia ir Higiena",
@@ -512,68 +516,236 @@
       "doors": {
         "title": "Durų ir Prietaisų Konfliktai",
         "description": "Trinties Testas",
-        "importance": "Nekonfltuojančios durys palengvina kasdienį gyvenimą"
+        "importance": "Nekonfltuojančios durys palengvina kasdienę rutiną"
       }
     },
-    "item": {
+    "label": {
       "storage": {
-        "hallwayWardrobe": "Ar prieškambaryje yra kabykla ar drabužinė bent {value}m (paltams, batams, svečiams)?",
-        "masterWardrobe": "Ar pagrindiniame miegamajame yra bent {value}m ilgio drabužinė?",
-        "kidsWardrobe": "Ar vaikų drabužinė yra bent {value}m ilgio?",
-        "general": "Ar bendra ūkinė spinta yra bent {value}m?",
-        "utility": "Ar yra atskira vieta dulkių siurbliui/šluotai (min 60×60cm) ne miegamajame?",
+        "hallwayWardrobe": "Prieškambario drabužinės ar kabyklos ilgis",
+        "masterWardrobe": "Pagrindinio miegamojo drabužinės ilgis",
+        "kidsWardrobe": "Vaikų drabužinės bendras ilgis",
+        "general": "Bendros ūkinės spintos ilgis",
         "entryDrop": "Ar prie įėjimo durų yra konsolė ar lentyna raktams/telefonams?"
       },
       "social": {
-        "diningCount": "Ar prie valgomojo stalo telpa bent {value} žmonės (su svečiais)?",
+        "diningCount": "Kiek žmonių gali patogiai sėdėti prie valgomojo stalo?",
         "chairClearance": "Ar už kiekvienos kėdės yra bent 80cm, kad ją atitrauktumėte?",
-        "sofaCapacity": "Ar svetainėje telpa bent {value} žmonės (įskaitant patogų gulėjimą)?",
-        "conversation": "Ar foteliai/sofos nukreipti vienas į kitą (socialiai), o ne visi į TV?",
-        "trafficPaths": "Ar galite pasiekti virtuvę nepereidami TV zonos?"
+        "sofaCapacity": "Kiek žmonių gali patogiai sėdėti svetainėje?",
+        "conversation": "Ar foteliai/sofos nukreipti į vieną kitą(socialiai), o ne visi i TV?",
+        "trafficPaths": "Ar galite patekti į virtuvę neperidami TV zonos?"
       },
       "kitchen": {
-        "linear": "Ar bendra virtuvės linija (apatinės + aukštosios spintelės) yra bent {value}m?",
-        "tallUnits": "Ar yra bent {value} aukšt. spintelė(-ės) (maisto, šaldytuvo bokštas)?",
-        "triangle": "Ar atstumų tarp Kriauklės, Šaldytuvo ir Kaitlentės suma mažesnė nei 6m?",
-        "prepZone": "Ar tarp Kriauklės ir Kaitlentės yra bent 60cm laisvo stalviršio?",
-        "aisleWidth": "Jei yra sala, ar praėjimas yra bent 90cm pločio?",
-        "dishwasherTrap": "Ar atidarius indaplovę ji neužblokuoja stovinčio prie kriauklės?",
-        "fridgeDoor": "Ar šaldytuvo durys atsidaro link darbo zonos (neblokuodamos srauto)?",
-        "fridgeOven": "Ar tarp šaldytuvo ir orkaitės yra bent 15cm atstumas?"
+        "linear": "Bendras virtuvės ilgis (įskaitant žemas ir aukštas spinteles)",
+        "tallUnits": "Aukštų spintelių skaičius (įskaitant aukštą šaldytuvą)",
+        "triangle": "Ar bendras kelionės atstumas nuo šaldytuvo, iki plautuvės, kaitlentės ir vėl prie šaldytuvo yra mažiau nei 6m?",
+        "prepZone": "Ar tarp plautuvės ir kaitlentės yra bent 60cm laisvo stalviršio?",
+        "aisleWidth": "Jei yra sala, ar praėjimo plotis yra bent 90cm?",
+        "dishwasherTrap": "Ar atidarant indaplovės dureles, jos neblokuoja praėjimo?",
+        "fridgeDoor": "Ar šaldytuvas atsidaro link darbo zonos",
+        "fridgeOven": "Ar tarp šaldytuvo ir kaitlentės yra bent 15cm atstumas?"
       },
       "bedroom": {
-        "bedAccess": "Ar abiejose dvigulės lovos pusėse yra bent 50cm praėjimas?",
-        "nightstands": "Ar abiejose lovos pusėse yra paviršiai telefonams/knygoms?",
-        "doorConflict": "Ar atidarius miegamojo durys nekonfliktuoja su spintų durimis?",
-        "sightlines": "Ar pravėrus miegamojo duris nėra iš kart matomas besiilsintis žmogus?",
-        "acoustics": "Ar pagrindinis miegamasis nesidalina siena su TV ar virtuve?"
+        "bedAccess": "Ar abiejuose lovos pusėse yra bent 50cm praėjimas?",
+        "nightstands": "Ar abiiejose lovos pusėse yra naktiniai staliukai telefonas/knygoms?",
+        "doorConflict": "Ar atidarytos miegamojo durys nesiremią į lovą ar spintų duris?",
+        "sightlines": "Ar pravėrus miegamojo duris besiilsintis žmogus lieka nematomas?",
+        "acoustics": "Ar visos miegamojo sienos nutolusios nuo TV ar virtuvės?"
       },
       "bathroom": {
-        "ratio": "Ar jūsų namų ūkyje yra bent {value} vonia(-os)?",
-        "laundry": "Ar yra {value} skalbimui?",
-        "laundryIntegrated": "skalbyklė vonios kambaryje",
-        "laundryNiche": "atskira skalbimo niša",
-        "laundryRoom": "atskiras skalbimo kambarys",
-        "doorSwing": "Ar vonios durys neblokuoja prie praustuvo stovinčio žmogaus?",
-        "elbowRoom": "Ar abiejose tualeto pusėse yra bent 15cm tarpas?",
+        "doorSwing": "Ar vonios durys atsidaro netrukdydamos žmogui prie praustuvo?",
+        "elbowRoom": "Ar abiejuose tualeto pusėse yra bent 15cm laisvos vietos alkūnėms?",
         "showerHead": "Ar galite įjungti dušą nesušlapdami iš karto?"
       },
       "homeOffice": {
         "workZone": "Ar darbo stalas yra atskiroje zonoje (ne ant valgomojo stalo)?",
-        "naturalLight": "Ar pagrindinis darbo paviršius gauna šoninę šviesą ar žiūri į langą?"
+        "naturalLight": "Ar pagrindinis darbo stalas nėra nugara į langą?"
       },
       "power": {
         "bedCharging": "Ar rozetės pasiekiamos iš abiejų lovos pusių?",
-        "sofaPower": "Ar yra bent viena rozetė 1.5m atstumu nuo pagrindinės sofos?",
-        "entryCharging": "Ar prie įėjimo/daiktų padėjimo zonos yra rozetė?",
+        "sofaPower": "Ar yra bent viena rozetė 1.5 atstumu nuo sofos?",
+        "entryCharging": "Ar prie įėjimo/daiktų padėjimo vietos yra rozetė?",
         "workPower": "Ar prie darbo stalo yra bent 2 lengvai pasiekiamos rozetės?",
         "taskLighting": "Ar virtuvę, darbo stalą ir veidrodį galima apšviesti ne tik lubų šviestuvais?"
       },
       "doors": {
-        "doorToDoor": "Ar kambario, spintos ir vonios durys nesusiduria atidaromos?",
-        "applianceToPerson": "Ar atidaromi prietaisai neužblokuoja juos naudojančio žmogaus?",
+        "doorToDoor": "Ar kambario, spintos ir vonios durys neblokuoja viena kitos?",
+        "applianceToPerson": "Prietaisai neblokuoja naudotojo",
         "applianceToAppliance": "Ar šaldytuvas, indaplovė, orkaitė ir stalčiai gali būti atidaryti vienu metu?",
-        "circulationBlocking": "Ar atidarytos durys neužblokuoja pagrindinio praėjimo?"
+        "circulationBlocking": "Ar atidarytos durys neblokuoja pagrindinio praėjimo?"
+      }
+    },
+    "tag": {
+      "storage": {
+        "hallwayWardrobe": {
+          "underbuilt": "Nepakanka vietos kasdieniniams paltams ir batams",
+          "minimal": "Kompaktiška vieta kasdieniniams paltams ir batams",
+          "optimal": "Pakankamai vietos sezoniniams daiktams ir svečiams"
+        },
+        "masterWardrobe": {
+          "underbuilt": "Tikėtina netvarka ir perpildytos spintos",
+          "minimal": "Tilps būtiniausi drabužiai ir aksesuarai",
+          "optimal": "Pakankamai vietos visam garderobui"
+        },
+        "kidsWardrobe": {
+          "underbuilt": "Tikėtina netvarka ir perpildytos spintos",
+          "minimal": "Tilps būtiniausi drabužiai ir žaislai",
+          "optimal": "Yra vietos sporto įrangai ir sezoniniams daiktams"
+        },
+        "general": {
+          "underbuilt": "Sunkiai tilps būtiniausi reikmenys, gali būti netvarka",
+          "minimal": "Patenkina pagrindinius buities poreikius",
+          "optimal": "Tiks ir didesniems dalykams ir sezoniniams daiktams"
+        },
+        "entryDrop": {
+          "no": "Raktai ir telefonai nuolat pasimeta",
+          "yes": "Tvarkinga ir aiški rutina"
+        }
+      },
+      "social": {
+        "diningCount": {
+          "underbuilt": "Ne visi gali susėsti kartu",
+          "minimal": "Pakanka tik šeimos nariams",
+          "optimal": "Patogu ir su svečiais"
+        },
+        "chairClearance": {
+          "no": "Sunku atsisėsti ir atsikelti",
+          "yes": "Lengva atsisėsti ir atsikelti"
+        },
+        "sofaCapacity": {
+          "underbuilt": "Trūksta vietos patogiai atsipalaiduoti",
+          "minimal": "Pakanka tik šeimos nariams",
+          "optimal": "Patogu ir kasdien, ir su svečiais"
+        },
+        "conversation": {
+          "no": "Erdvė orientuota į TV, pokalbiai nepatogūs",
+          "yes": "Skatina bendravimą ir santykius"
+        },
+        "trafficPaths": {
+          "no": "Eismas trikdo TV žiūrėjimą",
+          "yes": "Jauki ir privati svetainės zona"
+        }
+      },
+      "kitchen": {
+        "linear": {
+          "underbuilt": "Gaminti ankšta ir nepatogu, trūksta vietos daiktams",
+          "minimal": "Funkcionalu, bet ankšta",
+          "optimal": "Patogu gaminti ir laikyti daiktus"
+        },
+        "tallUnits": {
+          "underbuilt": "Gali trūkti vietos patogiam pasidėjimui ir organizavimui",
+          "minimal": "Pakanka pagrindiniams produktams ir indams",
+          "optimal": "Pakanka vietos išanktiniam apsipirkimui ir buities reikmenims"
+        },
+        "triangle": {
+          "no": "Per daug bereikalingo vaikščiojimo",
+          "yes": "Patogus judėjimas virtuvėje"
+        },
+        "prepZone": {
+          "no": "Gali trūkti vietos saugiam maisto ruošimui",
+          "yes": "Saugi ir aiški ruošimo zona"
+        },
+        "aisleWidth": {
+          "no": "Žmonės ir durelės trukdys vieni kitiems",
+          "yes": "Du žmonės gali prasilenkti"
+        },
+        "dishwasherTrap": {
+          "no": "Iškrovimas blokuoja praėjimą",
+          "yes": "Tvarkymasis be trukdžių"
+        },
+        "fridgeDoor": {
+          "no": "Sudėtinga išimti produktus ant darbo zonos",
+          "yes": "Patogus ir logiškas priėjimas prie šaldytuvo"
+        },
+        "fridgeOven": {
+          "no": "Eikvoja energiją, gali pažeisti šaldytuvą",
+          "yes": "Saugus prietaisų išdėstymas"
+        }
+      },
+      "bedroom": {
+        "bedAccess": {
+          "no": "Sunku kloti lovą, partnerio trukdymas",
+          "yes": "Patogus tvarkymas ir priėjimas abiems"
+        },
+        "nightstands": {
+          "no": "Telefonai atsidurs ant grindų",
+          "yes": "Patogus krovimas ir saugojimas"
+        },
+        "doorConflict": {
+          "no": "Kasdienis erzulys ir tikėtini baldų pažeidimai",
+          "yes": "Durys atsidaro be kliūčių"
+        },
+        "sightlines": {
+          "no": "Miegamasis praranda privatumo jausmą",
+          "yes": "Rami ir privati poilsio erdvė"
+        },
+        "acoustics": {
+          "no": "Triukšmas lengvai girdimas miegamajame",
+          "yes": "Tyli miegamoji aplinka"
+        }
+      },
+      "bathroom": {
+        "doorSwing": {
+          "no": "Gali sužeisti prie praustuvo esantį žmogų",
+          "yes": "Saugus durų sprendimas"
+        },
+        "elbowRoom": {
+          "no": "Nepatogu",
+          "yes": "Patogus naudojimas"
+        },
+        "showerHead": {
+          "no": "Šaltas netikėtumas kiekvieną kartą",
+          "yes": "Patogus ir kontroliuojamas naudojimas"
+        }
+      },
+      "homeOffice": {
+        "workZone": {
+          "no": "Buitis gali trukdyti darbui",
+          "yes": "Patogi darbo erdvė"
+        },
+        "naturalLight": {
+          "no": "Atspindžiai, akinimas ir akių nuovargis",
+          "yes": "Optimalus apšvietimas darbui"
+        }
+      },
+      "power": {
+        "bedCharging": {
+          "no": "Laidai kerta lovą arba reikia ilgintuvų",
+          "yes": "Patogus naktinis krovimas"
+        },
+        "sofaPower": {
+          "no": "Dažnai prireiks ilgintuvų ir gali būti netvarka",
+          "yes": "Patogus elektros prietaisų naudojimas svetainėje"
+        },
+        "entryCharging": {
+          "no": "Įrenginiai negali krautis prie įėjimo",
+          "yes": "Krovimas ten, kur padedate"
+        },
+        "workPower": {
+          "no": "Ilgintuvai ir laidų netvarka",
+          "yes": "Tvarkinga darbo vieta"
+        },
+        "taskLighting": {
+          "no": "Šešėliai apsunkina darbus",
+          "yes": "Šviesa ten, kur jos reikia"
+        }
+      },
+      "doors": {
+        "doorToDoor": {
+          "no": "Durys nuolat kliūna viena kitai",
+          "yes": "Durys atlieka savo funkciją be trukdžių"
+        },
+        "applianceToPerson": {
+          "no": "Trintis gaminant ir tvarkant",
+          "yes": "Netrukdomas prietaisų naudojimas"
+        },
+        "applianceToAppliance": {
+          "no": "Galima dirbti tik paeiliui",
+          "yes": "Galima naudoti vienu metu"
+        },
+        "circulationBlocking": {
+          "no": "Judėjimas su kliūtimis",
+          "yes": "Aiškūs ir patogūs praėjimai"
+        }
       }
     },
     "tooltip": {

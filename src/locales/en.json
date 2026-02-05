@@ -461,6 +461,10 @@
     "undo": "Undo",
     "yes": "Yes",
     "no": "No",
+    "underbuilt": "−",
+    "minimal": "Min",
+    "optimal": "✓",
+    "overbuilt": "+",
     "conclusion": {
       "green": "Well Optimized",
       "amber": "Requires Optimization",
@@ -508,67 +512,235 @@
         "importance": "Collision-free doors make daily life smoother"
       }
     },
-    "item": {
+    "label": {
       "storage": {
-        "hallwayWardrobe": "Is there an entrance wardrobe of at least {value}m (for coats, shoes, guests)?",
-        "masterWardrobe": "Is there a wardrobe run of at least {value}m in the master bedroom?",
-        "kidsWardrobe": "Is there a kids wardrobe run of at least {value}m?",
-        "general": "Is the general storage (utility wardrobe) at least {value}m?",
-        "utility": "Is there a dedicated spot for vacuum/mop (min 60×60cm) outside bedrooms?",
-        "entryDrop": "Is there a console or shelf near the front door for keys/phones?"
+        "hallwayWardrobe": "Entrance wardrobe",
+        "masterWardrobe": "Master bedroom wardrobe",
+        "kidsWardrobe": "Kids wardrobe",
+        "general": "General storage",
+        "entryDrop": "Entry drop zone (keys/phones)"
       },
       "social": {
-        "diningCount": "Does the dining table seat at least {value} people (including guests)?",
-        "chairClearance": "Is there at least 80cm behind each dining chair to pull it out?",
-        "sofaCapacity": "Does the living room seat at least {value} people (including lounging)?",
-        "conversation": "Are armchairs/sofas facing each other (social) rather than all facing TV?",
-        "trafficPaths": "Can you reach the kitchen/balcony without walking through the TV zone?"
+        "diningCount": "Dining table seating",
+        "chairClearance": "Chair clearance (80cm behind)",
+        "sofaCapacity": "Living room seating",
+        "conversation": "Social seating arrangement",
+        "trafficPaths": "Kitchen access without crossing TV zone"
       },
       "kitchen": {
-        "linear": "Is the total kitchen run (base + tall units) at least {value}m?",
-        "tallUnits": "Are there at least {value} tall storage unit(s) (pantry, fridge tower)?",
-        "triangle": "Is the sum of distances between Sink, Fridge, and Hob less than 6m?",
-        "prepZone": "Is there at least 60cm of clear countertop between the Sink and the Hob?",
-        "aisleWidth": "If there is an island, is the walkway at least 90cm wide?",
-        "dishwasherTrap": "When the dishwasher door opens, does it avoid blocking the sink user?",
-        "fridgeDoor": "Does the fridge door open towards the work zone (not blocking flow)?",
-        "fridgeOven": "Is there at least 15cm distance between the fridge and the oven?"
+        "linear": "Kitchen linear run",
+        "tallUnits": "Tall storage units",
+        "triangle": "Work triangle under 6m",
+        "prepZone": "Prep zone (60cm between sink and hob)",
+        "aisleWidth": "Island walkway (90cm wide)",
+        "dishwasherTrap": "Dishwasher doesn't block sink",
+        "fridgeDoor": "Fridge opens towards work zone",
+        "fridgeOven": "Fridge-oven gap (15cm)"
       },
       "bedroom": {
-        "bedAccess": "Is there at least 50cm of walking space on both sides of a double bed?",
-        "nightstands": "Are there surfaces on both sides of the bed for phones/books?",
-        "doorConflict": "When the bedroom door is open, does it avoid blocking the wardrobe?",
-        "sightlines": "When lying in bed, is the bathroom/toilet not directly visible?",
-        "acoustics": "Does the master bedroom avoid sharing a wall with the TV or kitchen?"
+        "bedAccess": "Bed access both sides (50cm)",
+        "nightstands": "Nightstands on both sides",
+        "doorConflict": "Door doesn't block wardrobe",
+        "sightlines": "Bathroom not visible from bed",
+        "acoustics": "No shared wall with TV/kitchen"
       },
       "bathroom": {
-        "ratio": "Is there at least {value} bathroom(s) for your household?",
-        "laundry": "Is there a {value} for laundry?",
-        "laundryIntegrated": "bathroom-integrated washer/dryer",
-        "laundryNiche": "dedicated laundry niche",
-        "laundryRoom": "separate laundry room",
-        "doorSwing": "Does the bathroom door swing outwards or slide (not inwards hitting fixtures)?",
-        "elbowRoom": "Is there at least 15cm clearance on either side of the toilet?",
-        "showerHead": "Can you turn the water on without getting wet immediately?"
+        "doorSwing": "Door swings out or slides",
+        "elbowRoom": "Toilet clearance (15cm each side)",
+        "showerHead": "Can turn water on without getting wet"
       },
       "homeOffice": {
-        "workZone": "Is the desk in a dedicated zone (not on the dining table)?",
-        "naturalLight": "Is the primary work surface receiving side-light or facing a window?"
+        "workZone": "Dedicated desk zone",
+        "naturalLight": "Natural light on work surface"
       },
       "power": {
-        "bedCharging": "Are there power outlets reachable from both sides of the bed?",
-        "sofaPower": "Is there at least one outlet within 1.5m of main sofa seating?",
-        "entryCharging": "Is there a power outlet near the entry/drop zone?",
-        "workPower": "Does the desk area have at least 2 accessible outlets?",
-        "taskLighting": "Can kitchen prep, desk, and mirror be lit without only ceiling lights?"
+        "bedCharging": "Outlets on both sides of bed",
+        "sofaPower": "Outlet near sofa (1.5m)",
+        "entryCharging": "Outlet at entry zone",
+        "workPower": "2+ outlets at desk",
+        "taskLighting": "Task lighting (not just ceiling)"
       },
       "doors": {
-        "doorToDoor": "Do room, wardrobe, and bathroom doors avoid colliding when opened?",
-        "applianceToPerson": "Does opening appliances avoid blocking the person using the space?",
-        "applianceToAppliance": "Can fridge, dishwasher, oven, and drawers open simultaneously?",
-        "circulationBlocking": "Does any open door avoid blocking a primary walking path?"
+        "doorToDoor": "Doors don't collide",
+        "applianceToPerson": "Appliances don't block user",
+        "applianceToAppliance": "Appliances can open together",
+        "circulationBlocking": "Open doors don't block paths"
       }
     },
+    "tag": {
+    "storage": {
+      "hallwayWardrobe": {
+        "underbuilt": "Not enough space for everyday coats and shoes",
+        "minimal": "Compact storage for daily coats and shoes",
+        "optimal": "Enough space for seasonal items and guests"
+      },
+      "masterWardrobe": {
+        "underbuilt": "Clutter and overcrowded wardrobes are likely",
+        "minimal": "Fits essential clothes and accessories",
+        "optimal": "Enough space for a full wardrobe"
+      },
+      "kidsWardrobe": {
+        "underbuilt": "Clutter and overcrowded wardrobes are likely",
+        "minimal": "Fits essential clothes and toys",
+        "optimal": "Space for sports gear and seasonal items"
+      },
+      "general": {
+        "underbuilt": "Basic items barely fit, clutter is likely",
+        "minimal": "Covers basic household needs",
+        "optimal": "Suitable for larger items and seasonal storage"
+      },
+      "entryDrop": {
+        "no": "Keys and phones constantly get misplaced",
+        "yes": "Tidy and clear routine"
+      }
+    },
+    "social": {
+      "diningCount": {
+        "underbuilt": "Not everyone can sit together",
+        "minimal": "Enough only for household members",
+        "optimal": "Comfortable even with guests"
+      },
+      "chairClearance": {
+        "no": "Difficult to sit down and get up",
+        "yes": "Easy to sit down and stand up"
+      },
+      "sofaCapacity": {
+        "underbuilt": "Not enough space to relax comfortably",
+        "minimal": "Enough only for household members",
+        "optimal": "Comfortable both daily and with guests"
+      },
+      "conversation": {
+        "no": "Space is TV-oriented, conversations feel awkward",
+        "yes": "Encourages communication and relationships"
+      },
+      "trafficPaths": {
+        "no": "Movement disrupts TV viewing",
+        "yes": "Cozy and private living room area"
+      }
+    },
+    "kitchen": {
+      "linear": {
+        "underbuilt": "Cooking feels cramped and storage is limited",
+        "minimal": "Functional but tight",
+        "optimal": "Comfortable for cooking and storage"
+      },
+      "tallUnits": {
+        "underbuilt": "May lack space for convenient storage and organization",
+        "minimal": "Enough for basic food items and dishes",
+        "optimal": "Enough space for bulk shopping and household supplies"
+      },
+      "triangle": {
+        "no": "Too much unnecessary walking",
+        "yes": "Comfortable movement in the kitchen"
+      },
+      "prepZone": {
+        "no": "May lack space for safe food preparation",
+        "yes": "Safe and clearly defined prep area"
+      },
+      "aisleWidth": {
+        "no": "People and cabinet doors will interfere with each other",
+        "yes": "Two people can pass each other"
+      },
+      "dishwasherTrap": {
+        "no": "Unloading blocks circulation",
+        "yes": "Cleanup without interruptions"
+      },
+      "fridgeDoor": {
+        "no": "Difficult to place items directly onto the work surface",
+        "yes": "Convenient and logical access to the fridge"
+      },
+      "fridgeOven": {
+        "no": "Wastes energy and may damage the fridge",
+        "yes": "Safe appliance placement"
+      }
+    },
+    "bedroom": {
+      "bedAccess": {
+        "no": "Hard to make the bed, disturbs the partner",
+        "yes": "Easy access and maintenance for both"
+      },
+      "nightstands": {
+        "no": "Phones will end up on the floor",
+        "yes": "Convenient charging and storage"
+      },
+      "doorConflict": {
+        "no": "Daily annoyance and likely furniture damage",
+        "yes": "Doors open without obstruction"
+      },
+      "sightlines": {
+        "no": "Bedroom loses its sense of privacy",
+        "yes": "Calm and private resting space"
+      },
+      "acoustics": {
+        "no": "Noise is easily heard in the bedroom",
+        "yes": "Quiet sleeping environment"
+      }
+    },
+    "bathroom": {
+      "doorSwing": {
+        "no": "May injure a person standing at the sink",
+        "yes": "Safe door solution"
+      },
+      "elbowRoom": {
+        "no": "Uncomfortable to use",
+        "yes": "Comfortable daily use"
+      },
+      "showerHead": {
+        "no": "A cold surprise every time",
+        "yes": "Comfortable and controlled use"
+      }
+    },
+    "homeOffice": {
+      "workZone": {
+        "no": "Household activity may interfere with work",
+        "yes": "Comfortable work area"
+      },
+      "naturalLight": {
+        "no": "Reflections, glare, and eye strain",
+        "yes": "Optimal lighting for work"
+      }
+    },
+    "power": {
+      "bedCharging": {
+        "no": "Cables cross the bed or require extension cords",
+        "yes": "Convenient overnight charging"
+      },
+      "sofaPower": {
+        "no": "Frequent need for extension cords and potential clutter",
+        "yes": "Convenient device charging in the living room"
+      },
+      "entryCharging": {
+        "no": "Devices cannot charge near the entry",
+        "yes": "Charging where you place your items"
+      },
+      "workPower": {
+        "no": "Extension cords and cable clutter",
+        "yes": "Tidy workspace"
+      },
+      "taskLighting": {
+        "no": "Shadows make tasks more difficult",
+        "yes": "Light exactly where it’s needed"
+      }
+    },
+    "doors": {
+      "doorToDoor": {
+        "no": "Doors constantly collide with each other",
+        "yes": "Doors function without obstruction"
+      },
+      "applianceToPerson": {
+        "no": "Friction during cooking and cleaning",
+        "yes": "Unobstructed appliance use"
+      },
+      "applianceToAppliance": {
+        "no": "Tasks can only be done sequentially",
+        "yes": "Can be used simultaneously"
+      },
+      "circulationBlocking": {
+        "no": "Movement with obstacles",
+        "yes": "Clear and comfortable walkways"
+      }
+    }
+  },
     "tooltip": {
       "storage": {
         "hallwayWardrobe": "Without adequate entrance storage, coats pile on chairs and the entry feels cluttered. Plan 0.6m per adult + 0.4m per child + 0.6m buffer for guests.",

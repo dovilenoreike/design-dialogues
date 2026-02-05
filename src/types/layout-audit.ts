@@ -2,18 +2,31 @@
  * Layout Audit types for the ergonomic evaluation checklist
  */
 
-export type AuditResponse = 'pass' | 'fail' | 'unknown' | 'na';
+export type AuditResponse = 'underbuilt' | 'minimal' | 'optimal' | 'yes' | 'no' | 'unknown' | 'na';
 
 export interface AuditItem {
   id: string;
-  /** i18n key for the question text */
-  questionKey: string;
-  /** i18n key for the "why it matters" tooltip shown on fail */
+  /** i18n key for the label text (simplified, not a full question) */
+  labelKey: string;
+  /** i18n key for the "why it matters" tooltip */
   tooltipKey: string;
-  /** Optional variable substitution in question text (e.g., {wardrobeLength}) */
-  variableKey?: 'numberOfPeople' | 'workFromHome';
-  /** Value calculation function based on variables */
-  calculateValue?: (variables: AuditVariables) => string;
+  /** Item type: measurable (value-based) or boolean (yes/no) */
+  type: 'measurable' | 'boolean';
+
+  /** For measurable items: threshold calculation function */
+  thresholds?: (v: AuditVariables) => { minimal: number; optimal: number };
+  /** Unit for measurable items (e.g., 'm', 'units', 'seats') */
+  unit?: string;
+
+  /** Functional tags for each response tier */
+  functionalTags?: {
+    underbuilt?: string;
+    minimal?: string;
+    optimal?: string;
+    yes?: string;
+    no?: string;
+  };
+
   /** Condition to show this item (returns true to show, false to hide) */
   showIf?: (variables: AuditVariables) => boolean;
 }

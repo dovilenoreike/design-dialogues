@@ -2,18 +2,9 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, HelpCircle, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AuditCategory as AuditCategoryType, AuditResponse, AuditVariables } from "@/types/layout-audit";
-import { getCategoryStats } from "@/data/layout-audit-rules";
+import { calculateCategoryScore, getCategoryStats } from "@/data/layout-audit-rules";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuditItem } from "./AuditItem";
-
-/**
- * Calculate category score (pass / (pass + fail) * 100)
- */
-const getCategoryScore = (stats: { pass: number; fail: number }): number | null => {
-  const total = stats.pass + stats.fail;
-  if (total === 0) return null;
-  return Math.round((stats.pass / total) * 100);
-};
 
 /**
  * Get score color based on value
@@ -50,7 +41,7 @@ export const AuditCategory = ({
 
   const stats = getCategoryStats(category.id, responses, variables);
   const answered = stats.pass + stats.fail + stats.unknown + stats.na;
-  const categoryScore = getCategoryScore(stats);
+  const categoryScore = calculateCategoryScore(category.id, responses, variables);
 
   // Filter items based on showIf condition
   const visibleItems = category.items.filter(

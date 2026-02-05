@@ -33,7 +33,7 @@ const KitchenSlider = React.forwardRef<
       numberOfChildren,
       min = 2,
       max = 8,
-      step = 0.5,
+      step = 0.2,
       ...props
     },
     ref
@@ -46,9 +46,12 @@ const KitchenSlider = React.forwardRef<
     // Calculate recommended kitchen length
     const recommended = parseFloat(calculateKitchenLinear(safeAdults, safeChildren)) || 3.0;
 
-    // Calculate ergonomic standard range (recommended ± tolerance)
-    const rangeStart = Math.max(3, recommended - 0.9);
-    const rangeEnd = Math.min(max, recommended + 1.2);
+    // Calculate ergonomic standard range (minimal acceptable to end of optimal)
+    // Minimal: formula - 1.5m to formula - 0.6m
+    // Optimal: formula - 0.6m to formula + 0.6m
+    // Sage covers both: formula - 1.5m to formula + 0.6m
+    const rangeStart = Math.max(2.4, recommended - 1.5);
+    const rangeEnd = Math.min(max, recommended + 0.6);
 
     // Calculate percentages for positioning
     const totalRange = max - min;
@@ -101,6 +104,10 @@ KitchenSlider.displayName = "KitchenSlider";
 
 /**
  * Get the ergonomic status for kitchen length
+ * Based on ergonomic-standards.md:
+ * - Underbuilt: < formula − 1.5m (or < 2.4m)
+ * - Minimal/Optimal: formula − 1.5m to formula + 0.6m (covered by sage)
+ * - Overbuilt: > formula + 1.5m
  */
 export const getKitchenStatus = (
   value: number,
@@ -111,7 +118,8 @@ export const getKitchenStatus = (
   const safeChildren = (typeof numberOfChildren === 'number' && !isNaN(numberOfChildren)) ? numberOfChildren : 0;
   const recommended = parseFloat(calculateKitchenLinear(safeAdults, safeChildren)) || 3.0;
 
-  if (value < recommended - 0.9) return 'underbuilt';
+  const minAcceptable = Math.max(2.4, recommended - 1.5);
+  if (value < minAcceptable) return 'underbuilt';
   if (value > recommended + 1.5) return 'overbuilt';
   return 'optimal';
 };

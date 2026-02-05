@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AuditItem as AuditItemType, AuditResponse, AuditVariables } from "@/types/layout-audit";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { X } from "lucide-react";
 
 interface AuditItemProps {
   item: AuditItemType;
@@ -13,141 +12,243 @@ interface AuditItemProps {
 
 export const AuditItem = ({ item, response, variables, onResponse }: AuditItemProps) => {
   const { t } = useLanguage();
-  const [showTooltip, setShowTooltip] = useState(false);
 
-  // Get the question text with variable interpolation
-  const getQuestionText = () => {
-    let text = t(item.questionKey);
-
-    // Replace {value} placeholder with calculated value if present
-    if (item.calculateValue) {
-      let value = item.calculateValue(variables);
-
-      // Special handling for laundry setup - translate the setup type
-      if (item.id === "bathroom-laundry") {
-        const laundryKey = `audit.item.bathroom.laundry${value.charAt(0).toUpperCase() + value.slice(1)}`;
-        value = t(laundryKey);
-      }
-
-      text = text.replace("{value}", value);
-    }
-
-    return text;
+  // Get the label text
+  const getLabelText = () => {
+    return t(item.labelKey);
   };
 
-  // Segmented control segment classes
-  const getSegmentClasses = (buttonType: AuditResponse) => {
-    const isSelected = response === buttonType;
-    const baseClasses = "flex-1 py-1.5 text-xs font-medium transition-all touch-manipulation";
-
-    if (buttonType === "pass") {
-      return cn(
-        baseClasses,
-        "rounded-l-full",
-        isSelected
-          ? "bg-neutral-900 text-white"
-          : "text-neutral-500 hover:text-neutral-700"
-      );
+  // Get threshold values for measurable items
+  const getThresholds = () => {
+    if (item.type === 'measurable' && item.thresholds) {
+      return item.thresholds(variables);
     }
+    return null;
+  };
 
-    if (buttonType === "fail") {
+  // Handle button click - toggle if already selected
+  const handleResponseClick = (buttonType: AuditResponse) => {
+    if (response === buttonType) {
+      // Clicking selected button unchecks it (becomes unknown)
+      onResponse(undefined);
+    } else {
+      onResponse(buttonType);
+    }
+  };
+
+  // Get functional tag for current response
+  const getFunctionalTag = () => {
+    if (!response || !item.functionalTags) return null;
+    const tagKey = item.functionalTags[response as keyof typeof item.functionalTags];
+    return tagKey ? t(tagKey) : null;
+  };
+
+  // Get tag color based on response
+  const getTagColor = () => {
+    if (response === 'underbuilt' || response === 'no') {
+      return 'text-[#9A3412]';
+    }
+    if (response === 'minimal') {
+      return 'text-[#CA8A04]';
+    }
+    if (response === 'optimal' || response === 'yes') {
+      return 'text-[#647D75]';
+    }
+    return 'text-muted-foreground';
+  };
+
+  // Segment button classes for measurable items (3 buttons)
+  const getMeasurableSegmentClasses = (buttonType: AuditResponse, position: 'first' | 'middle' | 'last') => {
+    const isSelected = response === buttonType;
+    const baseClasses = "flex-1 py-2 px-3 text-xs font-medium transition-all touch-manipulation text-center";
+    const roundedClasses = position === 'first' ? 'rounded-l-full' : position === 'last' ? 'rounded-r-full' : '';
+
+    if (buttonType === "underbuilt") {
       return cn(
         baseClasses,
+        roundedClasses,
         isSelected
           ? "bg-[#9A3412]/10 text-[#9A3412]"
           : "text-neutral-500 hover:text-neutral-700"
       );
     }
 
-    // unknown
-    return cn(
-      baseClasses,
-      "rounded-r-full",
-      isSelected
-        ? "bg-neutral-200 text-neutral-700"
-        : "text-neutral-500 hover:text-neutral-700"
-    );
+    if (buttonType === "minimal") {
+      return cn(
+        baseClasses,
+        roundedClasses,
+        isSelected
+          ? "bg-[#CA8A04]/10 text-[#CA8A04]"
+          : "text-neutral-500 hover:text-neutral-700"
+      );
+    }
+
+    if (buttonType === "optimal") {
+      return cn(
+        baseClasses,
+        roundedClasses,
+        isSelected
+          ? "bg-[#647D75]/10 text-[#647D75]"
+          : "text-neutral-500 hover:text-neutral-700"
+      );
+    }
+
+    return cn(baseClasses, roundedClasses, "text-neutral-500 hover:text-neutral-700");
   };
 
-  // N/A selected state - show muted question with undo option
+  // Segment button classes for boolean items (2 buttons)
+  const getBooleanSegmentClasses = (buttonType: AuditResponse, position: 'first' | 'last') => {
+    const isSelected = response === buttonType;
+    const baseClasses = "flex-1 py-2 px-4 text-xs font-medium transition-all touch-manipulation text-center";
+    const roundedClasses = position === 'first' ? 'rounded-l-full' : 'rounded-r-full';
+
+    if (buttonType === "no") {
+      return cn(
+        baseClasses,
+        roundedClasses,
+        isSelected
+          ? "bg-[#9A3412]/10 text-[#9A3412]"
+          : "text-neutral-500 hover:text-neutral-700"
+      );
+    }
+
+    if (buttonType === "yes") {
+      return cn(
+        baseClasses,
+        roundedClasses,
+        isSelected
+          ? "bg-[#647D75]/10 text-[#647D75]"
+          : "text-neutral-500 hover:text-neutral-700"
+      );
+    }
+
+    return cn(baseClasses, roundedClasses, "text-neutral-500 hover:text-neutral-700");
+  };
+
+  // Format threshold value with unit
+  const formatThreshold = (value: number, unit?: string) => {
+    if (unit === 'seats' || unit === 'units') {
+      return `${value}`;
+    }
+    return `${value}${unit || ''}`;
+  };
+
+  // N/A selected state - show muted label with undo option
   if (response === "na") {
     return (
-      <div className="flex items-start gap-3 py-3 opacity-50">
-        <div className="flex-1 min-w-0">
+      <div className="flex flex-col gap-2 py-5 opacity-50">
+        {/* Top row: Title and undo */}
+        <div className="flex items-start justify-between gap-3">
           <p className="text-sm text-muted-foreground leading-relaxed line-through">
-            {getQuestionText()}
+            {getLabelText()}
           </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-muted-foreground">N/A</span>
-          <button
-            onClick={() => onResponse(undefined)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t("audit.undo")}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-muted-foreground">N/A</span>
+            <button
+              onClick={() => onResponse(undefined)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("audit.undo")}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Normal state - show question with segmented control
-  return (
-    <div className="flex items-start gap-3 py-3">
-      {/* Question text */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-foreground leading-relaxed">{getQuestionText()}</p>
+  const thresholds = getThresholds();
+  const functionalTag = getFunctionalTag();
 
-        {/* Tooltip on fail */}
-        {response === "fail" && (
+  // Render measurable item with value-based buttons
+  if (item.type === 'measurable' && thresholds) {
+    return (
+      <div className="flex flex-col gap-3 py-5">
+        {/* Top row: Title and X button */}
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm text-foreground leading-relaxed">{getLabelText()}</p>
           <button
-            onClick={() => setShowTooltip(!showTooltip)}
-            className="mt-1.5 flex items-center gap-1 text-xs text-[#9A3412] hover:text-[#9A3412]/80"
+            onClick={() => onResponse("na")}
+            className="shrink-0 p-1 -mt-1 -mr-1 text-neutral-300 hover:text-neutral-500 transition-colors"
+            aria-label={t("audit.notRelevant")}
           >
-            <AlertCircle className="w-3 h-3" />
-            <span>{t("audit.whyItMatters")}</span>
+            <X className="w-4 h-4" />
           </button>
-        )}
+        </div>
 
-        {response === "fail" && showTooltip && (
-          <div className="mt-2 p-2.5 bg-[#9A3412]/5 rounded-lg">
-            <p className="text-xs text-[#9A3412] leading-relaxed">{t(item.tooltipKey)}</p>
-          </div>
-        )}
+        {/* Middle row: Value-based segmented control */}
+        <div className="flex items-center bg-neutral-100 rounded-full w-full max-w-sm">
+          <button
+            onClick={() => handleResponseClick("underbuilt")}
+            className={getMeasurableSegmentClasses("underbuilt", "first")}
+            aria-label={`Less than ${formatThreshold(thresholds.minimal, item.unit)}`}
+          >
+            &lt; {formatThreshold(thresholds.minimal, item.unit)}
+          </button>
+          <button
+            onClick={() => handleResponseClick("minimal")}
+            className={getMeasurableSegmentClasses("minimal", "middle")}
+            aria-label={`${formatThreshold(thresholds.minimal, item.unit)} or more`}
+          >
+            {formatThreshold(thresholds.minimal, item.unit)}+
+          </button>
+          <button
+            onClick={() => handleResponseClick("optimal")}
+            className={getMeasurableSegmentClasses("optimal", "last")}
+            aria-label={`${formatThreshold(thresholds.optimal, item.unit)} or more`}
+          >
+            {formatThreshold(thresholds.optimal, item.unit)}+
+          </button>
+        </div>
 
-        {/* "Not relevant" link */}
+        {/* Bottom row: Functional tag (status text) */}
+        {functionalTag && (
+          <p className={cn("text-xs leading-relaxed", getTagColor())}>
+            {functionalTag}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Render boolean item with Yes/No buttons
+  return (
+    <div className="flex flex-col gap-3 py-5">
+      {/* Top row: Title and X button */}
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-foreground leading-relaxed">{getLabelText()}</p>
         <button
           onClick={() => onResponse("na")}
-          className="mt-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="shrink-0 p-1 -mt-1 -mr-1 text-neutral-300 hover:text-neutral-500 transition-colors"
+          aria-label={t("audit.notRelevant")}
         >
-          {t("audit.notRelevant")}
+          <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Segmented Control */}
-      <div className="flex items-center bg-neutral-100 rounded-full shrink-0 min-w-[120px]">
+      {/* Middle row: Yes/No segmented control */}
+      <div className="flex items-center bg-neutral-100 rounded-full w-full max-w-sm">
         <button
-          onClick={() => onResponse("pass")}
-          className={getSegmentClasses("pass")}
-          aria-label="Yes"
-        >
-          {t("audit.yes")}
-        </button>
-        <button
-          onClick={() => onResponse("fail")}
-          className={getSegmentClasses("fail")}
-          aria-label="No"
+          onClick={() => handleResponseClick("no")}
+          className={getBooleanSegmentClasses("no", "first")}
+          aria-label={t("audit.no")}
         >
           {t("audit.no")}
         </button>
         <button
-          onClick={() => onResponse("unknown")}
-          className={getSegmentClasses("unknown")}
-          aria-label="Unknown"
+          onClick={() => handleResponseClick("yes")}
+          className={getBooleanSegmentClasses("yes", "last")}
+          aria-label={t("audit.yes")}
         >
-          ?
+          {t("audit.yes")}
         </button>
       </div>
+
+      {/* Bottom row: Functional tag (status text) */}
+      {functionalTag && (
+        <p className={cn("text-xs leading-relaxed", getTagColor())}>
+          {functionalTag}
+        </p>
+      )}
     </div>
   );
 };

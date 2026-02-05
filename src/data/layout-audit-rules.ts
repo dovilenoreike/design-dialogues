@@ -96,10 +96,10 @@ export const getStorageBreakdown = (adults: number, children: number): {
 
 /**
  * Kitchen linear length (Formula #1)
- * Rule: 3.0m base + 0.6m per adult + 0.4m per child
+ * Rule: 3m base + 0.6m per adult + 0.2m per child
  */
 export const calculateKitchenLinear = (adults: number, children: number): string => {
-  const length = 3.0 + adults * 0.6 + children * 0.4;
+  const length = 3 + adults * 0.6 + children * 0.2;
   return length.toFixed(1);
 };
 
@@ -155,6 +155,8 @@ export const calculateSofaLength = (numberOfPeople: number): string => {
 
 /**
  * All audit categories with their items
+ * Updated to use value-based tier selection for measurable items
+ * and Yes/No for boolean items
  */
 export const auditCategories: AuditCategory[] = [
   {
@@ -164,42 +166,80 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'storage-hallway-wardrobe',
-        questionKey: 'audit.item.storage.hallwayWardrobe',
+        labelKey: 'audit.label.storage.hallwayWardrobe',
         tooltipKey: 'audit.tooltip.storage.hallwayWardrobe',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateEntranceWardrobe(v.numberOfAdults, v.numberOfChildren),
+        type: 'measurable',
+        unit: 'm',
+        thresholds: (v: AuditVariables) => {
+          const formula = v.numberOfAdults * 0.6 + v.numberOfChildren * 0.4 + 0.6;
+          return { minimal: Math.round((formula - 0.8) * 10) / 10, optimal: Math.round((formula - 0.3) * 10) / 10 };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.storage.hallwayWardrobe.underbuilt',
+          minimal: 'audit.tag.storage.hallwayWardrobe.minimal',
+          optimal: 'audit.tag.storage.hallwayWardrobe.optimal',
+        },
       },
       {
         id: 'storage-master-wardrobe',
-        questionKey: 'audit.item.storage.masterWardrobe',
+        labelKey: 'audit.label.storage.masterWardrobe',
         tooltipKey: 'audit.tooltip.storage.masterWardrobe',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateMasterWardrobe(v.numberOfAdults),
+        type: 'measurable',
+        unit: 'm',
+        thresholds: (v: AuditVariables) => {
+          // For couple: minimal 1.8m, optimal 2.4m
+          return v.numberOfAdults >= 2
+            ? { minimal: 1.8, optimal: 2.4 }
+            : { minimal: 1.2, optimal: 1.8 };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.storage.masterWardrobe.underbuilt',
+          minimal: 'audit.tag.storage.masterWardrobe.minimal',
+          optimal: 'audit.tag.storage.masterWardrobe.optimal',
+        },
       },
       {
         id: 'storage-kids-wardrobe',
-        questionKey: 'audit.item.storage.kidsWardrobe',
+        labelKey: 'audit.label.storage.kidsWardrobe',
         tooltipKey: 'audit.tooltip.storage.kidsWardrobe',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateKidsWardrobe(v.numberOfChildren),
+        type: 'measurable',
+        unit: 'm',
+        thresholds: (v: AuditVariables) => {
+          const formula = v.numberOfChildren * 0.8 + 0.4;
+          return { minimal: Math.round((formula - 0.5) * 10) / 10, optimal: Math.round((formula - 0.2) * 10) / 10 };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.storage.kidsWardrobe.underbuilt',
+          minimal: 'audit.tag.storage.kidsWardrobe.minimal',
+          optimal: 'audit.tag.storage.kidsWardrobe.optimal',
+        },
         showIf: (v: AuditVariables) => v.numberOfChildren > 0,
       },
       {
         id: 'storage-general',
-        questionKey: 'audit.item.storage.general',
+        labelKey: 'audit.label.storage.general',
         tooltipKey: 'audit.tooltip.storage.general',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateGeneralStorage(v.numberOfPeople),
-      },
-      {
-        id: 'storage-utility',
-        questionKey: 'audit.item.storage.utility',
-        tooltipKey: 'audit.tooltip.storage.utility',
+        type: 'measurable',
+        unit: 'm',
+        thresholds: (v: AuditVariables) => {
+          const formula = 1.0 + v.numberOfPeople * 0.4;
+          return { minimal: Math.round((formula - 0.6) * 10) / 10, optimal: Math.round((formula - 0.2) * 10) / 10 };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.storage.general.underbuilt',
+          minimal: 'audit.tag.storage.general.minimal',
+          optimal: 'audit.tag.storage.general.optimal',
+        },
       },
       {
         id: 'storage-entry-drop',
-        questionKey: 'audit.item.storage.entryDrop',
+        labelKey: 'audit.label.storage.entryDrop',
         tooltipKey: 'audit.tooltip.storage.entryDrop',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.storage.entryDrop.no',
+          yes: 'audit.tag.storage.entryDrop.yes',
+        },
       },
     ],
   },
@@ -210,32 +250,65 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'social-dining-count',
-        questionKey: 'audit.item.social.diningCount',
+        labelKey: 'audit.label.social.diningCount',
         tooltipKey: 'audit.tooltip.social.diningCount',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateDiningSeats(v.numberOfPeople),
+        type: 'measurable',
+        unit: 'seats',
+        thresholds: (v: AuditVariables) => ({
+          minimal: v.numberOfPeople,
+          optimal: v.numberOfPeople + 2,
+        }),
+        functionalTags: {
+          underbuilt: 'audit.tag.social.diningCount.underbuilt',
+          minimal: 'audit.tag.social.diningCount.minimal',
+          optimal: 'audit.tag.social.diningCount.optimal',
+        },
       },
       {
         id: 'social-chair-clearance',
-        questionKey: 'audit.item.social.chairClearance',
+        labelKey: 'audit.label.social.chairClearance',
         tooltipKey: 'audit.tooltip.social.chairClearance',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.social.chairClearance.no',
+          yes: 'audit.tag.social.chairClearance.yes',
+        },
       },
       {
         id: 'social-sofa-capacity',
-        questionKey: 'audit.item.social.sofaCapacity',
+        labelKey: 'audit.label.social.sofaCapacity',
         tooltipKey: 'audit.tooltip.social.sofaCapacity',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateLivingSeats(v.numberOfPeople),
+        type: 'measurable',
+        unit: 'seats',
+        thresholds: (v: AuditVariables) => ({
+          minimal: v.numberOfPeople,
+          optimal: v.numberOfPeople + 1,
+        }),
+        functionalTags: {
+          underbuilt: 'audit.tag.social.sofaCapacity.underbuilt',
+          minimal: 'audit.tag.social.sofaCapacity.minimal',
+          optimal: 'audit.tag.social.sofaCapacity.optimal',
+        },
       },
       {
         id: 'social-conversation',
-        questionKey: 'audit.item.social.conversation',
+        labelKey: 'audit.label.social.conversation',
         tooltipKey: 'audit.tooltip.social.conversation',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.social.conversation.no',
+          yes: 'audit.tag.social.conversation.yes',
+        },
       },
       {
         id: 'social-traffic-paths',
-        questionKey: 'audit.item.social.trafficPaths',
+        labelKey: 'audit.label.social.trafficPaths',
         tooltipKey: 'audit.tooltip.social.trafficPaths',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.social.trafficPaths.no',
+          yes: 'audit.tag.social.trafficPaths.yes',
+        },
       },
     ],
   },
@@ -246,47 +319,98 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'kitchen-linear',
-        questionKey: 'audit.item.kitchen.linear',
+        labelKey: 'audit.label.kitchen.linear',
         tooltipKey: 'audit.tooltip.kitchen.linear',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateKitchenLinear(v.numberOfAdults, v.numberOfChildren),
+        type: 'measurable',
+        unit: 'm',
+        thresholds: (v: AuditVariables) => {
+          const formula = 3.0 + v.numberOfAdults * 0.6 + v.numberOfChildren * 0.4;
+          return {
+            minimal: Math.max(2.4, Math.round((formula - 1.5) * 10) / 10),
+            optimal: Math.round((formula - 0.6) * 10) / 10,
+          };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.kitchen.linear.underbuilt',
+          minimal: 'audit.tag.kitchen.linear.minimal',
+          optimal: 'audit.tag.kitchen.linear.optimal',
+        },
       },
       {
         id: 'kitchen-tall-units',
-        questionKey: 'audit.item.kitchen.tallUnits',
+        labelKey: 'audit.label.kitchen.tallUnits',
         tooltipKey: 'audit.tooltip.kitchen.tallUnits',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => calculateTallUnits(v.numberOfPeople),
+        type: 'measurable',
+        unit: 'units',
+        thresholds: (v: AuditVariables) => {
+          const required = Math.ceil(v.numberOfPeople / 2);
+          return { minimal: Math.max(1, required - 1), optimal: required };
+        },
+        functionalTags: {
+          underbuilt: 'audit.tag.kitchen.tallUnits.underbuilt',
+          minimal: 'audit.tag.kitchen.tallUnits.minimal',
+          optimal: 'audit.tag.kitchen.tallUnits.optimal',
+        },
       },
       {
         id: 'kitchen-triangle',
-        questionKey: 'audit.item.kitchen.triangle',
+        labelKey: 'audit.label.kitchen.triangle',
         tooltipKey: 'audit.tooltip.kitchen.triangle',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.triangle.no',
+          yes: 'audit.tag.kitchen.triangle.yes',
+        },
       },
       {
         id: 'kitchen-prep-zone',
-        questionKey: 'audit.item.kitchen.prepZone',
+        labelKey: 'audit.label.kitchen.prepZone',
         tooltipKey: 'audit.tooltip.kitchen.prepZone',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.prepZone.no',
+          yes: 'audit.tag.kitchen.prepZone.yes',
+        },
       },
       {
         id: 'kitchen-aisle-width',
-        questionKey: 'audit.item.kitchen.aisleWidth',
+        labelKey: 'audit.label.kitchen.aisleWidth',
         tooltipKey: 'audit.tooltip.kitchen.aisleWidth',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.aisleWidth.no',
+          yes: 'audit.tag.kitchen.aisleWidth.yes',
+        },
       },
       {
         id: 'kitchen-dishwasher-trap',
-        questionKey: 'audit.item.kitchen.dishwasherTrap',
+        labelKey: 'audit.label.kitchen.dishwasherTrap',
         tooltipKey: 'audit.tooltip.kitchen.dishwasherTrap',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.dishwasherTrap.no',
+          yes: 'audit.tag.kitchen.dishwasherTrap.yes',
+        },
       },
       {
         id: 'kitchen-fridge-door',
-        questionKey: 'audit.item.kitchen.fridgeDoor',
+        labelKey: 'audit.label.kitchen.fridgeDoor',
         tooltipKey: 'audit.tooltip.kitchen.fridgeDoor',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.fridgeDoor.no',
+          yes: 'audit.tag.kitchen.fridgeDoor.yes',
+        },
       },
       {
         id: 'kitchen-fridge-oven',
-        questionKey: 'audit.item.kitchen.fridgeOven',
+        labelKey: 'audit.label.kitchen.fridgeOven',
         tooltipKey: 'audit.tooltip.kitchen.fridgeOven',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.kitchen.fridgeOven.no',
+          yes: 'audit.tag.kitchen.fridgeOven.yes',
+        },
       },
     ],
   },
@@ -297,28 +421,53 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'bedroom-bed-access',
-        questionKey: 'audit.item.bedroom.bedAccess',
+        labelKey: 'audit.label.bedroom.bedAccess',
         tooltipKey: 'audit.tooltip.bedroom.bedAccess',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bedroom.bedAccess.no',
+          yes: 'audit.tag.bedroom.bedAccess.yes',
+        },
       },
       {
         id: 'bedroom-nightstands',
-        questionKey: 'audit.item.bedroom.nightstands',
+        labelKey: 'audit.label.bedroom.nightstands',
         tooltipKey: 'audit.tooltip.bedroom.nightstands',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bedroom.nightstands.no',
+          yes: 'audit.tag.bedroom.nightstands.yes',
+        },
       },
       {
         id: 'bedroom-door-conflict',
-        questionKey: 'audit.item.bedroom.doorConflict',
+        labelKey: 'audit.label.bedroom.doorConflict',
         tooltipKey: 'audit.tooltip.bedroom.doorConflict',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bedroom.doorConflict.no',
+          yes: 'audit.tag.bedroom.doorConflict.yes',
+        },
       },
       {
         id: 'bedroom-sightlines',
-        questionKey: 'audit.item.bedroom.sightlines',
+        labelKey: 'audit.label.bedroom.sightlines',
         tooltipKey: 'audit.tooltip.bedroom.sightlines',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bedroom.sightlines.no',
+          yes: 'audit.tag.bedroom.sightlines.yes',
+        },
       },
       {
         id: 'bedroom-acoustics',
-        questionKey: 'audit.item.bedroom.acoustics',
+        labelKey: 'audit.label.bedroom.acoustics',
         tooltipKey: 'audit.tooltip.bedroom.acoustics',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bedroom.acoustics.no',
+          yes: 'audit.tag.bedroom.acoustics.yes',
+        },
       },
     ],
   },
@@ -328,39 +477,34 @@ export const auditCategories: AuditCategory[] = [
     descriptionKey: 'audit.category.bathroom.description',
     items: [
       {
-        id: 'bathroom-ratio',
-        questionKey: 'audit.item.bathroom.ratio',
-        tooltipKey: 'audit.tooltip.bathroom.ratio',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => String(Math.ceil(v.numberOfPeople / 3)),
-        showIf: (v: AuditVariables) => v.numberOfPeople > 3,
-      },
-      {
-        id: 'bathroom-laundry',
-        questionKey: 'audit.item.bathroom.laundry',
-        tooltipKey: 'audit.tooltip.bathroom.laundry',
-        variableKey: 'numberOfPeople',
-        calculateValue: (v: AuditVariables) => {
-          const setup = calculateLaundrySetup(v.numberOfPeople);
-          // Return a key that will be translated in the UI
-          return setup;
-        },
-        showIf: (v: AuditVariables) => v.numberOfPeople > 3,
-      },
-      {
         id: 'bathroom-door-swing',
-        questionKey: 'audit.item.bathroom.doorSwing',
+        labelKey: 'audit.label.bathroom.doorSwing',
         tooltipKey: 'audit.tooltip.bathroom.doorSwing',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bathroom.doorSwing.no',
+          yes: 'audit.tag.bathroom.doorSwing.yes',
+        },
       },
       {
         id: 'bathroom-elbow-room',
-        questionKey: 'audit.item.bathroom.elbowRoom',
+        labelKey: 'audit.label.bathroom.elbowRoom',
         tooltipKey: 'audit.tooltip.bathroom.elbowRoom',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bathroom.elbowRoom.no',
+          yes: 'audit.tag.bathroom.elbowRoom.yes',
+        },
       },
       {
         id: 'bathroom-shower-head',
-        questionKey: 'audit.item.bathroom.showerHead',
+        labelKey: 'audit.label.bathroom.showerHead',
         tooltipKey: 'audit.tooltip.bathroom.showerHead',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.bathroom.showerHead.no',
+          yes: 'audit.tag.bathroom.showerHead.yes',
+        },
       },
     ],
   },
@@ -372,13 +516,23 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'homeOffice-work-zone',
-        questionKey: 'audit.item.homeOffice.workZone',
+        labelKey: 'audit.label.homeOffice.workZone',
         tooltipKey: 'audit.tooltip.homeOffice.workZone',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.homeOffice.workZone.no',
+          yes: 'audit.tag.homeOffice.workZone.yes',
+        },
       },
       {
         id: 'homeOffice-natural-light',
-        questionKey: 'audit.item.homeOffice.naturalLight',
+        labelKey: 'audit.label.homeOffice.naturalLight',
         tooltipKey: 'audit.tooltip.homeOffice.naturalLight',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.homeOffice.naturalLight.no',
+          yes: 'audit.tag.homeOffice.naturalLight.yes',
+        },
       },
     ],
   },
@@ -389,29 +543,53 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'power-bed-charging',
-        questionKey: 'audit.item.power.bedCharging',
+        labelKey: 'audit.label.power.bedCharging',
         tooltipKey: 'audit.tooltip.power.bedCharging',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.power.bedCharging.no',
+          yes: 'audit.tag.power.bedCharging.yes',
+        },
       },
       {
         id: 'power-sofa-power',
-        questionKey: 'audit.item.power.sofaPower',
+        labelKey: 'audit.label.power.sofaPower',
         tooltipKey: 'audit.tooltip.power.sofaPower',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.power.sofaPower.no',
+          yes: 'audit.tag.power.sofaPower.yes',
+        },
       },
       {
         id: 'power-entry-charging',
-        questionKey: 'audit.item.power.entryCharging',
+        labelKey: 'audit.label.power.entryCharging',
         tooltipKey: 'audit.tooltip.power.entryCharging',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.power.entryCharging.no',
+          yes: 'audit.tag.power.entryCharging.yes',
+        },
       },
       {
         id: 'power-work-power',
-        questionKey: 'audit.item.power.workPower',
+        labelKey: 'audit.label.power.workPower',
         tooltipKey: 'audit.tooltip.power.workPower',
-        variableKey: 'workFromHome',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.power.workPower.no',
+          yes: 'audit.tag.power.workPower.yes',
+        },
       },
       {
         id: 'power-task-lighting',
-        questionKey: 'audit.item.power.taskLighting',
+        labelKey: 'audit.label.power.taskLighting',
         tooltipKey: 'audit.tooltip.power.taskLighting',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.power.taskLighting.no',
+          yes: 'audit.tag.power.taskLighting.yes',
+        },
       },
     ],
   },
@@ -422,23 +600,43 @@ export const auditCategories: AuditCategory[] = [
     items: [
       {
         id: 'doors-door-to-door',
-        questionKey: 'audit.item.doors.doorToDoor',
+        labelKey: 'audit.label.doors.doorToDoor',
         tooltipKey: 'audit.tooltip.doors.doorToDoor',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.doors.doorToDoor.no',
+          yes: 'audit.tag.doors.doorToDoor.yes',
+        },
       },
       {
         id: 'doors-appliance-to-person',
-        questionKey: 'audit.item.doors.applianceToPerson',
+        labelKey: 'audit.label.doors.applianceToPerson',
         tooltipKey: 'audit.tooltip.doors.applianceToPerson',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.doors.applianceToPerson.no',
+          yes: 'audit.tag.doors.applianceToPerson.yes',
+        },
       },
       {
         id: 'doors-appliance-to-appliance',
-        questionKey: 'audit.item.doors.applianceToAppliance',
+        labelKey: 'audit.label.doors.applianceToAppliance',
         tooltipKey: 'audit.tooltip.doors.applianceToAppliance',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.doors.applianceToAppliance.no',
+          yes: 'audit.tag.doors.applianceToAppliance.yes',
+        },
       },
       {
         id: 'doors-circulation-blocking',
-        questionKey: 'audit.item.doors.circulationBlocking',
+        labelKey: 'audit.label.doors.circulationBlocking',
         tooltipKey: 'audit.tooltip.doors.circulationBlocking',
+        type: 'boolean',
+        functionalTags: {
+          no: 'audit.tag.doors.circulationBlocking.no',
+          yes: 'audit.tag.doors.circulationBlocking.yes',
+        },
       },
     ],
   },
@@ -446,8 +644,9 @@ export const auditCategories: AuditCategory[] = [
 
 /**
  * Calculate audit score
- * Score = (passCount / (passCount + failCount)) * 100
- * Items marked "unknown" are excluded from calculation
+ * Score = (totalPoints / answeredCount) * 100
+ * Points: optimal/yes = 1.0, minimal = 0.8, underbuilt/no = 0
+ * Items marked "unknown" or "na" are excluded from calculation
  * Only counts items that are visible based on showIf condition
  */
 export const calculateAuditScore = (
@@ -456,36 +655,45 @@ export const calculateAuditScore = (
 ): number | null => {
   const validItemIds = getAllItemIds(variables);
 
-  let passCount = 0;
-  let failCount = 0;
+  let totalPoints = 0;
+  let answeredCount = 0;
 
   for (const id of validItemIds) {
     const response = responses[id];
-    if (response === 'pass') passCount++;
-    else if (response === 'fail') failCount++;
+    if (response === 'optimal' || response === 'yes') {
+      totalPoints += 1.0;
+      answeredCount++;
+    } else if (response === 'minimal') {
+      totalPoints += 0.8;
+      answeredCount++;
+    } else if (response === 'underbuilt' || response === 'no') {
+      totalPoints += 0;
+      answeredCount++;
+    }
+    // unknown and na are not counted
   }
-
-  const answeredCount = passCount + failCount;
 
   if (answeredCount === 0) {
     return null; // No score if nothing answered
   }
 
-  return Math.round((passCount / answeredCount) * 100);
+  return Math.round((totalPoints / answeredCount) * 100);
 };
 
 /**
  * Get category stats (pass/fail/unknown counts)
+ * Pass = minimal, optimal, yes
+ * Fail = underbuilt, no
  * Only counts items that are visible based on showIf condition
  */
 export const getCategoryStats = (
   categoryId: string,
   responses: Record<string, AuditResponse>,
   variables?: AuditVariables
-): { pass: number; fail: number; unknown: number; na: number; total: number } => {
+): { pass: number; fail: number; unknown: number; na: number; total: number; underbuilt: number; minimal: number; optimal: number; yes: number; no: number } => {
   const category = auditCategories.find((c) => c.id === categoryId);
   if (!category) {
-    return { pass: 0, fail: 0, unknown: 0, na: 0, total: 0 };
+    return { pass: 0, fail: 0, unknown: 0, na: 0, total: 0, underbuilt: 0, minimal: 0, optimal: 0, yes: 0, no: 0 };
   }
 
   // Filter items based on showIf condition
@@ -493,17 +701,49 @@ export const getCategoryStats = (
     ? category.items.filter((item) => !item.showIf || item.showIf(variables))
     : category.items;
 
-  const stats = { pass: 0, fail: 0, unknown: 0, na: 0, total: visibleItems.length };
+  const stats = { pass: 0, fail: 0, unknown: 0, na: 0, total: visibleItems.length, underbuilt: 0, minimal: 0, optimal: 0, yes: 0, no: 0 };
 
   visibleItems.forEach((item) => {
     const response = responses[item.id];
-    if (response === 'pass') stats.pass++;
-    else if (response === 'fail') stats.fail++;
-    else if (response === 'unknown') stats.unknown++;
-    else if (response === 'na') stats.na++;
+    if (response === 'underbuilt') {
+      stats.underbuilt++;
+      stats.fail++;
+    } else if (response === 'no') {
+      stats.no++;
+      stats.fail++;
+    } else if (response === 'minimal') {
+      stats.minimal++;
+      stats.pass++;
+    } else if (response === 'optimal') {
+      stats.optimal++;
+      stats.pass++;
+    } else if (response === 'yes') {
+      stats.yes++;
+      stats.pass++;
+    } else if (response === 'unknown') {
+      stats.unknown++;
+    } else if (response === 'na') {
+      stats.na++;
+    }
   });
 
   return stats;
+};
+
+/**
+ * Calculate category score with proper weights
+ * optimal/yes = 1.0, minimal = 0.8, underbuilt/no = 0
+ */
+export const calculateCategoryScore = (
+  categoryId: string,
+  responses: Record<string, AuditResponse>,
+  variables?: AuditVariables
+): number | null => {
+  const stats = getCategoryStats(categoryId, responses, variables);
+  const answered = stats.pass + stats.fail;
+  if (answered === 0) return null;
+  const points = (stats.optimal + stats.yes) * 1.0 + stats.minimal * 0.8;
+  return Math.round((points / answered) * 100);
 };
 
 /**
