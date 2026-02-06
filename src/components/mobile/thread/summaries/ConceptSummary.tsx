@@ -18,17 +18,27 @@ interface RoomImage {
 }
 
 export function ConceptSummary() {
-  const { design, setActiveTab, handleSelectCategory } = useDesign();
+  const { design, generation, setActiveTab, handleSelectCategory } = useDesign();
   const { t } = useLanguage();
 
   // Build room images array - always 4 rooms
   const roomImages = useMemo(() => {
     const result: RoomImage[] = [];
+    const currentRoom = design.selectedCategory || "Kitchen";
 
     ROOM_CONFIG.forEach(room => {
-      // Check for uploaded image first
       const uploadedImage = design.uploadedImages[room.displayName];
-      if (uploadedImage) {
+
+      // For the current room, prioritize generated image over uploaded
+      if (room.displayName === currentRoom && generation.generatedImage) {
+        result.push({
+          src: generation.generatedImage,
+          roomDisplayName: room.displayName,
+          translationKey: room.translationKey,
+          slug: room.slug,
+        });
+      } else if (uploadedImage) {
+        // Use uploaded image for other rooms or if no generated image
         result.push({
           src: uploadedImage,
           roomDisplayName: room.displayName,
@@ -47,7 +57,7 @@ export function ConceptSummary() {
     });
 
     return result;
-  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle]);
+  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, design.selectedCategory, generation.generatedImage]);
 
   // Determine Hero room - last selected, or first room with content
   const heroRoom = useMemo(() => {
