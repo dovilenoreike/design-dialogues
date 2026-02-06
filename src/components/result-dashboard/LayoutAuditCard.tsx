@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Baby, Home, Minus, Plus, ChevronRight } from "lucide-react";
+import { User, Baby, Home, Minus, Plus, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,6 +12,8 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 
 /**
@@ -154,6 +156,7 @@ export const AuditScoreWidget = () => {
     setLayoutAuditWorkFromHome,
   } = useDesign();
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
 
   const score = calculateAuditScore(layoutAuditResponses, layoutAuditVariables);
   const { answered, total } = getProgressStats(layoutAuditResponses, layoutAuditVariables);
@@ -177,6 +180,115 @@ export const AuditScoreWidget = () => {
     const newCount = Math.max(0, Math.min(10, layoutAuditVariables.numberOfChildren + delta));
     setLayoutAuditChildren(newCount);
   };
+
+  // Shared checklist content
+  const checklistContent = (
+    <div className={isMobile ? "overflow-y-auto px-4 pb-6" : "overflow-y-auto pb-6"}>
+      {/* Score Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <span className={cn(
+          "text-5xl font-serif font-bold tabular-nums leading-none",
+          getScoreColor(score, layoutAuditResponses, layoutAuditVariables)
+        )}>
+          {score !== null ? score : "—"}
+        </span>
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-neutral-400">
+            {t("audit.layoutHealth")}
+          </span>
+          {score !== null && (
+            <span className={cn(
+              "text-[10px] uppercase tracking-[0.1em] font-bold mt-0.5",
+              getScoreColor(score, layoutAuditResponses, layoutAuditVariables)
+            )}>
+              {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "green" && t("audit.conclusion.green")}
+              {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "amber" && t("audit.conclusion.amber")}
+              {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "red" && t("audit.conclusion.red")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Household Settings - Row with Adults + Children + WFH */}
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        {/* Adults Stepper Pill */}
+        <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1 py-1">
+          <button
+            onClick={() => handleAdultsChange(-1)}
+            disabled={layoutAuditVariables.numberOfAdults <= 1}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <div className="flex items-center gap-1.5 px-2">
+            <User className="w-3.5 h-3.5 text-neutral-500" />
+            <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
+              {layoutAuditVariables.numberOfAdults}
+            </span>
+          </div>
+          <button
+            onClick={() => handleAdultsChange(1)}
+            disabled={layoutAuditVariables.numberOfAdults >= 10}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Children Stepper Pill */}
+        <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1 py-1">
+          <button
+            onClick={() => handleChildrenChange(-1)}
+            disabled={layoutAuditVariables.numberOfChildren <= 0}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <div className="flex items-center gap-1.5 px-2">
+            <Baby className="w-3.5 h-3.5 text-neutral-500" />
+            <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
+              {layoutAuditVariables.numberOfChildren}
+            </span>
+          </div>
+          <button
+            onClick={() => handleChildrenChange(1)}
+            disabled={layoutAuditVariables.numberOfChildren >= 10}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Work from Home Chip */}
+        <button
+          onClick={() => setLayoutAuditWorkFromHome(!layoutAuditVariables.workFromHome)}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+            layoutAuditVariables.workFromHome
+              ? "bg-neutral-900 text-white"
+              : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
+          )}
+        >
+          <Home className="w-3.5 h-3.5" />
+          <span>{t("audit.workFromHome")}</span>
+        </button>
+      </div>
+
+      {/* Categories list */}
+      <div className="space-y-3">
+        {auditCategories.map((category, index) => (
+          <AuditCategory
+            key={category.id}
+            category={category}
+            responses={layoutAuditResponses}
+            variables={layoutAuditVariables}
+            onResponse={setLayoutAuditResponse}
+            defaultExpanded={index === 0}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -229,121 +341,40 @@ export const AuditScoreWidget = () => {
         </div>
       </div>
 
-      {/* Full Checklist Drawer */}
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerContent className="max-h-[90vh]">
-          <DrawerHeader className="text-left">
-            <DrawerTitle>{t("audit.title")}</DrawerTitle>
-            <DrawerDescription>{t("audit.subtitle")}</DrawerDescription>
-          </DrawerHeader>
-
-          <div className="overflow-y-auto px-4 pb-6">
-            {/* Score Header */}
-            <div className="flex items-center gap-4 mb-6">
-              <span className={cn(
-                "text-5xl font-serif font-bold tabular-nums leading-none",
-                getScoreColor(score, layoutAuditResponses, layoutAuditVariables)
-              )}>
-                {score !== null ? score : "—"}
-              </span>
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-neutral-400">
-                  {t("audit.layoutHealth")}
-                </span>
-                {score !== null && (
-                  <span className={cn(
-                    "text-[10px] uppercase tracking-[0.1em] font-bold mt-0.5",
-                    getScoreColor(score, layoutAuditResponses, layoutAuditVariables)
-                  )}>
-                    {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "green" && t("audit.conclusion.green")}
-                    {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "amber" && t("audit.conclusion.amber")}
-                    {getScoreLevel(score, layoutAuditResponses, layoutAuditVariables) === "red" && t("audit.conclusion.red")}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Household Settings - Row with Adults + Children + WFH */}
-            <div className="flex items-center gap-2 mb-5 flex-wrap">
-              {/* Adults Stepper Pill */}
-              <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1 py-1">
-                <button
-                  onClick={() => handleAdultsChange(-1)}
-                  disabled={layoutAuditVariables.numberOfAdults <= 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <div className="flex items-center gap-1.5 px-2">
-                  <User className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
-                    {layoutAuditVariables.numberOfAdults}
-                  </span>
+      {/* Full Checklist - Drawer for mobile, Dialog for desktop */}
+      {isMobile ? (
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader className="text-left">
+              <DrawerTitle>{t("audit.title")}</DrawerTitle>
+              <DrawerDescription>{t("audit.subtitle")}</DrawerDescription>
+            </DrawerHeader>
+            {checklistContent}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DialogContent className="max-w-lg p-6 gap-0 max-h-[85vh] overflow-hidden flex flex-col" hideCloseButton aria-describedby={undefined}>
+            <DialogHeader className="text-left pb-4 flex-shrink-0">
+              <div className="flex items-start justify-between">
+                <div>
+                  <DialogTitle>{t("audit.title")}</DialogTitle>
+                  <DialogDescription>{t("audit.subtitle")}</DialogDescription>
                 </div>
                 <button
-                  onClick={() => handleAdultsChange(1)}
-                  disabled={layoutAuditVariables.numberOfAdults >= 10}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="text-text-muted hover:text-text-primary transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <X size={20} />
                 </button>
               </div>
-
-              {/* Children Stepper Pill */}
-              <div className="flex items-center gap-1 bg-neutral-100 rounded-full px-1 py-1">
-                <button
-                  onClick={() => handleChildrenChange(-1)}
-                  disabled={layoutAuditVariables.numberOfChildren <= 0}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <div className="flex items-center gap-1.5 px-2">
-                  <Baby className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="text-sm font-medium tabular-nums min-w-[1ch] text-center">
-                    {layoutAuditVariables.numberOfChildren}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleChildrenChange(1)}
-                  disabled={layoutAuditVariables.numberOfChildren >= 10}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Work from Home Chip */}
-              <button
-                onClick={() => setLayoutAuditWorkFromHome(!layoutAuditVariables.workFromHome)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                  layoutAuditVariables.workFromHome
-                    ? "bg-neutral-900 text-white"
-                    : "border border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                )}
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span>{t("audit.workFromHome")}</span>
-              </button>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {checklistContent}
             </div>
-
-            {/* Categories list */}
-            <div className="space-y-3">
-              {auditCategories.map((category, index) => (
-                <AuditCategory
-                  key={category.id}
-                  category={category}
-                  responses={layoutAuditResponses}
-                  variables={layoutAuditVariables}
-                  onResponse={setLayoutAuditResponse}
-                  defaultExpanded={index === 0}
-                />
-              ))}
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };

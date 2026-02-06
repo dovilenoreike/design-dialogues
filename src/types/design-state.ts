@@ -9,6 +9,7 @@ export interface DesignSelection {
   selectedMaterial: string | null;
   selectedStyle: string | null;  // Combined style ID (architecture + atmosphere)
   freestyleDescription: string;
+  lastSelectedRoom: string | null;  // Last room user selected/interacted with (for Hero display)
 }
 
 export interface GenerationState {
@@ -25,9 +26,10 @@ export interface GenerationState {
 export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
   selectedCategory: "Kitchen",
-  selectedMaterial: "fog-in-the-forest",
-  selectedStyle: "scandinavian-minimalism",  // Default combined style
+  selectedMaterial: null,  // No material selected initially
+  selectedStyle: null,  // No style selected initially
   freestyleDescription: "",
+  lastSelectedRoom: null,  // No room selected initially
 };
 
 export const initialGenerationState: GenerationState = {

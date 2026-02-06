@@ -41,10 +41,31 @@
     "hallwayAcc": "Hallway"
   },
   "tabs": {
+    "thread": "Thread",
     "design": "Design",
     "specs": "Specs",
     "budget": "Budget",
     "plan": "Plan"
+  },
+  "thread": {
+    "title": "Renovation without guesswork",
+    "projectLabel": "{{area}} M² APARTMENT • {{city}}",
+    "projectLabelCityOnly": "{{city}}",
+    "concept": "CONCEPT",
+    "conceptCta": "Design your space",
+    "materials": "MATERIALS",
+    "materialsCta": "Find matching materials",
+    "budget": "BUDGET",
+    "budgetCta": "Get Estimates",
+    "planAudit": "PLAN AUDIT",
+    "planAuditCta": "Score your plan",
+    "roadmap": "ROADMAP",
+    "roadmapCta": "When to do what?",
+    "assessment": "Assessment",
+    "palette": "Palette",
+    "overdue": "Overdue",
+    "fullHomeVision": "Full Home Vision",
+    "curatedBy": "Curated by"
   },
   "modes": {
     "rooms": "Rooms",
@@ -98,7 +119,8 @@
     "requestMaterials": "Request Curated Material List",
     "tierComingSoon": "Coming soon!",
     "tierComingSoonDescription": "Explore our Standard selection in the meantime.",
-    "selectPalette": "Select Palette"
+    "selectPalette": "Select Palette",
+    "browsePalettes": "Browse Palettes"
   },
   "material": {
     "purpose": {

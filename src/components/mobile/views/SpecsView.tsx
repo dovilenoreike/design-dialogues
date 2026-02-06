@@ -51,8 +51,22 @@ export default function SpecsView() {
             <p className="text-sm text-muted-foreground text-center max-w-xs">
               {t("specs.emptyDescription")}
             </p>
+            <button
+              onClick={() => setIsPaletteSelectorOpen(true)}
+              className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
+            >
+              {t("specs.browsePalettes")}
+            </button>
           </div>
         </div>
+
+        {/* Palette Selector Sheet */}
+        <PaletteSelectorSheet
+          isOpen={isPaletteSelectorOpen}
+          onClose={() => setIsPaletteSelectorOpen(false)}
+          selectedPaletteId={selectedMaterial}
+          onSelectPalette={handleSelectMaterial}
+        />
       </div>
     );
   }

@@ -19,7 +19,7 @@ import { parseUrlState, buildUrl } from "@/lib/url-state";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 import { defaultAuditVariables } from "@/data/layout-audit-rules";
 
-export type BottomTab = "design" | "specs" | "budget" | "plan";
+export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
 export type Tier = "Budget" | "Standard" | "Premium";
 
@@ -121,7 +121,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [formData, setFormData] = useState<FormData | null>(null);
 
   // Navigation state
-  const [activeTab, setActiveTabState] = useState<BottomTab>("design");
+  const [activeTab, setActiveTabState] = useState<BottomTab>("thread");
   const [activeMode, setActiveMode] = useState<ControlMode>("rooms");
   const [selectedTier, setSelectedTierState] = useState<Tier>("Standard");
 
@@ -155,6 +155,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         selectedMaterial: initialSharedSession.selectedMaterial,
         selectedStyle: initialSharedSession.selectedStyle,
         freestyleDescription: initialSharedSession.freestyleDescription || "",
+        lastSelectedRoom: initialSharedSession.selectedCategory,
       });
       if (initialSharedSession.generatedImage) {
         setGeneration((prev) => ({ ...prev, generatedImage: initialSharedSession.generatedImage }));
@@ -533,7 +534,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
       return;
     }
-    setDesign((prev) => ({ ...prev, selectedCategory: category }));
+    setDesign((prev) => ({
+      ...prev,
+      selectedCategory: category,
+      lastSelectedRoom: category,
+    }));
   }, [generation.generatedImage, design.selectedCategory]);
 
   // Material selection
@@ -659,7 +664,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setDesign(initialDesignSelection);
     setGeneration(initialGenerationState);
     setFormData(null);
-    setActiveTab("design");
+    setActiveTab("thread");
     setActiveMode("rooms");
     setUserMoveInDate(null);
     setCompletedTasks(new Set());
@@ -723,6 +728,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setDesign((prev) => ({
       ...prev,
       selectedCategory: newRoom,
+      lastSelectedRoom: newRoom,
       // uploadedImages stays intact - per-room storage
     }));
   }, [generation.generatedImage, generation.pendingRoomSwitch, handleSaveImage]);

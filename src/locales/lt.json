@@ -41,10 +41,31 @@
     "hallwayAcc": "Prieškambarį"
   },
   "tabs": {
+    "thread": "Pradžia",
     "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
     "plan": "Planas"
+  },
+  "thread": {
+    "title": "Namų įrengimas – be spėlionių",
+    "projectLabel": "{{area}} M² BUTAS • {{city}}",
+    "projectLabelCityOnly": "{{city}}",
+    "concept": "KONCEPTAS",
+    "conceptCta": "Sukurkite savo erdvę",
+    "materials": "MEDŽIAGOS",
+    "materialsCta": "Raskite tinkamas medžiagas",
+    "budget": "BIUDŽETAS",
+    "budgetCta": "Gaukite orientacinęsąmatą",
+    "planAudit": "PLANO AUDITAS",
+    "planAuditCta": "Įvertinkite savo planą",
+    "roadmap": "GRAFIKAS",
+    "roadmapCta": "Kada ką daryti?",
+    "assessment": "Įvertinta",
+    "palette": "Paletė",
+    "overdue": "Vėluoja",
+    "fullHomeVision": "Viso namo vizija",
+    "curatedBy": "Sukūrė"
   },
   "modes": {
     "rooms": "Kambariai",
@@ -96,7 +117,8 @@
     "requestMaterials": "Užsakyti medžiagų sąrašą",
     "tierComingSoon": "Jau greitai!",
     "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus.",
-    "selectPalette": "Pasirinkti Paletę"
+    "selectPalette": "Pasirinkti Paletę",
+    "browsePalettes": "Naršyti paletes"
   },
   "material": {
     "purpose": {
