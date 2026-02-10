@@ -21,6 +21,8 @@ import {
 export interface CostLineItem {
   label: string;
   value: number;
+  lowValue: number;
+  highValue: number;
   tooltip: string;
 }
 
@@ -189,6 +191,8 @@ export function useCostCalculation({
           {
             label: t("cost.interiorDesign"),
             value: interiorDesignFinal,
+            lowValue: roundToHundred(interiorDesignFinal * (1 - priceVariance)),
+            highValue: roundToHundred(interiorDesignFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Interior Design Project"][tier],
           },
         ].filter((item) => item.value > 0),
@@ -199,6 +203,8 @@ export function useCostCalculation({
           {
             label: t("cost.constructionFinish"),
             value: constructionFinishFinal,
+            lowValue: roundToHundred(constructionFinishFinal * (1 - priceVariance)),
+            highValue: roundToHundred(constructionFinishFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Construction & Finish"][tier],
           },
           ...(renovationCostFinal > 0
@@ -206,6 +212,8 @@ export function useCostCalculation({
                 {
                   label: t("cost.prepWork"),
                   value: renovationCostFinal,
+                  lowValue: roundToHundred(renovationCostFinal * (1 - priceVariance)),
+                  highValue: roundToHundred(renovationCostFinal * (1 + priceVariance)),
                   tooltip: t("cost.prepWorkTooltip"),
                 },
               ]
@@ -218,16 +226,22 @@ export function useCostCalculation({
           {
             label: t("cost.kitchen"),
             value: kitchenJoineryFinal,
+            lowValue: roundToHundred(kitchenJoineryFinal * (1 - priceVariance)),
+            highValue: roundToHundred(kitchenJoineryFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Kitchen & Joinery"][tier],
           },
           {
             label: t("cost.wardrobes"),
             value: wardrobesFinal,
+            lowValue: roundToHundred(wardrobesFinal * (1 - priceVariance)),
+            highValue: roundToHundred(wardrobesFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Built-in Wardrobes"][tier],
           },
           {
             label: t("cost.appliances"),
             value: appliancesFinal,
+            lowValue: roundToHundred(appliancesFinal * (1 - priceVariance)),
+            highValue: roundToHundred(appliancesFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Home Appliances"][tier],
           },
         ].filter((item) => item.value > 0),
@@ -238,6 +252,8 @@ export function useCostCalculation({
           {
             label: t("cost.furniture"),
             value: furnitureFinal,
+            lowValue: roundToHundred(furnitureFinal * (1 - priceVariance)),
+            highValue: roundToHundred(furnitureFinal * (1 + priceVariance)),
             tooltip: tierTooltips["Furniture (est.)"][tier],
           },
         ].filter((item) => item.value > 0),

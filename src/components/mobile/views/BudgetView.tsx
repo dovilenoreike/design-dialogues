@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { KitchenSlider, getKitchenStatus, getRecommendedKitchen } from "@/components/ui/kitchen-slider";
 import { calculateTotalStorage } from "@/data/layout-audit-rules";
 import ServiceDetailsSheet from "../controls/ServiceDetailsSheet";
+import FeedbackDialog from "@/components/FeedbackDialog";
 import type { ServiceSelection, FormData } from "@/types/calculator";
 
 const tiers: Tier[] = ["Budget", "Standard", "Premium"];
@@ -139,6 +140,7 @@ export default function BudgetView() {
   const data = formData || defaultFormData;
 
   const [isServiceSheetOpen, setIsServiceSheetOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Local state for form inputs
   const [localArea, setLocalArea] = useState(data.area);
@@ -260,6 +262,11 @@ export default function BudgetView() {
     } else {
       handleUpdateFormData({ isUrgent: !localIsUrgent });
     }
+  };
+
+  const handleOpenFeedback = () => {
+    haptic.light();
+    setIsFeedbackOpen(true);
   };
 
   return (
@@ -549,7 +556,7 @@ export default function BudgetView() {
                         {item.label}
                       </span>
                       <span className="font-serif text-sm tabular-nums text-neutral-900">
-                        €{item.value.toLocaleString()}
+                        €{item.lowValue.toLocaleString('lt-LT')} – €{item.highValue.toLocaleString('lt-LT')}
                       </span>
                     </div>
                   ))}
@@ -560,6 +567,14 @@ export default function BudgetView() {
             <p className="text-[10px] text-neutral-400 pt-3 mt-3 border-t border-neutral-100 italic">
               {t("result.disclaimer")}
             </p>
+
+            {/* Feedback Link */}
+            <button
+              onClick={handleOpenFeedback}
+              className="mt-3 text-[10px] text-neutral-400 hover:text-neutral-900 transition-colors italic inline-flex items-center gap-1"
+            >
+              {t("budget.foundInaccuracies")} →
+            </button>
           </div>
 
         </div>
@@ -573,6 +588,9 @@ export default function BudgetView() {
         calculation={calculation}
         services={localServices}
       />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen} />
     </div>
   );
 }

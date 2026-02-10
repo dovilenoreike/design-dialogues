@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useCity, CITIES, CITY_LABELS, City } from "@/contexts/CityContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,26 +11,53 @@ import {
 } from "@/components/ui/select";
 
 export function ThreadHeader() {
-  const { formData } = useDesign();
-  const { city, setCity, cityLabel } = useCity();
-  const { t, language } = useLanguage();
+  const { formData, selectedTier } = useDesign();
+  const { city, setCity } = useCity();
+  const { t } = useLanguage();
 
-  // Build area label if area exists
-  const areaLabel = formData?.area
-    ? `${formData.area} M² ${language === "lt" ? "BUTAS" : "APARTMENT"}`
-    : null;
+  // 1. Project ID (mock for now, persists in session)
+  const projectId = useMemo(() => {
+    const stored = sessionStorage.getItem('projectId');
+    if (stored) return stored;
+    const id = `#${Math.floor(Math.random() * 90000) + 10000}`;
+    sessionStorage.setItem('projectId', id);
+    return id;
+  }, []);
+
+  // 2. Area
+  const area = formData?.area ? `${formData.area} M²` : "– M²";
+
+  // 3. Tier
+  const tier = selectedTier
+    ? `${t(`tier.${selectedTier.toLowerCase()}`).toUpperCase()} ${t("tier.label").toUpperCase()}`
+    : `${t("tier.standard").toUpperCase()} ${t("tier.label").toUpperCase()}`;
+
+  // 4. Scope
+  const scope = useMemo(() => {
+    if (!formData?.services) return t("budget.noScope").toUpperCase();
+
+    const count = Object.values(formData.services).filter(Boolean).length;
+    const total = Object.values(formData.services).length;
+
+    if (count === total) return t("budget.fullScope").toUpperCase();
+    if (count === 0) return t("budget.noScope").toUpperCase();
+    return t("budget.partialScope").toUpperCase();
+  }, [formData?.services, t]);
+
+  // 5. Check if parameters are defined
+  const hasArea = formData?.area && formData.area > 0;
+  const hasServices = formData?.services && Object.values(formData.services).some(Boolean);
+  const parametersAreDefined = hasArea && hasServices;
 
   return (
-    <header className="mb-8">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-500 mb-2">
-        {areaLabel && (
-          <>
-            <span>{areaLabel}</span>
-            <span>•</span>
-          </>
-        )}
+    <header className="mb-16 pl-8">
+      {/* Project Identity Bar */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400">
+          {projectId} •
+        </span>
         <Select value={city} onValueChange={(value) => setCity(value as City)}>
-          <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1 text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-500 hover:text-neutral-700 focus:ring-0 focus:ring-offset-0">
+          <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1 text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400 hover:text-neutral-500 focus:ring-0 focus:ring-offset-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -41,9 +69,19 @@ export function ThreadHeader() {
           </SelectContent>
         </Select>
       </div>
-      <h1 className="text-2xl font-serif text-neutral-900">
+
+      {/* Hero Title */}
+      <h1 className="text-4xl sm:text-5xl font-serif text-neutral-900 leading-[1.1] mb-2">
         {t("thread.title")}
       </h1>
+
+      {/* Parameter Line */}
+      <p className="text-xs uppercase tracking-widest text-neutral-600 mb-4">
+        {parametersAreDefined ? `${area} • ${tier} • ${scope}` : t("thread.defineParameters").toUpperCase()}
+      </p>
+
+      {/* Closing Hairline */}
+      <div className="border-t border-neutral-100" />
     </header>
   );
 }

@@ -51,6 +51,7 @@
     "title": "Namų įrengimas – be spėlionių",
     "projectLabel": "{{area}} M² BUTAS • {{city}}",
     "projectLabelCityOnly": "{{city}}",
+    "defineParameters": "Nurodykite parametrus įverčiams apskaičiuoti",
     "concept": "KONCEPTAS",
     "conceptCta": "Sukurkite savo erdvę",
     "materials": "MEDŽIAGOS",
@@ -197,6 +198,7 @@
     "budget": "Taupus",
     "standard": "Optimalus",
     "premium": "Premium",
+    "label": "Lygis",
     "budgetDesc": "Paprastesnės medžiagos ir sprendimai, tinka mažai naudojamoms erdvėms ar nuomai.",
     "standardDesc": "Subalansuota kaina, kokybė ir estetika kasdieniam naudojimui.",
     "premiumDesc": "Aukščiausios kokybės medžiagos ir išskirtinė patirtis erdvėje."
@@ -409,7 +411,8 @@
     "projectScope": "Projekto Apimtis",
     "fullScope": "Visa Apimtis",
     "partialScope": "Dalinė Apimtis",
-    "noScope": "Be Paslaugų"
+    "noScope": "Be Paslaugų",
+    "foundInaccuracies": "Radai netikslumų? Pranešk"
   },
   "mobile": {
     "stage": {

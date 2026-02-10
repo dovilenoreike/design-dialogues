@@ -34,7 +34,7 @@ export default function ThreadView() {
         <div className="px-6 py-8">
           <ThreadHeader />
 
-          <div className="mt-10">
+          <div>
             <ThreadSection
               title={t("thread.concept")}
               ctaText={t("thread.conceptCta")}

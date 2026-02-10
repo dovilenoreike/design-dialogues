@@ -51,6 +51,7 @@
     "title": "Renovation without guesswork",
     "projectLabel": "{{area}} M² APARTMENT • {{city}}",
     "projectLabelCityOnly": "{{city}}",
+    "defineParameters": "Define parameters to calculate estimates",
     "concept": "CONCEPT",
     "conceptCta": "Design your space",
     "materials": "MATERIALS",
@@ -190,6 +191,7 @@
     "budget": "Budget",
     "standard": "Standard",
     "premium": "Premium",
+    "label": "Tier",
     "budgetDesc": "Smart choices for practical living",
     "standardDesc": "Quality materials with lasting value",
     "premiumDesc": "Exceptional finishes for discerning taste"
@@ -402,7 +404,8 @@
     "projectScope": "Project Scope",
     "fullScope": "Full Scope",
     "partialScope": "Partial Scope",
-    "noScope": "No Services"
+    "noScope": "No Services",
+    "foundInaccuracies": "Found inaccuracies? Report"
   },
   "mobile": {
     "stage": {

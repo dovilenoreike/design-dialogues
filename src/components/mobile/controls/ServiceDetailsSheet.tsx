@@ -52,7 +52,7 @@ export default function ServiceDetailsSheet({
                   <div key={item.label} className="flex justify-between items-center py-1">
                     <span className="text-sm text-foreground">{item.label}</span>
                     <span className="text-sm font-medium tabular-nums">
-                      €{item.value.toLocaleString()}
+                      €{item.lowValue.toLocaleString('lt-LT')} – €{item.highValue.toLocaleString('lt-LT')}
                     </span>
                   </div>
                 ))}

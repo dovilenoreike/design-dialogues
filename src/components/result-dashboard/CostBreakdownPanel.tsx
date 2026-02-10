@@ -2,11 +2,13 @@
  * CostBreakdownPanel - Expandable panel with sliders, service toggles, and cost breakdown
  */
 
+import { useState } from "react";
 import { ChevronDown, Info, Minus, Plus, User, Baby } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { KitchenSlider } from "@/components/ui/kitchen-slider";
 import { Switch } from "@/components/ui/switch";
 import ServiceCard from "@/components/ServiceCard";
+import FeedbackDialog from "@/components/FeedbackDialog";
 import type { ServiceSelection, FormData } from "@/types/calculator";
 import type { Tier } from "@/config/tiers";
 import { getServiceCardContent } from "@/config/pricing";
@@ -50,6 +52,7 @@ const CostBreakdownPanel = ({
 }: CostBreakdownPanelProps) => {
   const { t } = useLanguage();
   const serviceCardContent = getServiceCardContent(t);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   return (
     <>
@@ -249,7 +252,7 @@ const CostBreakdownPanel = ({
                       />
                     </span>
                     <span className="font-medium text-text-primary tabular-nums text-right">
-                      €{item.value.toLocaleString()}
+                      €{item.lowValue.toLocaleString('lt-LT')} – €{item.highValue.toLocaleString('lt-LT')}
                     </span>
                   </div>
                 ))}
@@ -259,9 +262,20 @@ const CostBreakdownPanel = ({
             <p className="text-[10px] text-muted-foreground pt-2 italic">
               {t("result.disclaimer")}
             </p>
+
+            {/* Feedback Link */}
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              className="mt-3 text-[10px] text-muted-foreground hover:text-text-primary transition-colors italic inline-flex items-center gap-1"
+            >
+              {t("budget.foundInaccuracies")} →
+            </button>
           </div>
         </div>
       )}
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen} />
     </>
   );
 };
