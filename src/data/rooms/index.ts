@@ -9,8 +9,8 @@ export interface Room {
 export const rooms: Room[] = [
   { id: "kitchen", name: "Kitchen", icon: ChefHat },
   { id: "living-room", name: "Living Room", icon: Sofa },
-  { id: "bathroom", name: "Bathroom", icon: Bath },
   { id: "bedroom", name: "Bedroom", icon: Bed },
+  { id: "bathroom", name: "Bathroom", icon: Bath },
 ];
 
 export function getRoomById(id: string): Room | undefined {

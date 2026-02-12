@@ -37,6 +37,10 @@ const PALETTES = [
   "morning-mist",
   "day-by-the-sea",
   "caramel-morning",
+  "sleeping-earth",
+  "urban-dusk",
+  "pure-scandi",
+  "spicy-nord",
 ];
 
 const ROOMS = [

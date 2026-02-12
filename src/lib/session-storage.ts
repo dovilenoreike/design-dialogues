@@ -14,7 +14,7 @@ const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 export interface SessionData {
   // Design selections
   design: DesignSelection;
-  generatedImage: string | null;
+  generatedImages: Record<string, string | null>;
 
   // Budget inputs
   formData: FormData | null;
@@ -61,7 +61,7 @@ export function saveSession(data: Omit<SessionData, "savedAt">): boolean {
             ...data.design,
             uploadedImages: {}, // Clear uploaded images to save space
           },
-          generatedImage: null, // Clear generated image
+          generatedImages: {}, // Clear generated images
           savedAt: Date.now(),
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalData));
@@ -86,6 +86,13 @@ export function loadSession(): SessionData | null {
     if (!serialized) return null;
 
     const data: SessionData = JSON.parse(serialized);
+
+    // Migrate old single image to per-room format
+    if ('generatedImage' in data && data.generatedImage && !data.generatedImages) {
+      const room = data.design?.selectedCategory || "Kitchen";
+      data.generatedImages = { [room]: data.generatedImage };
+      delete (data as any).generatedImage;
+    }
 
     // Check if session has expired
     if (Date.now() - data.savedAt > SESSION_EXPIRY_MS) {

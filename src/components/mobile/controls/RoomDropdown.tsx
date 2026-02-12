@@ -13,8 +13,8 @@ import {
 const roomTranslationKey: Record<string, string> = {
   "kitchen": "space.kitchen",
   "living-room": "space.livingRoom",
-  "bathroom": "space.bathroom",
   "bedroom": "space.bedroom",
+  "bathroom": "space.bathroom",
 };
 
 export default function RoomDropdown() {

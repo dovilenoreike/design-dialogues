@@ -8,9 +8,11 @@ import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import { getPaletteById } from "@/data/palettes";
+import { getDesignerWithFallback } from "@/data/designers";
 import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
 import { defaultMaterials } from "./constants";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { Tier } from "@/contexts/DesignContext";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
@@ -29,7 +31,7 @@ const MaterialManifestSection = ({
   onOpenDesignerSheet,
   onOpenMaterialMatchModal,
 }: MaterialManifestSectionProps) => {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
 

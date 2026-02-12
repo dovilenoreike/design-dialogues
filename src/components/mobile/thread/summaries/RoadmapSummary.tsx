@@ -94,12 +94,21 @@ export function RoadmapSummary() {
     const TaskIcon = getTaskIcon(task);
 
     return (
-      <button
+      <div
         key={task.id}
+        role="button"
+        tabIndex={0}
         onClick={(e) => handleTaskClick(e, task.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleTaskClick(e, task.id);
+          }
+        }}
         className={`
           inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] uppercase tracking-wide font-medium transition-all
-          touch-manipulation active:scale-95
+          touch-manipulation active:scale-95 cursor-pointer
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2
           ${getTaskButtonStyle(isOverdue, isCompleted)}
         `}
       >
@@ -109,7 +118,7 @@ export function RoadmapSummary() {
           <TaskIcon className="w-3 h-3 opacity-60" strokeWidth={1.5} />
         )}
         <span>{task.label}</span>
-      </button>
+      </div>
     );
   };
 

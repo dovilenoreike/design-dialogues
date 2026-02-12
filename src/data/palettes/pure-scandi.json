@@ -1,0 +1,77 @@
+{
+  "id": "pure-scandi",
+  "name": "Pure Scandi",
+  "designer": "dizaino_dialogai",
+  "designerTitle": "Dizaino Platforma",
+  "status": "coming-soon",
+  "promptSnippet": "Inspired by modern Scandi interiors. Soft, calm, and understated. decorate with natural textiles, white and dark decor details. Walls in white.",
+  "materials": { 
+    "material1": {
+      "description": {
+        "en": "Light natural oak parquet, matte finish, subtle grain, laid in a mosaic pattern, Scandinavian feel.",
+        "lt": "Šviesaus ąžuolo tekstūra."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Vinyl",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material2": {
+      "description": {
+        "en": "Natural soft grey-beige marble, cloudy movement, dark rich veines.",
+        "lt": "Šviesaus natūralaus akmens tekstūra."
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Worktops and backsplash"},
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material3": {
+      "description": {
+        "en": "Light oak veneer fronts, vertical grain, matte natural oil finish",
+        "lt": "Šviesaus ąžuolo tekstūra."
+      },
+      "rooms": ["kitchen", "bathroom", "livingRoom"],
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets", "bathroom": "Vanity unit" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material4": {
+      "description": {
+        "en": "Flat matte off-white.",
+        "lt": "Matinė šilta balta spalva."
+      },
+      "rooms": ["kitchen", "bedroom", "livingRoom"],
+      "purpose": { "default": "Shelving"},
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material5": {
+      "description": {
+        "en": "Soft white stone-effect tiles with subtle texture, matte finish.",
+        "lt": "Švelnios baltos akmens tekstūros plytelės."
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Tiles" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material6": {
+      "description": {
+        "en": "Natural soft grey-beige marble texture, cloudy movement",
+        "lt": "Šviesaus natūralaus akmens tekstūra."
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Flooring" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    }
+
+  }
+}

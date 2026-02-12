@@ -47,6 +47,24 @@ export const designers: Record<string, DesignerProfile> = {
     instagram: "impeka_home",
     website: "https://www.impeka.lt/",
   },
+  "design-dialogues": {
+    name: "Dizaino Dialogai",
+    title: "Interjero dizaino platforma",
+    bio: "Sukurta, kad padėtų Jums kurti nuostabias erdves.",
+    styles: ALL_STYLES,
+    cities:[],
+    instagram: "dizainodialogai",
+    website: "https://www.dizainodialogai.lt/",
+  },
+  "dizaino_dialogai": {
+    name: "Dizaino Dialogai",
+    title: "Dizaino Platforma",
+    bio: "Sukurta, kad padėtų Jums kurti nuostabias erdves.",
+    styles: ALL_STYLES,
+    cities:[],
+    instagram: "dizainodialogai",
+    website: "https://www.dizainodialogai.lt/",
+  },
 };
 
 export function getDesignerByName(name: string): DesignerProfile | undefined {
@@ -54,8 +72,19 @@ export function getDesignerByName(name: string): DesignerProfile | undefined {
 }
 
 export function getDesignerWithFallback(name: string, title: string): DesignerProfile {
-  return designers[name] || {
-    name,
+  if (designers[name]) {
+    return designers[name];
+  }
+
+  // Format the name by removing underscores and hyphens, capitalizing words
+  const formattedName = name
+    .replace(/[_-]/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return {
+    name: formattedName,
     title,
     bio: "Interior designer passionate about creating beautiful, functional spaces.",
     styles: ALL_STYLES,

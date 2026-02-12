@@ -3,6 +3,7 @@ import { Check, Sparkles } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
 import { palettes } from "@/data/palettes";
 import { paletteThumbnails } from "@/data/palettes/thumbnails";
+import { PaletteBadge } from "@/components/PaletteBadge";
 
 interface MaterialPaletteProps {
   selectedMaterial: string | null;
@@ -89,11 +90,12 @@ const MaterialPalette = ({
                 <div className="flex flex-col">
                   {/* Square Image */}
                   <div className="relative aspect-square w-full">
-                    <img 
-                      src={paletteThumbnails[palette.id]} 
+                    <img
+                      src={paletteThumbnails[palette.id]}
                       alt={palette.name}
                       className="w-full h-full object-cover"
                     />
+                    <PaletteBadge status={palette.status} />
                     {isSelected && (
                       <div className="absolute inset-0 bg-foreground/60 flex items-center justify-center">
                         <Check size={20} className="text-background" />

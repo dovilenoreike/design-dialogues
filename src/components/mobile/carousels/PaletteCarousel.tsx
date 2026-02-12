@@ -11,11 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PaletteBadge } from "@/components/PaletteBadge";
 
 export default function PaletteCarousel() {
   const { t } = useLanguage();
   const { design, handleSelectMaterial, handleFreestyleChange } = useDesign();
-  const { selectedMaterial, freestyleDescription } = design;
+  const { selectedMaterial, selectedStyle, freestyleDescription } = design;
   const [isFreestyleOpen, setIsFreestyleOpen] = useState(false);
   const [freestyleInput, setFreestyleInput] = useState(freestyleDescription);
 
@@ -28,7 +29,11 @@ export default function PaletteCarousel() {
 
   return (
     <>
-      <div className="h-full flex items-center justify-center">
+      <div
+        className={`h-full flex items-center justify-center ${
+          selectedStyle && !selectedMaterial && !hasFreestyle ? "animate-pulse-subtle" : ""
+        }`}
+      >
         <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
           {palettes.map((palette) => {
             const isSelected = selectedMaterial === palette.id;
@@ -51,6 +56,7 @@ export default function PaletteCarousel() {
                     alt={palette.name}
                     className="w-full h-full object-cover"
                   />
+                  <PaletteBadge status={palette.status} />
                   {isSelected && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       <Check className="w-4 h-4 text-white" strokeWidth={2.5} />

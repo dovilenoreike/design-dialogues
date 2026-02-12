@@ -20,10 +20,11 @@ export function useThreadSections(): ThreadSectionState {
   } = useDesign();
 
   return useMemo(() => {
-    // CONCEPT: has generated image, uploaded images, OR has selected palette+style (pregenerated)
+    // CONCEPT: has generated images, uploaded images, OR has selected palette+style (pregenerated)
     const hasUploadedImages = Object.values(design.uploadedImages).some(img => img !== null);
+    const hasGeneratedImages = Object.values(generation.generatedImages).some(img => img !== null);
     const hasPregenerated = design.selectedMaterial !== null && design.selectedStyle !== null;
-    const concept = !!(generation.generatedImage || hasUploadedImages || hasPregenerated);
+    const concept = !!(hasGeneratedImages || hasUploadedImages || hasPregenerated);
 
     // MATERIALS: has selected material (palette)
     const materials = design.selectedMaterial !== null;
@@ -44,5 +45,5 @@ export function useThreadSections(): ThreadSectionState {
       planAudit,
       roadmap,
     };
-  }, [generation.generatedImage, design.uploadedImages, design.selectedMaterial, design.selectedStyle, formData, layoutAuditResponses, userMoveInDate, completedTasks]);
+  }, [generation.generatedImages, design.uploadedImages, design.selectedMaterial, design.selectedStyle, formData, layoutAuditResponses, userMoveInDate, completedTasks]);
 }

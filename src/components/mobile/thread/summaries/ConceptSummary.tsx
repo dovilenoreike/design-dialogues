@@ -24,21 +24,20 @@ export function ConceptSummary() {
   // Build room images array - always 4 rooms
   const roomImages = useMemo(() => {
     const result: RoomImage[] = [];
-    const currentRoom = design.selectedCategory || "Kitchen";
 
     ROOM_CONFIG.forEach(room => {
       const uploadedImage = design.uploadedImages[room.displayName];
+      const generatedImage = generation.generatedImages[room.displayName];
 
-      // For the current room, prioritize generated image over uploaded
-      if (room.displayName === currentRoom && generation.generatedImage) {
+      // Priority: generated > uploaded > pregenerated
+      if (generatedImage) {
         result.push({
-          src: generation.generatedImage,
+          src: generatedImage,
           roomDisplayName: room.displayName,
           translationKey: room.translationKey,
           slug: room.slug,
         });
       } else if (uploadedImage) {
-        // Use uploaded image for other rooms or if no generated image
         result.push({
           src: uploadedImage,
           roomDisplayName: room.displayName,
@@ -57,7 +56,7 @@ export function ConceptSummary() {
     });
 
     return result;
-  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, design.selectedCategory, generation.generatedImage]);
+  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, generation.generatedImages]);
 
   // Determine Hero room - last selected, or first room with content
   const heroRoom = useMemo(() => {
@@ -94,9 +93,9 @@ export function ConceptSummary() {
         <h3 className="font-serif text-base text-neutral-900">
           {t("thread.fullHomeVision")}
         </h3>
-        {heroRoom && (
+        {design.selectedStyle && (
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-            {t(heroRoom.translationKey)}
+            {t(`style.${design.selectedStyle}`)}
           </p>
         )}
       </div>

@@ -12,16 +12,16 @@ import { getStyleById } from "@/data/styles";
 const roomTranslationKey: Record<string, string> = {
   "Kitchen": "space.kitchen",
   "Living Room": "space.livingRoom",
-  "Bathroom": "space.bathroom",
   "Bedroom": "space.bedroom",
+  "Bathroom": "space.bathroom",
 };
 
 // Map room name to accusative translation key (for "Kuriame {room}")
 const roomTranslationKeyAcc: Record<string, string> = {
   "Kitchen": "space.kitchenAcc",
   "Living Room": "space.livingRoomAcc",
-  "Bathroom": "space.bathroomAcc",
   "Bedroom": "space.bedroomAcc",
+  "Bathroom": "space.bathroomAcc",
 };
 
 export default function Stage() {
@@ -38,8 +38,8 @@ export default function Stage() {
   } = useDesign();
   const { credits, useCredit, refetchCredits } = useCredits();
 
-  const { uploadedImages, selectedCategory, selectedMaterial } = design;
-  const { generatedImage, isGenerating } = generation;
+  const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
+  const { generatedImages, isGenerating } = generation;
 
   // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
@@ -70,8 +70,9 @@ export default function Stage() {
     }
   }, [credits, handleGenerate, useCredit, refetchCredits, t]);
 
-  // Get current room's uploaded image
+  // Get current room's uploaded image and generated image
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
+  const generatedImage = generatedImages[selectedCategory || "Kitchen"] || null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -203,7 +204,11 @@ export default function Stage() {
               }`}
             >
               <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-              {generatedImage ? t("mobile.stage.revisualize") : t("mobile.stage.visualize")}
+              {canGenerate
+                ? (generatedImage ? t("mobile.stage.revisualize") : t("mobile.stage.visualize"))
+                : (!selectedStyle
+                    ? t("mobile.stage.selectStyle")
+                    : t("mobile.stage.selectPalette"))}
             </button>
           )}
         </div>

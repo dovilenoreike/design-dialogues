@@ -18,6 +18,7 @@ import { saveSession, loadSession, clearSession, SessionData } from "@/lib/sessi
 import { parseUrlState, buildUrl } from "@/lib/url-state";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 import { defaultAuditVariables } from "@/data/layout-audit-rules";
+import { API_CONFIG } from "@/config/api";
 
 export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -158,7 +159,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         lastSelectedRoom: initialSharedSession.selectedCategory,
       });
       if (initialSharedSession.generatedImage) {
-        setGeneration((prev) => ({ ...prev, generatedImage: initialSharedSession.generatedImage }));
+        const currentRoom = initialSharedSession.selectedCategory || "Kitchen";
+        setGeneration((prev) => ({
+          ...prev,
+          generatedImages: { [currentRoom]: initialSharedSession.generatedImage },
+        }));
       }
       setFormData(initialSharedSession.formData);
       setSelectedTierState(initialSharedSession.selectedTier);
@@ -193,8 +198,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     const session = loadSession();
     if (session) {
       setDesign(session.design);
-      if (session.generatedImage) {
-        setGeneration((prev) => ({ ...prev, generatedImage: session.generatedImage }));
+      if (session.generatedImages) {
+        setGeneration((prev) => ({ ...prev, generatedImages: session.generatedImages }));
       }
       setFormData(session.formData);
       setSelectedTierState(session.selectedTier);
@@ -291,7 +296,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Track latest state in a ref for beforeunload handler
   const latestStateRef = useRef({
     design,
-    generatedImage: generation.generatedImage,
+    generatedImages: generation.generatedImages,
     formData,
     selectedTier,
     activeTab,
@@ -306,7 +311,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   useEffect(() => {
     latestStateRef.current = {
       design,
-      generatedImage: generation.generatedImage,
+      generatedImages: generation.generatedImages,
       formData,
       selectedTier,
       activeTab,
@@ -316,7 +321,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       layoutAuditResponses,
       layoutAuditVariables,
     };
-  }, [design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
+  }, [design, generation.generatedImages, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Save immediately when user leaves the page
   useEffect(() => {
@@ -324,7 +329,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       const state = latestStateRef.current;
       saveSession({
         design: state.design,
-        generatedImage: state.generatedImage,
+        generatedImages: state.generatedImages,
         formData: state.formData,
         selectedTier: state.selectedTier,
         activeTab: state.activeTab,
@@ -352,7 +357,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     const currentState = {
       design,
-      generatedImage: generation.generatedImage,
+      generatedImages: generation.generatedImages,
       formData,
       selectedTier,
       activeTab,
@@ -376,16 +381,16 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         saveSession(currentState);
       }
     };
-  }, [isInitialized, design, generation.generatedImage, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
+  }, [isInitialized, design, generation.generatedImages, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Destructure for convenience
-  const { uploadedImages, selectedCategory, selectedMaterial, freestyleDescription } = design;
+  const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle, freestyleDescription } = design;
 
   // Get current room's uploaded image
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
 
-  // Computed: can generate if material selected OR freestyle description provided
-  const canGenerate = !!(selectedMaterial || freestyleDescription.trim().length > 0);
+  // Computed: can generate if (style selected AND material selected) OR freestyle description provided
+  const canGenerate = !!((selectedStyle && selectedMaterial) || freestyleDescription.trim().length > 0);
 
   // Toggle task completion status
   const toggleTask = useCallback((taskId: string) => {
@@ -468,12 +473,17 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         [currentRoom]: null,
       },
     }));
-    setGeneration((prev) => ({ ...prev, generatedImage: null }));
+    setGeneration((prev) => ({
+      ...prev,
+      generatedImages: { ...prev.generatedImages, [currentRoom]: null },
+    }));
   }, [design.selectedCategory]);
 
   // Save/download generated image - mobile compatible
   const handleSaveImage = useCallback(async () => {
-    if (!generation.generatedImage) return;
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const generatedImage = generation.generatedImages[currentRoom];
+    if (!generatedImage) return;
 
     const filename = `${design.selectedCategory}-${design.selectedStyle || 'custom'}-visualization.png`;
 
@@ -485,11 +495,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
       if (isDataUrl) {
         // Convert base64 data URL to blob
-        const response = await fetch(generation.generatedImage);
+        const response = await fetch(generatedImage);
         blob = await response.blob();
       } else {
         // Fetch remote URL and convert to blob
-        const response = await fetch(generation.generatedImage);
+        const response = await fetch(generatedImage);
         blob = await response.blob();
       }
 
@@ -519,14 +529,16 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch (error) {
       console.error("Failed to save image:", error);
       // Fallback: open image in new tab
-      window.open(generation.generatedImage, '_blank');
+      window.open(generatedImage, '_blank');
       toast.info("Image opened in new tab - save from there", { position: "top-center" });
     }
-  }, [generation.generatedImage, design.selectedCategory, design.selectedStyle]);
+  }, [generation.generatedImages, design.selectedCategory, design.selectedStyle]);
 
   // Category selection - show confirmation if there's a generated image
   const handleSelectCategory = useCallback((category: string | null) => {
-    if (generation.generatedImage && category !== design.selectedCategory) {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const hasGeneratedImage = generation.generatedImages[currentRoom];
+    if (hasGeneratedImage && category !== design.selectedCategory) {
       setGeneration((prev) => ({
         ...prev,
         pendingRoomSwitch: category,
@@ -539,7 +551,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedCategory: category,
       lastSelectedRoom: category,
     }));
-  }, [generation.generatedImage, design.selectedCategory]);
+  }, [generation.generatedImages, design.selectedCategory]);
 
   // Material selection
   const handleSelectMaterial = useCallback((material: string | null) => {
@@ -552,7 +564,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Style selection - show confirmation if there's a generated image
   const handleSelectStyle = useCallback((style: string | null) => {
-    if (generation.generatedImage && style !== design.selectedStyle) {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const generatedImage = generation.generatedImages[currentRoom];
+    if (generatedImage && style !== design.selectedStyle) {
       setGeneration((prev) => ({
         ...prev,
         pendingStyleSwitch: style,
@@ -561,7 +575,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return;
     }
     setDesign((prev) => ({ ...prev, selectedStyle: style }));
-  }, [generation.generatedImage, design.selectedStyle]);
+  }, [generation.generatedImages, design.selectedStyle, design.selectedCategory]);
 
   // Freestyle description change
   const handleFreestyleChange = useCallback((description: string) => {
@@ -611,6 +625,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           materialPrompt: materialPrompt || null,
           stylePrompt,
           freestyleDescription: design.freestyleDescription.trim() || null,
+          quality: API_CONFIG.imageGeneration.quality,
         },
       });
 
@@ -623,16 +638,24 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         throw new Error("No image returned from generation service");
       }
 
+      const currentRoom = selectedCategory || "Kitchen";
       setGeneration((prev) => ({
         ...prev,
-        generatedImage: generatedImageBase64,
+        generatedImages: {
+          ...prev.generatedImages,
+          [currentRoom]: generatedImageBase64,
+        },
         isGenerating: false,
       }));
 
       // Save session immediately after successful generation
+      const updatedGeneratedImages = {
+        ...generation.generatedImages,
+        [currentRoom]: generatedImageBase64,
+      };
       saveSession({
         design,
-        generatedImage: generatedImageBase64,
+        generatedImages: updatedGeneratedImages,
         formData,
         selectedTier,
         activeTab,
@@ -651,7 +674,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
       return false;
     }
-  }, [uploadedImage, selectedCategory, design, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
+  }, [uploadedImage, selectedCategory, design, generation.generatedImages, formData, selectedTier, activeTab, activeMode, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
@@ -679,11 +702,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     try {
       const currentRoom = design.selectedCategory || "Kitchen";
       const uploadedImage = design.uploadedImages[currentRoom] || null;
+      const generatedImage = generation.generatedImages[currentRoom] || null;
 
       const { data, error } = await supabase.functions.invoke("share-session", {
         body: {
           uploadedImage,
-          generatedImage: generation.generatedImage,
+          generatedImage: generatedImage,
           selectedCategory: design.selectedCategory,
           selectedMaterial: design.selectedMaterial,
           selectedStyle: design.selectedStyle,
@@ -711,27 +735,30 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } finally {
       setIsSharing(false);
     }
-  }, [design, generation.generatedImage, selectedTier, formData, userMoveInDate, completedTasks]);
+  }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks]);
 
   // Confirm room switch - optionally save image first
   const confirmRoomSwitch = useCallback((saveFirst: boolean) => {
-    if (saveFirst && generation.generatedImage) {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const generatedImage = generation.generatedImages[currentRoom];
+
+    if (saveFirst && generatedImage) {
       handleSaveImage();
     }
-    const newRoom = generation.pendingRoomSwitch;
+
     setGeneration((prev) => ({
       ...prev,
-      generatedImage: null,
+      // Keep generatedImages intact - don't clear on room switch!
       pendingRoomSwitch: null,
       showRoomSwitchDialog: false,
     }));
+
     setDesign((prev) => ({
       ...prev,
-      selectedCategory: newRoom,
-      lastSelectedRoom: newRoom,
-      // uploadedImages stays intact - per-room storage
+      selectedCategory: generation.pendingRoomSwitch,
+      lastSelectedRoom: generation.pendingRoomSwitch,
     }));
-  }, [generation.generatedImage, generation.pendingRoomSwitch, handleSaveImage]);
+  }, [generation.generatedImages, generation.pendingRoomSwitch, handleSaveImage, design.selectedCategory]);
 
   // Cancel room switch
   const cancelRoomSwitch = useCallback(() => {
@@ -744,18 +771,24 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Confirm style switch - optionally save image first
   const confirmStyleSwitch = useCallback((saveFirst: boolean) => {
-    if (saveFirst && generation.generatedImage) {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const generatedImage = generation.generatedImages[currentRoom];
+
+    if (saveFirst && generatedImage) {
       handleSaveImage();
     }
-    const newStyle = generation.pendingStyleSwitch;
+
     setGeneration((prev) => ({
       ...prev,
-      generatedImage: null,
+      generatedImages: {
+        ...prev.generatedImages,
+        [currentRoom]: null,  // Clear only current room
+      },
       pendingStyleSwitch: null,
       showStyleSwitchDialog: false,
     }));
-    setDesign((prev) => ({ ...prev, selectedStyle: newStyle }));
-  }, [generation.generatedImage, generation.pendingStyleSwitch, handleSaveImage]);
+    setDesign((prev) => ({ ...prev, selectedStyle: generation.pendingStyleSwitch }));
+  }, [generation.generatedImages, generation.pendingStyleSwitch, handleSaveImage, design.selectedCategory]);
 
   // Cancel style switch
   const cancelStyleSwitch = useCallback(() => {

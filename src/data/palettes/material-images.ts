@@ -42,6 +42,34 @@ import caramelMaterial3 from "@/assets/materials/caramel-morning/material3.jpg";
 import caramelMaterial4 from "@/assets/materials/caramel-morning/material4.jpg";
 import caramelMaterial5 from "@/assets/materials/caramel-morning/material5.jpg";
 
+// Sleeping Earth
+import sleepingMaterial1 from "@/assets/materials/sleeping-earth/material1.jpg";
+import sleepingMaterial2 from "@/assets/materials/sleeping-earth/material2.jpg";
+import sleepingMaterial3 from "@/assets/materials/sleeping-earth/material3.jpg";
+import sleepingMaterial4 from "@/assets/materials/sleeping-earth/material4.jpg";
+import sleepingMaterial5 from "@/assets/materials/sleeping-earth/material5.jpg";
+
+// Pure Scandi
+import pureScandi1 from "@/assets/materials/pure-scandi/material1.jpg";
+import pureScandi2 from "@/assets/materials/pure-scandi/material2.jpg";
+import pureScandi3 from "@/assets/materials/pure-scandi/material3.jpg";
+import pureScandi4 from "@/assets/materials/pure-scandi/material4.jpg";
+import pureScandi5 from "@/assets/materials/pure-scandi/material5.jpg";
+
+// Spicy Nord
+import spicyNord1 from "@/assets/materials/spicy-nord/material1.jpg";
+import spicyNord2 from "@/assets/materials/spicy-nord/material2.jpg";
+import spicyNord3 from "@/assets/materials/spicy-nord/material3.jpg";
+import spicyNord4 from "@/assets/materials/spicy-nord/material4.jpg";
+import spicyNord5 from "@/assets/materials/spicy-nord/material5.jpg";
+
+// Urban Dusk
+import urbanDusk1 from "@/assets/materials/urban-dusk/material1.jpg";
+import urbanDusk2 from "@/assets/materials/urban-dusk/material2.jpg";
+import urbanDusk3 from "@/assets/materials/urban-dusk/material3.jpg";
+import urbanDusk4 from "@/assets/materials/urban-dusk/material4.jpg";
+import urbanDusk5 from "@/assets/materials/urban-dusk/material5.jpg";
+
 /**
  * Map of palette IDs to their first 5 material images
  */
@@ -52,6 +80,10 @@ export const paletteMaterialImages: Record<string, string[]> = {
   "morning-mist": [morningMaterial1, morningMaterial2, morningMaterial3, morningMaterial4, morningMaterial5],
   "day-by-the-sea": [seaMaterial1, seaMaterial2, seaMaterial3, seaMaterial4, seaMaterial5],
   "caramel-morning": [caramelMaterial1, caramelMaterial2, caramelMaterial3, caramelMaterial4, caramelMaterial5],
+  "sleeping-earth": [sleepingMaterial1, sleepingMaterial2, sleepingMaterial3, sleepingMaterial4, sleepingMaterial5],
+  "pure-scandi": [pureScandi1, pureScandi2, pureScandi3, pureScandi4, pureScandi5],
+  "spicy-nord": [spicyNord1, spicyNord2, spicyNord3, spicyNord4, spicyNord5],
+  "urban-dusk": [urbanDusk1, urbanDusk2, urbanDusk3, urbanDusk4, urbanDusk5],
 };
 
 /**

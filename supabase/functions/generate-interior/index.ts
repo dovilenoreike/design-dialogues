@@ -32,7 +32,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, roomCategory, materialPrompt, materialImages, stylePrompt, freestyleDescription } = await req.json();
+    const { imageBase64, roomCategory, materialPrompt, stylePrompt, freestyleDescription, quality } = await req.json();
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
@@ -56,14 +56,10 @@ serve(async (req) => {
       designPrompt += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
     }
 
-    // Note: images/edits doesn't support multiple reference images, but we include context in prompt
-    if (materialImages && materialImages.length > 0) {
-      designPrompt += ` Match the specified material selections precisely in textures, colors, and finishes.`;
-    }
-
     designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
 
     console.log("Generating interior with prompt:", designPrompt);
+    console.log("Quality setting:", quality || "low");
 
     // Convert base64 image to Blob for FormData
     const imageBlob = base64ToBlob(imageBase64);
@@ -74,6 +70,7 @@ serve(async (req) => {
     formData.append("prompt", designPrompt);
     formData.append("model", "gpt-image-1");
     formData.append("size", "1024x1024");
+    formData.append("quality", quality || "low");  // Use client quality or default to low
 
     const response = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",

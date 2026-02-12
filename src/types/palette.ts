@@ -40,6 +40,7 @@ export interface Palette {
   designerProfile?: DesignerProfile;
   promptSnippet: string;
   materials: Record<string, Material>;
+  status?: "available" | "coming-soon";
 }
 
 export type RoomCategory =

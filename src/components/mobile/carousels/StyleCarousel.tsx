@@ -10,7 +10,11 @@ export default function StyleCarousel() {
   const { selectedStyle, selectedCategory, selectedMaterial } = design;
 
   return (
-    <div className="h-full flex items-center justify-center">
+    <div
+      className={`h-full flex items-center justify-center ${
+        !selectedStyle ? "animate-pulse-subtle" : ""
+      }`}
+    >
       <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
         {styles.map((style) => {
           const isSelected = selectedStyle === style.id;
@@ -21,7 +25,7 @@ export default function StyleCarousel() {
           return (
             <button
               key={style.id}
-              onClick={() => handleSelectStyle(isSelected ? null : style.id)}
+              onClick={() => handleSelectStyle(style.id)}
               className="flex-shrink-0 transition-transform active:scale-95"
             >
               <div

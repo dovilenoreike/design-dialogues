@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Sparkles, MessageSquare, ChevronDown } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaletteById } from "@/data/palettes";
+import { getPaletteById, isComingSoon } from "@/data/palettes";
+import { getPaletteThumbnail } from "@/data/palettes/thumbnails";
 import { getDesignerWithFallback } from "@/data/designers";
 import { getMaterialsForRoom, getMaterialPurpose, getMaterialImageUrl, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
 import MaterialCard from "@/components/MaterialCard";
@@ -12,18 +13,25 @@ import TierPill from "../controls/TierPill";
 import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
+import { ComingSoonPaletteSheet } from "@/components/ComingSoonPaletteSheet";
 
 export default function SpecsView() {
-  const { design, handleSelectMaterial, selectedTier } = useDesign();
+  const { design, handleSelectMaterial, selectedTier, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [isPaletteSelectorOpen, setIsPaletteSelectorOpen] = useState(false);
+  const [isComingSoonSheetOpen, setIsComingSoonSheetOpen] = useState(false);
+  const [isTierWaitlistOpen, setIsTierWaitlistOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const { selectedMaterial, selectedCategory, freestyleDescription } = design;
 
   const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
   const roomCategory = selectedCategory ? mapSpaceCategoryToRoom(selectedCategory) : "all";
+
+  const handleComingSoonClose = () => {
+    setIsComingSoonSheetOpen(false);
+  };
 
   // No selection state
   if (!selectedMaterial && !freestyleDescription) {
@@ -66,6 +74,73 @@ export default function SpecsView() {
           onClose={() => setIsPaletteSelectorOpen(false)}
           selectedPaletteId={selectedMaterial}
           onSelectPalette={handleSelectMaterial}
+        />
+      </div>
+    );
+  }
+
+  // Coming soon palette mode
+  if (selectedMaterial && isComingSoon(selectedMaterial)) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-4">
+          {/* Sticky Room Pills + Tier */}
+          <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                <RoomPillBar />
+              </div>
+              <div className="flex-shrink-0">
+                <TierPill />
+              </div>
+            </div>
+          </div>
+
+          {/* Editorial Headline */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-serif mb-1">
+              {t(`palette.${palette?.id}`) || palette?.name}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("result.curatedBy")} {getDesignerWithFallback(palette?.designer, palette?.designerTitle).name}
+            </p>
+          </div>
+
+          {/* Palette Preview with Coming Soon Overlay */}
+          <div className="relative rounded-xl overflow-hidden w-full max-w-md mx-auto">
+            {/* Wrapper for aspect ratio - constrained width so full square fits */}
+            <div className="relative aspect-square w-full">
+              {palette && getPaletteThumbnail(palette.id) && (
+                <img
+                  src={getPaletteThumbnail(palette.id)}
+                  alt={t(`palette.${palette.id}`) || palette.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+            {/* Coming Soon overlay at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center py-6 px-4">
+              <p className="text-lg font-serif mb-1">{t("comingSoon.screenTitle")}</p>
+              <p className="text-xs text-muted-foreground text-center mb-4 line-clamp-2">
+                {t("comingSoon.screenDescription").replace("{paletteName}", palette?.id ? t(`palette.${palette.id}`) : "")}
+              </p>
+              <button
+                onClick={() => setIsComingSoonSheetOpen(true)}
+                className="px-6 py-2.5 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                {t("comingSoon.beNotifiedButton")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Coming Soon Modal */}
+        <ComingSoonPaletteSheet
+          isOpen={isComingSoonSheetOpen}
+          onClose={handleComingSoonClose}
+          paletteId={selectedMaterial}
+          paletteName={palette?.id ? t(`palette.${palette.id}`) : ""}
+          selectedTier={selectedTier}
         />
       </div>
     );
@@ -140,9 +215,15 @@ export default function SpecsView() {
           {selectedTier !== "Standard" && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-xl">
               <p className="text-lg font-serif mb-1">{t("specs.tierComingSoon")}</p>
-              <p className="text-sm text-muted-foreground text-center px-4">
+              <p className="text-sm text-muted-foreground text-center px-4 mb-4">
                 {t("specs.tierComingSoonDescription")}
               </p>
+              <button
+                onClick={() => setIsTierWaitlistOpen(true)}
+                className="px-6 py-2.5 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                {t("comingSoon.beNotifiedButton")}
+              </button>
             </div>
           )}
           <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
@@ -223,6 +304,15 @@ export default function SpecsView() {
         onClose={() => setIsPaletteSelectorOpen(false)}
         selectedPaletteId={selectedMaterial}
         onSelectPalette={handleSelectMaterial}
+      />
+
+      {/* Tier Waitlist Sheet */}
+      <ComingSoonPaletteSheet
+        isOpen={isTierWaitlistOpen}
+        onClose={() => setIsTierWaitlistOpen(false)}
+        paletteId={selectedMaterial || ""}
+        paletteName={palette?.id ? t(`palette.${palette.id}`) : palette?.name || ""}
+        selectedTier={selectedTier}
       />
     </div>
   );

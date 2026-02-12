@@ -2,6 +2,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPaletteById } from "@/data/palettes";
 import { getPaletteMaterialImages } from "@/data/palettes/material-images";
+import { getDesignerWithFallback } from "@/data/designers";
 import type { LocalizedString } from "@/types/palette";
 
 function getLocalizedName(name: string | LocalizedString | undefined, lang: string): string {
@@ -21,6 +22,7 @@ export function MaterialsSummary() {
 
   const materialImages = getPaletteMaterialImages(palette.id);
   const materials = Object.values(palette.materials);
+  const designer = getDesignerWithFallback(palette.designer, palette.designerTitle);
 
   // Get first 5 materials for the grid
   const displayImages = materialImages.slice(0, 5);
@@ -43,7 +45,7 @@ export function MaterialsSummary() {
           {t(`palette.${palette.id}`)}
         </h3>
         <p className="text-[10px] uppercase tracking-widest text-neutral-500">
-          {t("thread.curatedBy")}: @{palette.designer}
+          {t("thread.curatedBy")}: {designer.name}
         </p>
       </div>
 

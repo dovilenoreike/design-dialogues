@@ -74,6 +74,17 @@ serve(async (req) => {
         `;
         break;
 
+      case "palette-waitlist":
+        subject = `Palette Waitlist Signup: ${data.paletteId}`;
+        html = `
+          <h2>New Palette Waitlist Signup</h2>
+          <p><strong>Palette ID:</strong> ${data.paletteId}</p>
+          <p><strong>Email:</strong> ${data.email}</p>
+          <p><strong>Name:</strong> ${data.name}</p>
+          <p><strong>Budget Tier:</strong> ${data.budgetTier}</p>
+        `;
+        break;
+
       default:
         throw new Error("Unknown email type");
     }

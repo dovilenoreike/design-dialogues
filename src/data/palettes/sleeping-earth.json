@@ -1,0 +1,76 @@
+{
+  "id": "sleeping-earth",
+  "name": "Quiet Earth",
+  "designer": "heya_studio",
+  "designerTitle": "Interior Studio",
+  "status": "coming-soon",
+  "promptSnippet": "Inspired by the quiet, moon lighted evening atmosphere of the earth. Colours of grey sky, white clouds, clay and stone. Walls in warm white. Add decor details in beige and chocolate brown.",
+  "materials": {
+    "material1": {
+      "description": {
+        "en": "Honeyed oak in darker medium tone and herringbone pattern",
+        "lt": "Šiltas, vidutinio atspalvio natūralaus ąžuolo tekstūra"
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Vinyl",
+    "technicalCode": "Macadamia",
+    "showroomIds":["solido-grindys"]
+    },
+    "material2": {
+      "description": {
+        "en": "Charcoal slate colour with blue undertones",
+        "lt": "Nakties mėlyna su pilkšvais atspalviais"
+      },
+      "rooms": ["kitchen", "bathroom", "livingRoom", "bedroom"],
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets", "bathroom": "Vanity unit" },
+      "materialType": "MDF",
+      "technicalCode": "Velvet 7574",
+      "showroomIds":["impeka"]
+    },
+    "material3": {
+      "description": {
+        "en": "Dark grey stone texture",
+        "lt": "Tamsiai pilka akmens tekstūra"
+      },
+      "rooms": ["kitchen", "bathroom"],
+      "purpose": {"default": "Worktops", "kitchen": "Worktops and backsplash"},
+      "materialType": "Compact HPL",
+      "technicalCode": "FONDI 23 Vulcano Grigia",
+      "showroomIds":["impeka"]
+    },
+    "material4": {
+      "description": {
+        "en": "Light grey texture",
+        "lt": "Šviesiai pilka tekstūra"
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
+      "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
+      "materialType": "MDF",
+      "technicalCode": "Velvet 7393",
+      "showroomIds":["impeka"]
+    },
+    "material5": {
+      "description": {
+        "en": "Grey stone texture",
+        "lt": "Pilkas akmens tekstūra"
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "Tiles",
+      "technicalCode": "Florim Sensi Lithos Grey",
+      "showroomIds":["linea"]
+    },
+    "material6": {
+      "description": {
+        "en": "ONYX&MORE SILVER PORPHYRY tiles Dark taupe-grey natural stone texture with high variation, cloudy movement and fractured veining. Irregular white mineral streaks cutting through the surface.",
+        "lt": "Pilkos plytelės su uolų tekstūra"
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas"},
+      "materialType": "Tiles",
+      "technicalCode": "Florim ONYX&MORE SILVER PORPHYRY STR SAT",
+      "showroomIds":["linea"]
+    }
+  }
+}

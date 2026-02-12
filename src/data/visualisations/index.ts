@@ -17,8 +17,8 @@ function roomNameToId(roomName: string): string {
   const mapping: Record<string, string> = {
     Kitchen: "kitchen",
     "Living Room": "living-room",
-    Bathroom: "bathroom",
     Bedroom: "bedroom",
+    Bathroom: "bathroom",
   };
   return mapping[roomName] || DEFAULT_ROOM;
 }

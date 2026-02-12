@@ -18,7 +18,7 @@
     "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
   },
   "landing": {
-    "title": "Namų įrengimas – be spėlionių.",
+    "title": "Tobulos erdvės formulė",
     "subtitle": "Momentinė vizualizacija ir realus finansinis planas. Kurkite namus užtikrintai, o ne tik vaizduotėje.",
     "uploadHint": "Įkelkite savo erdvę",
     "uploadHelper": "Nuotrauka, eskizas arba planas",
@@ -48,7 +48,7 @@
     "plan": "Planas"
   },
   "thread": {
-    "title": "Namų įrengimas – be spėlionių",
+    "title": "Tobulos erdvės formulė",
     "projectLabel": "{{area}} M² BUTAS • {{city}}",
     "projectLabelCityOnly": "{{city}}",
     "defineParameters": "Nurodykite parametrus įverčiams apskaičiuoti",
@@ -79,15 +79,19 @@
     "morning-mist": "Ryto migla",
     "chocolate-wabi-sabi": "Wabi-sabi šokolade",
     "day-by-the-sea": "Diena prie jūros",
-    "caramel-morning": "Karamelinis rytas"
+    "caramel-morning": "Karamelinis rytas",
+    "sleeping-earth": "Mieganti žemė",
+    "urban-dusk": "Miesto prieblanda",
+    "pure-scandi": "Grynai skandi",
+    "spicy-nord": "Charakteringa šiaurė"
   },
-  "style": {
+"style": {
     "scandinavian-minimalism": "Skandinaviškas",
     "japandi": "Japandi",
     "modern-classic": "Šiuolaikinė Klasika",
     "soft-industrial": "Švelnus Industrinis",
     "art-inspired-modernism": "Meno Įkvėptas Modernizmas",
-    "quiet-luxury": "Santūri Prabanga"
+    "quiet-luxury": "Tyli Prabanga"
   },
   "architecture": {
     "minimalist": "Minimalistinis",
@@ -130,6 +134,7 @@
       "Walls": "Sienos",
       "Tiles": "Plytelės",
       "Shelving": "Lentynos",
+      "Top Cabinets with shelves": "Lentynos ir viršutinės spintelės",
       "Top cabinets": "Viršutinės spintelės",
       "Bottom cabinets": "Apatinės spintelės",
       "Cabinetry": "Spintelės",
@@ -139,7 +144,8 @@
       "Drawer fronts": "Stalčių fasadai",
       "Other cabinet surfaces": "Kitos spintelių dalys",
       "Accent areas": "Akcentinės zonos",
-      "Vanity unit": "Praustuvo spintelė"
+      "Vanity unit": "Praustuvo spintelė",
+      "Side walls": "Sienos"
     },
     "type": {
       "Vinyl": "Vinilas",
@@ -423,6 +429,10 @@
       "generating": "Generuojama...",
       "revisualize": "Pergeneruoti",
       "visualize": "Vizualizuoti",
+      "selectStyle": "Pasirinkti Stilių",
+      "selectPalette": "Pasirinkti Paletę",
+      "styleHint": "1 žingsnis iš 2: Pasirinkite dizaino stilių",
+      "paletteHint": "2 žingsnis iš 2: Pasirinkite paletę arba aprašykite medžiagas",
       "replace": "Pakeisti",
       "share": "Dalintis"
     },
@@ -831,5 +841,21 @@
         "circulationBlocking": "Durys, blokuojančios praėjimus, sukuria nuolatinį naršymą aplink kliūtis."
       }
     }
+  },
+  "comingSoon": {
+    "badge": "Greitai",
+    "screenTitle": "Jau greitai!",
+    "screenDescription": "{paletteName} paletė netrukus bus paruošta.",
+    "beNotifiedButton": "Sužinok pirmas",
+    "sheetTitle": "Gauti pranešimą",
+    "sheetDescription": "Mes jums pranešime el. paštu, kai ši paletė bus paruošta.",
+    "emailPlaceholder": "jusu@el-pastas.lt",
+    "namePlaceholder": "Jūsų vardas (neprivaloma)",
+    "tierLabel": "Biudžeto lygis: {tier}",
+    "tierNote": "Mes pranešime, kai medžiagos bus paruoštos šiam lygiui",
+    "submitButton": "Pranešti, kai bus paruošta",
+    "successMessage": "Ačiū! Mes jums pranešime el. paštu, kai {paletteName} bus paruošta.",
+    "errorMessage": "Nepavyko išsaugoti jūsų el. pašto. Bandykite dar kartą.",
+    "notificationToast": "Mes jums pranešime, kai bus paruošta!"
   }
 }

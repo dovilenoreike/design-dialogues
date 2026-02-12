@@ -16,7 +16,7 @@ export interface GenerationState {
   isProcessing: boolean;
   isGenerating: boolean;
   showResults: boolean;
-  generatedImage: string | null;
+  generatedImages: Record<string, string | null>;
   pendingRoomSwitch: string | null;
   showRoomSwitchDialog: boolean;
   pendingStyleSwitch: string | null;
@@ -36,7 +36,7 @@ export const initialGenerationState: GenerationState = {
   isProcessing: false,
   isGenerating: false,
   showResults: false,
-  generatedImage: null,
+  generatedImages: {},
   pendingRoomSwitch: null,
   showRoomSwitchDialog: false,
   pendingStyleSwitch: null,

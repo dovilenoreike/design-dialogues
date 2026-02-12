@@ -48,7 +48,7 @@
     "plan": "Plan"
   },
   "thread": {
-    "title": "Renovation without guesswork",
+    "title": "The formula for a perfect space",
     "projectLabel": "{{area}} M² APARTMENT • {{city}}",
     "projectLabelCityOnly": "{{city}}",
     "defineParameters": "Define parameters to calculate estimates",
@@ -81,7 +81,11 @@
     "art-inspired-modernism": "Art-Inspired Modernism",
     "quiet-luxury": "Quiet Luxury",
     "day-by-the-sea": "Day by the Sea",
-    "caramel-morning": "Caramel Morning"
+    "caramel-morning": "Caramel Morning",
+    "sleeping-earth": "Sleeping Earth",
+    "urban-dusk": "Urban Dusk",
+    "pure-scandi": "Pure Scandi",
+    "spicy-nord": "Spicy Nord"
   },
   "style": {
     "scandinavian-minimalism": "Scandinavian Minimalism",
@@ -130,9 +134,11 @@
       "Worktops and backsplash": "Worktops and backsplash",
       "Tiles": "Tiles",
       "Shelving": "Shelving",
+      "Top Cabinets with shelves": "Top Cabinets with shelves",
       "Top cabinets": "Top cabinets",
       "Bottom cabinets": "Bottom cabinets",
-      "Cabinet furniture": "Cabinet furniture"
+      "Cabinet furniture": "Cabinet furniture",
+      "Accent walls": "Accent walls"
     },
     "type": {
       "Vinyl": "Vinyl",
@@ -416,6 +422,10 @@
       "generating": "Generating...",
       "revisualize": "Re-visualize",
       "visualize": "Visualize",
+      "selectStyle": "Select Style",
+      "selectPalette": "Select Palette",
+      "styleHint": "Step 1 of 2: Choose a design style",
+      "paletteHint": "Step 2 of 2: Choose a palette or describe materials",
       "replace": "Replace",
       "share": "Share"
     },
@@ -824,5 +834,21 @@
         "circulationBlocking": "Doors blocking walkways create constant navigation around obstacles."
       }
     }
+  },
+  "comingSoon": {
+    "badge": "Soon",
+    "screenTitle": "Coming Soon",
+    "screenDescription": "{paletteName} is still being perfected.",
+    "beNotifiedButton": "Be Notified",
+    "sheetTitle": "Get Notified",
+    "sheetDescription": "We'll email you when this palette is ready.",
+    "emailPlaceholder": "your@email.com",
+    "namePlaceholder": "Your name (optional)",
+    "tierLabel": "Budget Tier: {tier}",
+    "tierNote": "We'll notify you when materials are ready for this tier",
+    "submitButton": "Notify Me When Ready",
+    "successMessage": "Thanks! We'll email you when {paletteName} is ready.",
+    "errorMessage": "Failed to save your email. Please try again.",
+    "notificationToast": "We'll let you know when it's ready!"
   }
 }

@@ -1,0 +1,77 @@
+{
+  "id": "spicy-nord",
+  "name": "Spicy Nord",
+  "designer": "dizaino_dialogai",
+  "designerTitle": "Dizaino Platforma",
+  "status": "coming-soon",
+  "promptSnippet": "Inspired by modern Scandi interiors with character. Decorate with natural textiles, natural wood, black and chrome details. Walls in white.",
+  "materials": { 
+    "material1": {
+      "description": {
+        "en": "Light conrete texture with subtle warm undertones, matte finish.",
+        "lt": "Šviesaus betono tekstūra."
+      },
+      "rooms": ["kitchen", "livingRoom", "bedroom"],
+      "purpose": { "default": "Flooring"},
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material2": {
+      "description": {
+        "en": "Bold white and black marble calacatta viola texture.",
+        "lt": "Drąsi juodo ir balto marmuro tekstūra."
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Worktops and backsplash"},
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material3": {
+      "description": {
+        "en": "Flat matte off-white.",
+        "lt": "Matinė šilta balta spalva."
+      },
+      "rooms": ["kitchen"],
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry", "bathroom": "Vanity unit" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material4": {
+      "description": {
+        "en": "Natural oak veneer, vertical grain, amber undertones, matte natural oil finish",
+        "lt": "Natūralaus medžio tekstūra"
+      },
+      "rooms": ["bedroom", "livingRoom", "bathroom"],
+      "purpose": { "default": "Cabinet furniture", "kitchen": "Cabinetry", "bathroom": "Vanity unit"},
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material5": {
+      "description": {
+        "en": "Soft white stone-effect tiles with subtle texture, matte finish.",
+        "lt": "Švelnios baltos akmens tekstūros plytelės."
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Tiles" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    },
+    "material6": {
+      "description": {
+        "en": "Bold white and black marble calacatta viola texture.",
+        "lt": "Drąsi juodo ir balto marmuro tekstūra."
+      },
+      "rooms": ["bathroom"],
+      "purpose": { "default": "Accent areas" },
+      "materialType": "",
+      "technicalCode": "",
+      "showroomIds":[""]
+    }
+
+  }
+}
