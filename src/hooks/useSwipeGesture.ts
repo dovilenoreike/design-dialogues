@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 
 interface SwipeConfig {
   onSwipeLeft: () => void;
@@ -33,12 +33,13 @@ export function useSwipeGesture({
     dragOffset: 0,
   });
 
+  const elementRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<TouchPosition | null>(null);
   const touchCurrent = useRef<TouchPosition | null>(null);
   const isHorizontalSwipe = useRef<boolean | null>(null);
 
   const handleTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
+    (e: TouchEvent) => {
       if (disabled) return;
 
       const touch = e.touches[0];
@@ -54,7 +55,7 @@ export function useSwipeGesture({
   );
 
   const handleTouchMove = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
+    (e: TouchEvent) => {
       if (disabled || !touchStart.current) return;
 
       const touch = e.touches[0];
@@ -72,14 +73,21 @@ export function useSwipeGesture({
       // Determine if this is a horizontal swipe on first significant movement
       if (isHorizontalSwipe.current === null && (absDeltaX > 10 || absDeltaY > 10)) {
         isHorizontalSwipe.current = absDeltaX > absDeltaY;
+
+        // Try to prevent default early if it's a horizontal swipe
+        if (isHorizontalSwipe.current && e.cancelable) {
+          e.preventDefault();
+        }
       }
 
       // Only proceed if we've determined this is a horizontal swipe
       if (isHorizontalSwipe.current) {
         // Check if vertical deviation is within acceptable range
         if (absDeltaY <= maxVerticalDeviation) {
-          // Prevent default scrolling for horizontal swipes
-          e.preventDefault();
+          // Try to prevent default scrolling for horizontal swipes (only if cancelable)
+          if (e.cancelable) {
+            e.preventDefault();
+          }
 
           // Update drag offset for visual feedback
           setSwipeState({
@@ -143,13 +151,26 @@ export function useSwipeGesture({
     isHorizontalSwipe.current = null;
   }, []);
 
+  // Attach native event listeners with passive: false
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    element.addEventListener('touchstart', handleTouchStart);
+    element.addEventListener('touchmove', handleTouchMove, { passive: false });
+    element.addEventListener('touchend', handleTouchEnd);
+    element.addEventListener('touchcancel', handleTouchCancel);
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchmove', handleTouchMove);
+      element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchCancel);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel]);
+
   return {
     ...swipeState,
-    handlers: {
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
-      onTouchCancel: handleTouchCancel,
-    },
+    ref: elementRef,
   };
 }

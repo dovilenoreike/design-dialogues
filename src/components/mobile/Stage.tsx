@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo, useEffect } from "react";
 import { Upload, Sparkles, Loader2, Camera, X, Download, LayoutGrid, Palette } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -62,6 +62,28 @@ export default function Stage() {
     return items[nextIndex];
   }, []);
 
+  // Get previous item (wraps to end)
+  const getPrevItem = useCallback(<T,>(
+    current: string | null,
+    items: T[],
+    getKey: (item: T) => string
+  ): T => {
+    return getNextItem(current, items, 'right', getKey);
+  }, [getNextItem]);
+
+  // Calculate image URL for any room/style/palette combo
+  const getImageForState = useCallback((
+    category: string | null,
+    material: string | null,
+    style: string | null
+  ): string => {
+    const roomName = category || "Kitchen";
+    const uploadedImage = uploadedImages[roomName];
+    const generatedImage = generatedImages[roomName];
+    const visualizationImage = getVisualization(material, category, style);
+    return generatedImage || uploadedImage || visualizationImage;
+  }, [uploadedImages, generatedImages]);
+
   // Swipe handlers
   const handleSwipeLeft = useCallback(() => {
     if (isGenerating || showRoomSwitchDialog || showStyleSwitchDialog) return;
@@ -102,7 +124,7 @@ export default function Stage() {
   }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
 
   // Apply swipe gesture
-  const { isDragging, dragOffset, handlers } = useSwipeGesture({
+  const { isDragging, dragOffset, ref } = useSwipeGesture({
     onSwipeLeft: handleSwipeLeft,
     onSwipeRight: handleSwipeRight,
     disabled: isGenerating || showRoomSwitchDialog || showStyleSwitchDialog,
@@ -172,6 +194,51 @@ export default function Stage() {
   const roomNameAcc = t(roomTranslationKeyAcc[roomNameRaw] || roomTranslationKey[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
 
+  // Calculate prev/current/next based on activeMode
+  const prevImage = useMemo(() => {
+    switch (activeMode) {
+      case 'rooms': {
+        const prevRoom = getPrevItem(selectedCategory, rooms, r => r.name);
+        return getImageForState(prevRoom.name, selectedMaterial, selectedStyle);
+      }
+      case 'styles': {
+        const prevStyle = getPrevItem(selectedStyle, styles, s => s.id);
+        return getImageForState(selectedCategory, selectedMaterial, prevStyle.id);
+      }
+      case 'palettes': {
+        const prevPalette = getPrevItem(selectedMaterial, palettes, p => p.id);
+        return getImageForState(selectedCategory, prevPalette.id, selectedStyle);
+      }
+    }
+  }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getPrevItem, getImageForState]);
+
+  const currentImage = displayImage; // Already calculated
+
+  const nextImage = useMemo(() => {
+    switch (activeMode) {
+      case 'rooms': {
+        const nextRoom = getNextItem(selectedCategory, rooms, 'left', r => r.name);
+        return getImageForState(nextRoom.name, selectedMaterial, selectedStyle);
+      }
+      case 'styles': {
+        const nextStyle = getNextItem(selectedStyle, styles, 'left', s => s.id);
+        return getImageForState(selectedCategory, selectedMaterial, nextStyle.id);
+      }
+      case 'palettes': {
+        const nextPalette = getNextItem(selectedMaterial, palettes, 'left', p => p.id);
+        return getImageForState(selectedCategory, nextPalette.id, selectedStyle);
+      }
+    }
+  }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getNextItem, getImageForState]);
+
+  // Preload adjacent images
+  useEffect(() => {
+    [prevImage, nextImage].forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [prevImage, nextImage]);
+
   return (
     <div className="relative w-full h-full bg-surface-muted">
       {/* Hidden file input */}
@@ -183,20 +250,47 @@ export default function Stage() {
         className="hidden"
       />
 
-      {/* Background visualization image */}
+      {/* Carousel container */}
       <div
-        className="absolute inset-0"
-        {...handlers}
-        style={{
-          transform: `translateX(${dragOffset}px)`,
-          transition: isDragging ? 'none' : 'transform 300ms ease-out',
-        }}
+        ref={ref}
+        className="absolute inset-0 overflow-hidden"
       >
-        <img
-          src={displayImage}
-          alt={`${roomName} visualization`}
-          className="w-full h-full object-cover"
-        />
+        {/* Inner track that slides */}
+        <div
+          className="absolute inset-0 flex"
+          style={{
+            width: '300%',
+            transform: `translateX(calc(${-100 / 3}% + ${dragOffset}px))`,
+            transition: isDragging ? 'none' : 'transform 300ms ease-out',
+          }}
+        >
+          {/* Previous Image */}
+          <div className="relative h-full flex-shrink-0" style={{ width: 'calc(100% / 3)' }}>
+            <img
+              src={prevImage}
+              alt="Previous"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Current Image */}
+          <div className="relative h-full flex-shrink-0" style={{ width: 'calc(100% / 3)' }}>
+            <img
+              src={currentImage}
+              alt={`${roomName} visualization`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Next Image */}
+          <div className="relative h-full flex-shrink-0" style={{ width: 'calc(100% / 3)' }}>
+            <img
+              src={nextImage}
+              alt="Next"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Disclaimer - always visible at bottom right */}
@@ -208,23 +302,27 @@ export default function Stage() {
 
       {/* Upload overlay - show when no user image */}
       {!hasUserImage && (
-        <button
-          onClick={handleUploadClick}
-          className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 transition-colors active:bg-black/50"
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 transition-colors pointer-events-none"
         >
-          <div className="w-16 h-16 mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Upload className="w-7 h-7 text-white" strokeWidth={1.5} />
-          </div>
-          <h2
-            key={roomName}
-            className="text-2xl font-serif text-white/80 mb-2 [text-shadow:0_2px_8px_rgba(0,0,0,0.3)] animate-fade-in-up"
+          <button
+            onClick={handleUploadClick}
+            className="pointer-events-auto flex flex-col items-center active:scale-95 transition-transform"
           >
-            {t("mobile.stage.designingThe").replace("{room}", roomNameAcc)}
-          </h2>
-          <p className="text-sm text-white/80">
-            {t("mobile.stage.uploadPrompt")}
-          </p>
-        </button>
+            <div className="w-16 h-16 mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <Upload className="w-7 h-7 text-white" strokeWidth={1.5} />
+            </div>
+            <h2
+              key={roomName}
+              className="text-2xl font-serif text-white/80 mb-2 [text-shadow:0_2px_8px_rgba(0,0,0,0.3)] animate-fade-in-up"
+            >
+              {t("mobile.stage.designingThe").replace("{room}", roomNameAcc)}
+            </h2>
+            <p className="text-sm text-white/80">
+              {t("mobile.stage.uploadPrompt")}
+            </p>
+          </button>
+        </div>
       )}
 
       {/* Status badge and action buttons - show when user has uploaded/generated */}
