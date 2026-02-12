@@ -489,7 +489,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     try {
       // Check if it's a data URL or a remote URL
-      const isDataUrl = generation.generatedImage.startsWith('data:');
+      const isDataUrl = generatedImage.startsWith('data:');
 
       let blob: Blob;
 

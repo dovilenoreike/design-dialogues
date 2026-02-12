@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { format } from "date-fns";
 import { Search, ShoppingBag, CheckCircle, ArrowRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { calculateTimeline, calculatePhaseStates } from "@/components/result-dashboard/timeline-utils";
 import type { ServiceSelection } from "@/types/calculator";
 import type { TimelineTask } from "@/types/timeline";
+import { MoveInDateSummary } from "./MoveInDateSummary";
 
 const defaultServices: ServiceSelection = {
   spacePlanning: true,
@@ -149,9 +149,10 @@ export function RoadmapSummary() {
       )}
 
       {/* Move-in date */}
-      <p className="text-xs text-neutral-500">
-        {t("timeline.moveIn.title")}: {format(displayDate, "MMM d, yyyy", { locale: dateLocale })}
-      </p>
+      <MoveInDateSummary
+        moveInDate={displayDate}
+        hasConflicts={overdueTasks.length > 0}
+      />
     </div>
   );
 }

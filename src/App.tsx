@@ -10,7 +10,6 @@ import { CreditsProvider } from "@/contexts/CreditsContext";
 import { CityProvider } from "@/contexts/CityContext";
 import Index from "./pages/Index";
 import SharedSession from "./pages/SharedSession";
-import Calculator from "./pages/Calculator";
 import HowItWorks from "./pages/HowItWorks";
 import Mission from "./pages/Mission";
 import Partner from "./pages/Partner";
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/budget" element={<Index />} />
             <Route path="/plan" element={<Index />} />
             <Route path="/share/:shareId" element={<SharedSession />} />
-            <Route path="/calculator" element={<Calculator />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/mission" element={<Mission />} />
             <Route path="/partner" element={<Partner />} />

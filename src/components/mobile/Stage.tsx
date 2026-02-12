@@ -5,8 +5,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
 import { toast } from "sonner";
 import { getVisualization } from "@/data/visualisations";
-import { getPaletteById } from "@/data/palettes";
-import { getStyleById } from "@/data/styles";
+import { getPaletteById, palettes } from "@/data/palettes";
+import { getStyleById, styles } from "@/data/styles";
+import { rooms } from "@/data/rooms";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 // Map room name to translation key (nominative)
 const roomTranslationKey: Record<string, string> = {
@@ -35,11 +37,76 @@ export default function Stage() {
     handleGenerate,
     handleSaveImage,
     setActiveMode,
+    activeMode,
+    handleSelectCategory,
+    handleSelectStyle,
+    handleSelectMaterial,
   } = useDesign();
   const { credits, useCredit, refetchCredits } = useCredits();
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
-  const { generatedImages, isGenerating } = generation;
+  const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
+
+  // Helper: Get next/prev item with wrapping
+  const getNextItem = useCallback(<T,>(
+    current: string | null,
+    items: T[],
+    direction: 'left' | 'right',
+    getKey: (item: T) => string
+  ): T => {
+    const currentIndex = items.findIndex((item) => getKey(item) === current);
+    const validIndex = currentIndex === -1 ? 0 : currentIndex;
+    const nextIndex = direction === 'left'
+      ? (validIndex + 1) % items.length
+      : (validIndex - 1 + items.length) % items.length;
+    return items[nextIndex];
+  }, []);
+
+  // Swipe handlers
+  const handleSwipeLeft = useCallback(() => {
+    if (isGenerating || showRoomSwitchDialog || showStyleSwitchDialog) return;
+
+    switch (activeMode) {
+      case 'rooms':
+        const nextRoom = getNextItem(selectedCategory, rooms, 'left', r => r.name);
+        handleSelectCategory(nextRoom.name);
+        break;
+      case 'styles':
+        const nextStyle = getNextItem(selectedStyle, styles, 'left', s => s.id);
+        handleSelectStyle(nextStyle.id);
+        break;
+      case 'palettes':
+        const nextPalette = getNextItem(selectedMaterial, palettes, 'left', p => p.id);
+        handleSelectMaterial(nextPalette.id);
+        break;
+    }
+  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (isGenerating || showRoomSwitchDialog || showStyleSwitchDialog) return;
+
+    switch (activeMode) {
+      case 'rooms':
+        const nextRoom = getNextItem(selectedCategory, rooms, 'right', r => r.name);
+        handleSelectCategory(nextRoom.name);
+        break;
+      case 'styles':
+        const nextStyle = getNextItem(selectedStyle, styles, 'right', s => s.id);
+        handleSelectStyle(nextStyle.id);
+        break;
+      case 'palettes':
+        const nextPalette = getNextItem(selectedMaterial, palettes, 'right', p => p.id);
+        handleSelectMaterial(nextPalette.id);
+        break;
+    }
+  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
+
+  // Apply swipe gesture
+  const { isDragging, dragOffset, handlers } = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    disabled: isGenerating || showRoomSwitchDialog || showStyleSwitchDialog,
+  });
 
   // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
@@ -117,7 +184,14 @@ export default function Stage() {
       />
 
       {/* Background visualization image */}
-      <div className="absolute inset-0">
+      <div
+        className="absolute inset-0"
+        {...handlers}
+        style={{
+          transform: `translateX(${dragOffset}px)`,
+          transition: isDragging ? 'none' : 'transform 300ms ease-out',
+        }}
+      >
         <img
           src={displayImage}
           alt={`${roomName} visualization`}
