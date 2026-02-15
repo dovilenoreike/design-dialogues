@@ -26,9 +26,9 @@ export const designRates: Record<Tier, number> = {
  * Kitchen & Joinery rates per linear meter
  */
 export const kitchenRates: Record<Tier, number> = {
-  Budget: 800,
-  Standard: 1200,
-  Premium: 2000,
+  Budget: 700,
+  Standard: 1000,
+  Premium: 1800,
 };
 
 /**
