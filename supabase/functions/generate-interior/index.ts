@@ -1,3 +1,4 @@
+// @ts-nocheck - Deno imports not recognized by local TypeScript
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -5,34 +6,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Convert base64 data URL to Blob
-function base64ToBlob(base64DataUrl: string): Blob {
-  // Extract the base64 content and mime type
-  const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!matches) {
-    throw new Error("Invalid base64 data URL format");
-  }
-
-  const mimeType = matches[1];
-  const base64Data = matches[2];
-
-  // Decode base64 to binary
-  const binaryString = atob(base64Data);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  return new Blob([bytes], { type: mimeType });
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { imageBase64, roomCategory, materialPrompt, stylePrompt, freestyleDescription, quality, model } = await req.json();
+    // Parse FormData instead of JSON (binary image, no base64 conversion needed)
+    const formData = await req.formData();
+
+    const imageFile = formData.get('image') as File;
+    const roomCategory = formData.get('roomCategory') as string;
+    const materialPrompt = formData.get('materialPrompt') as string | null;
+    const stylePrompt = formData.get('stylePrompt') as string | null;
+    const freestyleDescription = formData.get('freestyleDescription') as string | null;
+    const quality = formData.get('quality') as string || 'low';
+    const model = formData.get('model') as string || 'gpt-image-1';
+
+    if (!imageFile) {
+      throw new Error("No image file provided");
+    }
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
@@ -59,25 +52,22 @@ serve(async (req) => {
     designPrompt += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
 
     console.log("Generating interior with prompt:", designPrompt);
-    console.log("Quality setting:", quality || "low");
+    console.log("Quality setting:", quality);
 
-    // Convert base64 image to Blob for FormData
-    const imageBlob = base64ToBlob(imageBase64);
-
-    // Build FormData for images/edits endpoint
-    const formData = new FormData();
-    formData.append("image", imageBlob, "room.png");
-    formData.append("prompt", designPrompt);
-    formData.append("model", model || "gpt-image-1");
-    formData.append("size", "1024x1024");
-    formData.append("quality", quality || "low");  // Use client quality or default to low
+    // Build FormData for images/edits endpoint (pass File directly, no base64 conversion!)
+    const openaiFormData = new FormData();
+    openaiFormData.append("image", imageFile, "room.png");
+    openaiFormData.append("prompt", designPrompt);
+    openaiFormData.append("model", model);
+    openaiFormData.append("size", "1024x1024");
+    openaiFormData.append("quality", quality);
 
     const response = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
-      body: formData,
+      body: openaiFormData,
     });
 
     if (!response.ok) {

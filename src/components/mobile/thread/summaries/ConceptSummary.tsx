@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -21,12 +21,47 @@ export function ConceptSummary() {
   const { design, generation, setActiveTab, handleSelectCategory } = useDesign();
   const { t } = useLanguage();
 
+  // Create object URLs for File objects (uploaded images)
+  const objectUrlsRef = useRef<Map<string, string>>(new Map());
+
+  // Create object URL for a File, reusing existing URL if possible
+  const getObjectUrl = useCallback((file: File | null, key: string): string | null => {
+    if (!file) {
+      // Clean up existing URL if file is removed
+      const existingUrl = objectUrlsRef.current.get(key);
+      if (existingUrl) {
+        URL.revokeObjectURL(existingUrl);
+        objectUrlsRef.current.delete(key);
+      }
+      return null;
+    }
+
+    // Check if we already have a URL for this file
+    const existingUrl = objectUrlsRef.current.get(key);
+    if (existingUrl) {
+      return existingUrl;
+    }
+
+    // Create new URL
+    const url = URL.createObjectURL(file);
+    objectUrlsRef.current.set(key, url);
+    return url;
+  }, []);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current.clear();
+    };
+  }, []);
+
   // Build room images array - always 4 rooms
   const roomImages = useMemo(() => {
     const result: RoomImage[] = [];
 
     ROOM_CONFIG.forEach(room => {
-      const uploadedImage = design.uploadedImages[room.displayName];
+      const uploadedFile = design.uploadedImages[room.displayName];
       const generatedImage = generation.generatedImages[room.displayName];
 
       // Priority: generated > uploaded > pregenerated
@@ -37,13 +72,17 @@ export function ConceptSummary() {
           translationKey: room.translationKey,
           slug: room.slug,
         });
-      } else if (uploadedImage) {
-        result.push({
-          src: uploadedImage,
-          roomDisplayName: room.displayName,
-          translationKey: room.translationKey,
-          slug: room.slug,
-        });
+      } else if (uploadedFile) {
+        // Convert File to object URL for display
+        const uploadedImageUrl = getObjectUrl(uploadedFile, room.displayName);
+        if (uploadedImageUrl) {
+          result.push({
+            src: uploadedImageUrl,
+            roomDisplayName: room.displayName,
+            translationKey: room.translationKey,
+            slug: room.slug,
+          });
+        }
       } else if (design.selectedMaterial && design.selectedStyle) {
         // Fall back to pregenerated
         result.push({
@@ -56,7 +95,7 @@ export function ConceptSummary() {
     });
 
     return result;
-  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, generation.generatedImages]);
+  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, generation.generatedImages, getObjectUrl]);
 
   // Determine Hero room - last selected, or first room with content
   const heroRoom = useMemo(() => {

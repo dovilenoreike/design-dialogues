@@ -425,7 +425,8 @@ async function generateImage(
 
   // Create a File from the buffer (matching UI implementation exactly)
   // Always use image/png - same as UI code in src/lib/openai-api.ts
-  const imageBlob = new Blob([imageBuffer], { type: "image/png" });
+  // Convert Buffer to Uint8Array for TypeScript compatibility with BlobPart
+  const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: "image/png" });
   const imageFile = new File([imageBlob], "room.png", { type: "image/png" });
 
   // Use CLI quality override if provided, otherwise use config default
