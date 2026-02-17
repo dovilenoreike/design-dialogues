@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
+import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const HOLD_OUTPUT_DURATION = 1500;
 const FADE_OUT_DURATION = 500;
 
 export function ConceptPlaceholder() {
+  const { setActiveTab } = useDesign();
   const { t } = useLanguage();
   const [stateIndex, setStateIndex] = useState(0);
   const [phase, setPhase] = useState<"fadeIn" | "holdInput" | "crossfade" | "holdOutput" | "fadeOut">("fadeIn");
@@ -54,6 +56,10 @@ export function ConceptPlaceholder() {
     return () => clearTimeout(timeout);
   }, [phase, advancePhase]);
 
+  const handleClick = () => {
+    setActiveTab("design");
+  };
+
   const currentState = TRANSFORMATION_STATES[stateIndex];
 
   // Determine opacity for each layer based on phase
@@ -66,8 +72,9 @@ export function ConceptPlaceholder() {
   const showResult = phase === "crossfade" || phase === "holdOutput" || phase === "fadeOut";
 
   return (
-    <div
-      className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden group"
+    <button
+      onClick={handleClick}
+      className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer group"
     >
       {/* Background images container with fade in/out */}
       <div className={cn("absolute inset-0", getContainerOpacity())}>
@@ -107,6 +114,6 @@ export function ConceptPlaceholder() {
 
       {/* Hover state */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
-    </div>
+    </button>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 export interface DesignSelection {
-  uploadedImages: Record<string, File | null>;  // Per-room uploaded File objects, keyed by room name
+  uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name
   selectedCategory: string | null;
   selectedMaterial: string | null;
   selectedStyle: string | null;  // Combined style ID (architecture + atmosphere)

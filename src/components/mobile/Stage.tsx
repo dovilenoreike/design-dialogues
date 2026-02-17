@@ -47,42 +47,6 @@ export default function Stage() {
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
 
-  // Create object URLs for File objects (uploaded images)
-  // Store URLs in a ref to track them for cleanup
-  const objectUrlsRef = useRef<Map<string, string>>(new Map());
-
-  // Create object URL for a File, reusing existing URL if possible
-  const getObjectUrl = useCallback((file: File | null, key: string): string | null => {
-    if (!file) {
-      // Clean up existing URL if file is removed
-      const existingUrl = objectUrlsRef.current.get(key);
-      if (existingUrl) {
-        URL.revokeObjectURL(existingUrl);
-        objectUrlsRef.current.delete(key);
-      }
-      return null;
-    }
-
-    // Check if we already have a URL for this file
-    const existingUrl = objectUrlsRef.current.get(key);
-    if (existingUrl) {
-      return existingUrl;
-    }
-
-    // Create new URL
-    const url = URL.createObjectURL(file);
-    objectUrlsRef.current.set(key, url);
-    return url;
-  }, []);
-
-  // Cleanup object URLs on unmount
-  useEffect(() => {
-    return () => {
-      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      objectUrlsRef.current.clear();
-    };
-  }, []);
-
   // Helper: Get next/prev item with wrapping
   const getNextItem = useCallback(<T,>(
     current: string | null,
@@ -114,13 +78,11 @@ export default function Stage() {
     style: string | null
   ): string => {
     const roomName = category || "Kitchen";
-    const uploadedFile = uploadedImages[roomName];
+    const uploadedImage = uploadedImages[roomName];
     const generatedImage = generatedImages[roomName];
     const visualizationImage = getVisualization(material, category, style);
-    // Convert File to object URL if needed
-    const uploadedImageUrl = uploadedFile ? getObjectUrl(uploadedFile, roomName) : null;
-    return generatedImage || uploadedImageUrl || visualizationImage;
-  }, [uploadedImages, generatedImages, getObjectUrl]);
+    return generatedImage || uploadedImage || visualizationImage;
+  }, [uploadedImages, generatedImages]);
 
   // Swipe handlers
   const handleSwipeLeft = useCallback(() => {
@@ -197,11 +159,9 @@ export default function Stage() {
     }
   }, [credits, handleGenerate, useCredit, refetchCredits, t]);
 
-  // Get current room's uploaded file and generated image
-  const uploadedFile = uploadedImages[selectedCategory || "Kitchen"] || null;
+  // Get current room's uploaded image and generated image
+  const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
   const generatedImage = generatedImages[selectedCategory || "Kitchen"] || null;
-  // Convert File to object URL for display
-  const uploadedImageUrl = uploadedFile ? getObjectUrl(uploadedFile, selectedCategory || "Kitchen") : null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -228,11 +188,11 @@ export default function Stage() {
   // Get the appropriate image to display (palette × room × style)
   const styleId = design.selectedStyle || null;
   const visualizationImage = getVisualization(selectedMaterial, selectedCategory, styleId);
-  const displayImage = generatedImage || uploadedImageUrl || visualizationImage;
+  const displayImage = generatedImage || uploadedImage || visualizationImage;
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(roomTranslationKey[roomNameRaw] || roomNameRaw);
   const roomNameAcc = t(roomTranslationKeyAcc[roomNameRaw] || roomTranslationKey[roomNameRaw] || roomNameRaw);
-  const hasUserImage = !!uploadedFile || !!generatedImage;
+  const hasUserImage = !!uploadedImage || !!generatedImage;
 
   // Calculate prev/current/next based on activeMode
   const prevImage = useMemo(() => {

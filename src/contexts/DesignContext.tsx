@@ -7,7 +7,7 @@ import {
   initialDesignSelection,
   initialGenerationState,
 } from "@/types/design-state";
-import { FormData as CalculatorFormData } from "@/types/calculator";
+import { FormData } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
@@ -28,7 +28,7 @@ interface DesignContextValue {
   // Design selections
   design: DesignSelection;
   generation: GenerationState;
-  formData: CalculatorFormData | null;
+  formData: FormData | null;
 
   // Navigation state
   activeTab: BottomTab;
@@ -85,7 +85,7 @@ interface DesignContextValue {
   handleSaveImage: () => void;
 
   // Form actions
-  setFormData: (data: CalculatorFormData | null) => void;
+  setFormData: (data: FormData | null) => void;
 
   // Sharing
   shareSession: () => Promise<string | null>;
@@ -103,7 +103,7 @@ interface SharedSessionData {
   selectedStyle: string | null;
   freestyleDescription: string;
   selectedTier: Tier;
-  formData: CalculatorFormData | null;
+  formData: FormData | null;
   userMoveInDate: string | null;
   completedTasks: string[];
   layoutAuditResponses?: Record<string, AuditResponse>;
@@ -123,7 +123,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Design state
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
   const [generation, setGeneration] = useState<GenerationState>(initialGenerationState);
-  const [formData, setFormData] = useState<CalculatorFormData | null>(null);
+  const [formData, setFormData] = useState<FormData | null>(null);
 
   // Navigation state
   const [activeTab, setActiveTabState] = useState<BottomTab>("thread");
@@ -151,8 +151,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   useEffect(() => {
     // If we have a shared session, use that as initial state
     if (initialSharedSession) {
+      const currentRoom = initialSharedSession.selectedCategory || "Kitchen";
       setDesign({
-        uploadedImages: {}, // File objects can't be restored from shared sessions
+        uploadedImages: initialSharedSession.uploadedImage
+          ? { [currentRoom]: initialSharedSession.uploadedImage }
+          : {},
         selectedCategory: initialSharedSession.selectedCategory,
         selectedMaterial: initialSharedSession.selectedMaterial,
         selectedStyle: initialSharedSession.selectedStyle,
@@ -198,11 +201,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     // First load from localStorage
     const session = loadSession();
     if (session) {
-      // Note: uploadedImages (File objects) can't be restored from localStorage
-      setDesign({
-        ...session.design,
-        uploadedImages: {}, // File objects can't be serialized/restored
-      });
+      setDesign(session.design);
       if (session.generatedImages) {
         setGeneration((prev) => ({ ...prev, generatedImages: session.generatedImages }));
       }
@@ -332,12 +331,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   useEffect(() => {
     const handleBeforeUnload = () => {
       const state = latestStateRef.current;
-      // Note: uploadedImages (File objects) can't be serialized - skip them
       saveSession({
-        design: {
-          ...state.design,
-          uploadedImages: {}, // File objects can't be serialized
-        },
+        design: state.design,
         generatedImages: state.generatedImages,
         formData: state.formData,
         selectedTier: state.selectedTier,
@@ -364,12 +359,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Note: uploadedImages (File objects) can't be serialized to localStorage - skip them
     const currentState = {
-      design: {
-        ...design,
-        uploadedImages: {}, // File objects can't be serialized
-      },
+      design,
       generatedImages: generation.generatedImages,
       formData,
       selectedTier,
@@ -460,7 +451,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
-  // Image upload handler - saves per room (stores File object directly, no base64 conversion)
+  // Image upload handler - saves per room
   const handleImageUpload = useCallback((file: File) => {
     const currentRoom = design.selectedCategory || "Kitchen";
     const hasGeneratedImage = generation.generatedImages[currentRoom];
@@ -475,14 +466,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return;
     }
 
-    // No generated image - store File directly (no base64 conversion)
-    setDesign((prev) => ({
-      ...prev,
-      uploadedImages: {
-        ...prev.uploadedImages,
-        [currentRoom]: file,
-      },
-    }));
+    // No generated image - upload directly
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setDesign((prev) => ({
+        ...prev,
+        uploadedImages: {
+          ...prev.uploadedImages,
+          [currentRoom]: reader.result as string,
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
   }, [design.selectedCategory, generation.generatedImages]);
 
   // Clear uploaded image for current room to browse defaults
@@ -639,38 +634,25 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         .filter(Boolean)
         .join(" ") || null;
 
-      // Create FormData with binary file (no base64 conversion - prevents memory issues on older phones)
-      const requestFormData = new FormData();
-      requestFormData.append('image', uploadedImage); // File object, not base64
-      requestFormData.append('roomCategory', selectedCategory);
-      if (materialPrompt) requestFormData.append('materialPrompt', materialPrompt);
-      if (stylePrompt) requestFormData.append('stylePrompt', stylePrompt);
-      if (design.freestyleDescription.trim()) {
-        requestFormData.append('freestyleDescription', design.freestyleDescription.trim());
-      }
-      requestFormData.append('quality', API_CONFIG.imageGeneration.quality);
-      requestFormData.append('model', API_CONFIG.imageGeneration.model);
+      // Call Supabase Edge Function for secure server-side generation
+      const { data, error } = await supabase.functions.invoke("generate-interior", {
+        body: {
+          imageBase64: uploadedImage,
+          roomCategory: selectedCategory,
+          materialPrompt: materialPrompt || null,
+          stylePrompt,
+          freestyleDescription: design.freestyleDescription.trim() || null,
+          quality: API_CONFIG.imageGeneration.quality,
+          model: API_CONFIG.imageGeneration.model,
+        },
+      });
 
-      // Send as FormData directly to Edge Function (binary, not JSON)
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-interior`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: requestFormData, // Binary FormData, not JSON
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to generate interior' }));
-        throw new Error(errorData.error || 'Failed to generate interior');
+      if (error) {
+        throw new Error(error.message || "Failed to generate interior");
       }
 
-      const data = await response.json();
-      const generatedImageUrl = data?.generatedImage;
-      if (!generatedImageUrl) {
+      const generatedImageBase64 = data?.generatedImage;
+      if (!generatedImageBase64) {
         throw new Error("No image returned from generation service");
       }
 
@@ -679,22 +661,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         ...prev,
         generatedImages: {
           ...prev.generatedImages,
-          [currentRoom]: generatedImageUrl,
+          [currentRoom]: generatedImageBase64,
         },
         isGenerating: false,
       }));
 
       // Save session immediately after successful generation
-      // Note: uploadedImages (File objects) are NOT persisted to localStorage
       const updatedGeneratedImages = {
         ...generation.generatedImages,
-        [currentRoom]: generatedImageUrl,
+        [currentRoom]: generatedImageBase64,
       };
       saveSession({
-        design: {
-          ...design,
-          uploadedImages: {}, // File objects can't be serialized - skip them
-        },
+        design,
         generatedImages: updatedGeneratedImages,
         formData,
         selectedTier,
@@ -741,23 +719,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setIsSharing(true);
     try {
       const currentRoom = design.selectedCategory || "Kitchen";
-      const uploadedFile = design.uploadedImages[currentRoom] || null;
+      const uploadedImage = design.uploadedImages[currentRoom] || null;
       const generatedImage = generation.generatedImages[currentRoom] || null;
-
-      // Convert File to base64 for sharing (async, only when user explicitly shares)
-      let uploadedImageBase64: string | null = null;
-      if (uploadedFile) {
-        uploadedImageBase64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(uploadedFile);
-        });
-      }
 
       const { data, error } = await supabase.functions.invoke("share-session", {
         body: {
-          uploadedImage: uploadedImageBase64,
+          uploadedImage,
           generatedImage: generatedImage,
           selectedCategory: design.selectedCategory,
           selectedMaterial: design.selectedMaterial,
@@ -868,14 +835,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         : prev.generatedImages,
     }));
 
-    // Store File directly (no base64 conversion)
-    setDesign((prev) => ({
-      ...prev,
-      uploadedImages: {
-        ...prev.uploadedImages,
-        [currentRoom]: file,
-      },
-    }));
+    // Process the upload
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setDesign((prev) => ({
+        ...prev,
+        uploadedImages: {
+          ...prev.uploadedImages,
+          [currentRoom]: reader.result as string,
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
   }, [design.selectedCategory, generation.pendingImageUpload]);
 
   // Cancel image upload
