@@ -449,6 +449,12 @@
       "placeholder": "Aprašykite norimas medžiagas...\npvz., Juodos matinės virtuvės fasadai, baltas kvarcinis stalviršis, šiltas ąžuolo parketas, žalvariniai akcentai",
       "cancel": "Atšaukti",
       "apply": "Taikyti"
+    },
+    "uploadDialog": {
+      "title": "Įkelti naują nuotrauką",
+      "description": "Įkeliant naują nuotrauką bus išvalyta dabartinė vizualizacija. Ar norite tęsti?",
+      "clearAndUpload": "Išvalyti ir įkelti",
+      "cancel": "Atšaukti"
     }
   },
   "sourcing": {

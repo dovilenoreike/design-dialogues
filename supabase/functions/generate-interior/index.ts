@@ -32,7 +32,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, roomCategory, materialPrompt, stylePrompt, freestyleDescription, quality } = await req.json();
+    const { imageBase64, roomCategory, materialPrompt, stylePrompt, freestyleDescription, quality, model } = await req.json();
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
@@ -68,7 +68,7 @@ serve(async (req) => {
     const formData = new FormData();
     formData.append("image", imageBlob, "room.png");
     formData.append("prompt", designPrompt);
-    formData.append("model", "gpt-image-1");
+    formData.append("model", model || "gpt-image-1");
     formData.append("size", "1024x1024");
     formData.append("quality", quality || "low");  // Use client quality or default to low
 

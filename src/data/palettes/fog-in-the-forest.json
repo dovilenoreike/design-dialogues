@@ -40,7 +40,7 @@
     },
     "material4": {
       "description": {
-        "en": "Garrison gray colour with blue undertone.",
+        "en": "Garrison gray colour with blue undertone. Flat surfaces.",
         "lt": "Rūką primenanti melsvai pilka."
       },
       "rooms": ["kitchen", "bathroom", "livingRoom"],

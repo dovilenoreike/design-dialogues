@@ -21,6 +21,8 @@ export interface GenerationState {
   showRoomSwitchDialog: boolean;
   pendingStyleSwitch: string | null;
   showStyleSwitchDialog: boolean;
+  pendingImageUpload: File | null;
+  showUploadDialog: boolean;
 }
 
 export const initialDesignSelection: DesignSelection = {
@@ -41,4 +43,6 @@ export const initialGenerationState: GenerationState = {
   showRoomSwitchDialog: false,
   pendingStyleSwitch: null,
   showStyleSwitchDialog: false,
+  pendingImageUpload: null,
+  showUploadDialog: false,
 };

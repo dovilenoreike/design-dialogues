@@ -3,9 +3,10 @@ import Stage from "../Stage";
 import ControlCenter from "../ControlCenter";
 import { RoomSwitchDialog } from "../dialogs/RoomSwitchDialog";
 import { StyleSwitchDialog } from "../dialogs/StyleSwitchDialog";
+import { UploadDialog } from "../dialogs/UploadDialog";
 
 export default function DesignView() {
-  const { design, generation, confirmRoomSwitch, cancelRoomSwitch, confirmStyleSwitch, cancelStyleSwitch } = useDesign();
+  const { design, generation, confirmRoomSwitch, cancelRoomSwitch, confirmStyleSwitch, cancelStyleSwitch, confirmImageUpload, cancelImageUpload } = useDesign();
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -35,6 +36,13 @@ export default function DesignView() {
         onSaveAndSwitch={() => confirmStyleSwitch(true)}
         onSwitch={() => confirmStyleSwitch(false)}
         onCancel={cancelStyleSwitch}
+      />
+
+      {/* Upload confirmation dialog */}
+      <UploadDialog
+        open={generation.showUploadDialog}
+        onConfirm={confirmImageUpload}
+        onCancel={cancelImageUpload}
       />
     </div>
   );

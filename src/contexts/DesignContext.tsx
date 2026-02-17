@@ -77,6 +77,10 @@ interface DesignContextValue {
   confirmStyleSwitch: (saveFirst: boolean) => void;
   cancelStyleSwitch: () => void;
 
+  // Upload dialog actions
+  confirmImageUpload: (clearFirst: boolean) => void;
+  cancelImageUpload: () => void;
+
   // Save action
   handleSaveImage: () => void;
 
@@ -449,9 +453,22 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Image upload handler - saves per room
   const handleImageUpload = useCallback((file: File) => {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const hasGeneratedImage = generation.generatedImages[currentRoom];
+
+    // If there's a generated image, show confirmation dialog
+    if (hasGeneratedImage) {
+      setGeneration((prev) => ({
+        ...prev,
+        pendingImageUpload: file,
+        showUploadDialog: true,
+      }));
+      return;
+    }
+
+    // No generated image - upload directly
     const reader = new FileReader();
     reader.onloadend = () => {
-      const currentRoom = design.selectedCategory || "Kitchen";
       setDesign((prev) => ({
         ...prev,
         uploadedImages: {
@@ -461,7 +478,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
     };
     reader.readAsDataURL(file);
-  }, [design.selectedCategory]);
+  }, [design.selectedCategory, generation.generatedImages]);
 
   // Clear uploaded image for current room to browse defaults
   const clearUploadedImage = useCallback(() => {
@@ -626,6 +643,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           stylePrompt,
           freestyleDescription: design.freestyleDescription.trim() || null,
           quality: API_CONFIG.imageGeneration.quality,
+          model: API_CONFIG.imageGeneration.model,
         },
       });
 
@@ -799,6 +817,47 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
+  // Confirm image upload - optionally clear generated image first
+  const confirmImageUpload = useCallback((clearFirst: boolean) => {
+    const currentRoom = design.selectedCategory || "Kitchen";
+    const file = generation.pendingImageUpload;
+
+    if (!file) return;
+
+    // Clear the dialog state
+    setGeneration((prev) => ({
+      ...prev,
+      pendingImageUpload: null,
+      showUploadDialog: false,
+      // Clear generated image if user confirmed
+      generatedImages: clearFirst
+        ? { ...prev.generatedImages, [currentRoom]: null }
+        : prev.generatedImages,
+    }));
+
+    // Process the upload
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setDesign((prev) => ({
+        ...prev,
+        uploadedImages: {
+          ...prev.uploadedImages,
+          [currentRoom]: reader.result as string,
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
+  }, [design.selectedCategory, generation.pendingImageUpload]);
+
+  // Cancel image upload
+  const cancelImageUpload = useCallback(() => {
+    setGeneration((prev) => ({
+      ...prev,
+      pendingImageUpload: null,
+      showUploadDialog: false,
+    }));
+  }, []);
+
   const value: DesignContextValue = {
     design,
     generation,
@@ -832,6 +891,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     cancelRoomSwitch,
     confirmStyleSwitch,
     cancelStyleSwitch,
+    confirmImageUpload,
+    cancelImageUpload,
     handleSaveImage,
     setFormData,
     shareSession,

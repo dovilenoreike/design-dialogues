@@ -32,7 +32,7 @@
         "en": "Matte terrazzo-look stone tiles with beige and warm grey base and mixed stone fragments",
         "lt": "Šiltos terazo stiliaus plytelės."
       },
-      "rooms": ["bathroom", "kitchen"],
+      "rooms": ["bathroom"],
       "purpose": { "default": "Flooring"},
       "materialType": "Tiles",
       "technicalCode": "Ragno Eterna Mix Multicolor",

@@ -23,7 +23,7 @@ export const API_CONFIG = {
   },
 
   /**
-   * API endpoints
+   * API endpointsß
    */
   endpoints: {
     chat: "https://api.openai.com/v1/chat/completions",

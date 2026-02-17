@@ -442,6 +442,12 @@
       "placeholder": "Describe your ideal materials...\ne.g., Black matte kitchen facades, white quartz worktops, warm oak flooring, brass accents",
       "cancel": "Cancel",
       "apply": "Apply"
+    },
+    "uploadDialog": {
+      "title": "Upload New Image",
+      "description": "Uploading a new image will clear your current visualization. Do you want to continue?",
+      "clearAndUpload": "Clear & Upload",
+      "cancel": "Cancel"
     }
   },
   "sourcing": {
