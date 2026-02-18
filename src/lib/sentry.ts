@@ -6,21 +6,14 @@ import * as Sentry from "@sentry/react";
 export function initSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
 
-  // Debug logging - remove after confirming it works
-  console.log("Sentry DSN present:", !!dsn);
-
   // Skip initialization if no DSN configured
   if (!dsn) {
-    console.log("Sentry: No DSN configured, skipping initialization");
     return;
   }
-
-  console.log("Sentry: Initializing with DSN:", dsn.substring(0, 20) + "...");
 
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,
-    debug: true, // Enable debug mode temporarily
 
     // Capture 100% of errors
     sampleRate: 1.0,
@@ -89,11 +82,6 @@ export function initSentry() {
       /^moz-extension:\/\//i,
     ],
   });
-
-  // Expose Sentry globally for testing (remove after verification)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).Sentry = Sentry;
-  console.log("Sentry: Initialized and exposed to window.Sentry");
 }
 
 /**
