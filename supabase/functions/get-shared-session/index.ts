@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { captureException } from "../_shared/sentry.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,6 +70,7 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error:", error);
+    await captureException(error, { functionName: "get-shared-session" });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to get shared session" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

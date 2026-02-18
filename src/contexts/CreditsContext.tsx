@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { captureError } from "@/lib/sentry";
 
 const CREDITS_CACHE_KEY = "design_dialogues_credits";
 
@@ -77,6 +78,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       cacheCredits(data.credits);
     } catch (err) {
       console.error("Failed to fetch credits:", err);
+      captureError(err, { action: "fetchCredits" });
       setError(err instanceof Error ? err.message : "Failed to fetch credits");
     } finally {
       setLoading(false);
@@ -122,6 +124,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       }
     } catch (err) {
       console.error("Failed to create checkout:", err);
+      captureError(err, { action: "buyCredits" });
       throw err;
     }
   }, [user]);
@@ -151,6 +154,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       }
     } catch (err) {
       console.error("Failed to use credit:", err);
+      captureError(err, { action: "useCredit" });
       throw err;
     }
   }, [user]);

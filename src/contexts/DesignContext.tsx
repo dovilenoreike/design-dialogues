@@ -21,6 +21,8 @@ import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { compressImage } from "@/lib/image-utils";
+import { captureError, setSentryDesignContext } from "@/lib/sentry";
+import { mapErrorToUserMessage } from "@/lib/error-messages";
 
 export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -814,6 +816,14 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return false;
     }
 
+    // Set Sentry context before API call
+    setSentryDesignContext({
+      room,
+      style,
+      palette: material,
+      hasUploadedImage: !!uploadedImage,
+    });
+
     try {
       const palette = design.selectedMaterial ? getPaletteById(design.selectedMaterial) : null;
 
@@ -944,8 +954,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       toast.success("Interior visualization generated!", { position: "top-center" });
       return true;
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again.";
-      toast.error(errorMessage);
+      captureError(err, {
+        action: "generateInteriorRender",
+        room,
+        style,
+        palette: material,
+      });
+      toast.error(mapErrorToUserMessage(err));
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
       return false;
     }

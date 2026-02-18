@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { captureException } from "../_shared/sentry.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,6 +120,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error sending email:", error);
+    await captureException(error, { functionName: "send-email" });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to send email" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

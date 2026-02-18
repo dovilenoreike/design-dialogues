@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { captureException } from "../_shared/sentry.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -129,6 +130,7 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error generating interior:", error);
+    await captureException(error, { functionName: "generate-interior" });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to generate interior" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
