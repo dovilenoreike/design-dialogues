@@ -307,6 +307,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         }
       } catch (err) {
         console.error('Error loading design state:', err);
+        captureError(err, { action: "loadDesignState" });
       }
     };
 
@@ -341,6 +342,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }
     } catch (err) {
       console.error('Error saving design state:', err);
+      captureError(err, { action: "saveDesignState" });
     }
   }, [
     user,
@@ -641,7 +643,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
     } catch (err) {
       console.error('Image upload failed:', err);
-      toast.error("Failed to upload image");
+      captureError(err, { action: "handleImageUpload" });
+      toast.error(mapErrorToUserMessage(err));
     }
   }, [user, design.selectedCategory, generation.generatedImages]);
 
@@ -703,6 +706,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         }
       } catch (err) {
         console.error('Failed to clear images from database:', err);
+        captureError(err, { action: "clearUploadedImage" });
       }
     }
   }, [design.selectedCategory, user]);
@@ -1013,6 +1017,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         hasLoadedFromDB.current = false;
       } catch (err) {
         console.error('Failed to clear data from database:', err);
+        captureError(err, { action: "handleStartFresh" });
       }
     }
   }, [user]);
@@ -1053,7 +1058,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return data?.shareId || null;
     } catch (err) {
       console.error("Share session error:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to share design");
+      captureError(err, { action: "shareSession" });
+      toast.error(mapErrorToUserMessage(err));
       return null;
     } finally {
       setIsSharing(false);
@@ -1203,7 +1209,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
     } catch (err) {
       console.error('Image upload failed:', err);
-      toast.error("Failed to upload image");
+      captureError(err, { action: "confirmImageUpload" });
+      toast.error(mapErrorToUserMessage(err));
     }
   }, [design.selectedCategory, generation.pendingImageUpload, user]);
 
