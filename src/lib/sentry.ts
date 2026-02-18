@@ -15,11 +15,12 @@ export function initSentry() {
     return;
   }
 
-  console.log("Sentry: Initializing...");
+  console.log("Sentry: Initializing with DSN:", dsn.substring(0, 20) + "...");
 
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,
+    debug: true, // Enable debug mode temporarily
 
     // Capture 100% of errors
     sampleRate: 1.0,
@@ -88,6 +89,11 @@ export function initSentry() {
       /^moz-extension:\/\//i,
     ],
   });
+
+  // Expose Sentry globally for testing (remove after verification)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).Sentry = Sentry;
+  console.log("Sentry: Initialized and exposed to window.Sentry");
 }
 
 /**
