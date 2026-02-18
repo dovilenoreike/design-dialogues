@@ -12,7 +12,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Parse request body early so it's available in catch block
+  let type = "unknown";
+  let data: Record<string, unknown> = {};
+
   try {
+    const body = await req.json();
+    type = body.type || "unknown";
+    data = body.data || {};
+
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is not configured");
@@ -24,7 +32,6 @@ serve(async (req) => {
     }
 
     const resend = new Resend(RESEND_API_KEY);
-    const { type, data } = await req.json();
 
     let subject: string;
     let html: string;
@@ -109,7 +116,7 @@ serve(async (req) => {
 
     if (error) {
       console.error("Resend error:", error);
-      throw error;
+      throw new Error(error.message || JSON.stringify(error));
     }
 
     console.log("Email sent successfully");
@@ -119,7 +126,10 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error sending email:", error);
-    await captureException(error, { functionName: "send-email" });
+    await captureException(error, {
+      functionName: "send-email",
+      extra: { emailType: type, userEmail: data?.email }
+    });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to send email" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

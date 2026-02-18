@@ -120,7 +120,19 @@ export async function captureException(
     return;
   }
 
-  const errorObj = error instanceof Error ? error : new Error(String(error));
+  // Convert non-Error objects to proper Error instances
+  let errorObj: Error;
+  if (error instanceof Error) {
+    errorObj = error;
+  } else if (typeof error === "object" && error !== null) {
+    // Handle API error objects (e.g., Resend errors with message property)
+    const errObj = error as Record<string, unknown>;
+    const message = errObj.message || errObj.error || JSON.stringify(error);
+    errorObj = new Error(String(message));
+    errorObj.name = errObj.name ? String(errObj.name) : "APIError";
+  } else {
+    errorObj = new Error(String(error));
+  }
   const event = buildEvent(errorObj, context);
 
   const storeUrl = `https://${parsed.host}/api/${parsed.projectId}/store/`;
