@@ -505,10 +505,22 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Wrapped setters that update both state and trigger URL sync
   const setActiveTab = useCallback((tab: BottomTab) => {
     setActiveTabState(tab);
+    trackEvent(AnalyticsEvents.TAB_VIEWED, { tab });
   }, []);
 
   const setSelectedTier = useCallback((tier: Tier) => {
     setSelectedTierState(tier);
+  }, []);
+
+  // Wrapped setter for move-in date with tracking
+  const setUserMoveInDateWithTracking = useCallback((date: Date | null) => {
+    setUserMoveInDate(date);
+    if (date) {
+      trackEvent(AnalyticsEvents.MOVE_IN_DATE_SET, {
+        date: date.toISOString().split('T')[0],
+        tab: "plan",
+      });
+    }
   }, []);
 
   // Destructure for convenience
@@ -525,11 +537,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const toggleTask = useCallback((taskId: string) => {
     setCompletedTasks((prev) => {
       const next = new Set(prev);
-      if (next.has(taskId)) {
+      const wasCompleted = next.has(taskId);
+      if (wasCompleted) {
         next.delete(taskId);
       } else {
         next.add(taskId);
       }
+      // Track the toggle
+      trackEvent(AnalyticsEvents.TIMELINE_TASK_TOGGLED, {
+        task_id: taskId,
+        completed: !wasCompleted,
+        tab: "plan",
+      });
       return next;
     });
   }, []);
@@ -542,6 +561,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         const { [itemId]: _, ...rest } = prev;
         return rest;
       }
+      // Track the response
+      trackEvent(AnalyticsEvents.AUDIT_RESPONSE_GIVEN, {
+        item_id: itemId,
+        response,
+        tab: "plan",
+      });
       return {
         ...prev,
         [itemId]: response,
@@ -648,7 +673,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
 
       // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom });
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, tab: "design" });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "handleImageUpload" });
@@ -792,7 +817,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     // Track palette selection
     if (material) {
-      trackEvent(AnalyticsEvents.PALETTE_SELECTED, { palette_id: material });
+      trackEvent(AnalyticsEvents.PALETTE_SELECTED, { palette_id: material, tab: "design" });
     }
   }, []);
 
@@ -804,7 +829,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     // Track style selection
     if (style) {
-      trackEvent(AnalyticsEvents.STYLE_SELECTED, { style_id: style });
+      trackEvent(AnalyticsEvents.STYLE_SELECTED, { style_id: style, tab: "design" });
     }
   }, []);
 
@@ -952,6 +977,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           room,
           style,
           duration_ms: Date.now() - startTime,
+          tab: "design",
         });
         return true;
       }
@@ -990,6 +1016,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         room,
         style,
         duration_ms: Date.now() - startTime,
+        tab: "design",
       });
       return true;
     } catch (err: unknown) {
@@ -1006,6 +1033,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       // Track visualization failed
       trackEvent(AnalyticsEvents.VISUALIZATION_FAILED, {
         error_type: err instanceof Error ? err.message : "unknown",
+        tab: "design",
       });
       return false;
     }
@@ -1020,6 +1048,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       room: design.selectedCategory || "Kitchen",
       style: design.selectedStyle,
       palette: design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial,
+      tab: "design",
     });
 
     return generateInteriorRender();
@@ -1263,7 +1292,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
 
       // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom });
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, tab: "design" });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "confirmImageUpload" });
@@ -1298,7 +1327,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setActiveTab,
     setActiveMode,
     setSelectedTier,
-    setUserMoveInDate,
+    setUserMoveInDate: setUserMoveInDateWithTracking,
     toggleTask,
     setLayoutAuditResponse,
     setLayoutAuditAdults,

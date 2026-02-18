@@ -11,6 +11,7 @@ import { calculateTotalStorage } from "@/data/layout-audit-rules";
 import ServiceDetailsSheet from "../controls/ServiceDetailsSheet";
 import FeedbackDialog from "@/components/FeedbackDialog";
 import type { ServiceSelection, FormData } from "@/types/calculator";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 const tiers: Tier[] = ["Budget", "Standard", "Premium"];
 
@@ -234,6 +235,15 @@ export default function BudgetView() {
     if (updates.kitchenLength !== undefined) setLocalKitchenLength(updates.kitchenLength);
     if (updates.wardrobeLength !== undefined) setLocalWardrobeLength(updates.wardrobeLength);
 
+    // Track calculator usage
+    const field = Object.keys(updates)[0];
+    const value = Object.values(updates)[0];
+    trackEvent(AnalyticsEvents.BUDGET_CALCULATOR_USED, {
+      field,
+      value,
+      tab: "budget",
+    });
+
     const currentData = formData || defaultFormData;
     setFormData({ ...currentData, ...updates });
   };
@@ -253,6 +263,10 @@ export default function BudgetView() {
   const handleTierSelect = (tier: Tier) => {
     haptic.light();
     setSelectedTier(tier);
+    trackEvent(AnalyticsEvents.BUDGET_TIER_SELECTED, {
+      tier,
+      tab: "budget",
+    });
   };
 
   const handleToggleCondition = (condition: 'isRenovation' | 'isUrgent') => {

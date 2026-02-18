@@ -91,4 +91,18 @@ export const AnalyticsEvents = {
   VISUALIZATION_FAILED: "visualization_failed",
   CREDITS_PURCHASED: "credits_purchased",
   SESSION_SHARED: "session_shared",
+  // Tab tracking
+  TAB_VIEWED: "tab_viewed",
+  // Specs tab
+  MATERIAL_CLICKED: "material_clicked",
+  DESIGNER_PROFILE_OPENED: "designer_profile_opened",
+  // Budget tab
+  BUDGET_TIER_SELECTED: "budget_tier_selected",
+  BUDGET_CALCULATOR_USED: "budget_calculator_used",
+  // Plan tab
+  AUDIT_RESPONSE_GIVEN: "audit_response_given",
+  TIMELINE_TASK_TOGGLED: "timeline_task_toggled",
+  MOVE_IN_DATE_SET: "move_in_date_set",
+  // Thread tab
+  THREAD_SECTION_CLICKED: "thread_section_clicked",
 } as const;

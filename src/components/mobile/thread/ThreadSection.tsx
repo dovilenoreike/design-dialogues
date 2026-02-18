@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { ThreadNode } from "./ThreadNode";
 import { useDesign, BottomTab } from "@/contexts/DesignContext";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 interface ThreadSectionProps {
   title: string;
@@ -27,6 +28,11 @@ export function ThreadSection({
   const { setActiveTab } = useDesign();
 
   const handleClick = () => {
+    trackEvent(AnalyticsEvents.THREAD_SECTION_CLICKED, {
+      section: title,
+      target_tab: targetTab,
+      tab: "thread",
+    });
     setActiveTab(targetTab);
   };
 

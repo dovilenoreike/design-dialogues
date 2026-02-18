@@ -14,6 +14,7 @@ import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
 import { ComingSoonPaletteSheet } from "@/components/ComingSoonPaletteSheet";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 export default function SpecsView() {
   const { design, handleSelectMaterial, selectedTier, setActiveTab } = useDesign();
@@ -243,6 +244,11 @@ export default function SpecsView() {
 
 
             const handleMaterialClick = () => {
+              trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
+                material_code: material.technicalCode,
+                room: selectedCategory,
+                tab: "specs",
+              });
               setSelectedMaterialInfo({
                 name: description?.split('.')[0] || translatedPurpose,
                 materialType: material.materialType,
@@ -274,7 +280,13 @@ export default function SpecsView() {
           <DesignerCompactCard
             designerId={palette.designer}
             designerTitle={palette.designerTitle}
-            onOpenProfile={() => setIsProfileSheetOpen(true)}
+            onOpenProfile={() => {
+              trackEvent(AnalyticsEvents.DESIGNER_PROFILE_OPENED, {
+                designer_id: palette.designer,
+                tab: "specs",
+              });
+              setIsProfileSheetOpen(true);
+            }}
           />
         )}
       </div>
