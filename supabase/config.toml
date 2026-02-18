@@ -22,3 +22,12 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.share-session]
+verify_jwt = false
+
+[functions.get-shared-session]
+verify_jwt = false
+
+[functions.palette-waitlist-signup]
+verify_jwt = false

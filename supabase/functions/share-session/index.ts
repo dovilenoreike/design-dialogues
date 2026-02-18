@@ -18,11 +18,16 @@ function generateShareId(length = 8): string {
 }
 
 serve(async (req) => {
+  console.log("share-session: Request received");
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const body = await req.json();
+    console.log("share-session: Body parsed, keys:", Object.keys(body));
+
     const {
       uploadedImage,
       generatedImage,
@@ -36,14 +41,16 @@ serve(async (req) => {
       completedTasks,
       layoutAuditResponses,
       layoutAuditVariables,
-    } = await req.json();
+    } = body;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    console.log("share-session: Supabase URL present:", !!supabaseUrl);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Generate unique share ID (retry if collision)
     let shareId = generateShareId();
+    console.log("share-session: Generated shareId:", shareId);
     let attempts = 0;
     const maxAttempts = 5;
 
@@ -69,6 +76,16 @@ serve(async (req) => {
     }
 
     // Insert shared session
+    console.log("share-session: Inserting with data:", {
+      id: shareId,
+      hasUploadedImage: !!uploadedImage,
+      hasGeneratedImage: !!generatedImage,
+      selectedCategory,
+      selectedMaterial,
+      selectedStyle,
+      selectedTier: selectedTier || "Standard",
+    });
+
     const { error: insertError } = await supabase
       .from("shared_sessions")
       .insert({
@@ -88,8 +105,11 @@ serve(async (req) => {
       });
 
     if (insertError) {
+      console.error("share-session: Insert error:", insertError);
       throw insertError;
     }
+
+    console.log("share-session: Success, shareId:", shareId);
 
     return new Response(
       JSON.stringify({ shareId }),
