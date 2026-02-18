@@ -491,7 +491,11 @@
     "paymentError": "Mokėjimo klaida. Bandykite dar kartą.",
     "serverError": "Serverio klaida. Bandykite dar kartą.",
     "generic": "Kažkas nepavyko. Bandykite dar kartą.",
-    "shareFailed": "Nepavyko pasidalinti dizainu. Bandykite dar kartą."
+    "shareFailed": "Nepavyko pasidalinti dizainu. Bandykite dar kartą.",
+    "sendEmailFailed": "Nepavyko išsiųsti žinutės. Bandykite dar kartą."
+  },
+  "toast": {
+    "visualizationGenerated": "Vizualizacija sukurta!"
   },
   "share": {
     "title": "Mano Dizainas",

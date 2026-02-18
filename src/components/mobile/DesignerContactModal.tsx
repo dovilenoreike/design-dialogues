@@ -57,7 +57,7 @@ export default function DesignerContactModal({
       setProject("");
       onClose();
     } catch (error) {
-      toast.error("Failed to send. Please try again.");
+      toast.error(t("error.sendEmailFailed"));
     } finally {
       setIsSubmitting(false);
     }

@@ -928,7 +928,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           generatedImages: { ...prev.generatedImages, [room]: generatedImageData },
           isGenerating: false,
         }));
-        toast.success("Interior visualization generated!", { position: "top-center" });
+        toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
         return true;
       }
 
@@ -959,7 +959,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         isGenerating: false,
       }));
 
-      toast.success("Interior visualization generated!", { position: "top-center" });
+      toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
       return true;
     } catch (err: unknown) {
       captureError(err, {
