@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { captureError } from "@/lib/sentry";
 import type { Tier } from "@/contexts/DesignContext";
 
 export async function joinPaletteWaitlist(
@@ -14,6 +15,11 @@ export async function joinPaletteWaitlist(
     );
 
     if (error) {
+      captureError(error, {
+        action: "joinPaletteWaitlist",
+        edgeFunction: "palette-waitlist-signup",
+        paletteId,
+      });
       throw new Error(error.message || "Failed to join waitlist");
     }
 
@@ -23,6 +29,11 @@ export async function joinPaletteWaitlist(
 
     return { success: true };
   } catch (error) {
+    captureError(error, {
+      action: "joinPaletteWaitlist",
+      edgeFunction: "palette-waitlist-signup",
+      paletteId,
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error"

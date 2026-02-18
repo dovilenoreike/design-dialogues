@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { captureError } from "@/lib/sentry";
 import { DesignProvider } from "@/contexts/DesignContext";
 import AppShell from "@/components/mobile/AppShell";
 import MainContent from "@/components/mobile/MainContent";
@@ -84,6 +85,11 @@ export default function SharedSession() {
         }
       } catch (err) {
         console.error("Error loading shared session:", err);
+        captureError(err, {
+          action: "loadSharedSession",
+          edgeFunction: "get-shared-session",
+          shareId,
+        });
         setError(err instanceof Error ? err.message : "Failed to load shared design");
       } finally {
         setLoading(false);

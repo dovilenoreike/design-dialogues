@@ -78,7 +78,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       cacheCredits(data.credits);
     } catch (err) {
       console.error("Failed to fetch credits:", err);
-      captureError(err, { action: "fetchCredits" });
+      captureError(err, { action: "fetchCredits", edgeFunction: "get-credits" });
       setError(err instanceof Error ? err.message : "Failed to fetch credits");
     } finally {
       setLoading(false);
@@ -124,7 +124,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       }
     } catch (err) {
       console.error("Failed to create checkout:", err);
-      captureError(err, { action: "buyCredits" });
+      captureError(err, { action: "buyCredits", edgeFunction: "create-checkout" });
       throw err;
     }
   }, [user]);
@@ -154,7 +154,7 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       }
     } catch (err) {
       console.error("Failed to use credit:", err);
-      captureError(err, { action: "useCredit" });
+      captureError(err, { action: "useCredit", edgeFunction: "use-credit" });
       throw err;
     }
   }, [user]);

@@ -995,6 +995,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch (err: unknown) {
       captureError(err, {
         action: "generateInteriorRender",
+        edgeFunction: "generate-interior",
         room,
         style,
         palette: material,
@@ -1111,7 +1112,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return data?.shareId || null;
     } catch (err) {
       console.error("Share session error:", err);
-      captureError(err, { action: "shareSession" });
+      captureError(err, { action: "shareSession", edgeFunction: "share-session" });
       toast.error(t(getErrorTranslationKey(err)));
       return null;
     } finally {

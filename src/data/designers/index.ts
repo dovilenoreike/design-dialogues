@@ -44,7 +44,6 @@ export const designers: Record<string, DesignerProfile> = {
     bio: "Esame profesionalų komanda. Jau 20 metų tiekiame  rinkai baldines medžiagas, laminuotas grindis bei priedus joms.",
     styles: ALL_STYLES,
     cities:["vilnius","kaunas","klaipeda"],
-    email: "j.dovile@gmail.com",
     instagram: "impeka_home",
     website: "https://www.impeka.lt/",
   },
