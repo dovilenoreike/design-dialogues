@@ -1022,6 +1022,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           formData,
           userMoveInDate: userMoveInDate?.toISOString() ?? null,
           completedTasks: Array.from(completedTasks),
+          layoutAuditResponses,
+          layoutAuditVariables,
         },
       });
 
@@ -1041,7 +1043,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } finally {
       setIsSharing(false);
     }
-  }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks]);
+  }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
   // Confirm room switch - optionally save image first
   const confirmRoomSwitch = useCallback((saveFirst: boolean) => {

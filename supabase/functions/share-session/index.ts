@@ -33,6 +33,8 @@ serve(async (req) => {
       formData,
       userMoveInDate,
       completedTasks,
+      layoutAuditResponses,
+      layoutAuditVariables,
     } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -80,6 +82,8 @@ serve(async (req) => {
         form_data: formData || null,
         user_move_in_date: userMoveInDate || null,
         completed_tasks: completedTasks || [],
+        layout_audit_responses: layoutAuditResponses || null,
+        layout_audit_variables: layoutAuditVariables || null,
       });
 
     if (insertError) {

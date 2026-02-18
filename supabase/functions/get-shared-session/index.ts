@@ -59,6 +59,8 @@ serve(async (req) => {
       formData: data.form_data,
       userMoveInDate: data.user_move_in_date,
       completedTasks: data.completed_tasks || [],
+      layoutAuditResponses: data.layout_audit_responses || {},
+      layoutAuditVariables: data.layout_audit_variables || null,
     };
 
     return new Response(
