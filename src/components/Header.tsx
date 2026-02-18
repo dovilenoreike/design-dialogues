@@ -15,6 +15,7 @@ import { useCredits } from "@/contexts/CreditsContext";
 import { useDesignOptional } from "@/contexts/DesignContext";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +39,12 @@ const Header = () => {
       });
       refetchCredits();
       setSearchParams({});
+
+      // Track credits purchased
+      trackEvent(AnalyticsEvents.CREDITS_PURCHASED, {
+        // Amount/credits info not available client-side, tracked by Stripe webhook
+        source: "stripe_redirect",
+      });
     } else if (payment === "cancelled") {
       toastUI({
         title: t("credits.purchaseCancelled"),

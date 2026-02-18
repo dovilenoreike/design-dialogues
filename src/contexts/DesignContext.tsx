@@ -24,6 +24,7 @@ import { compressImage } from "@/lib/image-utils";
 import { captureError, setSentryDesignContext } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -645,6 +646,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         ...prev,
         uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
       }));
+
+      // Track image upload
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "handleImageUpload" });
@@ -785,6 +789,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedMaterial: material,
       freestyleDescription: material ? "" : prev.freestyleDescription, // Clear freestyle if selecting curated
     }));
+
+    // Track palette selection
+    if (material) {
+      trackEvent(AnalyticsEvents.PALETTE_SELECTED, { palette_id: material });
+    }
   }, []);
 
   // Style selection - with two-table approach, switching styles may restore cached generations
@@ -792,6 +801,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     // With two-table caching, we don't need confirmation dialogs for style switching
     // The generation effect will automatically load cached generation if available
     setDesign((prev) => ({ ...prev, selectedStyle: style }));
+
+    // Track style selection
+    if (style) {
+      trackEvent(AnalyticsEvents.STYLE_SELECTED, { style_id: style });
+    }
   }, []);
 
   // Freestyle description change
@@ -823,6 +837,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       toast.error("Please select a palette or enter a freestyle description");
       return false;
     }
+
+    // Track generation start time
+    const startTime = Date.now();
 
     // Set Sentry context before API call
     setSentryDesignContext({
@@ -929,6 +946,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           isGenerating: false,
         }));
         toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
+
+        // Track visualization completed
+        trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
+          room,
+          style,
+          duration_ms: Date.now() - startTime,
+        });
         return true;
       }
 
@@ -960,6 +984,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       }));
 
       toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
+
+      // Track visualization completed
+      trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
+        room,
+        style,
+        duration_ms: Date.now() - startTime,
+      });
       return true;
     } catch (err: unknown) {
       captureError(err, {
@@ -970,6 +1001,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       });
       toast.error(t(getErrorTranslationKey(err)));
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
+
+      // Track visualization failed
+      trackEvent(AnalyticsEvents.VISUALIZATION_FAILED, {
+        error_type: err instanceof Error ? err.message : "unknown",
+      });
       return false;
     }
   }, [uploadedImage, selectedCategory, design, user]);
@@ -977,8 +1013,16 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
     setGeneration((prev) => ({ ...prev, isProcessing: true, isGenerating: true }));
+
+    // Track visualization started
+    trackEvent(AnalyticsEvents.VISUALIZATION_STARTED, {
+      room: design.selectedCategory || "Kitchen",
+      style: design.selectedStyle,
+      palette: design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial,
+    });
+
     return generateInteriorRender();
-  }, [generateInteriorRender]);
+  }, [generateInteriorRender, design.selectedCategory, design.selectedStyle, design.selectedMaterial, design.freestyleDescription]);
 
   // Start fresh - reset all state and clear session
   const handleStartFresh = useCallback(async () => {
@@ -1058,6 +1102,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       if (data?.error) {
         throw new Error(data.error);
       }
+
+      // Track session shared
+      trackEvent(AnalyticsEvents.SESSION_SHARED, {
+        has_image: !!currentGeneratedImage,
+      });
 
       return data?.shareId || null;
     } catch (err) {
@@ -1211,6 +1260,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         ...prev,
         uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
       }));
+
+      // Track image upload
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "confirmImageUpload" });
