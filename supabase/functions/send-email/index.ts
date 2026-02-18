@@ -57,9 +57,12 @@ serve(async (req) => {
         html = `
           <h2>New Project Inquiry</h2>
           <p><strong>Designer:</strong> ${data.designerName}</p>
+          <p><strong>Designer Email:</strong> ${data.designerEmail || "Not provided"}</p>
           <p><strong>From:</strong> ${data.name} (${data.email})</p>
           <p><strong>Project Details:</strong></p>
           <p>${data.project}</p>
+          <hr>
+          <p><em>Laiškas išsiųstas pagal kliento užklausą www.dizainodialogai.lt</em></p>
         `;
         break;
 
@@ -90,13 +93,9 @@ serve(async (req) => {
         throw new Error("Unknown email type");
     }
 
-    // Determine recipient based on email type
-    let toEmail: string;
-    if (type === "designer-inquiry" && data.designerEmail) {
-      toEmail = data.designerEmail; // Send directly to designer
-    } else {
-      toEmail = RECIPIENT_EMAIL; // General business email
-    }
+    // All emails go to admin (Resend free tier can't send to unverified addresses)
+    // Designer email is included in the message body for manual forwarding
+    const toEmail = RECIPIENT_EMAIL;
 
     console.log(`Sending ${type} email to: ${toEmail}`);
 
