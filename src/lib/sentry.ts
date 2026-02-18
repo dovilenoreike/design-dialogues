@@ -6,11 +6,16 @@ import * as Sentry from "@sentry/react";
 export function initSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
 
+  // Debug logging - remove after confirming it works
+  console.log("Sentry DSN present:", !!dsn);
+
   // Skip initialization if no DSN configured
   if (!dsn) {
     console.log("Sentry: No DSN configured, skipping initialization");
     return;
   }
+
+  console.log("Sentry: Initializing...");
 
   Sentry.init({
     dsn,
