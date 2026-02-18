@@ -481,7 +481,17 @@
   "error": {
     "pageNotFound": "Puslapis nerastas",
     "pageNotFoundDescription": "Puslapis, kurio ieškote, neegzistuoja arba buvo perkeltas.",
-    "returnHome": "Grįžti į pradžią"
+    "returnHome": "Grįžti į pradžią",
+    "rateLimit": "Per daug užklausų. Palaukite ir bandykite dar kartą.",
+    "sessionExpired": "Jūsų sesija pasibaigė. Atnaujinkite puslapį.",
+    "noCredits": "Baigėsi kreditai. Įsigykite daugiau, kad tęstumėte.",
+    "networkError": "Ryšio problema. Patikrinkite internetą ir bandykite dar kartą.",
+    "imageGeneration": "Vizualizacijos paslauga laikinai neveikia. Bandykite dar kartą.",
+    "uploadFailed": "Nepavyko įkelti nuotraukos. Bandykite dar kartą.",
+    "paymentError": "Mokėjimo klaida. Bandykite dar kartą.",
+    "serverError": "Serverio klaida. Bandykite dar kartą.",
+    "generic": "Kažkas nepavyko. Bandykite dar kartą.",
+    "shareFailed": "Nepavyko pasidalinti dizainu. Bandykite dar kartą."
   },
   "share": {
     "title": "Mano Dizainas",

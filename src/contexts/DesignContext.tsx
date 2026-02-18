@@ -22,7 +22,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { compressImage } from "@/lib/image-utils";
 import { captureError, setSentryDesignContext } from "@/lib/sentry";
-import { mapErrorToUserMessage } from "@/lib/error-messages";
+import { getErrorTranslationKey } from "@/lib/error-messages";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -129,6 +130,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Auth state - automatic anonymous auth
   const { user, loading: authLoading } = useAuth();
+
+  // Language for translated error messages
+  const { t } = useLanguage();
 
   // Design state - now stores URLs from Supabase instead of base64
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
@@ -644,7 +648,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "handleImageUpload" });
-      toast.error(mapErrorToUserMessage(err));
+      toast.error(t(getErrorTranslationKey(err)));
     }
   }, [user, design.selectedCategory, generation.generatedImages]);
 
@@ -964,7 +968,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         style,
         palette: material,
       });
-      toast.error(mapErrorToUserMessage(err));
+      toast.error(t(getErrorTranslationKey(err)));
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
       return false;
     }
@@ -1059,7 +1063,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch (err) {
       console.error("Share session error:", err);
       captureError(err, { action: "shareSession" });
-      toast.error(mapErrorToUserMessage(err));
+      toast.error(t(getErrorTranslationKey(err)));
       return null;
     } finally {
       setIsSharing(false);
@@ -1210,7 +1214,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "confirmImageUpload" });
-      toast.error(mapErrorToUserMessage(err));
+      toast.error(t(getErrorTranslationKey(err)));
     }
   }, [design.selectedCategory, generation.pendingImageUpload, user]);
 

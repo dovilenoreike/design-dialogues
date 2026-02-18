@@ -1,12 +1,12 @@
 /**
- * Map technical errors to user-friendly messages
+ * Map technical errors to translation keys for user-friendly messages
  */
-export function mapErrorToUserMessage(error: unknown): string {
+export function getErrorTranslationKey(error: unknown): string {
   const message = getErrorMessage(error).toLowerCase();
 
   // Rate limiting
   if (message.includes("rate limit") || message.includes("429") || message.includes("too many")) {
-    return "Too many requests. Please wait a moment and try again.";
+    return "error.rateLimit";
   }
 
   // Authentication/session errors
@@ -16,7 +16,7 @@ export function mapErrorToUserMessage(error: unknown): string {
     message.includes("session expired") ||
     message.includes("invalid token")
   ) {
-    return "Your session has expired. Please refresh the page.";
+    return "error.sessionExpired";
   }
 
   // Credits/payment errors
@@ -26,7 +26,7 @@ export function mapErrorToUserMessage(error: unknown): string {
     message.includes("insufficient credits") ||
     message.includes("out of credits")
   ) {
-    return "You're out of credits. Purchase more to continue.";
+    return "error.noCredits";
   }
 
   // Network errors
@@ -37,7 +37,7 @@ export function mapErrorToUserMessage(error: unknown): string {
     message.includes("connection") ||
     message.includes("offline")
   ) {
-    return "Connection problem. Please check your internet and try again.";
+    return "error.networkError";
   }
 
   // OpenAI/image generation errors
@@ -46,26 +46,31 @@ export function mapErrorToUserMessage(error: unknown): string {
     message.includes("image generation") ||
     message.includes("generation service")
   ) {
-    return "Image generation service is temporarily unavailable. Please try again.";
+    return "error.imageGeneration";
   }
 
   // Storage/upload errors
   if (message.includes("upload") || message.includes("storage")) {
-    return "Failed to upload image. Please try again.";
+    return "error.uploadFailed";
   }
 
   // Stripe/payment processing
   if (message.includes("stripe") || message.includes("payment")) {
-    return "Payment processing error. Please try again.";
+    return "error.paymentError";
+  }
+
+  // Share errors
+  if (message.includes("share")) {
+    return "error.shareFailed";
   }
 
   // Server errors
   if (message.includes("500") || message.includes("server error")) {
-    return "Server error. Please try again in a moment.";
+    return "error.serverError";
   }
 
   // Generic fallback
-  return "Something went wrong. Please try again.";
+  return "error.generic";
 }
 
 /**
