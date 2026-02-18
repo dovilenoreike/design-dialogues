@@ -10,7 +10,7 @@
   },
   "credits": {
     "purchaseSuccess": "Mokėjimas sėkmingas",
-    "creditsAdded": "10 kreditų pridėta į jūsų paskyrą",
+    "creditsAdded": "20 kreditų pridėta į jūsų paskyrą",
     "purchaseCancelled": "Mokėjimas atšauktas",
     "purchaseError": "Mokėjimo klaida",
     "noCredits": "Nebeliko kreditų",
@@ -266,7 +266,7 @@
     "heroSubtitle": "Interjero planavimas keturiais paprastais žingsniais.",
     "step": "Žingsnis",
     "step1Title": "Dizainas",
-    "step1Desc": "Naršykite paruoštas paletes ir stilius. Įkelkite savo erdvę ir pamatykite ją transformuotą su AI vizualizacija.",
+    "step1Desc": "Naršykite paruoštas paletes ir stilius. Įkelkite savo erdvės planą, nuotrauką ar eskizą ir pamatykite ją transformuotą su AI vizualizacija.",
     "step2Title": "Medžiagos",
     "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, parinktas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
     "step3Title": "Biudžetas",

@@ -49,18 +49,18 @@ serve(async (req) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const deviceId = session.metadata?.device_id;
+      const userId = session.metadata?.user_id;
       const creditsToAdd = parseInt(session.metadata?.credits_to_add || "10", 10);
 
-      if (!deviceId) {
-        console.error("No device_id in session metadata");
+      if (!userId) {
+        console.error("No user_id in session metadata");
         return new Response(
-          JSON.stringify({ error: "No device_id in metadata" }),
+          JSON.stringify({ error: "No user_id in metadata" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      console.log(`Adding ${creditsToAdd} credits to device: ${deviceId}`);
+      console.log(`Adding ${creditsToAdd} credits to user: ${userId}`);
 
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -70,14 +70,14 @@ serve(async (req) => {
       const { data: currentData, error: fetchError } = await supabase
         .from("user_credits")
         .select("credits")
-        .eq("device_id", deviceId)
+        .eq("user_id", userId)
         .single();
 
       if (fetchError && fetchError.code === "PGRST116") {
         // User doesn't exist, create with purchased credits
         const { error: insertError } = await supabase
           .from("user_credits")
-          .insert({ device_id: deviceId, credits: creditsToAdd });
+          .insert({ user_id: userId, credits: creditsToAdd });
 
         if (insertError) {
           throw insertError;
@@ -89,7 +89,7 @@ serve(async (req) => {
         const { error: updateError } = await supabase
           .from("user_credits")
           .update({ credits: currentData.credits + creditsToAdd })
-          .eq("device_id", deviceId);
+          .eq("user_id", userId);
 
         if (updateError) {
           throw updateError;

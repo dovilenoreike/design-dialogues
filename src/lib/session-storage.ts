@@ -1,6 +1,11 @@
 /**
- * Session persistence utility for localStorage
- * Saves and restores design state across page navigation and refresh
+ * Session storage utility - DEPRECATED
+ *
+ * This module previously handled localStorage persistence.
+ * Session data is now persisted to Supabase (Storage + Database).
+ *
+ * This file is kept for backwards compatibility during migration.
+ * The types are still used by the share-session edge function.
  */
 
 import { DesignSelection } from "@/types/design-state";
@@ -9,7 +14,6 @@ import { BottomTab, ControlMode, Tier } from "@/contexts/DesignContext";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 
 const STORAGE_KEY = "design_dialogues_session";
-const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export interface SessionData {
   // Design selections
@@ -25,8 +29,8 @@ export interface SessionData {
   activeMode: ControlMode;
 
   // Plan state
-  userMoveInDate: string | null; // ISO string for Date serialization
-  completedTasks: string[]; // Array of completed task IDs
+  userMoveInDate: string | null;
+  completedTasks: string[];
 
   // Layout audit state
   layoutAuditResponses?: Record<string, AuditResponse>;
@@ -37,91 +41,35 @@ export interface SessionData {
 }
 
 /**
- * Save session data to localStorage
- * Handles quota exceeded errors gracefully
+ * @deprecated Use Supabase storage instead
  */
-export function saveSession(data: Omit<SessionData, "savedAt">): boolean {
-  try {
-    const sessionData: SessionData = {
-      ...data,
-      savedAt: Date.now(),
-    };
-
-    const serialized = JSON.stringify(sessionData);
-    localStorage.setItem(STORAGE_KEY, serialized);
-    return true;
-  } catch (error) {
-    // Handle quota exceeded - try saving without images
-    if (error instanceof DOMException && error.name === "QuotaExceededError") {
-      console.warn("localStorage quota exceeded, saving session without images");
-      try {
-        const minimalData: SessionData = {
-          ...data,
-          design: {
-            ...data.design,
-            uploadedImages: {}, // Clear uploaded images to save space
-          },
-          generatedImages: {}, // Clear generated images
-          savedAt: Date.now(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalData));
-        return true;
-      } catch {
-        console.error("Failed to save even minimal session data");
-        return false;
-      }
-    }
-    console.error("Failed to save session:", error);
-    return false;
-  }
+export function saveSession(_data: Omit<SessionData, "savedAt">): boolean {
+  console.warn("saveSession is deprecated - data is now persisted to Supabase");
+  return false;
 }
 
 /**
- * Load session data from localStorage
- * Returns null if no valid session exists or if session is expired
+ * @deprecated Use Supabase storage instead
  */
 export function loadSession(): SessionData | null {
-  try {
-    const serialized = localStorage.getItem(STORAGE_KEY);
-    if (!serialized) return null;
-
-    const data: SessionData = JSON.parse(serialized);
-
-    // Migrate old single image to per-room format
-    if ('generatedImage' in data && data.generatedImage && !data.generatedImages) {
-      const room = data.design?.selectedCategory || "Kitchen";
-      data.generatedImages = { [room]: data.generatedImage };
-      delete (data as any).generatedImage;
-    }
-
-    // Check if session has expired
-    if (Date.now() - data.savedAt > SESSION_EXPIRY_MS) {
-      clearSession();
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Failed to load session:", error);
-    clearSession();
-    return null;
-  }
+  console.warn("loadSession is deprecated - data is now loaded from Supabase");
+  return null;
 }
 
 /**
- * Clear session data from localStorage
+ * Clear any legacy session data from localStorage
  */
 export function clearSession(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error("Failed to clear session:", error);
+    // Ignore errors
   }
 }
 
 /**
- * Check if a session exists (without parsing it)
+ * @deprecated Use Supabase storage instead
  */
 export function hasSession(): boolean {
-  return localStorage.getItem(STORAGE_KEY) !== null;
+  return false;
 }

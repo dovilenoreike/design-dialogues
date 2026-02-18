@@ -14,13 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      palette_waitlist: {
+        Row: {
+          budget_tier: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string | null
+          notified_at: string | null
+          palette_id: string
+        }
+        Insert: {
+          budget_tier?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          palette_id: string
+        }
+        Update: {
+          budget_tier?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          palette_id?: string
+        }
+        Relationships: []
+      }
+      shared_sessions: {
+        Row: {
+          completed_tasks: string[] | null
+          created_at: string | null
+          expires_at: string | null
+          form_data: Json | null
+          freestyle_description: string | null
+          generated_image: string | null
+          id: string
+          selected_category: string | null
+          selected_material: string | null
+          selected_style: string | null
+          selected_tier: string | null
+          uploaded_image: string | null
+          user_move_in_date: string | null
+          view_count: number | null
+        }
+        Insert: {
+          completed_tasks?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          form_data?: Json | null
+          freestyle_description?: string | null
+          generated_image?: string | null
+          id: string
+          selected_category?: string | null
+          selected_material?: string | null
+          selected_style?: string | null
+          selected_tier?: string | null
+          uploaded_image?: string | null
+          user_move_in_date?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          completed_tasks?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          form_data?: Json | null
+          freestyle_description?: string | null
+          generated_image?: string | null
+          id?: string
+          selected_category?: string | null
+          selected_material?: string | null
+          selected_style?: string | null
+          selected_tier?: string | null
+          uploaded_image?: string | null
+          user_move_in_date?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          credits: number
+          device_id: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits?: number
+          device_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          device_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_generations: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_path: string
+          room_category: string
+          selected_material: string
+          selected_style: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_path: string
+          room_category: string
+          selected_material: string
+          selected_style: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_path?: string
+          room_category?: string
+          selected_material?: string
+          selected_style?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_uploads: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_path: string
+          room_category: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_path: string
+          room_category: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_path?: string
+          room_category?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_expired_shared_sessions: { Args: never; Returns: number }
+      generate_share_id: { Args: { length?: number }; Returns: string }
     }
     Enums: {
       [_ in never]: never

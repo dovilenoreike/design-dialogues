@@ -1,5 +1,10 @@
 project_id = "nimrggpqcvgpgdmcermb"
 
+# Enable anonymous authentication for guest users
+# Also enable this in Supabase Dashboard: Authentication > Providers > Anonymous Sign-ins
+[auth]
+enable_signup = true
+
 [functions.generate-interior]
 verify_jwt = false
 

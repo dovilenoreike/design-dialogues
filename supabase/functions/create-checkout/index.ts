@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.14.0?target=deno";
 
 const corsHeaders = {
@@ -12,11 +13,31 @@ serve(async (req) => {
   }
 
   try {
-    const { device_id, success_url, cancel_url } = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (!device_id) {
-      throw new Error("device_id is required");
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { success_url, cancel_url } = await req.json();
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
@@ -38,7 +59,7 @@ serve(async (req) => {
               name: "Design Dialogues Credits",
               description: "20 image generation credits",
             },
-            unit_amount: 200, // €2.00 in cents
+            unit_amount: 200, // 2.00 EUR in cents
           },
           quantity: 1,
         },
@@ -47,7 +68,7 @@ serve(async (req) => {
       success_url: success_url || "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: cancel_url || "https://example.com/cancel",
       metadata: {
-        device_id: device_id,
+        user_id: user.id,
         credits_to_add: "20",
       },
     });

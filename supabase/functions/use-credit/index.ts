@@ -12,25 +12,48 @@ serve(async (req) => {
   }
 
   try {
-    const { device_id } = await req.json();
-
-    if (!device_id) {
-      throw new Error("device_id is required");
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    console.log("use-credit: Auth header present:", !!authHeader);
+
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      console.log("use-credit: No token found");
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    console.log("use-credit: Auth result - user:", user?.id, "error:", authError?.message);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", details: authError?.message }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const user_id = user.id;
 
     // Get current credits
     const { data: currentData, error: fetchError } = await supabase
       .from("user_credits")
       .select("credits")
-      .eq("device_id", device_id)
+      .eq("user_id", user_id)
       .single();
 
     if (fetchError) {
-      throw new Error("User not found");
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (currentData.credits <= 0) {
@@ -44,7 +67,7 @@ serve(async (req) => {
     const { data, error } = await supabase
       .from("user_credits")
       .update({ credits: currentData.credits - 1 })
-      .eq("device_id", device_id)
+      .eq("user_id", user_id)
       .select("credits")
       .single();
 

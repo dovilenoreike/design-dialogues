@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-const DEVICE_ID_KEY = "design_dialogues_device_id";
 const CREDITS_CACHE_KEY = "design_dialogues_credits";
-
-function getDeviceId(): string {
-  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
-  if (!deviceId) {
-    deviceId = crypto.randomUUID();
-    localStorage.setItem(DEVICE_ID_KEY, deviceId);
-  }
-  return deviceId;
-}
 
 // Save credits to localStorage cache
 function cacheCredits(credits: number) {
@@ -42,7 +33,6 @@ interface CreditsContextValue {
   credits: number | null;
   loading: boolean;
   error: string | null;
-  deviceId: string;
   buyCredits: () => Promise<void>;
   useCredit: () => Promise<{ success: boolean; credits: number }>;
   refetchCredits: () => Promise<void>;
@@ -60,16 +50,24 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const deviceId = getDeviceId();
+  const { user, loading: authLoading } = useAuth();
 
   const fetchCredits = useCallback(async () => {
+    if (!user) {
+      console.log("fetchCredits: No user, skipping");
+      return;
+    }
+
+    console.log("fetchCredits: User ID:", user.id);
+
     try {
       setLoading(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke("get-credits", {
-        body: { device_id: deviceId },
-      });
+      // Supabase client automatically includes the user's JWT in the Authorization header
+      const { data, error: fnError } = await supabase.functions.invoke("get-credits");
+
+      console.log("fetchCredits response:", { data, error: fnError });
 
       if (fnError) {
         throw fnError;
@@ -83,20 +81,33 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
     } finally {
       setLoading(false);
     }
-  }, [deviceId]);
+  }, [user]);
 
   useEffect(() => {
-    fetchCredits();
-  }, [fetchCredits]);
+    if (!authLoading && user) {
+      fetchCredits();
+    } else if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [fetchCredits, authLoading, user]);
 
   const buyCredits = useCallback(async () => {
-    try {
-      const successUrl = `${window.location.origin}?payment=success`;
-      const cancelUrl = `${window.location.origin}?payment=cancelled`;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
 
+    try {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('payment', 'success');
+      const successUrl = currentUrl.toString();
+
+      const cancelUrlObj = new URL(window.location.href);
+      cancelUrlObj.searchParams.set('payment', 'cancelled');
+      const cancelUrl = cancelUrlObj.toString();
+
+      // Supabase client automatically includes the user's JWT in the Authorization header
       const { data, error: fnError } = await supabase.functions.invoke("create-checkout", {
         body: {
-          device_id: deviceId,
           success_url: successUrl,
           cancel_url: cancelUrl,
         },
@@ -113,13 +124,16 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       console.error("Failed to create checkout:", err);
       throw err;
     }
-  }, [deviceId]);
+  }, [user]);
 
   const useCredit = useCallback(async (): Promise<{ success: boolean; credits: number }> => {
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("use-credit", {
-        body: { device_id: deviceId },
-      });
+      // Supabase client automatically includes the user's JWT in the Authorization header
+      const { data, error: fnError } = await supabase.functions.invoke("use-credit");
 
       if (fnError) {
         throw fnError;
@@ -139,13 +153,12 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
       console.error("Failed to use credit:", err);
       throw err;
     }
-  }, [deviceId]);
+  }, [user]);
 
   const value: CreditsContextValue = {
     credits,
-    loading,
+    loading: loading || authLoading,
     error,
-    deviceId,
     buyCredits,
     useCredit,
     refetchCredits: fetchCredits,
