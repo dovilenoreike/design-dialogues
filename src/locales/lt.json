@@ -18,7 +18,7 @@
     "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
   },
   "landing": {
-    "title": "Tobulos erdvės formulė",
+    "title": "Įrengimo planuotė",
     "subtitle": "Momentinė vizualizacija ir realus finansinis planas. Kurkite namus užtikrintai, o ne tik vaizduotėje.",
     "uploadHint": "Įkelkite savo erdvę",
     "uploadHelper": "Nuotrauka, eskizas arba planas",
@@ -41,14 +41,14 @@
     "hallwayAcc": "Prieškambarį"
   },
   "tabs": {
-    "thread": "Pradžia",
+    "thread": "Planuotė",
     "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
     "plan": "Planas"
   },
   "thread": {
-    "title": "Tobulos erdvės formulė",
+    "title": "Įrengimo planuotė",
     "projectLabel": "{{area}} M² BUTAS • {{city}}",
     "projectLabelCityOnly": "{{city}}",
     "defineParameters": "Nurodykite parametrus įverčiams apskaičiuoti",

@@ -141,7 +141,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [formData, setFormData] = useState<FormData | null>(null);
 
   // Navigation state
-  const [activeTab, setActiveTabState] = useState<BottomTab>("thread");
+  const [activeTab, setActiveTabState] = useState<BottomTab>("design");
   const [activeMode, setActiveMode] = useState<ControlMode>("rooms");
   const [selectedTier, setSelectedTierState] = useState<Tier>("Standard");
 
@@ -1029,7 +1029,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setDesign(initialDesignSelection);
     setGeneration(initialGenerationState);
     setFormData(null);
-    setActiveTab("thread");
+    setActiveTab("design");
     setActiveMode("rooms");
     setUserMoveInDate(null);
     setCompletedTasks(new Set());
