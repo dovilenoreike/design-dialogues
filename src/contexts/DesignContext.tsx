@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
 import { defaultAuditVariables } from "@/data/layout-audit-rules";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { compressImage } from "@/lib/image-utils";
 
 export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
@@ -149,6 +150,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const isUrlSyncEnabled = useRef(false); // Prevent URL update during initial load
+  const hasLoadedFromDB = useRef(false); // Track if design state loaded from DB
 
   // Track if this is a shared session view
   const isSharedSession = !!initialSharedSession;
@@ -232,6 +234,151 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       isUrlSyncEnabled.current = true;
     }, 100);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load design state from Supabase (after URL params have been applied)
+  useEffect(() => {
+    if (!user || authLoading || isSharedSession || !isInitialized || hasLoadedFromDB.current) return;
+
+    const loadDesignState = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_design_state')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Failed to load design state:', error);
+          return;
+        }
+
+        // Mark as loaded even if no data found (new user)
+        hasLoadedFromDB.current = true;
+
+        if (data) {
+          // Check what was set via URL params
+          const urlState = parseUrlState(location.pathname, location.search);
+
+          // Restore state - URL params take precedence over saved state
+          setDesign(prev => {
+            const restoredRoom = urlState.room || data.selected_category || prev.selectedCategory;
+            return {
+              ...prev,
+              selectedStyle: prev.selectedStyle || data.selected_style || null,
+              selectedMaterial: prev.selectedMaterial || data.selected_material || null,
+              // Only use saved room if URL didn't specify one (prev is "Kitchen" default)
+              selectedCategory: restoredRoom,
+              freestyleDescription: prev.freestyleDescription || data.freestyle_description || "",
+              // Also restore lastSelectedRoom so the hero image shows correctly
+              lastSelectedRoom: prev.lastSelectedRoom || restoredRoom,
+            };
+          });
+
+          // Restore tier if not set via URL
+          setSelectedTierState(prev => {
+            return urlState.tier || (data.selected_tier as Tier) || prev;
+          });
+
+          // Restore form data
+          if (data.form_data && !formData) {
+            setFormData(data.form_data as FormData);
+          }
+
+          // Restore layout audit state
+          if (data.layout_audit_responses && Object.keys(layoutAuditResponses).length === 0) {
+            setLayoutAuditResponses(data.layout_audit_responses as Record<string, AuditResponse>);
+          }
+          if (data.layout_audit_variables) {
+            const vars = data.layout_audit_variables as AuditVariables;
+            if (vars.numberOfAdults !== undefined) {
+              setLayoutAuditVariables(vars);
+            }
+          }
+
+          // Restore timeline state
+          if (data.user_move_in_date && !userMoveInDate) {
+            setUserMoveInDate(new Date(data.user_move_in_date));
+          }
+          if (data.completed_tasks && data.completed_tasks.length > 0 && completedTasks.size === 0) {
+            setCompletedTasks(new Set(data.completed_tasks));
+          }
+        }
+      } catch (err) {
+        console.error('Error loading design state:', err);
+      }
+    };
+
+    loadDesignState();
+  }, [user, authLoading, isSharedSession, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save design state to Supabase (debounced)
+  const saveDesignStateToSupabase = useCallback(async () => {
+    if (!user || isSharedSession) return;
+
+    const state = {
+      user_id: user.id,
+      selected_style: design.selectedStyle,
+      selected_material: design.selectedMaterial,
+      selected_category: design.selectedCategory,
+      freestyle_description: design.freestyleDescription,
+      selected_tier: selectedTier,
+      form_data: formData,
+      layout_audit_responses: layoutAuditResponses,
+      layout_audit_variables: layoutAuditVariables,
+      user_move_in_date: userMoveInDate?.toISOString().split('T')[0] || null,
+      completed_tasks: Array.from(completedTasks),
+    };
+
+    try {
+      const { error } = await supabase
+        .from('user_design_state')
+        .upsert(state, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('Failed to save design state:', error);
+      }
+    } catch (err) {
+      console.error('Error saving design state:', err);
+    }
+  }, [
+    user,
+    isSharedSession,
+    design.selectedStyle,
+    design.selectedMaterial,
+    design.selectedCategory,
+    design.freestyleDescription,
+    selectedTier,
+    formData,
+    layoutAuditResponses,
+    layoutAuditVariables,
+    userMoveInDate,
+    completedTasks,
+  ]);
+
+  // Debounced save function
+  const debouncedSaveDesignState = useDebouncedCallback(saveDesignStateToSupabase, 1000);
+
+  // Trigger save when state changes
+  useEffect(() => {
+    if (isInitialized && user && !isSharedSession && hasLoadedFromDB.current) {
+      debouncedSaveDesignState();
+    }
+  }, [
+    isInitialized,
+    user,
+    isSharedSession,
+    design.selectedStyle,
+    design.selectedMaterial,
+    design.selectedCategory,
+    design.freestyleDescription,
+    selectedTier,
+    formData,
+    layoutAuditResponses,
+    layoutAuditVariables,
+    userMoveInDate,
+    completedTasks,
+    debouncedSaveDesignState,
+  ]);
 
   // Load uploaded images from user_uploads table
   useEffect(() => {
@@ -844,7 +991,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         await Promise.all([
           supabase.from('user_uploads').delete().eq('user_id', user.id),
           supabase.from('user_generations').delete().eq('user_id', user.id),
+          supabase.from('user_design_state').delete().eq('user_id', user.id),
         ]);
+
+        // Reset the loaded flag so next visit starts fresh
+        hasLoadedFromDB.current = false;
       } catch (err) {
         console.error('Failed to clear data from database:', err);
       }

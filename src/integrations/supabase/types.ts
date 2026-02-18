@@ -130,6 +130,65 @@ export type Database = {
           }
         ]
       }
+      user_design_state: {
+        Row: {
+          id: string
+          user_id: string
+          selected_style: string | null
+          selected_material: string | null
+          selected_category: string | null
+          freestyle_description: string | null
+          selected_tier: string | null
+          form_data: Json | null
+          layout_audit_responses: Json | null
+          layout_audit_variables: Json | null
+          user_move_in_date: string | null
+          completed_tasks: string[] | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          selected_style?: string | null
+          selected_material?: string | null
+          selected_category?: string | null
+          freestyle_description?: string | null
+          selected_tier?: string | null
+          form_data?: Json | null
+          layout_audit_responses?: Json | null
+          layout_audit_variables?: Json | null
+          user_move_in_date?: string | null
+          completed_tasks?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          selected_style?: string | null
+          selected_material?: string | null
+          selected_category?: string | null
+          freestyle_description?: string | null
+          selected_tier?: string | null
+          form_data?: Json | null
+          layout_audit_responses?: Json | null
+          layout_audit_variables?: Json | null
+          user_move_in_date?: string | null
+          completed_tasks?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_design_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       user_generations: {
         Row: {
           created_at: string | null
