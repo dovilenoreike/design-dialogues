@@ -150,7 +150,7 @@ const Header = () => {
               to="/"
               className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
             >
-              Design Dialogues
+              Dizaino Dialogai
             </Link>
 
             {designContext && (
@@ -192,7 +192,7 @@ const Header = () => {
                 to="/" 
                 className="text-2xl font-serif font-medium tracking-tight text-foreground"
               >
-                Design Dialogues
+                Dizaino Dialogai
               </Link>
             </div>
             

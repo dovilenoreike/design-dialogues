@@ -8,9 +8,9 @@ import type { Tier } from "./tiers";
  * Base rates per m² by tier
  */
 export const baseRates: Record<Tier, number> = {
-  Budget: 300,
-  Standard: 500,
-  Premium: 800,
+  Budget: 290,
+  Standard: 490,
+  Premium: 780,
 };
 
 /**
@@ -64,9 +64,9 @@ export const furnitureRates: Record<Tier, number> = {
 };
 
 /**
- * Price range variance (±15%)
+ * Price range variance (±10%)
  */
-export const priceVariance = 0.15;
+export const priceVariance = 0.10;
 
 /**
  * Urgency multiplier (20% premium for rush projects)

@@ -107,7 +107,7 @@ serve(async (req) => {
     console.log(`Sending ${type} email to: ${toEmail}`);
 
     const { error } = await resend.emails.send({
-      from: "Design Dialogues <onboarding@resend.dev>", // Update to your verified domain
+      from: "Dizaino Dialogai <labas@dizainodialogai.lt>", // Update to your verified domain
       to: [toEmail],
       subject,
       html,

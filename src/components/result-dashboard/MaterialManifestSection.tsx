@@ -89,7 +89,7 @@ const MaterialManifestSection = ({
           </div>
           <div className="flex-1 text-left">
             <p className="text-xs font-medium text-foreground">
-              {palette?.designer || "Design Dialogues"}
+              {palette?.designer || "Dizaino Dialogai"}
             </p>
             <p className="text-[10px] text-muted-foreground">
               {palette?.designerTitle || "Interior Designer"}

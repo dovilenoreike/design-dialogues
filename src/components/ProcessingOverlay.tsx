@@ -113,7 +113,7 @@ const ProcessingOverlay = ({ isVisible, onComplete, isGenerating }: ProcessingOv
                 value={[kitchenLength]}
                 onValueChange={(value) => setKitchenLength(value[0])}
                 min={2}
-                max={8}
+                max={12}
                 step={0.5}
                 className="w-full"
               />

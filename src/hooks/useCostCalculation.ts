@@ -124,7 +124,7 @@ export function useCostCalculation({
     // Construction & Finish: 60/40 split between services
     // Rough Labor (60%) = wiring, plumbing, structural → Space Planning
     // Finish Labor (40%) = painting, tiling, trim → Interior Finishes
-    const totalConstructionBase = area * baseRates[tier];
+    const totalConstructionBase = area * baseRates[tier] * areaAdjustment;
     const roughLabor = services.spacePlanning
       ? roundToHundred(totalConstructionBase * 0.2)
       : 0;

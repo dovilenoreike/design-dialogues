@@ -99,9 +99,15 @@ export default function SpecsView() {
 
           {/* Editorial Headline */}
           <div className="mb-6">
-            <h2 className="text-2xl font-serif mb-1">
-              {t(`palette.${palette?.id}`) || palette?.name}
-            </h2>
+            <button
+              onClick={() => setIsPaletteSelectorOpen(true)}
+              className="flex items-center gap-1.5 group"
+            >
+              <h2 className="text-2xl font-serif group-hover:text-foreground/80 transition-colors">
+                {t(`palette.${palette?.id}`) || palette?.name}
+              </h2>
+              <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" strokeWidth={1.5} />
+            </button>
             <p className="text-sm text-muted-foreground mt-1">
               {t("result.curatedBy")} {getDesignerWithFallback(palette?.designer, palette?.designerTitle).name}
             </p>
@@ -142,6 +148,14 @@ export default function SpecsView() {
           paletteId={selectedMaterial}
           paletteName={palette?.id ? t(`palette.${palette.id}`) : ""}
           selectedTier={selectedTier}
+        />
+
+        {/* Palette Selector Sheet */}
+        <PaletteSelectorSheet
+          isOpen={isPaletteSelectorOpen}
+          onClose={() => setIsPaletteSelectorOpen(false)}
+          selectedPaletteId={selectedMaterial}
+          onSelectPalette={handleSelectMaterial}
         />
       </div>
     );

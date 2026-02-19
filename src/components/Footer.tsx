@@ -10,7 +10,7 @@ const Footer = () => {
             to="/" 
             className="font-serif text-lg font-medium text-foreground"
           >
-            Design Dialogues
+            Dizaino Dialogai
           </Link>
           
           {/* Social Placeholders */}
@@ -37,7 +37,7 @@ const Footer = () => {
           
           {/* Copyright */}
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Design Dialogues. All rights reserved.
+            © {new Date().getFullYear()} Dizaino Dialogai. All rights reserved.
           </p>
         </div>
       </div>

@@ -57,8 +57,8 @@ serve(async (req) => {
           price_data: {
             currency: "eur",
             product_data: {
-              name: "Design Dialogues Credits",
-              description: "20 image generation credits",
+              name: "Dizaino Dialogai Kreditai",
+              description: "20 koncepto generavimo kreditų",
             },
             unit_amount: 200, // 2.00 EUR in cents
           },

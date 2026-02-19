@@ -158,7 +158,7 @@ const CostBreakdownPanel = ({
               numberOfAdults={localNumberOfAdults}
               numberOfChildren={localNumberOfChildren}
               min={2}
-              max={8}
+              max={12}
               step={0.2}
               recommendedLabel={t("budget.recommended")}
             />
