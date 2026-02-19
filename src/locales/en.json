@@ -498,6 +498,9 @@
     "notFound": "Design not found or expired",
     "startFresh": "Start Fresh"
   },
+  "showroom": {
+    "poweredBy": "Powered by Dizaino Dialogai"
+  },
   "audit": {
     "title": "Layout Audit",
     "subtitle": "Evaluate your floorplan against professional ergonomic standards",

@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CreditsProvider } from "@/contexts/CreditsContext";
 import { CityProvider } from "@/contexts/CityContext";
+import { ShowroomProvider } from "@/contexts/ShowroomContext";
 import { AppErrorBoundary } from "@/components/ErrorBoundary";
 import { trackPageView } from "@/lib/analytics";
 import Index from "./pages/Index";
@@ -41,21 +42,23 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <PageViewTracker />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/thread" element={<Index />} />
-                  <Route path="/design" element={<Index />} />
-                  <Route path="/specs" element={<Index />} />
-                  <Route path="/budget" element={<Index />} />
-                  <Route path="/plan" element={<Index />} />
-                  <Route path="/share/:shareId" element={<SharedSession />} />
-                  <Route path="/how-it-works" element={<HowItWorks />} />
-                  <Route path="/mission" element={<Mission />} />
-                  <Route path="/partner" element={<Partner />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <ShowroomProvider>
+                  <PageViewTracker />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/thread" element={<Index />} />
+                    <Route path="/design" element={<Index />} />
+                    <Route path="/specs" element={<Index />} />
+                    <Route path="/budget" element={<Index />} />
+                    <Route path="/plan" element={<Index />} />
+                    <Route path="/share/:shareId" element={<SharedSession />} />
+                    <Route path="/how-it-works" element={<HowItWorks />} />
+                    <Route path="/mission" element={<Mission />} />
+                    <Route path="/partner" element={<Partner />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </ShowroomProvider>
               </BrowserRouter>
               <Analytics />
               <SpeedInsights />

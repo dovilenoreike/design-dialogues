@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
 import { useCredits } from "@/contexts/CreditsContext";
 import { useDesignOptional } from "@/contexts/DesignContext";
@@ -22,6 +23,7 @@ const Header = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
   const { t } = useLanguage();
+  const { isShowroomMode, activeShowroom } = useShowroom();
   const { credits, loading, buyCredits, refetchCredits } = useCredits();
   const designContext = useDesignOptional();
   const shareSession = designContext?.shareSession;
@@ -146,12 +148,23 @@ const Header = () => {
               </SheetContent>
             </Sheet>
 
-            <Link
-              to="/"
-              className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
-            >
-              Dizaino Dialogai
-            </Link>
+            {isShowroomMode && activeShowroom ? (
+              <div className="flex-1 text-center px-2 truncate">
+                <span className="text-xl font-serif font-medium tracking-tight text-foreground">
+                  {activeShowroom.name}
+                </span>
+                <span className="block text-[10px] text-muted-foreground tracking-wide">
+                  {t("showroom.poweredBy")}
+                </span>
+              </div>
+            ) : (
+              <Link
+                to="/"
+                className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
+              >
+                Dizaino Dialogai
+              </Link>
+            )}
 
             {designContext && (
               <button
@@ -186,14 +199,25 @@ const Header = () => {
           
           {/* Desktop Layout - 3-part grid */}
           <div className="hidden md:grid grid-cols-3 items-center">
-            {/* Left: Logo */}
+            {/* Left: Logo / Co-branding */}
             <div className="justify-self-start">
-              <Link 
-                to="/" 
-                className="text-2xl font-serif font-medium tracking-tight text-foreground"
-              >
-                Dizaino Dialogai
-              </Link>
+              {isShowroomMode && activeShowroom ? (
+                <div>
+                  <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
+                    {activeShowroom.name}
+                  </span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {t("showroom.poweredBy")}
+                  </span>
+                </div>
+              ) : (
+                <Link
+                  to="/"
+                  className="text-2xl font-serif font-medium tracking-tight text-foreground"
+                >
+                  Dizaino Dialogai
+                </Link>
+              )}
             </div>
             
             {/* Center: Navigation */}

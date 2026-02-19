@@ -1,7 +1,9 @@
 import { useMemo } from "react";
+import { X } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useCity, CITIES, CITY_LABELS, City } from "@/contexts/CityContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import {
   Select,
   SelectContent,
@@ -14,6 +16,7 @@ export function ThreadHeader() {
   const { formData, selectedTier } = useDesign();
   const { city, setCity } = useCity();
   const { t } = useLanguage();
+  const { isShowroomMode, activeShowroom, exitShowroomMode } = useShowroom();
 
   // 1. Project ID (mock for now, persists in session)
   const projectId = useMemo(() => {
@@ -68,6 +71,20 @@ export function ThreadHeader() {
             ))}
           </SelectContent>
         </Select>
+        {isShowroomMode && activeShowroom && (
+          <>
+            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400">
+              •
+            </span>
+            <button
+              onClick={exitShowroomMode}
+              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              {activeShowroom.name}
+              <X size={10} className="ml-0.5" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Hero Title */}

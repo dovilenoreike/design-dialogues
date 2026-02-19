@@ -19,6 +19,7 @@ export interface Material {
   materialType?: string;
   technicalCode?: string;
   includeInPrompt?: boolean; // defaults to true if omitted
+  showroomIds?: string[]; // IDs of showrooms that carry this material
 }
 
 export interface DesignerProfile {

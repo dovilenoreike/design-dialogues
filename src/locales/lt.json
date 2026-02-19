@@ -505,6 +505,9 @@
     "notFound": "Dizainas nerastas arba pasibaigė jo galiojimas",
     "startFresh": "Pradėti iš naujo"
   },
+  "showroom": {
+    "poweredBy": "su Dizaino Dialogais"
+  },
   "audit": {
     "title": "Plano Auditas",
     "subtitle": "Įvertinkite savo planą pagal ergonomikos standartus",

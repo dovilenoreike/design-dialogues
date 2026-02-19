@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Check } from "lucide-react";
 import {
   Sheet,
@@ -6,8 +7,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import { palettes } from "@/data/palettes";
 import { paletteThumbnails } from "@/data/palettes/thumbnails";
+import { getPalettesForShowroom } from "@/lib/palette-utils";
 
 interface PaletteSelectorSheetProps {
   isOpen: boolean;
@@ -23,6 +26,15 @@ export default function PaletteSelectorSheet({
   onSelectPalette,
 }: PaletteSelectorSheetProps) {
   const { t } = useLanguage();
+  const { isShowroomMode, activeShowroom } = useShowroom();
+
+  // Filter palettes in showroom mode
+  const displayPalettes = useMemo(() => {
+    if (isShowroomMode && activeShowroom) {
+      return getPalettesForShowroom(activeShowroom.id);
+    }
+    return palettes;
+  }, [isShowroomMode, activeShowroom]);
 
   const handleSelect = (paletteId: string) => {
     onSelectPalette(paletteId);
@@ -37,7 +49,7 @@ export default function PaletteSelectorSheet({
         </SheetHeader>
 
         <div className="space-y-2">
-          {palettes.map((palette) => {
+          {displayPalettes.map((palette) => {
             const isSelected = selectedPaletteId === palette.id;
 
             return (

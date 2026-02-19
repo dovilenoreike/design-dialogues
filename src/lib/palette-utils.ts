@@ -1,5 +1,6 @@
 import type { Palette, Material, RoomCategory, LocalizedString } from "@/types/palette";
 import type { Language } from "@/contexts/LanguageContext";
+import { palettes } from "@/data/palettes";
 
 // Import all material images using Vite's glob import
 const materialImages = import.meta.glob<string>(
@@ -144,4 +145,16 @@ export async function loadMaterialImagesAsBase64(
   
   const results = await Promise.all(imagePromises);
   return results.filter((img): img is string => img !== null);
+}
+
+/**
+ * Gets palettes that have at least one material available at the specified showroom
+ */
+export function getPalettesForShowroom(showroomId: string): Palette[] {
+  return palettes.filter((palette) => {
+    // Check if ANY material in this palette has the showroomId
+    return Object.values(palette.materials).some(
+      (material) => material.showroomIds?.includes(showroomId)
+    );
+  });
 }
