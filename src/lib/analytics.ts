@@ -51,9 +51,9 @@ export function trackEvent(
 export function trackPageView(path: string, referrer?: string) {
   if (!isInitialized) return;
 
-  posthog.capture("page_view", {
-    path,
-    referrer: referrer || document.referrer,
+  posthog.capture("$pageview", {
+    $current_url: path,
+    $referrer: referrer || document.referrer,
   });
 }
 
@@ -82,7 +82,7 @@ export function resetAnalyticsUser() {
 
 // Event name constants for consistency
 export const AnalyticsEvents = {
-  PAGE_VIEW: "page_view",
+  PAGE_VIEW: "$pageview",
   IMAGE_UPLOADED: "image_uploaded",
   STYLE_SELECTED: "style_selected",
   PALETTE_SELECTED: "palette_selected",
