@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Menu, Plus, Loader2, Share2, Sparkles } from "lucide-react";
+import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { Menu, Plus, Loader2, Share2, Sparkles, ArrowLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -36,6 +36,10 @@ const Header = () => {
   const isSharing = designContext?.isSharing ?? false;
   const { toast: toastUI } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const subPages = ["/how-it-works", "/mission", "/partner"];
+  const isSubPage = subPages.includes(location.pathname);
 
   // Handle payment return
   useEffect(() => {
@@ -108,8 +112,10 @@ const Header = () => {
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
-    { label: t("nav.mission"), href: "/mission" },
-    { label: t("nav.partner"), href: "/partner" },
+    ...(!isShowroomMode ? [
+      { label: t("nav.mission"), href: "/mission" },
+      { label: t("nav.partner"), href: "/partner" },
+    ] : []),
   ];
 
   const handleMobileFeedback = () => {
@@ -123,6 +129,14 @@ const Header = () => {
         <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
           {/* Mobile Layout */}
           <div className="flex md:hidden items-center gap-2">
+            {isSubPage ? (
+              <button
+                onClick={() => navigate("/")}
+                className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors shrink-0"
+              >
+                <ArrowLeft size={22} />
+              </button>
+            ) : (
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <button className="p-2 -ml-2 text-foreground hover:bg-muted rounded-lg transition-colors shrink-0">
@@ -153,6 +167,7 @@ const Header = () => {
                 </div>
               </SheetContent>
             </Sheet>
+            )}
 
             {isShowroomMode && activeShowroom ? (
               <button
@@ -233,15 +248,25 @@ const Header = () => {
             
             {/* Center: Navigation */}
             <nav className="justify-self-center flex items-center gap-8">
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              {isSubPage ? (
+                <button
+                  onClick={() => navigate("/")}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {item.label}
-                </Link>
-              ))}
+                  <ArrowLeft size={16} />
+                  {t("nav.backToPlanner")}
+                </button>
+              ) : (
+                NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))
+              )}
             </nav>
             
             {/* Right: Utilities */}
