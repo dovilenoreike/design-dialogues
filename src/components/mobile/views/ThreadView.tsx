@@ -31,10 +31,10 @@ export default function ThreadView() {
   return (
     <div className="relative flex-1">
       <div className="absolute inset-0 overflow-y-auto">
-        <div className="px-6 py-8">
+        <div className="px-6 pt-4 pb-8">
           <ThreadHeader />
 
-          <div>
+          <div className="mt-10">
             <ThreadSection
               title={t("thread.concept")}
               ctaText={t("thread.conceptCta")}

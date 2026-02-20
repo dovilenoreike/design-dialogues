@@ -18,7 +18,7 @@
     "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
   },
   "landing": {
-    "title": "Įrengimo planuotė",
+    "title": "Interjero planuotė",
     "subtitle": "Momentinė vizualizacija ir realus finansinis planas. Kurkite namus užtikrintai, o ne tik vaizduotėje.",
     "uploadHint": "Įkelkite savo erdvę",
     "uploadHelper": "Nuotrauka, eskizas arba planas",
@@ -28,17 +28,17 @@
   },
   "space": {
     "kitchen": "Virtuvė",
-    "kitchenAcc": "Virtuvę",
+    "kitchenAcc": "Virtuvės",
     "livingRoom": "Svetainė",
-    "livingRoomAcc": "Svetainę",
+    "livingRoomAcc": "Svetainės",
     "bedroom": "Miegamasis",
-    "bedroomAcc": "Miegamąjį",
+    "bedroomAcc": "Miegamojo",
     "bathroom": "Vonia",
-    "bathroomAcc": "Vonią",
+    "bathroomAcc": "Vonios",
     "other": "Kita",
     "otherAcc": "Kitą",
     "hallway": "Prieškambaris",
-    "hallwayAcc": "Prieškambarį"
+    "hallwayAcc": "Prieškambario"
   },
   "tabs": {
     "thread": "Planuotė",
@@ -48,7 +48,7 @@
     "plan": "Planas"
   },
   "thread": {
-    "title": "Įrengimo planuotė",
+    "title": "Interjero planuotė",
     "projectLabel": "{{area}} M² BUTAS • {{city}}",
     "projectLabelCityOnly": "{{city}}",
     "defineParameters": "Nurodykite parametrus įverčiams apskaičiuoti",
@@ -73,7 +73,7 @@
     "assessment": "Įvertinta",
     "palette": "Paletė",
     "overdue": "Vėluoja",
-    "fullHomeVision": "Viso namo vizija",
+    "fullHomeVision": "Viso būsto vizija",
     "curatedBy": "Sukūrė"
   },
   "modes": {
@@ -430,7 +430,7 @@
   },
   "mobile": {
     "stage": {
-      "designingThe": "Kuriame {room}",
+      "designingThe": "{room} konceptas",
       "uploadPrompt": "Įkelkite nuotrauką, eskizą arba planą.",
       "visualized": "Vizualizuota {room}",
       "yourRoom": "Jūsų {room}",
@@ -506,7 +506,10 @@
     "startFresh": "Pradėti iš naujo"
   },
   "showroom": {
-    "poweredBy": "su Dizaino Dialogais"
+    "poweredBy": "Interjero planuotė",
+    "sessionTitle": "Showroom sesija",
+    "sessionMessage": "Šiuo metu esate {name} sesijoje.",
+    "exitSession": "Grįžti į bendrą katalogą"
   },
   "audit": {
     "title": "Plano Auditas",

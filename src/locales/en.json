@@ -499,7 +499,10 @@
     "startFresh": "Start Fresh"
   },
   "showroom": {
-    "poweredBy": "Powered by Dizaino Dialogai"
+    "poweredBy": "Interior layout",
+    "sessionTitle": "Showroom session",
+    "sessionMessage": "You are currently in a {name} session.",
+    "exitSession": "Return to general catalog"
   },
   "audit": {
     "title": "Layout Audit",

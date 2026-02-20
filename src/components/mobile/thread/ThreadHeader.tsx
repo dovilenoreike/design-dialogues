@@ -1,9 +1,7 @@
 import { useMemo } from "react";
-import { X } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useCity, CITIES, CITY_LABELS, City } from "@/contexts/CityContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useShowroom } from "@/contexts/ShowroomContext";
 import {
   Select,
   SelectContent,
@@ -16,8 +14,6 @@ export function ThreadHeader() {
   const { formData, selectedTier } = useDesign();
   const { city, setCity } = useCity();
   const { t } = useLanguage();
-  const { isShowroomMode, activeShowroom, exitShowroomMode } = useShowroom();
-
   // 1. Project ID (mock for now, persists in session)
   const projectId = useMemo(() => {
     const stored = sessionStorage.getItem('projectId');
@@ -53,9 +49,12 @@ export function ThreadHeader() {
   const parametersAreDefined = hasArea && hasServices;
 
   return (
-    <header className="mb-16 pl-8">
+    <header className="relative pl-8">
+      {/* Thread line starting from header */}
+      <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-border" />
+
       {/* Project Identity Bar */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-baseline gap-2 mb-2">
         <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400">
           {projectId} •
         </span>
@@ -71,34 +70,12 @@ export function ThreadHeader() {
             ))}
           </SelectContent>
         </Select>
-        {isShowroomMode && activeShowroom && (
-          <>
-            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400">
-              •
-            </span>
-            <button
-              onClick={exitShowroomMode}
-              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] font-medium text-neutral-400 hover:text-neutral-600 transition-colors"
-            >
-              {activeShowroom.name}
-              <X size={10} className="ml-0.5" />
-            </button>
-          </>
-        )}
       </div>
 
-      {/* Hero Title */}
-      <h1 className="text-4xl sm:text-5xl font-serif text-neutral-900 leading-[1.1] mb-2">
-        {t("thread.title")}
-      </h1>
-
-      {/* Parameter Line */}
-      <p className="text-xs uppercase tracking-widest text-neutral-600 mb-4">
+      {/* Parameter Data String */}
+      <p className="text-xs uppercase tracking-widest text-neutral-500 font-medium">
         {parametersAreDefined ? `${area} • ${tier} • ${scope}` : t("thread.defineParameters").toUpperCase()}
       </p>
-
-      {/* Closing Hairline */}
-      <div className="border-t border-neutral-100" />
     </header>
   );
 }

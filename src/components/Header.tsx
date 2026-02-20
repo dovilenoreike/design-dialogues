@@ -8,6 +8,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -22,8 +27,9 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
+  const [showroomSheetOpen, setShowroomSheetOpen] = useState(false);
   const { t } = useLanguage();
-  const { isShowroomMode, activeShowroom } = useShowroom();
+  const { isShowroomMode, activeShowroom, exitShowroomMode } = useShowroom();
   const { credits, loading, buyCredits, refetchCredits } = useCredits();
   const designContext = useDesignOptional();
   const shareSession = designContext?.shareSession;
@@ -149,20 +155,24 @@ const Header = () => {
             </Sheet>
 
             {isShowroomMode && activeShowroom ? (
-              <div className="flex-1 text-center px-2 truncate">
+              <button
+                onClick={() => setShowroomSheetOpen(true)}
+                className="flex-1 text-center px-2 truncate"
+              >
                 <span className="text-xl font-serif font-medium tracking-tight text-foreground">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                   {activeShowroom.name}
                 </span>
                 <span className="block text-[10px] text-muted-foreground tracking-wide">
                   {t("showroom.poweredBy")}
                 </span>
-              </div>
+              </button>
             ) : (
               <Link
                 to="/"
                 className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
               >
-                Dizaino Dialogai
+                Interjero planuotė
               </Link>
             )}
 
@@ -202,20 +212,21 @@ const Header = () => {
             {/* Left: Logo / Co-branding */}
             <div className="justify-self-start">
               {isShowroomMode && activeShowroom ? (
-                <div>
+                <button onClick={() => setShowroomSheetOpen(true)} className="text-left">
                   <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                     {activeShowroom.name}
                   </span>
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("showroom.poweredBy")}
                   </span>
-                </div>
+                </button>
               ) : (
                 <Link
                   to="/"
                   className="text-2xl font-serif font-medium tracking-tight text-foreground"
                 >
-                  Dizaino Dialogai
+                  Interjero planuotė
                 </Link>
               )}
             </div>
@@ -271,6 +282,27 @@ const Header = () => {
       </header>
       
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+
+      {/* Showroom exit sheet */}
+      <Drawer open={showroomSheetOpen} onOpenChange={setShowroomSheetOpen}>
+        <DrawerContent>
+          <div className="px-6 pt-4 pb-8 text-center">
+            <DrawerTitle className="sr-only">{t("showroom.sessionTitle")}</DrawerTitle>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t("showroom.sessionMessage").replace("{name}", activeShowroom?.name ?? "")}
+            </p>
+            <button
+              onClick={() => {
+                exitShowroomMode();
+                setShowroomSheetOpen(false);
+              }}
+              className="text-sm font-medium text-[#647d75] underline underline-offset-4 hover:text-[#4f645d] transition-colors"
+            >
+              {t("showroom.exitSession")}
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 };
