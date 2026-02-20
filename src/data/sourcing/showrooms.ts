@@ -29,7 +29,7 @@ export const showroomBrands: ShowroomBrand[] = [
   },
   {
     id: "jusu-salonas",
-    name: "Vaineta",
+    name: "Jūsų Salonas",
     materialTypes: ["Vinyl", "Laminate", "Engineered Wood"],
     isPartner: false,
     locations: {},
