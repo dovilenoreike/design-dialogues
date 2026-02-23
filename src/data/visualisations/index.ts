@@ -6,8 +6,8 @@
  */
 
 // Default values
-export const DEFAULT_PALETTE = "fog-in-the-forest";
-export const DEFAULT_STYLE = "japandi";
+export const DEFAULT_PALETTE = "caramel-morning";
+export const DEFAULT_STYLE = "scandinavian-minimalism";
 export const DEFAULT_ROOM = "kitchen";
 
 /**
