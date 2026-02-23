@@ -54,7 +54,7 @@ export const designers: Record<string, DesignerProfile> = {
     styles: ALL_STYLES,
     cities:[],
     instagram: "dizainodialogai",
-    website: "https://www.dizainodialogai.lt/",
+    website: "https://www.interjeroplanuote.lt/",
   },
 };
 

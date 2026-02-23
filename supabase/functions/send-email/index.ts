@@ -69,7 +69,7 @@ serve(async (req) => {
           <p><strong>Project Details:</strong></p>
           <p>${data.project}</p>
           <hr>
-          <p><em>Laiškas išsiųstas pagal kliento užklausą www.dizainodialogai.lt</em></p>
+          <p><em>Laiškas išsiųstas pagal kliento užklausą www.interjeroplanuote.lt</em></p>
         `;
         break;
 
