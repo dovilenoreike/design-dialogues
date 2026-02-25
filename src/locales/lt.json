@@ -16,6 +16,8 @@
     "purchaseError": "Mokėjimo klaida",
     "noCredits": "Nebeliko kreditų",
     "buyMore": "Pirkti daugiau kreditų",
+    "bannerDescription": "Panaudojote visus vizualizacijos kreditus. Įsigykite daugiau, kad galėtumėte toliau kurti dizainus.",
+    "dismiss": "Ne dabar",
     "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
   },
   "landing": {

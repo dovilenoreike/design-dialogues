@@ -16,6 +16,8 @@
     "purchaseError": "Payment Error",
     "noCredits": "No Credits Remaining",
     "buyMore": "Buy More Credits",
+    "bannerDescription": "You've used all your visualization credits. Purchase more to continue creating designs.",
+    "dismiss": "Not now",
     "error": "Failed to process credit. Please try again."
   },
   "landing": {

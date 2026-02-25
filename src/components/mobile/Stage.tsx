@@ -1,10 +1,11 @@
 import { useRef, useCallback, useMemo, useEffect, useState } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown } from "lucide-react";
+import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown, Coins } from "lucide-react";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
-import { toast } from "sonner";
+
+
 import { getVisualization } from "@/data/visualisations";
 import { getPaletteById, palettes } from "@/data/palettes";
 import { getPaletteMaterialImages } from "@/data/palettes/material-images";
@@ -40,7 +41,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     handleSelectStyle,
     handleSelectMaterial,
   } = useDesign();
-  const { credits, useCredit, refetchCredits } = useCredits();
+  const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
@@ -132,7 +133,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const handleGenerateWithCredits = useCallback(async () => {
     // Check if user has credits before attempting generation
     if (credits !== null && credits <= 0) {
-      toast.error(t("credits.noCredits") || "No credits remaining. Please purchase more credits.");
+      setShowNoCreditsBanner(true);
       return;
     }
 
@@ -190,6 +191,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const roomName = t(roomTranslationKey[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
 
   // Calculate prev/current/next based on activeMode
   const prevImage = useMemo(() => {
@@ -506,6 +508,38 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         onOpenChange={setUploadMenuOpen}
         onSelect={handleUploadClick}
       />
+
+      {/* No credits banner overlay */}
+      {showNoCreditsBanner && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-6 w-full max-w-xs rounded-2xl bg-background p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <Coins className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t("credits.noCredits")}
+            </h3>
+            <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+              {t("credits.bannerDescription")}
+            </p>
+            <button
+              onClick={() => {
+                setShowNoCreditsBanner(false);
+                buyCredits();
+              }}
+              className="mt-4 w-full rounded-full bg-foreground py-3 text-sm font-medium text-background active:scale-[0.98] transition-transform"
+            >
+              {t("credits.buyMore")}
+            </button>
+            <button
+              onClick={() => setShowNoCreditsBanner(false)}
+              className="mt-2 w-full py-2 text-xs text-muted-foreground"
+            >
+              {t("credits.dismiss")}
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
