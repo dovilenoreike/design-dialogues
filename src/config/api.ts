@@ -17,7 +17,7 @@ export const API_CONFIG = {
    * Image generation settings
    */
   imageGeneration: {
-    model: "gpt-image-1",  // User's tested model
+    model: "gpt-image-1.5",  // User's tested model
     size: "1024x1024" as const,
     quality: "low",
   },

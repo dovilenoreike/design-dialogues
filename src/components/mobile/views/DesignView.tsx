@@ -47,23 +47,21 @@ export default function DesignView() {
       {/* Hero visualisation */}
       <div className="relative" style={{ height: 'calc(100svh - 228px)' }}>
         <Stage onOpenSelector={handleOpenSelector} />
-        {!hasUserImage && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
-            <div className="flex items-center gap-0.5 px-1 py-1 rounded-full bg-neutral-900 shadow-lg">
-              {(["rooms", "styles", "palettes"] as ControlMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setActiveMode(mode)}
-                  className={`px-3.5 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase font-medium transition-all active:scale-95 ${
-                    activeMode === mode ? "bg-white/15 text-white" : "text-white/50"
-                  }`}
-                >
-                  {t(`modes.${mode}`)}
-                </button>
-              ))}
-            </div>
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
+          <div className="flex items-center gap-0.5 px-1 py-1 rounded-full bg-neutral-900 shadow-lg">
+            {(["rooms", "styles", "palettes"] as ControlMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setActiveMode(mode)}
+                className={`px-3.5 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase font-medium transition-all active:scale-95 ${
+                  activeMode === mode ? "bg-white/15 text-white" : "text-white/50"
+                }`}
+              >
+                {t(`modes.${mode}`)}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Inline control center with carousels */}

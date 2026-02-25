@@ -440,13 +440,16 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight">
               {paletteName}
             </span>
-            <div className="flex flex-col gap-1.5">
+            <div
+              className={`flex flex-col gap-1.5 ${activeMode === "palettes" ? "p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg" : ""}`}
+              style={activeMode === "palettes" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
+            >
               {swatchImages.map((src, i) => (
                 <img
                   key={i}
                   src={src}
                   alt=""
-                  className="w-7 h-7 rounded-full object-cover shadow-sm"
+                  className={`w-7 h-7 rounded-full object-cover ${activeMode === "palettes" ? "" : "shadow-sm"}`}
                 />
               ))}
             </div>
