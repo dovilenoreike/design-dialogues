@@ -8,7 +8,7 @@
   "materials": { 
     "material1": {
       "description": {
-        "en": "Light conrete texture with subtle warm undertones, matte finish.",
+        "en": "Light concrete texture with subtle warm undertones, matte finish.",
         "lt": "Šviesaus betono tekstūra."
       },
       "rooms": ["kitchen", "livingRoom", "bedroom"],

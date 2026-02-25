@@ -8,7 +8,7 @@
     "material1": {
       "description": {
         "en": "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
-        "lt": "Pilkšva ažuolo tekstūra."
+        "lt": "Pilkšva ąžuolo tekstūra."
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring"},
@@ -40,7 +40,7 @@
     },
     "material4": {
       "description": {
-        "en": "Garrison gray colour with blue undertone. Flat surfaces.",
+        "en": "Garrison grey colour with blue undertone. Flat surfaces.",
         "lt": "Rūką primenanti melsvai pilka."
       },
       "rooms": ["kitchen", "bathroom", "livingRoom"],
@@ -52,7 +52,7 @@
     "material5": {
       "description": {
         "en": "Matte dark brown cabinet fronts with fine horizontal wood grain texture",
-        "lt": "Matinė tamsiai rudi medienos tekstūra"
+        "lt": "Matinė tamsiai ruda medienos tekstūra"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom","bathroom", "other"],
       "purpose": { "default": "Cabinet furniture", "kitchen": "Bottom cabinets" },

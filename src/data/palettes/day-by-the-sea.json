@@ -18,7 +18,7 @@
     },
     "material2": {
       "description": {
-        "en": "Fjord Green flat texture a pastel grey blue with green undertones",
+        "en": "Fjord Green flat texture, a pastel grey-blue with green undertones",
         "lt": "Jūros šviesiai mėlyna matinė tekstūra"
       },
       "rooms": ["kitchen"],
@@ -77,7 +77,7 @@
         "lt": "Šiltos smėlio spalvos kalkakmenio imitacijos plytelės"
       },
       "rooms": ["bathroom"],
-      "purpose": { "default": "Sienos ir grindys"},
+      "purpose": { "default": "Wall and floor surfaces"},
       "materialType": "Tiles",
       "technicalCode": "Florim Sensi Lithos Grey",
       "showroomIds":["linea"]

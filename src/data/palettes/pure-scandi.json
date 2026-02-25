@@ -4,7 +4,7 @@
   "designer": "dizaino_dialogai",
   "designerTitle": "Dizaino Platforma",
   "status": "coming-soon",
-  "promptSnippet": "Inspired by modern Scandi interiors. Soft, calm, and understated. decorate with natural textiles, white and dark decor details. Walls in white.",
+  "promptSnippet": "Inspired by modern Scandi interiors. Soft, calm, and understated. Decorate with natural textiles, white and dark decor details. Walls in white.",
   "materials": { 
     "material1": {
       "description": {
@@ -19,7 +19,7 @@
     },
     "material2": {
       "description": {
-        "en": "Natural soft grey-beige marble, cloudy movement, dark rich veines.",
+        "en": "Natural soft grey-beige marble, cloudy movement, dark rich veins.",
         "lt": "Šviesaus natūralaus akmens tekstūra."
       },
       "rooms": ["kitchen"],

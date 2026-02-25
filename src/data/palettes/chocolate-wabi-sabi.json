@@ -8,7 +8,7 @@
     "material1": {
       "description": {
         "en": "Natural light smoked oak flooring",
-        "lt": "Natūralios šviesiai rūkyto ąžuolo tesktūra"
+        "lt": "Natūralios šviesiai rūkyto ąžuolo tekstūra"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "other"],
       "purpose": { "default": "Flooring" },

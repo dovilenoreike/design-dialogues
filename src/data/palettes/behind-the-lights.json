@@ -30,7 +30,7 @@
     "material3": {
       "description": {
         "en": "Warm grey-brown medium tone marble with white veining and a calm, honed stone texture.",
-        "lt": "Šilta pilka marmuro tekstūta."
+        "lt": "Šilta pilka marmuro tekstūra."
       },
       "rooms": ["kitchen"],
       "purpose": { "default": "Worktops and backsplash"},

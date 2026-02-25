@@ -29,7 +29,7 @@
     },
     "material3": {
       "description": {
-        "en": "Light taupe texture a subtle vertical ribbed texture",
+        "en": "Light taupe texture with a subtle vertical ribbed texture",
         "lt": "Šviesi pilkšvai ruda tekstūra su subtiliu vertikaliu rievėjimu"
       },
       "rooms": ["kitchen", "livingRoom", "bedroom"],

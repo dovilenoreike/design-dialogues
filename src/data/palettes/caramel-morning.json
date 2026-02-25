@@ -3,12 +3,12 @@
   "name": "Caramel Morning",
   "designer": "gn_interiordesign",
   "designerTitle": "Interjero dizaino studija",
-  "promptSnippet": "Inspired by the uplifting energy of the morning. Sweet contrast of chaki-browns, warm beiges, soft off-whites. Walls in warm white.",
+  "promptSnippet": "Inspired by the uplifting energy of the morning. Sweet contrast of khaki-browns, warm beiges, soft off-whites. Walls in warm white.",
   "materials": {
     "material1": {
       "description": {
         "en": "Natural oak texture.",
-        "lt": "Natūralus ąžuolo tekstūra."
+        "lt": "Natūralaus ąžuolo tekstūra."
       },
       "rooms": ["kitchen", "livingRoom", "bedroom"],
       "purpose": { "default": "Flooring"},
@@ -52,7 +52,7 @@
     "material5": {
       "description": {
         "en": "Flat matte off-white.",
-        "lt": "Šila balta spalva."
+        "lt": "Šilta balta spalva."
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
       "purpose": { "default": "Shelving", "kitchen": "Top cabinets" },
@@ -62,7 +62,7 @@
     },
     "material6": {
       "description": {
-        "en": "Dark khaki-brow fronts with a subtle linear texture.",
+        "en": "Dark khaki-brown fronts with a subtle linear texture.",
         "lt": "Chaki-ruda su subtilia linijine tekstūra."
       },
       "rooms": ["kitchen", "livingRoom", "bedroom", "bathroom"],
