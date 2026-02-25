@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useDesign } from "@/contexts/DesignContext";
-import ModeSwitcher from "./ModeSwitcher";
 import RoomCarousel from "./carousels/RoomCarousel";
 import PaletteCarousel from "./carousels/PaletteCarousel";
 import StyleCarousel from "./carousels/StyleCarousel";
@@ -33,16 +32,10 @@ export default function ControlCenter() {
   }, [uploadedImage, selectedStyle, selectedMaterial, activeMode, setActiveMode]);
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Layer 1: Compact Mode Switcher */}
-      <ModeSwitcher />
-
-      {/* Layer 2: Filmstrip Area */}
-      <div className="flex-1 overflow-hidden">
-        {activeMode === "rooms" && <RoomCarousel />}
-        {activeMode === "palettes" && <PaletteCarousel />}
-        {activeMode === "styles" && <StyleCarousel />}
-      </div>
+    <div className="pt-4 h-[104px] overflow-hidden bg-background">
+      {activeMode === "rooms" && <RoomCarousel />}
+      {activeMode === "palettes" && <PaletteCarousel />}
+      {activeMode === "styles" && <StyleCarousel />}
     </div>
   );
 }

@@ -26,7 +26,7 @@ import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
-export type BottomTab = "thread" | "design" | "specs" | "budget" | "plan";
+export type BottomTab = "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
 export type Tier = "Budget" | "Standard" | "Premium";
 

@@ -1,11 +1,13 @@
-import { useRef, useCallback, useMemo, useEffect } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download, LayoutGrid, Palette } from "lucide-react";
-import { useDesign } from "@/contexts/DesignContext";
+import { useRef, useCallback, useMemo, useEffect, useState } from "react";
+import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown } from "lucide-react";
+import UploadMenuSheet from "./UploadMenuSheet";
+import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
 import { toast } from "sonner";
 import { getVisualization } from "@/data/visualisations";
 import { getPaletteById, palettes } from "@/data/palettes";
+import { getPaletteMaterialImages } from "@/data/palettes/material-images";
 import { getStyleById, styles } from "@/data/styles";
 import { rooms } from "@/data/rooms";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -18,15 +20,11 @@ const roomTranslationKey: Record<string, string> = {
   "Bathroom": "space.bathroom",
 };
 
-// Map room name to accusative translation key (for "Kuriame {room}")
-const roomTranslationKeyAcc: Record<string, string> = {
-  "Kitchen": "space.kitchenAcc",
-  "Living Room": "space.livingRoomAcc",
-  "Bedroom": "space.bedroomAcc",
-  "Bathroom": "space.bathroomAcc",
-};
+interface StageProps {
+  onOpenSelector?: (mode: ControlMode) => void;
+}
 
-export default function Stage() {
+export default function Stage({ onOpenSelector }: StageProps = {}) {
   const { t } = useLanguage();
   const {
     design,
@@ -181,7 +179,6 @@ export default function Stage() {
     fileInputRef.current?.click();
   };
 
-  // Get palette and style info for glass pills
   const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
   const style = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
 
@@ -191,8 +188,8 @@ export default function Stage() {
   const displayImage = generatedImage || uploadedImage || visualizationImage;
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(roomTranslationKey[roomNameRaw] || roomNameRaw);
-  const roomNameAcc = t(roomTranslationKeyAcc[roomNameRaw] || roomTranslationKey[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
 
   // Calculate prev/current/next based on activeMode
   const prevImage = useMemo(() => {
@@ -293,62 +290,59 @@ export default function Stage() {
         </div>
       </div>
 
-      {/* Disclaimer - always visible at bottom right */}
-      <div className="absolute right-3 bottom-3 z-10">
-        <p className="text-[10px] text-white/50 tracking-wider uppercase [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
-          {t("result.visualizationDisclaimer")}
-        </p>
-      </div>
+      {/* Gradient overlay for readability */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-      {/* Upload overlay - show when no user image */}
+      {/* Room technical label - top-left */}
       {!hasUserImage && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 transition-colors pointer-events-none"
-        >
+        <div className="absolute top-4 left-3 z-10">
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
+            {String(rooms.findIndex(r => r.name === roomNameRaw) + 1).padStart(2, '0')} &bull; {roomName}
+          </span>
+        </div>
+      )}
+
+      {/* Upload button - centered, clean */}
+      {!hasUserImage && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <button
-            onClick={handleUploadClick}
+            onClick={() => setUploadMenuOpen(true)}
             className="pointer-events-auto flex flex-col items-center active:scale-95 transition-transform"
           >
-            <div className="w-16 h-16 mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Upload className="w-7 h-7 text-white" strokeWidth={1.5} />
-            </div>
-            <h2
-              key={roomName}
-              className="text-2xl font-serif text-white/80 mb-2 [text-shadow:0_2px_8px_rgba(0,0,0,0.3)] animate-fade-in-up"
+            <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-lg"
+              style={{ border: '1.5px solid rgba(255,255,255,0.4)' }}
             >
-              {t("mobile.stage.designingThe").replace("{room}", roomNameAcc)}
-            </h2>
-            <p className="text-sm text-white/80">
-              {t("mobile.stage.uploadPrompt")}
-            </p>
+              <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
+            </div>
           </button>
         </div>
       )}
 
-      {/* Status badge and action buttons - show when user has uploaded/generated */}
+      {/* Room label + action buttons - show when user has uploaded/generated */}
       {hasUserImage && (
-        <div className="absolute inset-x-0 top-4 flex flex-col items-center px-4">
-          <p className="inline-block px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full text-xs text-white/90">
-            {generatedImage
-              ? t("mobile.stage.visualized").replace("{room}", roomName)
-              : t("mobile.stage.yourRoom").replace("{room}", roomName)}
-          </p>
-                    {/* Save button - visible when generated image exists */}
+        <div className="absolute inset-x-0 top-4 px-3">
+          {/* Room technical label - top-left */}
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-neutral-500 [text-shadow:0_0_4px_rgba(255,255,255,0.8)] select-none">
+            {String(rooms.findIndex(r => r.name === roomNameRaw) + 1).padStart(2, '0')} &bull; {roomName}
+          </span>
+          {/* Save button - visible when generated image exists */}
           {generatedImage && !isGenerating && (
             <button
               onClick={handleSaveImage}
-              className="absolute top-0 right-14 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
+              className="absolute top-0 right-12 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
+              style={{ border: '0.5px solid rgba(255,255,255,0.15)' }}
             >
-              <Download className="w-4 h-4" strokeWidth={2} />
+              <Download className="w-3.5 h-3.5" strokeWidth={2} />
             </button>
           )}
           {/* Clear button - top right */}
           {!isGenerating && (
             <button
               onClick={clearUploadedImage}
-              className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full text-white/90 active:scale-95 transition-transform"
+              className="absolute top-0 right-3 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
+              style={{ border: '0.5px solid rgba(255,255,255,0.15)' }}
             >
-              <X className="w-4 h-4" strokeWidth={2} />
+              <X className="w-3.5 h-3.5" strokeWidth={2} />
             </button>
           )}
         </div>
@@ -388,64 +382,131 @@ export default function Stage() {
 
       {/* Bottom left action buttons - show when user has uploaded */}
       {hasUserImage && !isGenerating && (
-        <div className="absolute bottom-4 left-4 flex items-center gap-2">
+        <div className="absolute bottom-4 left-3 flex items-center gap-1.5">
           <button
             onClick={handleUploadClick}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/90 backdrop-blur-sm text-foreground rounded-full text-sm font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
+            className="flex items-center gap-2 px-3 py-2.5 bg-white/20 backdrop-blur-xl text-white/80 rounded-full text-[10px] tracking-wide uppercase font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
+            style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
           >
-            <Camera className="w-4 h-4" strokeWidth={1.5} />
+            <Camera className="w-3.5 h-3.5" strokeWidth={1.5} />
             {t("mobile.stage.replace")}
           </button>
         </div>
       )}
 
-      {/* Glass Pills - bottom when browsing */}
-      {!hasUserImage && (style || palette) && (
-        <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
+      {/* Technical tags - bottom-left when browsing */}
+      {!hasUserImage && (
+        <div className="absolute bottom-8 left-3 flex items-center gap-1.5">
+          <button
+            onClick={() => { onOpenSelector ? onOpenSelector("rooms") : setActiveMode("rooms"); }}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] tracking-wide uppercase font-medium active:scale-95 transition-all ${
+              activeMode === "rooms"
+                ? "bg-white/20 backdrop-blur-xl text-white/80"
+                : "text-white/60"
+            }`}
+            style={activeMode === "rooms" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
+          >
+            {roomName}
+            <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
+          </button>
           {style && (
             <button
-              onClick={() => setActiveMode("styles")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium active:scale-95 transition-transform"
+              onClick={() => { onOpenSelector ? onOpenSelector("styles") : setActiveMode("styles"); }}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] tracking-wide uppercase font-medium active:scale-95 transition-all ${
+                activeMode === "styles"
+                  ? "bg-white/20 backdrop-blur-xl text-white/80"
+                  : "text-white/60"
+              }`}
+              style={activeMode === "styles" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
             >
-              <LayoutGrid className="w-3 h-3" strokeWidth={2} />
               {t(`style.${style.id}`) || style.name}
-            </button>
-          )}
-          {palette && (
-            <button
-              onClick={() => setActiveMode("palettes")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10 active:scale-95 transition-transform"
-            >
-              <Palette className="w-3 h-3" strokeWidth={2} />
-              {t(`palette.${palette.id}`) || palette.name}
+              <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
             </button>
           )}
         </div>
       )}
 
-      {/* Glass Pills - centered below status badge after upload/generation */}
-      {hasUserImage && (style || palette) && (
-        <div className="absolute top-14 inset-x-0 flex justify-center items-center gap-2">
-          {style && (
-            <button
-              onClick={() => setActiveMode("styles")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/25 backdrop-blur-sm rounded-full text-xs text-white font-medium active:scale-95 transition-transform"
-            >
-              <LayoutGrid className="w-3 h-3" strokeWidth={2} />
-              {t(`style.${style.id}`) || style.name}
-            </button>
-          )}
-          {palette && (
-            <button
-              onClick={() => setActiveMode("palettes")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/20 backdrop-blur-sm rounded-full text-xs text-white/80 border border-white/10 active:scale-95 transition-transform"
-            >
-              <Palette className="w-3 h-3" strokeWidth={2} />
-              {t(`palette.${palette.id}`) || palette.name}
-            </button>
-          )}
+      {/* Palette specimen strip - bottom-right when browsing */}
+      {!hasUserImage && palette && (() => {
+        const swatchImages = getPaletteMaterialImages(palette.id).slice(0, 4);
+        const paletteName = t(`palette.${palette.id}`) || palette.name;
+        return swatchImages.length > 0 ? (
+          <button
+            onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
+            className="absolute bottom-12 right-1.5 flex flex-col items-center active:scale-[0.97] transition-transform max-w-[44px]"
+          >
+            <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight">
+              {paletteName}
+            </span>
+            <div className="flex flex-col gap-1.5">
+              {swatchImages.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt=""
+                  className="w-7 h-7 rounded-full object-cover shadow-sm"
+                />
+              ))}
+            </div>
+          </button>
+        ) : null;
+      })()}
+
+      {/* Style tag - centered below status badge after upload/generation */}
+      {hasUserImage && style && (
+        <div className="absolute top-14 inset-x-0 flex justify-center">
+          <button
+            onClick={() => { onOpenSelector ? onOpenSelector("styles") : setActiveMode("styles"); }}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-white/20 backdrop-blur-xl rounded-full text-[10px] tracking-wide uppercase text-white/80 font-medium active:scale-95 transition-transform"
+            style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+          >
+            {t(`style.${style.id}`) || style.name}
+            <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
+          </button>
         </div>
       )}
+
+      {/* Palette specimen strip - bottom-right above FAB after upload */}
+      {hasUserImage && palette && (() => {
+        const swatchImages = getPaletteMaterialImages(palette.id).slice(0, 4);
+        const paletteName = t(`palette.${palette.id}`) || palette.name;
+        return swatchImages.length > 0 ? (
+          <button
+            onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
+            className="absolute bottom-20 right-1.5 flex flex-col items-center active:scale-[0.97] transition-transform max-w-[44px]"
+          >
+            <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight">
+              {paletteName}
+            </span>
+            <div
+              className="flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
+              style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+            >
+              {swatchImages.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt=""
+                  className="w-7 h-7 rounded-full object-cover"
+                />
+              ))}
+            </div>
+          </button>
+        ) : null;
+      })()}
+
+      {/* AI concept watermark - directly on image */}
+      <span className="absolute bottom-5 right-1.5 text-[8px] font-medium tracking-[0.2em] uppercase text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none pointer-events-none">
+        {t("result.visualizationDisclaimer")}
+      </span>
+
+      {/* Upload type menu bottom sheet */}
+      <UploadMenuSheet
+        open={uploadMenuOpen}
+        onOpenChange={setUploadMenuOpen}
+        onSelect={handleUploadClick}
+      />
+
     </div>
   );
 }

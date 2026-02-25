@@ -42,11 +42,21 @@
     "hallwayAcc": "Prieškambario"
   },
   "tabs": {
-    "thread": "Planuotė",
-    "design": "Dizainas",
+    "design": "Konceptas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
     "plan": "Planas"
+  },
+  "home": {
+    "materials": "Medžiagos",
+    "otherRooms": "Kiti kambariai",
+    "budget": "Orientacinis biudžetas",
+    "audit": "Plano auditas",
+    "roadmap": "Grafikas",
+    "configureBudget": "Konfigūruoti biudžetą",
+    "startAudit": "Įvertinkite savo planą",
+    "setTimeline": "Kada ką daryti?",
+    "fullHomeConcept": "Viso būsto koncepcija"
   },
   "thread": {
     "title": "Interjero planuotė",
@@ -124,6 +134,7 @@
     "bauhaus.desc": "Ryški geometrija ir pirminės spalvos"
   },
   "specs": {
+    "fullSpecification": "Pilna specifikacija",
     "emptyTitle": "Medžiagos nepasirinktos",
     "emptyDescription": "Pasirinkite paletę Dizaino skirtuke, kad čia matytumėte medžiagų specifikacijas.",
     "freestyleTitle": "Jūsų Vizija",
@@ -162,7 +173,10 @@
       "Laminate": "Laminatas",
       "Wood Veneer": "Medienos lukštas",
       "Metal": "Metalas",
-      "Tiles": "Plytelės"
+      "Tiles": "Plytelės",
+      "LMDP": "LMDP",
+      "MDF": "MDF",
+      "Compact HPL": "Compact HPL"
     }
   },
   "matrix": {
@@ -443,7 +457,8 @@
       "styleHint": "1 žingsnis iš 2: Pasirinkite dizaino stilių",
       "paletteHint": "2 žingsnis iš 2: Pasirinkite paletę arba aprašykite medžiagas",
       "replace": "Pakeisti",
-      "share": "Dalintis"
+      "share": "Dalintis",
+      "uploadLabel": "ĮKELKITE PLANĄ • ESKIZĄ • NUOTRAUKĄ"
     },
     "switchDialog": {
       "saveTitle": "Išsaugoti vizualizaciją?",
@@ -458,6 +473,16 @@
       "placeholder": "Aprašykite norimas medžiagas...\npvz., Juodos matinės virtuvės fasadai, baltas kvarcinis stalviršis, šiltas ąžuolo parketas, žalvariniai akcentai",
       "cancel": "Atšaukti",
       "apply": "Taikyti"
+    },
+    "uploadMenu": {
+      "title": "Pasirinkite, kaip pradėti",
+      "sectionHeader": "PASIRINKITE ĮVESTIES TIPĄ",
+      "2dPlan": "2D PLANAS",
+      "2dPlanTip": "Laisvė stiliui. AI pasiūlys konceptą pagal esamus baldus.",
+      "sketch": "ESKIZAS ARBA PIEŠINYS",
+      "sketchTip": "Stiliaus ir apimties paieškai. AI interpretuos jūsų idėją.",
+      "photo": "NUOTRAUKA",
+      "photoTip": "Greitai vizualizacijai. AI gali šiek tiek pakeisti erdvės proporcijas."
     },
     "uploadDialog": {
       "title": "Įkelti naują nuotrauką",

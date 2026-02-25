@@ -3,6 +3,8 @@
  * Groups related state for cleaner component structure
  */
 
+import { DEFAULT_PALETTE, DEFAULT_STYLE, DEFAULT_ROOM } from "@/data/visualisations";
+
 export interface DesignSelection {
   uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name
   selectedCategory: string | null;
@@ -27,9 +29,9 @@ export interface GenerationState {
 
 export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
-  selectedCategory: "Kitchen",
-  selectedMaterial: null,  // No material selected initially
-  selectedStyle: null,  // No style selected initially
+  selectedCategory: DEFAULT_ROOM,
+  selectedMaterial: DEFAULT_PALETTE,
+  selectedStyle: DEFAULT_STYLE,
   freestyleDescription: "",
   lastSelectedRoom: null,  // No room selected initially
 };

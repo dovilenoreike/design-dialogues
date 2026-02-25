@@ -42,11 +42,21 @@
     "hallwayAcc": "Hallway"
   },
   "tabs": {
-    "thread": "Thread",
-    "design": "Design",
+    "design": "Home",
     "specs": "Specs",
     "budget": "Budget",
     "plan": "Plan"
+  },
+  "home": {
+    "materials": "Materials",
+    "otherRooms": "Other Rooms",
+    "budget": "Budget Estimate",
+    "audit": "Layout Audit",
+    "roadmap": "Roadmap",
+    "configureBudget": "Configure Budget",
+    "startAudit": "Start Audit",
+    "setTimeline": "Set Timeline",
+    "fullHomeConcept": "Full Home Concept"
   },
   "thread": {
     "title": "The formula for a perfect space",
@@ -126,6 +136,7 @@
     "bauhaus.desc": "Bold geometry and primary colors"
   },
   "specs": {
+    "fullSpecification": "Full Specification",
     "emptyTitle": "No Materials Selected",
     "emptyDescription": "Select a palette from the Design tab to see your material specifications here.",
     "freestyleTitle": "Your Vision",
@@ -436,7 +447,8 @@
       "styleHint": "Step 1 of 2: Choose a design style",
       "paletteHint": "Step 2 of 2: Choose a palette or describe materials",
       "replace": "Replace",
-      "share": "Share"
+      "share": "Share",
+      "uploadLabel": "UPLOAD PLAN • SKETCH • PHOTO"
     },
     "switchDialog": {
       "saveTitle": "Save your visualization?",
@@ -451,6 +463,16 @@
       "placeholder": "Describe your ideal materials...\ne.g., Black matte kitchen facades, white quartz worktops, warm oak flooring, brass accents",
       "cancel": "Cancel",
       "apply": "Apply"
+    },
+    "uploadMenu": {
+      "title": "Choose how you start",
+      "sectionHeader": "SELECT INPUT TYPE",
+      "2dPlan": "2D PLAN",
+      "2dPlanTip": "Freedom for style. AI will suggest a concept based on existing furniture.",
+      "sketch": "SKETCH OR DRAWING",
+      "sketchTip": "For style and scope search. AI will interpret your idea.",
+      "photo": "PHOTO",
+      "photoTip": "For quick visualization. AI may slightly change space proportions."
     },
     "uploadDialog": {
       "title": "Upload New Image",

@@ -8,7 +8,7 @@
 // Default values
 export const DEFAULT_PALETTE = "caramel-morning";
 export const DEFAULT_STYLE = "scandinavian-minimalism";
-export const DEFAULT_ROOM = "kitchen";
+export const DEFAULT_ROOM = "Kitchen";
 
 /**
  * Convert room display name to room ID
@@ -20,7 +20,7 @@ function roomNameToId(roomName: string): string {
     Bedroom: "bedroom",
     Bathroom: "bathroom",
   };
-  return mapping[roomName] || DEFAULT_ROOM;
+  return mapping[roomName] || "kitchen";
 }
 
 /**
@@ -37,7 +37,7 @@ export function getVisualization(
   styleId: string | null
 ): string {
   const palette = paletteId || DEFAULT_PALETTE;
-  const room = roomName ? roomNameToId(roomName) : DEFAULT_ROOM;
+  const room = roomNameToId(roomName || DEFAULT_ROOM);
   const style = styleId || DEFAULT_STYLE;
 
   return `/visualisations/${palette}/${style}/${room}.webp`;

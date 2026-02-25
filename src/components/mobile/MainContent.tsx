@@ -1,5 +1,4 @@
 import { useDesign } from "@/contexts/DesignContext";
-import ThreadView from "./views/ThreadView";
 import DesignView from "./views/DesignView";
 import SpecsView from "./views/SpecsView";
 import BudgetView from "./views/BudgetView";
@@ -10,8 +9,6 @@ export default function MainContent() {
 
   const content = (() => {
     switch (activeTab) {
-      case "thread":
-        return <ThreadView />;
       case "design":
         return <DesignView />;
       case "specs":
@@ -21,7 +18,7 @@ export default function MainContent() {
       case "plan":
         return <PlanView />;
       default:
-        return <ThreadView />;
+        return <DesignView />;
     }
   })();
 

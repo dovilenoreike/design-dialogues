@@ -14,7 +14,7 @@ export interface UrlState {
 }
 
 // Valid values for validation
-const VALID_TABS: BottomTab[] = ["thread", "design", "specs", "budget", "plan"];
+const VALID_TABS: BottomTab[] = ["design", "specs", "budget", "plan"];
 const VALID_TIERS: Tier[] = ["Budget", "Standard", "Premium"];
 
 /**

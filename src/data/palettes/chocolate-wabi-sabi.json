@@ -33,7 +33,7 @@
         "lt": "Šilta balta akmens tekstūra"
       },
       "rooms": ["kitchen"],
-      "purpose": { "default": "Worktops & backsplash" },
+      "purpose": { "default": "Worktops and backsplash" },
       "materialType": "LMDP",
       "technicalCode": "Egger F229 ST75",
       "showroomIds":["impeka"]
