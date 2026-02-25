@@ -43,7 +43,7 @@ export default function DesignView() {
   const hasUserImage = !!(design.uploadedImages[roomKey] || generation.generatedImages[roomKey]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
       {/* Hero visualisation */}
       <div className="relative" style={{ height: 'calc(100svh - 228px)' }}>
         <Stage onOpenSelector={handleOpenSelector} />
