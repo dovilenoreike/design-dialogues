@@ -17,7 +17,8 @@ export const API_CONFIG = {
    * Image generation settings
    */
   imageGeneration: {
-    model: "gpt-image-1.5",  // User's tested model
+    modelCreative: "gpt-image-1",      // floorplans, sketches — creative interpretation
+    modelAccurate: "gpt-image-1",    // photo material edits — preserves room layout
     size: "1024x1024" as const,
     quality: "low",
   },

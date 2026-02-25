@@ -44,7 +44,7 @@
     "hallwayAcc": "Prieškambario"
   },
   "tabs": {
-    "design": "Konceptas",
+    "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
     "plan": "Planas"
@@ -479,12 +479,22 @@
     "uploadMenu": {
       "title": "Pasirinkite, kaip pradėti",
       "sectionHeader": "PASIRINKITE ĮVESTIES TIPĄ",
+      "tabCreative": "STILIAUS PAIEŠKA",
+      "tabPhotorealism": "FOTO-REALIZMAS",
+      "comingSoonTitle": "Jau greitai",
+      "comingSoonDescription": "Dirbame kad Jūs matytumėte realistines vizualizacijas su Jūsų pasirinktomis medžiagomis.",
+      "comingSoonCta": "Sužinok pirmas",
+      "emailPlaceholder": "jusu@el-pastas.lt",
+      "namePlaceholder": "Jūsų vardas (neprivaloma)",
+      "submitWaitlist": "Pranešti, kai bus paruošta",
+      "waitlistSuccess": "Ačiū! Pranešime kai bus paruošta.",
+      "waitlistError": "Nepavyko. Bandykite dar kartą.",
       "2dPlan": "2D PLANAS",
-      "2dPlanTip": "Laisvė stiliui. AI pasiūlys konceptą pagal esamus baldus.",
+      "2dPlanTip": "AI pasiūlys konceptą pagal esamus baldus.",
       "sketch": "ESKIZAS ARBA PIEŠINYS",
-      "sketchTip": "Stiliaus ir apimties paieškai. AI interpretuos jūsų idėją.",
+      "sketchTip": "AI patikslins Jūsų piešinį į detalų paveikslą.",
       "photo": "NUOTRAUKA",
-      "photoTip": "Greitai vizualizacijai. AI gali šiek tiek pakeisti erdvės proporcijas."
+      "photoTip": "Apdailos medžiagų perpiešimas. Visgi AI gali šiek tiek pakeisti erdvės proporcijas."
     },
     "uploadDialog": {
       "title": "Įkelti naują nuotrauką",

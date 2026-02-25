@@ -4,6 +4,7 @@ import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCredits } from "@/contexts/CreditsContext";
+import type { UploadType } from "@/types/design-state";
 
 
 import { getVisualization } from "@/data/visualisations";
@@ -168,7 +169,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        handleImageUpload(file);
+        handleImageUpload(file, pendingUploadTypeRef.current);
       }
       // Reset input so same file can be selected again
       e.target.value = "";
@@ -176,7 +177,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     [handleImageUpload]
   );
 
-  const handleUploadClick = () => {
+  const handleUploadClick = (type?: UploadType) => {
+    if (type) pendingUploadTypeRef.current = type;
     fileInputRef.current?.click();
   };
 
@@ -192,6 +194,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const hasUserImage = !!uploadedImage || !!generatedImage;
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
+  const pendingUploadTypeRef = useRef<UploadType>("photo");
 
   // Calculate prev/current/next based on activeMode
   const prevImage = useMemo(() => {
@@ -386,7 +389,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {hasUserImage && !isGenerating && (
         <div className="absolute bottom-4 left-3 flex items-center gap-1.5">
           <button
-            onClick={handleUploadClick}
+            onClick={() => setUploadMenuOpen(true)}
             className="flex items-center gap-2 px-3 py-2.5 bg-white/20 backdrop-blur-xl text-white/80 rounded-full text-[10px] tracking-wide uppercase font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
             style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
           >
@@ -509,7 +512,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       <UploadMenuSheet
         open={uploadMenuOpen}
         onOpenChange={setUploadMenuOpen}
-        onSelect={handleUploadClick}
+        onSelect={(type) => handleUploadClick(type)}
       />
 
       {/* No credits banner overlay */}

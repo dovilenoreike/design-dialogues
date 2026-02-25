@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      feature_waitlist: {
+        Row: {
+          created_at: string | null
+          email: string
+          feature_id: string
+          id: string
+          name: string | null
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          feature_id: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          feature_id?: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+        }
+        Relationships: []
+      }
       palette_waitlist: {
         Row: {
           budget_tier: string | null

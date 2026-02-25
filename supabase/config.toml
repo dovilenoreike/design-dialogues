@@ -31,3 +31,6 @@ verify_jwt = false
 
 [functions.palette-waitlist-signup]
 verify_jwt = false
+
+[functions.feature-waitlist-signup]
+verify_jwt = false

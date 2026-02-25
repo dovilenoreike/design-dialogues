@@ -22,7 +22,7 @@
         "lt": "Jūros šviesiai mėlyna matinė tekstūra"
       },
       "rooms": ["kitchen"],
-      "purpose": { "default": "Cabinet furniture"},
+      "purpose": { "default": "Cabinet fronts"},
       "materialType": "MDF",
       "technicalCode": "Velvet 4246",
       "showroomIds":["impeka"]
@@ -44,7 +44,7 @@
         "lt": "Šviesiai pilkšvai ruda matinis paviršius"
       },
       "rooms": ["livingRoom", "bedroom","bathroom", "other"],
-      "purpose": { "default": "Cabinet furniture"},
+      "purpose": { "default": "Cabinetry"},
       "materialType": "LMDP",
       "technicalCode": "Egger U750 ST9",
       "showroomIds":["impeka"]

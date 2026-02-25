@@ -6,13 +6,14 @@ import {
   GenerationState,
   initialDesignSelection,
   initialGenerationState,
+  UploadType,
 } from "@/types/design-state";
 import { FormData } from "@/types/calculator";
 import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
-import { buildDetailedMaterialPrompt } from "@/lib/palette-utils";
+import { buildDetailedMaterialPrompt, loadMaterialImagesWithMeta } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseUrlState, buildUrl } from "@/lib/url-state";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
@@ -67,7 +68,7 @@ interface DesignContextValue {
   setLayoutAuditWorkFromHome: (value: boolean) => void;
 
   // Design actions
-  handleImageUpload: (file: File) => void;
+  handleImageUpload: (file: File, uploadType?: UploadType) => void;
   clearUploadedImage: () => void;
   handleSelectCategory: (category: string | null) => void;
   handleSelectMaterial: (material: string | null) => void;
@@ -171,6 +172,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         uploadedImages: initialSharedSession.uploadedImage
           ? { [currentRoom]: initialSharedSession.uploadedImage }
           : {},
+        uploadTypes: {},
         selectedCategory: initialSharedSession.selectedCategory,
         selectedMaterial: initialSharedSession.selectedMaterial,
         selectedStyle: initialSharedSession.selectedStyle,
@@ -601,8 +603,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
+  // Track pending upload type for confirmation dialog flow
+  const pendingUploadTypeRef = useRef<UploadType>("photo");
+
   // Image upload handler - compresses and uploads to Supabase Storage
-  const handleImageUpload = useCallback(async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File, uploadType: UploadType = "photo") => {
     if (!user) {
       toast.error("Authentication required");
       return;
@@ -613,6 +618,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     // If there's a generated image, show confirmation dialog
     if (hasGeneratedImage) {
+      pendingUploadTypeRef.current = uploadType;
       setGeneration((prev) => ({
         ...prev,
         pendingImageUpload: file,
@@ -666,14 +672,15 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         console.error('Failed to save upload record:', dbError);
       }
 
-      // Update local state with the URL
+      // Update local state with the URL and upload type
       setDesign(prev => ({
         ...prev,
         uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
+        uploadTypes: { ...prev.uploadTypes, [currentRoom]: uploadType },
       }));
 
       // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, tab: "design" });
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, upload_type: uploadType, tab: "design" });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "handleImageUpload" });
@@ -842,13 +849,94 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
+  // Helper: store generated image to Supabase and update local state
+  const storeGeneratedImage = useCallback(async (
+    generatedImageData: string,
+    room: string,
+    style: string,
+    material: string,
+    startTime: number,
+  ): Promise<boolean> => {
+    // Check for existing generation with this combo to delete old file
+    const { data: existing } = await supabase
+      .from('user_generations')
+      .select('image_path')
+      .eq('user_id', user!.id)
+      .eq('room_category', room)
+      .eq('selected_style', style)
+      .eq('selected_material', material)
+      .single();
+
+    // Store the generated image in Supabase Storage
+    let generatedBlob: Blob;
+    if (generatedImageData.startsWith('data:')) {
+      const base64Response = await fetch(generatedImageData);
+      generatedBlob = await base64Response.blob();
+    } else {
+      const urlResponse = await fetch(generatedImageData);
+      generatedBlob = await urlResponse.blob();
+    }
+
+    const genPath = `${user!.id}/generated/${room}_${style}_${material}_${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('user-images')
+      .upload(genPath, generatedBlob, { contentType: 'image/jpeg' });
+
+    if (uploadError) {
+      console.error('Failed to upload generated image:', uploadError);
+      // Fall back to using the original URL/base64
+      setGeneration(prev => ({
+        ...prev,
+        generatedImages: { ...prev.generatedImages, [room]: generatedImageData },
+        isGenerating: false,
+      }));
+      toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
+      trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
+        room, style, duration_ms: Date.now() - startTime, tab: "design",
+      });
+      return true;
+    }
+
+    // Delete old file if exists
+    if (existing?.image_path) {
+      await supabase.storage.from('user-images').remove([existing.image_path]);
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('user-images')
+      .getPublicUrl(genPath);
+
+    // Upsert database record (keyed by room+style+palette)
+    await supabase
+      .from('user_generations')
+      .upsert({
+        user_id: user!.id,
+        room_category: room,
+        selected_style: style,
+        selected_material: material,
+        image_path: genPath,
+      }, { onConflict: 'user_id,room_category,selected_style,selected_material' });
+
+    setGeneration(prev => ({
+      ...prev,
+      generatedImages: { ...prev.generatedImages, [room]: urlData.publicUrl },
+      isGenerating: false,
+    }));
+
+    toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
+    trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
+      room, style, duration_ms: Date.now() - startTime, tab: "design",
+    });
+    return true;
+  }, [user, t]);
+
   // Generate interior render - returns true if successful
   const generateInteriorRender = useCallback(async (): Promise<boolean> => {
     if (!uploadedImage || !selectedCategory || !user) return false;
 
     const room = selectedCategory || "Kitchen";
     const style = design.selectedStyle;
-    // Use "freestyle" as the material value when in freestyle mode
     const material = design.freestyleDescription?.trim()
       ? "freestyle"
       : design.selectedMaterial;
@@ -863,49 +951,18 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return false;
     }
 
-    // Track generation start time
     const startTime = Date.now();
 
-    // Set Sentry context before API call
     setSentryDesignContext({
-      room,
-      style,
-      palette: material,
-      hasUploadedImage: !!uploadedImage,
+      room, style, palette: material, hasUploadedImage: !!uploadedImage,
     });
 
     try {
       const palette = design.selectedMaterial ? getPaletteById(design.selectedMaterial) : null;
 
-      // Get combined style and derive architecture + atmosphere from config
-      const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-      const architecture = styleData?.config.architecture
-        ? getArchitectureById(styleData.config.architecture)
-        : null;
-      const atmosphere = styleData?.config.atmosphere
-        ? getAtmosphereById(styleData.config.atmosphere)
-        : null;
-
-      // Build detailed material prompt with room-specific purposes
-      let materialPrompt = "";
-      if (palette) {
-        materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
-      }
-
-      // Get architecture and atmosphere prompts separately
-      const architecturePrompt = architecture?.promptSnippet || null;
-      const atmospherePrompt = atmosphere?.promptSnippet || null;
-
-      // Combine style prompts for the Supabase function
-      const stylePrompt = [architecturePrompt, atmospherePrompt]
-        .filter(Boolean)
-        .join(" ") || null;
-
-      // Fetch the image from Storage URL
+      // Fetch the image from Storage URL and convert to base64
       const imageResponse = await fetch(uploadedImage);
       const imageBlob = await imageResponse.blob();
-
-      // Convert blob to base64 for the edge function (OpenAI API compatibility)
       const reader = new FileReader();
       const imageBase64 = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => resolve(reader.result as string);
@@ -913,112 +970,109 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         reader.readAsDataURL(imageBlob);
       });
 
-      // Call Supabase Edge Function for secure server-side generation
-      const { data, error } = await supabase.functions.invoke("generate-interior", {
-        body: {
-          imageBase64,
-          roomCategory: selectedCategory,
-          materialPrompt: materialPrompt || null,
-          stylePrompt,
-          freestyleDescription: design.freestyleDescription.trim() || null,
-          quality: API_CONFIG.imageGeneration.quality,
-          model: API_CONFIG.imageGeneration.model,
-        },
-      });
+      // Determine upload type for this room (default to "photo" for existing uploads)
+      const uploadType = design.uploadTypes[room] || "photo";
+      const isPhotoWithPalette = uploadType === "photo" && palette && !design.freestyleDescription?.trim();
 
-      if (error) {
-        throw new Error(error.message || "Failed to generate interior");
-      }
+      let generatedImageData: string;
 
-      const generatedImageData = data?.generatedImage;
-      if (!generatedImageData) {
-        throw new Error("No image returned from generation service");
-      }
+      if (isPhotoWithPalette) {
+        // Photo path: use generate-material-edit with texture images + accurate model
+        try {
+          const materialImagesWithMeta = await loadMaterialImagesWithMeta(
+            design.selectedMaterial!, selectedCategory, palette
+          );
 
-      // Check for existing generation with this combo to delete old file
-      const { data: existing } = await supabase
-        .from('user_generations')
-        .select('image_path')
-        .eq('user_id', user.id)
-        .eq('room_category', room)
-        .eq('selected_style', style)
-        .eq('selected_material', material)
-        .single();
+          // Get atmosphere prompt from selected style
+          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+          const atmosphere = styleData?.config.atmosphere
+            ? getAtmosphereById(styleData.config.atmosphere) : null;
+          const atmospherePrompt = atmosphere?.promptSnippet || null;
 
-      // Store the generated image in Supabase Storage
-      let generatedBlob: Blob;
-      if (generatedImageData.startsWith('data:')) {
-        // Base64 data URL
-        const base64Response = await fetch(generatedImageData);
-        generatedBlob = await base64Response.blob();
+          const { data, error } = await supabase.functions.invoke("generate-material-edit", {
+            body: {
+              imageBase64,
+              materialImages: materialImagesWithMeta,
+              roomCategory: selectedCategory,
+              palettePromptSnippet: palette.promptSnippet,
+              atmospherePrompt,
+              quality: API_CONFIG.imageGeneration.quality,
+              model: API_CONFIG.imageGeneration.modelAccurate,
+            },
+          });
+
+          if (error) {
+            throw new Error(error.message || "Failed to generate material edit");
+          }
+
+          generatedImageData = data?.generatedImage;
+          if (!generatedImageData) {
+            throw new Error("No image returned from material edit service");
+          }
+        } catch (materialEditErr) {
+          // Fallback: use standard generate-interior path
+          console.warn("Material edit failed, falling back to generate-interior:", materialEditErr);
+
+          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+          const architecture = styleData?.config.architecture
+            ? getArchitectureById(styleData.config.architecture) : null;
+          const atmosphere = styleData?.config.atmosphere
+            ? getAtmosphereById(styleData.config.atmosphere) : null;
+
+          const materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
+          const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
+            .filter(Boolean).join(" ") || null;
+
+          const { data, error } = await supabase.functions.invoke("generate-interior", {
+            body: {
+              imageBase64,
+              roomCategory: selectedCategory,
+              materialPrompt: materialPrompt || null,
+              stylePrompt,
+              freestyleDescription: null,
+              quality: API_CONFIG.imageGeneration.quality,
+              model: API_CONFIG.imageGeneration.modelCreative,
+            },
+          });
+
+          if (error) throw new Error(error.message || "Failed to generate interior");
+          generatedImageData = data?.generatedImage;
+          if (!generatedImageData) throw new Error("No image returned from generation service");
+        }
       } else {
-        // URL from OpenAI
-        const urlResponse = await fetch(generatedImageData);
-        generatedBlob = await urlResponse.blob();
-      }
+        // Floorplan/sketch/freestyle path: use generate-interior with creative model
+        const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+        const architecture = styleData?.config.architecture
+          ? getArchitectureById(styleData.config.architecture) : null;
+        const atmosphere = styleData?.config.atmosphere
+          ? getAtmosphereById(styleData.config.atmosphere) : null;
 
-      const genPath = `${user.id}/generated/${room}_${style}_${material}_${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('user-images')
-        .upload(genPath, generatedBlob, { contentType: 'image/jpeg' });
+        let materialPrompt = "";
+        if (palette) {
+          materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
+        }
 
-      if (uploadError) {
-        console.error('Failed to upload generated image:', uploadError);
-        // Fall back to using the original URL/base64
-        setGeneration(prev => ({
-          ...prev,
-          generatedImages: { ...prev.generatedImages, [room]: generatedImageData },
-          isGenerating: false,
-        }));
-        toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
+        const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
+          .filter(Boolean).join(" ") || null;
 
-        // Track visualization completed
-        trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
-          room,
-          style,
-          duration_ms: Date.now() - startTime,
-          tab: "design",
+        const { data, error } = await supabase.functions.invoke("generate-interior", {
+          body: {
+            imageBase64,
+            roomCategory: selectedCategory,
+            materialPrompt: materialPrompt || null,
+            stylePrompt,
+            freestyleDescription: design.freestyleDescription.trim() || null,
+            quality: API_CONFIG.imageGeneration.quality,
+            model: API_CONFIG.imageGeneration.modelCreative,
+          },
         });
-        return true;
+
+        if (error) throw new Error(error.message || "Failed to generate interior");
+        generatedImageData = data?.generatedImage;
+        if (!generatedImageData) throw new Error("No image returned from generation service");
       }
 
-      // Delete old file if exists
-      if (existing?.image_path) {
-        await supabase.storage.from('user-images').remove([existing.image_path]);
-      }
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('user-images')
-        .getPublicUrl(genPath);
-
-      // Upsert database record (keyed by room+style+palette)
-      await supabase
-        .from('user_generations')
-        .upsert({
-          user_id: user.id,
-          room_category: room,
-          selected_style: style,
-          selected_material: material,
-          image_path: genPath,
-        }, { onConflict: 'user_id,room_category,selected_style,selected_material' });
-
-      setGeneration(prev => ({
-        ...prev,
-        generatedImages: { ...prev.generatedImages, [room]: urlData.publicUrl },
-        isGenerating: false,
-      }));
-
-      toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
-
-      // Track visualization completed
-      trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
-        room,
-        style,
-        duration_ms: Date.now() - startTime,
-        tab: "design",
-      });
-      return true;
+      return await storeGeneratedImage(generatedImageData, room, style, material, startTime);
     } catch (err: unknown) {
       captureError(err, {
         action: "generateInteriorRender",
@@ -1030,14 +1084,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       toast.error(t(getErrorTranslationKey(err)));
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
 
-      // Track visualization failed
       trackEvent(AnalyticsEvents.VISUALIZATION_FAILED, {
         error_type: err instanceof Error ? err.message : "unknown",
         tab: "design",
       });
       return false;
     }
-  }, [uploadedImage, selectedCategory, design, user]);
+  }, [uploadedImage, selectedCategory, design, user, storeGeneratedImage]);
 
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
@@ -1285,14 +1338,15 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         }
       }
 
-      // Update local state with the URL
+      // Update local state with the URL and upload type
       setDesign(prev => ({
         ...prev,
         uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
+        uploadTypes: { ...prev.uploadTypes, [currentRoom]: pendingUploadTypeRef.current },
       }));
 
       // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, tab: "design" });
+      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, upload_type: pendingUploadTypeRef.current, tab: "design" });
     } catch (err) {
       console.error('Image upload failed:', err);
       captureError(err, { action: "confirmImageUpload" });

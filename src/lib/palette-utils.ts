@@ -147,6 +147,56 @@ export async function loadMaterialImagesAsBase64(
   return results.filter((img): img is string => img !== null);
 }
 
+export interface MaterialImageWithMeta {
+  base64: string;
+  purpose: string;
+  description: string;
+}
+
+/**
+ * Loads material images as base64 with metadata (purpose, description) for a given palette and room.
+ * Used by the material-edit generation path to send texture references to the AI.
+ */
+export async function loadMaterialImagesWithMeta(
+  paletteId: string,
+  spaceCategory: string,
+  palette: Palette
+): Promise<MaterialImageWithMeta[]> {
+  const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
+  const materials = getMaterialsForRoom(palette, roomCategory);
+
+  // Only include materials that should be in the prompt
+  const promptMaterials = materials.filter(
+    ({ material }) => material.includeInPrompt !== false
+  );
+
+  const imagePromises = promptMaterials.map(async ({ key, material }) => {
+    const imageUrl = getMaterialImageUrl(paletteId, key);
+    if (!imageUrl) return null;
+
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      return {
+        base64,
+        purpose: getMaterialPurpose(material, roomCategory),
+        description: getMaterialDescription(material, "en"),
+      };
+    } catch {
+      return null;
+    }
+  });
+
+  const results = await Promise.all(imagePromises);
+  return results.filter((img): img is MaterialImageWithMeta => img !== null);
+}
+
 /**
  * Gets palettes that have at least one material available at the specified showroom
  */
