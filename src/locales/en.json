@@ -11,7 +11,7 @@
   },
   "credits": {
     "purchaseSuccess": "Payment Successful",
-    "creditsAdded": "10 credits have been added to your account",
+    "creditsAdded": "20 credits have been added to your account",
     "purchaseCancelled": "Payment Cancelled",
     "purchaseError": "Payment Error",
     "noCredits": "No Credits Remaining",
@@ -21,8 +21,8 @@
     "error": "Failed to process credit. Please try again."
   },
   "landing": {
-    "title": "Renovation without the guesswork.",
-    "subtitle": "Instant interior visualization paired with a realistic financial roadmap. Design with confidence, not just imagination.",
+    "title": "Interior Planner",
+    "subtitle": "Instant visualization and a realistic financial plan. Design your home with confidence, not just imagination.",
     "uploadHint": "Upload your space",
     "uploadHelper": "Photo, sketch, or floorplan",
     "roomTypeDisabled": "Select room type (after upload)",
@@ -44,7 +44,7 @@
     "hallwayAcc": "Hallway"
   },
   "tabs": {
-    "design": "Home",
+    "design": "Design",
     "specs": "Specs",
     "budget": "Budget",
     "plan": "Plan"
@@ -57,11 +57,11 @@
     "roadmap": "Roadmap",
     "configureBudget": "Configure Budget",
     "startAudit": "Start Audit",
-    "setTimeline": "Set Timeline",
+    "setTimeline": "When to do what?",
     "fullHomeConcept": "Full Home Concept"
   },
   "thread": {
-    "title": "The formula for a perfect space",
+    "title": "Interior Planner",
     "projectLabel": "{{area}} M² APARTMENT • {{city}}",
     "projectLabelCityOnly": "{{city}}",
     "defineParameters": "Define parameters to calculate estimates",
@@ -78,9 +78,9 @@
     "materials": "MATERIALS",
     "materialsCta": "Find matching materials",
     "budget": "BUDGET",
-    "budgetCta": "Get Estimates",
+    "budgetCta": "Get a budget estimate",
     "planAudit": "PLAN AUDIT",
-    "planAuditCta": "Score your plan",
+    "planAuditCta": "Evaluate your plan",
     "roadmap": "ROADMAP",
     "roadmapCta": "When to do what?",
     "assessment": "Assessment",
@@ -99,8 +99,6 @@
     "behind-the-lights": "Behind the Lights",
     "morning-mist": "Morning Mist",
     "chocolate-wabi-sabi": "Chocolate Wabi-Sabi",
-    "art-inspired-modernism": "Art-Inspired Modernism",
-    "quiet-luxury": "Quiet Luxury",
     "day-by-the-sea": "Day by the Sea",
     "caramel-morning": "Caramel Morning",
     "sleeping-earth": "Sleeping Earth",
@@ -160,14 +158,27 @@
       "Top cabinets": "Top cabinets",
       "Bottom cabinets": "Bottom cabinets",
       "Cabinet furniture": "Cabinet furniture",
-      "Accent walls": "Accent walls"
+      "Wall and floor surfaces": "Wall and floor surfaces",
+      "Walls": "Walls",
+      "Cabinetry": "Cabinetry",
+      "Fixtures and fittings": "Fixtures and fittings",
+      "Plumbing fixtures": "Plumbing fixtures",
+      "Drawer fronts": "Drawer fronts",
+      "Other cabinet surfaces": "Other cabinet surfaces",
+      "Accent areas": "Accent areas",
+      "Vanity unit": "Vanity unit",
+      "Side walls": "Side walls"
     },
     "type": {
       "Vinyl": "Vinyl",
       "Natural Stone": "Natural Stone",
       "Laminate": "Laminate",
       "Wood Veneer": "Wood Veneer",
-      "Metal": "Metal"
+      "Metal": "Metal",
+      "Tiles": "Tiles",
+      "LMDP": "LMDP",
+      "MDF": "MDF",
+      "Compact HPL": "Compact HPL"
     }
   },
   "matrix": {
@@ -182,13 +193,12 @@
   },
   "result": {
     "title": "Project Passport",
-    "conservativeEstimate": "Estimate of a typical project",
-    "estimatedInvestment": "Estimated investment for",
+    "conservativeEstimate": "Approximate estimate",
     "includesDesignFee": "Includes designer fee",
-    "shell": "Shell",
+    "shell": "Fit-out",
     "joinery": "Joinery",
     "equip": "Furniture",
-    "adjustParameters": "Edit Space Size & Scope",
+    "adjustParameters": "Adjust Parameters",
     "dimensions": "Dimensions",
     "totalArea": "Total Area",
     "kitchenLength": "Kitchen Length",
@@ -200,7 +210,7 @@
     "urgentProjectHint": "+20% for expedited timeline",
     "services": "Services",
     "costBreakdown": "Cost Breakdown",
-    "disclaimer": "All figures are preliminary estimates based on typical project costs",
+    "disclaimer": "All figures are preliminary estimates based on typical project costs including taxes. Final prices may vary depending on specific project requirements, location, and market conditions.",
     "visualizeSpace": "Visualize Your Space",
     "tryAnother": "Try Another Version",
     "changeStyle": "Change Style",
@@ -220,9 +230,9 @@
     "standard": "Standard",
     "premium": "Premium",
     "label": "Tier",
-    "budgetDesc": "Smart choices for practical living",
-    "standardDesc": "Quality materials with lasting value",
-    "premiumDesc": "Exceptional finishes for discerning taste"
+    "budgetDesc": "Simpler materials and solutions, suitable for low-use spaces or rental.",
+    "standardDesc": "Balanced price, quality, and aesthetics for everyday use.",
+    "premiumDesc": "Highest quality materials and an exceptional spatial experience."
   },
   "service": {
     "spacePlanning": "Space Planning",
@@ -251,9 +261,9 @@
     "prepWorkTooltip": "Demolition, waste removal, and surface preparation",
     "designProject": "DESIGN PROJECT",
     "projectShell": "PROJECT & SHELL",
-    "shellFinishes": "SHELL & FINISHES",
+    "shellFinishes": "FINISHES",
     "fixedJoinery": "FIXED JOINERY & TECH",
-    "movablesTech": "MOVABLES"
+    "movablesTech": "FURNITURE"
   },
   "processing": {
     "title": "Crafting Your Vision",
@@ -273,11 +283,11 @@
     "heroSubtitle": "Interior planning in four simple steps.",
     "step": "Step",
     "step1Title": "Design",
-    "step1Desc": "Browse curated palettes and styles. Upload your space to see it transformed with AI visualization.",
+    "step1Desc": "Browse curated palettes and styles. Upload your space's plan, photo, or sketch and see it transformed with AI visualization.",
     "step2Title": "Specs",
     "step2Desc": "View detailed material specifications curated by professional designers. Know exactly what goes where.",
     "step3Title": "Budget",
-    "step3Desc": "Get a realistic cost breakdown by tier. Adjust parameters to match your space and scope.",
+    "step3Desc": "Get approximate prices based on your needs. Adjust parameters to match your space and scope.",
     "step4Title": "Plan",
     "step4Desc": "See your project timeline from start to move-in. Track tasks and milestones along the way.",
     "cta": "Start Designing"
@@ -285,12 +295,12 @@
   "mission": {
     "title": "The Mission",
     "subtitle": "Democratizing design, one space at a time",
-    "headline": "Democratizing Professional Design.",
+    "headline": "Design — accessible to everyone.",
     "paragraph1": "Home renovation is one of the most significant investments a person makes—yet the process remains frustratingly opaque. Budgets spiral without warning. Contractors quote wildly different numbers. Homeowners feel lost before they've even begun.",
     "paragraph2": "We believe technology can change this. By analyzing thousands of completed projects, material costs, and market rates, we've built a system that brings transparency to what has always been a guessing game.",
     "paragraph3": "Our tool doesn't replace architects or designers—it empowers homeowners to approach professionals with realistic expectations, clear budgets, and a visual language for what they want. It levels the playing field.",
     "paragraph4": "This is professional-grade planning, accessible to everyone. No more fear. No more surprises. Just clarity from day one.",
-    "founderNote": "Built by a tech founder obsessed with design."
+    "founderNote": "Built by tech creators obsessed with design."
   },
   "partner": {
     "title": "Partner with Us",
@@ -298,7 +308,7 @@
     "headline": "Connect with Prepared Clients.",
     "heroSubtitle": "Join our network of architects, designers, and material suppliers.",
     "valueProp1": "Receive briefs with verified budgets.",
-    "valueProp2": "Skip the education phase—clients come with technical plans ready.",
+    "valueProp2": "Skip the education phase—clients come prepared.",
     "valueProp3": "Showcase your materials in our digital palette.",
     "formTitle": "Request Partnership",
     "name": "Name",
@@ -437,7 +447,7 @@
   },
   "mobile": {
     "stage": {
-      "designingThe": "Designing the {room}",
+      "designingThe": "{room} Concept",
       "uploadPrompt": "Upload a photo, sketch, or floor plan.",
       "visualized": "Visualized {room}",
       "yourRoom": "Your {room}",
@@ -469,7 +479,7 @@
     "uploadMenu": {
       "title": "Choose how you start",
       "sectionHeader": "SELECT INPUT TYPE",
-      "tabCreative": "CREATIVE VISION",
+      "tabCreative": "STYLE SEARCH",
       "tabPhotorealism": "PHOTO-REALISM",
       "comingSoonTitle": "Coming soon",
       "comingSoonDescription": "We're working to bring you realistic visualizations with your chosen materials.",
@@ -480,11 +490,11 @@
       "waitlistSuccess": "Thanks! We'll notify you when it's ready.",
       "waitlistError": "Failed. Please try again.",
       "2dPlan": "2D PLAN",
-      "2dPlanTip": "Freedom for style. AI will suggest a concept based on existing furniture.",
+      "2dPlanTip": "AI will suggest a concept based on existing furniture.",
       "sketch": "SKETCH OR DRAWING",
-      "sketchTip": "For style and scope search. AI will interpret your idea.",
+      "sketchTip": "AI will refine your drawing into a detailed image.",
       "photo": "PHOTO",
-      "photoTip": "For quick visualization. AI may slightly change space proportions."
+      "photoTip": "Finish materials redrawn. Note: AI may slightly change space proportions."
     },
     "uploadDialog": {
       "title": "Upload New Image",
@@ -523,7 +533,7 @@
     "sendEmailFailed": "Failed to send message. Please try again."
   },
   "toast": {
-    "visualizationGenerated": "Interior visualization generated!"
+    "visualizationGenerated": "Visualization created!"
   },
   "share": {
     "title": "My Design",
@@ -534,7 +544,7 @@
     "startFresh": "Start Fresh"
   },
   "showroom": {
-    "poweredBy": "Interior layout",
+    "poweredBy": "Interior Planner",
     "sessionTitle": "Showroom session",
     "sessionMessage": "You are currently in a {name} session.",
     "exitSession": "Return to general catalog"
@@ -559,7 +569,7 @@
     },
     "adults": "Adults",
     "children": "Children",
-    "workFromHome": "WFH",
+    "workFromHome": "Work from Home",
     "whyItMatters": "Why it matters",
     "notRelevant": "Not relevant",
     "undo": "Undo",
@@ -571,8 +581,8 @@
     "overbuilt": "+",
     "conclusion": {
       "green": "Well Optimized",
-      "amber": "Requires Optimization",
-      "red": "Needs Attention"
+      "amber": "Optimization Recommended",
+      "red": "Optimization Required"
     },
     "category": {
       "storage": {
@@ -907,8 +917,8 @@
   "comingSoon": {
     "badge": "Soon",
     "screenTitle": "Coming Soon",
-    "screenDescription": "{paletteName} is still being perfected.",
-    "beNotifiedButton": "Be Notified",
+    "screenDescription": "The {paletteName} palette will be ready soon.",
+    "beNotifiedButton": "Be the First to Know",
     "sheetTitle": "Get Notified",
     "sheetDescription": "We'll email you when this palette is ready.",
     "emailPlaceholder": "your@email.com",
