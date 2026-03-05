@@ -16,7 +16,7 @@ export const architectures: Architecture[] = [
     id: "organic",
     name: "Organic",
     desc: "Beauty in imperfection",
-    promptSnippet: "A soft, organic space with a warm and tactile atmosphere. Prioritize rounded forms. Avoid glossy finishes or industrial hardness."
+    promptSnippet: "A soft, organic space with a warm and tactile atmosphere. Include rounded forms. Avoid glossy finishes or industrial hardness."
   },
   {
     id: "classic",

@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sparkles, MessageSquare, ChevronDown } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPaletteById, isComingSoon } from "@/data/palettes";
 import { getPaletteThumbnail } from "@/data/palettes/thumbnails";
 import { getDesignerWithFallback } from "@/data/designers";
-import { getMaterialsForRoom, getMaterialPurpose, getMaterialImageUrl, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
+import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { getMaterialById } from "@/data/materials";
+import type { RoomType } from "@/data/rooms/surfaces";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
@@ -16,8 +18,15 @@ import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
 import { ComingSoonPaletteSheet } from "@/components/ComingSoonPaletteSheet";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
+const displayNameToRoomType: Record<string, RoomType> = {
+  Kitchen: "kitchen",
+  Bathroom: "bathroom",
+  Bedroom: "bedroom",
+  "Living Room": "livingRoom",
+};
+
 export default function SpecsView() {
-  const { design, handleSelectMaterial, selectedTier, setActiveTab } = useDesign();
+  const { design, materialOverrides, excludedSlots, handleSelectMaterial, selectedTier } = useDesign();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
@@ -28,7 +37,6 @@ export default function SpecsView() {
   const { selectedMaterial, selectedCategory, freestyleDescription } = design;
 
   const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
-  const roomCategory = selectedCategory ? mapSpaceCategoryToRoom(selectedCategory) : "all";
 
   const handleComingSoonClose = () => {
     setIsComingSoonSheetOpen(false);
@@ -195,8 +203,41 @@ export default function SpecsView() {
     );
   }
 
-  // Curated palette mode
-  const filteredMaterials = palette ? getMaterialsForRoom(palette, roomCategory) : [];
+  // Build unique materials grouped by surfaces for the current room
+  const groupedMaterials = useMemo(() => {
+    if (!selectedMaterial) return [];
+
+    const roomType = displayNameToRoomType[selectedCategory || "Kitchen"];
+    if (!roomType) return [];
+
+    const pv2 = palettesV2.find((p) => p.id === selectedMaterial);
+    if (!pv2) return [];
+
+    const slots = pv2.selections[roomType];
+    if (!slots) return [];
+
+    // Group slot keys by resolved material ID, preserving order
+    const matSlots = new Map<string, string[]>();
+    const matOrder: string[] = [];
+
+    for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+      if (excludedSlots.has(slotKey)) continue;
+      const matId = materialOverrides[slotKey] || defaultMatId;
+      const existing = matSlots.get(matId);
+      if (existing) {
+        existing.push(slotKey);
+      } else {
+        matSlots.set(matId, [slotKey]);
+        matOrder.push(matId);
+      }
+    }
+
+    return matOrder.map((matId) => ({
+      matId,
+      slotKeys: matSlots.get(matId)!,
+      mat: getMaterialById(matId),
+    })).filter((entry) => entry.mat != null);
+  }, [selectedMaterial, selectedCategory, materialOverrides, excludedSlots]);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -242,49 +283,48 @@ export default function SpecsView() {
             </div>
           )}
           <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
-            {filteredMaterials.map(({ key, material }) => {
-            const imageUrl = palette ? getMaterialImageUrl(palette.id, key) : null;
-            const materialPurpose = getMaterialPurpose(material, roomCategory);
+            {groupedMaterials.map(({ matId, slotKeys, mat }) => {
+              const translatedSurfaces = slotKeys
+                .map((sk) => t(`surface.${sk}`) || sk)
+                .join(", ");
 
-            const purposeKey = `material.purpose.${materialPurpose}`;
-            const translatedPurpose = t(purposeKey) === purposeKey ? materialPurpose : t(purposeKey);
+              const desc = typeof mat!.description === "object"
+                ? mat!.description[language] || mat!.description.en
+                : String(mat!.description || "");
 
-            const typeKey = `material.type.${material.materialType}`;
-            const translatedType = material.materialType
-              ? (t(typeKey) === typeKey ? material.materialType : t(typeKey))
-              : t("material.type.Natural Stone");
+              const typeKey = `material.type.${mat!.type}`;
+              const translatedType = mat!.type
+                ? (t(typeKey) === typeKey ? mat!.type : t(typeKey))
+                : "";
 
-            const description = getMaterialDescription(material, language);
+              const handleMaterialClick = () => {
+                trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
+                  material_code: mat!.code,
+                  room: selectedCategory,
+                  tab: "specs",
+                });
+                setSelectedMaterialInfo({
+                  name: desc?.split('.')[0] || translatedSurfaces,
+                  materialType: mat!.type,
+                  technicalCode: mat!.code,
+                  imageUrl: mat!.image || undefined,
+                  showroomIds: mat!.showroomIds,
+                });
+                setIsSourcingSheetOpen(true);
+              };
 
-
-            const handleMaterialClick = () => {
-              trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
-                material_code: material.technicalCode,
-                room: selectedCategory,
-                tab: "specs",
-              });
-              setSelectedMaterialInfo({
-                name: description?.split('.')[0] || translatedPurpose,
-                materialType: material.materialType,
-                technicalCode: material.technicalCode,
-                imageUrl: imageUrl || undefined,
-                showroomIds: material.showroomIds,
-              });
-              setIsSourcingSheetOpen(true);
-            };
-
-            return (
-              <MaterialCard
-                key={key}
-                image={imageUrl || undefined}
-                swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                title={description?.split('.')[0] || translatedPurpose}
-                category={translatedPurpose}
-                materialType={translatedType}
-                technicalCode={material.technicalCode}
-                onClick={handleMaterialClick}
-              />
-            );
+              return (
+                <MaterialCard
+                  key={matId}
+                  image={mat!.image || undefined}
+                  swatchColors={!mat!.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                  title={desc?.split('.')[0] || translatedSurfaces}
+                  category={translatedSurfaces}
+                  materialType={translatedType}
+                  technicalCode={mat!.code}
+                  onClick={handleMaterialClick}
+                />
+              );
             })}
           </div>
         </div>

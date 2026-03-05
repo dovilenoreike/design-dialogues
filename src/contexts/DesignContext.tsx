@@ -13,7 +13,7 @@ import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
-import { buildDetailedMaterialPrompt, loadMaterialImagesWithMeta } from "@/lib/palette-utils";
+import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseUrlState, buildUrl } from "@/lib/url-state";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
@@ -97,6 +97,14 @@ interface DesignContextValue {
   // Form actions
   setFormData: (data: FormData | null) => void;
 
+  // Material swap overrides (slotKey → materialId)
+  materialOverrides: Record<string, string>;
+  setMaterialOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+
+  // Excluded material slots (slotKeys to skip in prompt/images)
+  excludedSlots: Set<string>;
+  setExcludedSlots: React.Dispatch<React.SetStateAction<Set<string>>>;
+
   // Sharing
   shareSession: () => Promise<string | null>;
   isSharing: boolean;
@@ -140,6 +148,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
   const [generation, setGeneration] = useState<GenerationState>(initialGenerationState);
   const [formData, setFormData] = useState<FormData | null>(null);
+
+  // Material swap overrides (slotKey → materialId)
+  const [materialOverrides, setMaterialOverrides] = useState<Record<string, string>>({});
+
+  // Excluded material slots (slotKeys to skip in prompt/images)
+  const [excludedSlots, setExcludedSlots] = useState<Set<string>>(new Set());
 
   // Navigation state
   const [activeTab, setActiveTabState] = useState<BottomTab>("design");
@@ -812,6 +826,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedCategory: category,
       lastSelectedRoom: category,
     }));
+    setMaterialOverrides({});
+    setExcludedSlots(new Set());
   }, [generation.generatedImages, design.selectedCategory]);
 
   // Material selection
@@ -821,6 +837,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedMaterial: material,
       freestyleDescription: material ? "" : prev.freestyleDescription, // Clear freestyle if selecting curated
     }));
+    setMaterialOverrides({});
+    setExcludedSlots(new Set());
 
     // Track palette selection
     if (material) {
@@ -979,15 +997,27 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       if (isPhotoWithPalette) {
         // Photo path: use generate-material-edit with texture images + accurate model
         try {
-          const materialImagesWithMeta = await loadMaterialImagesWithMeta(
-            design.selectedMaterial!, selectedCategory, palette
-          );
+          const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, excludedSlots);
 
           // Get atmosphere prompt from selected style
           const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
           const atmosphere = styleData?.config.atmosphere
             ? getAtmosphereById(styleData.config.atmosphere) : null;
           const atmospherePrompt = atmosphere?.promptSnippet || null;
+
+          {
+            const rc = selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim();
+            const matInstr = materialImagesWithMeta
+              .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}. (${m.description})`)
+              .join("\n");
+            const atmoSection = atmospherePrompt ? `\nDecor and atmosphere details: ${atmospherePrompt}\n` : "";
+            console.log(`[AI Prompt] generate-material-edit →\n` +
+              `Image 1 is a photo of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\n` +
+              `PRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\n` +
+              `ONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n` +
+              `Overall aesthetic: ${palette.promptSnippet}\n${atmoSection}` +
+              `Create a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`);
+          }
 
           const { data, error } = await supabase.functions.invoke("generate-material-edit", {
             body: {
@@ -1019,9 +1049,19 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           const atmosphere = styleData?.config.atmosphere
             ? getAtmosphereById(styleData.config.atmosphere) : null;
 
-          const materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
+          const materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, palette.promptSnippet, excludedSlots);
           const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
             .filter(Boolean).join(" ") || null;
+
+          {
+            const rc = selectedCategory ? `a ${selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
+            let p = `Transform this room into ${rc} with professional interior design.`;
+            if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
+            if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
+            else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
+            p += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
+            console.log("[AI Prompt] generate-interior (fallback) →\n" + p);
+          }
 
           const { data, error } = await supabase.functions.invoke("generate-interior", {
             body: {
@@ -1049,11 +1089,23 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
         let materialPrompt = "";
         if (palette) {
-          materialPrompt = buildDetailedMaterialPrompt(palette, selectedCategory);
+          materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, palette.promptSnippet, excludedSlots);
         }
 
         const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
           .filter(Boolean).join(" ") || null;
+
+        {
+          const rc = selectedCategory ? `a ${selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
+          const fd = design.freestyleDescription.trim() || null;
+          let p = `Make visualisation of ${rc} with professional interior design. You must maintain the room's architecture and layout.`;
+          if (fd) p += ` Use these materials and finishes: ${fd}.`;
+          else if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
+          if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
+          else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
+          p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
+          console.log("[AI Prompt] generate-interior (creative) →\n" + p);
+        }
 
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
@@ -1090,7 +1142,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       });
       return false;
     }
-  }, [uploadedImage, selectedCategory, design, user, storeGeneratedImage]);
+  }, [uploadedImage, selectedCategory, design, user, storeGeneratedImage, materialOverrides, excludedSlots]);
 
   // Handle generate button click - returns true if successful
   const handleGenerate = useCallback(async (): Promise<boolean> => {
@@ -1403,6 +1455,10 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     cancelImageUpload,
     handleSaveImage,
     setFormData,
+    materialOverrides,
+    setMaterialOverrides,
+    excludedSlots,
+    setExcludedSlots,
     shareSession,
     isSharing,
     isSharedSession,

@@ -6,7 +6,20 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Check, AlertTriangle, Clock, X } from "lucide-react";
-import { categoryInsights, tierConfig } from "@/data/cost-insights";
+import { getCategoryInsight, tierConfig } from "@/data/cost-insights";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+/** Maps insightKey to the cost.* translation key for the header */
+const insightKeyToCostKey: Record<string, string> = {
+  "Interior Design": "cost.interiorDesign",
+  "Construction & Finish": "cost.constructionFinish",
+  "Materials": "cost.materials",
+  "Kitchen": "cost.kitchen",
+  "Wardrobes": "cost.wardrobes",
+  "Appliances": "cost.appliances",
+  "Furniture": "cost.furniture",
+  "Prep Work": "cost.prepWork",
+};
 
 interface CostInsightSheetProps {
   isOpen: boolean;
@@ -17,20 +30,22 @@ interface CostInsightSheetProps {
 
 export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsightSheetProps) => {
   const isMobile = useIsMobile();
-  const insight = categoryInsights[category];
+  const { t } = useLanguage();
+  const insight = getCategoryInsight(t, category);
 
   if (!insight) return null;
 
   const tierContent = insight[tier];
+  const tierCfg = tierConfig[tier];
 
   const content = (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-serif text-2xl text-text-primary">{category}</h2>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${tierConfig[tier].className}`}>
-            {tierConfig[tier].label}
+          <h2 className="font-serif text-2xl text-text-primary">{t(insightKeyToCostKey[category] ?? category)}</h2>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${tierCfg.className}`}>
+            {t(tierCfg.labelKey)}
           </span>
         </div>
         {!isMobile && (
@@ -46,7 +61,7 @@ export const CostInsightSheet = ({ isOpen, onClose, category, tier }: CostInsigh
       {/* Durability Badge */}
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-sunken rounded-full text-xs font-medium text-text-secondary">
         <Clock size={12} />
-        <span>Lifespan: {tierContent.lifespan}</span>
+        <span>{t("insights.lifespan")}: {tierContent.lifespan}</span>
       </div>
 
       {/* Strategy Blocks */}

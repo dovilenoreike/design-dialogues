@@ -92,7 +92,7 @@
   "modes": {
     "rooms": "Kambariai",
     "styles": "Stiliai",
-    "palettes": "Paletės"
+    "palettes": "Kolekcijos"
   },
   "palette": {
     "fog-in-the-forest": "Miškas rūke",
@@ -134,6 +134,20 @@
     "chiaroscuro.desc": "Dramatiška šviesa ir šešėliai",
     "bauhaus": "Bauhaus",
     "bauhaus.desc": "Ryški geometrija ir pirminės spalvos"
+  },
+  "surface": {
+    "floor": "Grindys",
+    "bottomCabinets": "Apatinės spintelės",
+    "topCabinets": "Viršutinės spintelės",
+    "tallCabinets": "Aukštos spintelės",
+    "shelves": "Lentynos",
+    "worktops": "Stalviršiai",
+    "backsplashes": "Sienelė",
+    "wall": "Sienos",
+    "accentAreas": "Akcentinės zonos",
+    "vanityUnit": "Praustuvo spintelė",
+    "cabinetFurniture": "Korpusiniai baldai",
+    "wardrobes": "Spinta"
   },
   "specs": {
     "fullSpecification": "Pilna specifikacija",
@@ -448,7 +462,7 @@
   "mobile": {
     "stage": {
       "designingThe": "{room} konceptas",
-      "uploadPrompt": "Įkelkite nuotrauką, eskizą arba planą.",
+      "uploadPrompt": "Įkelkite nuotrauką, eskizą arba planą ir vizualizuokite savo pasirinkimus",
       "visualized": "Vizualizuota {room}",
       "yourRoom": "Jūsų {room}",
       "generating": "Generuojama...",
@@ -929,5 +943,245 @@
     "successMessage": "Ačiū! Mes jums pranešime el. paštu, kai {paletteName} bus paruošta.",
     "errorMessage": "Nepavyko išsaugoti jūsų el. pašto. Bandykite dar kartą.",
     "notificationToast": "Mes jums pranešime, kai bus paruošta!"
+  },
+  "insights": {
+    "lifespan": "Tarnavimo laikas",
+    "interiorDesign": {
+      "definition": "Profesionalus erdvės planavimas, medžiagų ir baldų parinkimas pagal pasirinktą projekto apimtį.",
+      "budget": {
+        "lifespan": "Bazinė vertė",
+        "saveTitle": "Kur taupyti",
+        "save1": "Standartiniai planai",
+        "save2": "Ribotos korekcijos (1-2 etapai)",
+        "save3": "Standartizuotas medžiagų pasirinkimas",
+        "riskTitle": "Rizikos zona",
+        "risk1": "Nepakankamas planavimas — veda prie brangių pakeitimų statybų metu ir nepasitenkinimo vėliau."
+      },
+      "standard": {
+        "lifespan": "Ilgalaikė vertė",
+        "saveTitle": "Kur taupyti",
+        "save1": "Žinokite savo prioritetus iš anksto",
+        "save2": "Raskite dizainerį, atitinkantį jūsų stilių",
+        "save3": "Ribokite didelius plano pakeitimus po pradinio dizaino",
+        "riskTitle": "Rizikos zona",
+        "risk1": "Dizaino etapų praleidimas — skubėjimas į statybas be kruopštaus planavimo dažnai veda prie brangių klaidų."
+      },
+      "premium": {
+        "lifespan": "Ilgaamžė vertė",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Aiški vizija ir prioritetai nuo pat pradžių",
+        "save2": "Pasitikėkite patyrusiais dizaineriais priimant sprendimus",
+        "save3": "Orientuokitės į kokybę, o ne kiekybę",
+        "riskTitle": "Mažėjanti grąža",
+        "risk1": "Per didelis individualizavimas — pernelyg daug unikalių elementų gali padidinti kainas be proporcingos vertės.",
+        "risk2": "Nuolatinės korekcijos — dažni pakeitimai eikvo biudžetą ir vilkina terminus."
+      }
+    },
+    "constructionFinish": {
+      "definition": "„Šlapieji“ darbai: sienų lyginimas, dažymas, plytelių klojimas ir grindų montavimas.",
+      "budget": {
+        "lifespan": "5-10 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Standartiniai plytelių dydžiai 60x60, ne didelės plokštės ar mozaikos (brangesnis darbas).",
+        "save2": "Paviršinis vandentiekis/elektra padeda išvengti brangaus sienų kapojimo.",
+        "riskTitle": "„Greitas sprendimas“",
+        "risk1": "Skubinamas tinko džiūvimas. Dažymas ant drėgno tinko sukelia lupimąsi per <1 metus.",
+        "risk2": "Praleista hidroizoliacija vonios kambaryje. Veda prie pelėsio ir nuotėkių, nepriklausomai nuo plytelių kainos."
+      },
+      "standard": {
+        "lifespan": "15+ metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Paprasti išdėstymai. Venkite 45° grindų kampų – mažiau atliekų ir darbo valandų.",
+        "save2": "Kokybiški dažai vietoj brangių sienų plokščių.",
+        "riskTitle": "„Kaltinimo žaidimas“",
+        "risk1": "Fragmentuotas samdymas. Be pagrindinio rangovo, plytelininkas kaltina santechniką dėl nelygių sienų.",
+        "risk2": "Praleistas išlyginimas. Naujos grindys ant nelygaus betono girgždės ir sulaužys spynas."
+      },
+      "premium": {
+        "lifespan": "25+ metų",
+        "saveTitle": "Strateginis efektyvumas",
+        "save1": "Standartinis gipsas, aukščiausios kokybės tinko apdaila. Investuokite į meistriškumą, ne tik medžiagas.",
+        "save2": "Zoninis grindinis šildymas – komfortas svarbiau nei sudėtingos estetinės sistemos.",
+        "riskTitle": "Tikslumas ir fizika",
+        "risk1": "Geometrija. Šešėlių tarpai reikalauja tobulų 90° sienų; menkos klaidos atrodo baisiai.",
+        "risk2": "Per didelis medžiagų specifikavimas. Ultra-premium plytelės ir dažai turi minimalų vizualinį skirtumą."
+      }
+    },
+    "materials": {
+      "definition": "Visos paviršių apdailos: grindys, plytelės, dažai, sienų dangos ir dekoratyviniai elementai.",
+      "budget": {
+        "lifespan": "5-10 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Klijuojamas vinilinis parketas. 100% atsparus vandeniui, tyliau ir atsparesnis nei pigus laminatas.",
+        "save2": "Keraminės sieninės plytelės. Pigesnės nei porcelianas, identiškas vaizdas ant sienų.",
+        "riskTitle": "Ankstyvas susidėvėjimas",
+        "risk1": "Popierinės folijos durys. Pigiausios „medžio imitacijos“ durys akimirksniu susibraižo ir lupa. Rinkitės CPL dangą.",
+        "risk2": "Baltos siūlės ant grindų. Per kelias savaites tampa pilkos/nešvarios. Visada rinkitės pilką ar smėlinę."
+      },
+      "standard": {
+        "lifespan": "10-20 metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Porcelianas vietoj natūralaus akmens. Identiškas marmuro/travertino vaizdas, bet atsparus dėmėms, nereikia sandarinimo.",
+        "save2": "MDF grindjuostės. Stabilesnės nei medis, dažomos lygiau ir nesideformuoja.",
+        "riskTitle": "Funkcionalumo kompromisas",
+        "risk1": "Tuščiavidurės durys. Lengvos, visiškai neizoliuoja garso. Rinkitės „Solid Core“ privatumui.",
+        "risk2": "Matiniai dažai koridoriuose. Akimirksniu subraižomi. Naudokite „nuvalomą/kiaušinio lukšto“ paviršių intensyvaus naudojimo zonose."
+      },
+      "premium": {
+        "lifespan": "15-25 metų",
+        "saveTitle": "Strateginiai pasirinkimai",
+        "save1": "Inžinerinė mediena vietoj masyvo. Stabilesnė su grindiniu šildymu, atspari deformacijai.",
+        "save2": "„Character“ rūšies mediena. Natūralios mazgos suteikia tekstūros; dažnai pigesnė nei „Select“ švari rūšis.",
+        "riskTitle": "Priežiūra ir pažeidimai",
+        "risk1": "Natūralus marmuras dušuose. Sugeria muilo nuosėdas, kalkių dėmes. Reikia nuolatinio sandarinimo.",
+        "risk2": "Labai tamsios grindys. Matomos kiekvienos dulkės ir mikroįbrėžimai. Reikia kasdienio valymo."
+      }
+    },
+    "kitchen": {
+      "definition": "Integruoti baldai, stalviršiai ir vidinės stalčių/durų sistemos.",
+      "budget": {
+        "lifespan": "5-10 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Melamino (LMDP) spintelės. Patvarios, lengvai valomos, ekonomiškos.",
+        "save2": "Standartiniai HPL stalviršiai. Platus stilių pasirinkimas, labai atsparūs įbrėžimams ir karščiui.",
+        "riskTitle": "Karštis ir nusidėvėjimas",
+        "risk1": "Termofolijos durys šalia orkaitės. Karštis sukelia plastiko dangos burbuliavimą ir lupimą per 3 metus.",
+        "risk2": "Neženklinti stalčių bėgeliai. Lenkiasi ir lūžta nuo kasdienio naudojimo."
+      },
+      "standard": {
+        "lifespan": "15-20 metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Dažytos MDF spintelės. Pasiūlo individualias spalvas ir vientisą vaizdą, mažiau jautrios karščiui.",
+        "save2": "Mažiau stalčių, geresni lankstai. Investuokite į kokybiškus Blum/Hettich lankstus.",
+        "riskTitle": "Vandens pažeidimai",
+        "risk1": "Atviri drožlių plokštės kraštai. Neužsandarinti spintelių/stalviršių kraštai akimirksniu brinksta nuo vandens.",
+        "risk2": "Pigūs kriauklės. Linkusios į įlenkimus, įbrėžimus ir perduoda indaplovės/vandens triukšmą."
+      },
+      "premium": {
+        "lifespan": "20-30 metų",
+        "saveTitle": "Strateginis efektyvumas",
+        "save1": "Standartinės vidinės spintelių dėžutės. Skirkite biudžetą individualiems fasadams ir furnitūrai.",
+        "save2": "Integruotos šiukšliadėžės/organizatoriai. Pagerina kasdienę funkciją labiau nei egzotiškos medžiagos.",
+        "riskTitle": "Netinkama prabanga",
+        "risk1": "Egzotiški medienos lukštai. Linkę dėmėtis, braižytis ir reikalauja švelnaus valymo.",
+        "risk2": "Per stori stalviršiai. Prideda svorio ir kainos be funkcinio pranašumo."
+      }
+    },
+    "wardrobes": {
+      "definition": "Įmontuotos spintos, stumdomos durys, vidiniai organizatoriai.",
+      "budget": {
+        "lifespan": "5-10 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Paprastas vidinis išdėstymas. Koncentruokitės į lentynas ir kabyklas (standartiniai dydžiai).",
+        "save2": "Standartiniai durų dydžiai. Venkite individualių aukščių/pločių, kad sutaupytumėte gamybos ir montavimo kaštus.",
+        "riskTitle": "Kasdienė frustracija",
+        "risk1": "Pigūs stumdomų durų bėgeliai. Deformuojasi, stringa ir triukšmauja per kelis mėnesius.",
+        "risk2": "Atviros kabyklos. Atrodo netvarkingai ir leidžia rūbams greitai apsinešti dulkėmis."
+      },
+      "standard": {
+        "lifespan": "15-20 metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Standartinės plokščių spalvos vidui. Skirkite biudžetą išoriniams fasadams ir furnitūrai.",
+        "save2": "Kokybiški lankstai/švelnaus uždarymo mechanizmai. Investuokite į kasdienę funkciją.",
+        "riskTitle": "Ankstyvas gedimas",
+        "risk1": "Biudžetiniai stalčių bėgeliai. Greitai lenkiasi ir genda nuo svorio.",
+        "risk2": "Durys be švelnaus uždarymo. Trenkiamos durys veda prie nusidėvėjimo ir nuolatinio triukšmo."
+      },
+      "premium": {
+        "lifespan": "20-25 metų",
+        "saveTitle": "Strateginis efektyvumas",
+        "save1": "Standartinės galinės plokštės. Skirkite lėšas vidiniam apšvietimui ir organizatoriams.",
+        "save2": "Optimali ventiliacija. Apsaugo nuo pelėsio ir nemalonaus kvapo batų saugykloje.",
+        "riskTitle": "Detalių degradacija",
+        "risk1": "Itin plonos durys. Jaučiasi trapios ir laikui bėgant deformuojasi.",
+        "risk2": "Per sudėtingi organizatoriai. Dažnai nenaudojami ir prideda nereikalingų kaštų."
+      }
+    },
+    "appliances": {
+      "definition": "Pagrindinė buitinė technika: šaldytuvas, viryklė, indaplovė ir skalbimo įrenginiai.",
+      "budget": {
+        "lifespan": "5-8 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Laisvai stovintis šaldytuvas. Integruoti modeliai kainuoja 30% daugiau ir turi 20% mažiau vidinės erdvės.",
+        "save2": "Bazinė indukcinė kaitlentė. Net pradinio lygio indukcija veikia geriau ir saugiau nei elektrinė keraminė.",
+        "riskTitle": "Nepatikimas veikimas",
+        "risk1": "Energijos klasės — A+ kasmet kainuoja €150+ daugiau nei A+++ per trumpesnį tarnavimo laiką."
+      },
+      "standard": {
+        "lifespan": "10-15 metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Praleiskite „Smart“ funkcijas. Wi-Fi orkaitėse retai naudojamas. Mokėkite už mechaniką, ne programėlę.",
+        "save2": "Standartinė (60cm) indaplovė. Siauros (45cm) kainuoja tiek pat, bet talpina perpus mažiau.",
+        "riskTitle": "„Kombo“ spąstai",
+        "risk1": "Skalbyklė-džiovyklė kombinuoti. Ciklai trunka 5+ val., džiovinimas dažnai drėgnas, gedimų dažnis didelis.",
+        "risk2": "Pigūs recirkuliaciniai gartraukiai. Garsūs filtrai, kurie tiesiog pučia kvapus atgal į kambarį."
+      },
+      "premium": {
+        "lifespan": "12-15 metų",
+        "saveTitle": "Strateginis efektyvumas",
+        "save1": "Pradinio lygio prabanga. Bazinis Miele modelis plauna taip pat gerai kaip flagmanas; mokate už ekranus, ne veikimą.",
+        "save2": "Atskiras šaldiklis. Atskiras šaldiklis leidžia turėti didesnį šaldytuvą virtuvėje.",
+        "riskTitle": "Forma prieš funkciją",
+        "risk1": "Žemyn traukiami gartraukiai. Nors elegantiški, sunkiai susidoroja su aukštais puodais.",
+        "risk2": "Integruoto šaldytuvo talpa. Premium įmontuojami modeliai viduje apgaulingai maži. Tikrinkite „Grynąjį litrą“."
+      }
+    },
+    "furniture": {
+      "definition": "Kilnojami daiktai: sofos, valgomojo stalai, lovos, kėdės ir dekoratyviniai elementai.",
+      "budget": {
+        "lifespan": "2-5 metų",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Akcentiniai ir dekoratyviniai elementai. Lengvai keičiami; skirkite biudžetą sezoniniams trendams.",
+        "save2": "Svečių miegamojo baldai. Retesnis naudojimas leidžia rinktis ekonomiškiau.",
+        "riskTitle": "Kasdienis diskomfortas",
+        "risk1": "Kasdien naudojama sofa. Pigūs rėmai linksta, pagalvėlės susmunka per <2 metus.",
+        "risk2": "Trapios valgomojo kėdės. Svyruoja, girgžda ir lūžta nuo reguliaraus naudojimo."
+      },
+      "standard": {
+        "lifespan": "5-15 metų",
+        "saveTitle": "Protingi pasirinkimai",
+        "save1": "Vietiniai gamintojai. Dažnai siūlo geresnį kainos ir kokybės santykį nei nežinomi užsienio prekių ženklai.",
+        "save2": "Kokybiški sintetiniai audiniai. Patvaresni ir lengviau valomi nei biudžetinės natūralios medžiagos.",
+        "riskTitle": "Patvarumo aklosios zonos",
+        "risk1": "Pirkimas internetu neišbandžius. Komfortas yra subjektyvus; sofa gyvai jaučiasi kitaip.",
+        "risk2": "Trapūs lovų rėmai. Veda prie girgždėjimo ir prastesnio miego."
+      },
+      "premium": {
+        "lifespan": "15-25 metų",
+        "saveTitle": "Strateginiai pasirinkimai",
+        "save1": "Aukštos kokybės sintetiniai audinių mišiniai. Prabangus vaizdas su pranašesniu patvarumu lyginant su šilku/aksmu.",
+        "save2": "Koncentruokitės į rėmo kokybę. Brangi sofa yra investicija į jos konstrukciją.",
+        "riskTitle": "Netinkama investicija",
+        "risk1": "Delikatūs dizainerių baldai intensyvaus naudojimo zonose. Netinka vaikams/augintiniams.",
+        "risk2": "Neišbandytas komfortas. Brangius individualius gaminius reikėtų išbandyti prieš užsakant."
+      }
+    },
+    "prepWork": {
+      "definition": "Griovimo darbai, atliekų šalinimas, senų apdailos dangų nuėmimas ir paviršių paruošimas.",
+      "budget": {
+        "lifespan": "Vienkartinis",
+        "saveTitle": "Kur taupyti",
+        "save1": "Savarankiškas nekonstrukcinių elementų griovimas",
+        "save2": "Atliekų išvežimas savo jėgomis",
+        "riskTitle": "Rizikos zona",
+        "risk1": "Asbestas ar švino dažai — €200 testų praleidimas gali sukelti €20 000 sveikatos pavojų."
+      },
+      "standard": {
+        "lifespan": "Vienkartinis",
+        "saveTitle": "Kur taupyti",
+        "save1": "Savarankiškas nekonstrukcinių elementų griovimas",
+        "save2": "Atliekų išvežimas savo jėgomis",
+        "riskTitle": "Rizikos zona",
+        "risk1": "Asbesto ar švino dažų vertinimas. Testų praleidimas gali sukelti rimtų sveikatos pavojų."
+      },
+      "premium": {
+        "lifespan": "Vienkartinis",
+        "saveTitle": "Protingas taupymas",
+        "save1": "Išsaugokite originalius elementus, kuriuos verta restauruoti",
+        "save2": "Selektyvus griovimas saugo charakterį ir mažina atliekų kaštus",
+        "riskTitle": "Mažėjanti grąža",
+        "risk1": "Visiškas išvalymas — kartais originalūs kaulai yra geresni nei tai, kas juos pakeičia."
+      }
+    }
   }
 }

@@ -248,7 +248,7 @@ const CostBreakdownPanel = ({
                       <Info
                         size={11}
                         className="ml-1 text-text-subtle cursor-pointer hover:text-text-primary transition-colors"
-                        onClick={() => onOpenInsight(item.label)}
+                        onClick={() => onOpenInsight(item.insightKey)}
                       />
                     </span>
                     <span className="font-medium text-text-primary tabular-nums text-right">

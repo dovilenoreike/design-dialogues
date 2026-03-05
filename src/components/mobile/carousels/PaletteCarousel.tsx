@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useShowroom } from "@/contexts/ShowroomContext";
-import { palettes } from "@/data/palettes";
-import { paletteThumbnails } from "@/data/palettes/thumbnails";
-import { getPalettesForShowroom } from "@/lib/palette-utils";
+import { collections } from "@/data/collections";
+import { collectionThumbnails } from "@/data/collections/thumbnails";
+import { palettesV2 } from "@/data/palettes/palettes-v2";
 import {
   Dialog,
   DialogContent,
@@ -13,23 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PaletteBadge } from "@/components/PaletteBadge";
 
 export default function PaletteCarousel() {
   const { t } = useLanguage();
   const { design, handleSelectMaterial, handleFreestyleChange } = useDesign();
   const { selectedMaterial, selectedStyle, freestyleDescription } = design;
-  const { isShowroomMode, activeShowroom } = useShowroom();
   const [isFreestyleOpen, setIsFreestyleOpen] = useState(false);
   const [freestyleInput, setFreestyleInput] = useState(freestyleDescription);
 
-  // Filter palettes in showroom mode
-  const displayPalettes = useMemo(() => {
-    if (isShowroomMode && activeShowroom) {
-      return getPalettesForShowroom(activeShowroom.id);
-    }
-    return palettes;
-  }, [isShowroomMode, activeShowroom]);
+  // Derive which collection the current palette belongs to
+  const selectedPaletteV2 = palettesV2.find((p) => p.id === selectedMaterial);
+  const activeCollectionId = selectedPaletteV2?.collectionId;
 
   const handleSaveFreestyle = () => {
     handleFreestyleChange(freestyleInput);
@@ -46,28 +39,29 @@ export default function PaletteCarousel() {
         }`}
       >
         <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
-          {displayPalettes.map((palette) => {
-            const isSelected = selectedMaterial === palette.id;
+          {collections.map((collection) => {
+            const isSelected = collection.id === activeCollectionId;
+            const firstPaletteId = palettesV2.find((p) => p.collectionId === collection.id)?.id;
+            const thumbnail = collectionThumbnails[collection.id];
 
             return (
               <button
-                key={palette.id}
-                onClick={() => handleSelectMaterial(palette.id)}
+                key={collection.id}
+                onClick={() => { if (firstPaletteId) handleSelectMaterial(firstPaletteId); }}
                 className="flex-shrink-0 transition-transform active:scale-95"
               >
                 <div
                   className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
-                    isSelected
-                      ? "border-foreground"
-                      : "border-transparent"
+                    isSelected ? "border-foreground" : "border-transparent"
                   }`}
                 >
-                  <img
-                    src={paletteThumbnails[palette.id]}
-                    alt={palette.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <PaletteBadge status={palette.status} />
+                  {thumbnail && (
+                    <img
+                      src={thumbnail}
+                      alt={collection.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   {isSelected && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
@@ -78,30 +72,28 @@ export default function PaletteCarousel() {
             );
           })}
 
-          {/* Create Your Own button - hidden in showroom mode */}
-          {!isShowroomMode && (
-            <button
-              onClick={() => {
-                setFreestyleInput(freestyleDescription);
-                setIsFreestyleOpen(true);
-              }}
-              className="flex-shrink-0 transition-transform active:scale-95"
+          {/* Create Your Own button */}
+          <button
+            onClick={() => {
+              setFreestyleInput(freestyleDescription);
+              setIsFreestyleOpen(true);
+            }}
+            className="flex-shrink-0 transition-transform active:scale-95"
+          >
+            <div
+              className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center ${
+                hasFreestyle
+                  ? "border-foreground bg-foreground"
+                  : "border-dashed border-muted-foreground/50 bg-muted/50"
+              }`}
             >
-              <div
-                className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors flex items-center justify-center ${
-                  hasFreestyle
-                    ? "border-foreground bg-foreground"
-                    : "border-dashed border-muted-foreground/50 bg-muted/50"
-                }`}
-              >
-                {hasFreestyle ? (
-                  <Check className="w-4 h-4 text-background" strokeWidth={2.5} />
-                ) : (
-                  <Plus className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-                )}
-              </div>
-            </button>
-          )}
+              {hasFreestyle ? (
+                <Check className="w-4 h-4 text-background" strokeWidth={2.5} />
+              ) : (
+                <Plus className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+              )}
+            </div>
+          </button>
         </div>
       </div>
 

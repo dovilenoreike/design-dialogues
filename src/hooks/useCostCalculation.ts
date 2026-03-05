@@ -20,6 +20,7 @@ import {
 
 export interface CostLineItem {
   label: string;
+  insightKey: string;
   value: number;
   lowValue: number;
   highValue: number;
@@ -126,10 +127,10 @@ export function useCostCalculation({
     // Finish Labor (40%) = painting, tiling, trim → Interior Finishes
     const totalConstructionBase = area * baseRates[tier] * areaAdjustment;
     const roughLabor = services.spacePlanning
-      ? roundToHundred(totalConstructionBase * 0.2)
+      ? roundToHundred(totalConstructionBase * 0)
       : 0;
     const finishLabor = services.interiorFinishes
-      ? roundToHundred(totalConstructionBase * 0.8)
+      ? roundToHundred(totalConstructionBase * 1)
       : 0;
     const constructionFinish = roughLabor + finishLabor;
 
@@ -190,6 +191,7 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.interiorDesign"),
+            insightKey: "Interior Design",
             value: interiorDesignFinal,
             lowValue: roundToHundred(interiorDesignFinal * (1 - priceVariance)),
             highValue: roundToHundred(interiorDesignFinal * (1 + priceVariance)),
@@ -202,6 +204,7 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.constructionFinish"),
+            insightKey: "Construction & Finish",
             value: constructionFinishFinal,
             lowValue: roundToHundred(constructionFinishFinal * (1 - priceVariance)),
             highValue: roundToHundred(constructionFinishFinal * (1 + priceVariance)),
@@ -211,6 +214,7 @@ export function useCostCalculation({
             ? [
                 {
                   label: t("cost.prepWork"),
+                  insightKey: "Prep Work",
                   value: renovationCostFinal,
                   lowValue: roundToHundred(renovationCostFinal * (1 - priceVariance)),
                   highValue: roundToHundred(renovationCostFinal * (1 + priceVariance)),
@@ -225,6 +229,7 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.kitchen"),
+            insightKey: "Kitchen",
             value: kitchenJoineryFinal,
             lowValue: roundToHundred(kitchenJoineryFinal * (1 - priceVariance)),
             highValue: roundToHundred(kitchenJoineryFinal * (1 + priceVariance)),
@@ -232,6 +237,7 @@ export function useCostCalculation({
           },
           {
             label: t("cost.wardrobes"),
+            insightKey: "Wardrobes",
             value: wardrobesFinal,
             lowValue: roundToHundred(wardrobesFinal * (1 - priceVariance)),
             highValue: roundToHundred(wardrobesFinal * (1 + priceVariance)),
@@ -239,6 +245,7 @@ export function useCostCalculation({
           },
           {
             label: t("cost.appliances"),
+            insightKey: "Appliances",
             value: appliancesFinal,
             lowValue: roundToHundred(appliancesFinal * (1 - priceVariance)),
             highValue: roundToHundred(appliancesFinal * (1 + priceVariance)),
@@ -251,6 +258,7 @@ export function useCostCalculation({
         items: [
           {
             label: t("cost.furniture"),
+            insightKey: "Furniture",
             value: furnitureFinal,
             lowValue: roundToHundred(furnitureFinal * (1 - priceVariance)),
             highValue: roundToHundred(furnitureFinal * (1 + priceVariance)),

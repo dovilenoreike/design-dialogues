@@ -92,7 +92,7 @@
   "modes": {
     "rooms": "Rooms",
     "styles": "Styles",
-    "palettes": "Palettes"
+    "palettes": "Collections"
   },
   "palette": {
     "fog-in-the-forest": "Fog in the Forest",
@@ -134,6 +134,19 @@
     "chiaroscuro.desc": "Dramatic light and shadow",
     "bauhaus": "Bauhaus",
     "bauhaus.desc": "Bold geometry and primary colors"
+  },
+  "surface": {
+    "floor": "Floor",
+    "bottomCabinets": "Bottom Cabinets",
+    "topCabinets": "Top Cabinets",
+    "shelves": "Shelves",
+    "worktops": "Worktops",
+    "backsplashes": "Backsplashes",
+    "wall": "Wall",
+    "accentAreas": "Accent Areas",
+    "vanityUnit": "Vanity Unit",
+    "cabinetFurniture": "Cabinet Furniture",
+    "wardrobes": "Wardrobes"
   },
   "specs": {
     "fullSpecification": "Full Specification",
@@ -448,7 +461,7 @@
   "mobile": {
     "stage": {
       "designingThe": "{room} Concept",
-      "uploadPrompt": "Upload a photo, sketch, or floor plan.",
+      "uploadPrompt": "Upload your photo, sketch or floor plan to visualise your choices",
       "visualized": "Visualized {room}",
       "yourRoom": "Your {room}",
       "generating": "Generating...",
@@ -929,5 +942,245 @@
     "successMessage": "Thanks! We'll email you when {paletteName} is ready.",
     "errorMessage": "Failed to save your email. Please try again.",
     "notificationToast": "We'll let you know when it's ready!"
+  },
+  "insights": {
+    "lifespan": "Lifespan",
+    "interiorDesign": {
+      "definition": "Professional space planning, with material and furniture selection tailored to your chosen project scope.",
+      "budget": {
+        "lifespan": "Basic Value",
+        "saveTitle": "Where to Save",
+        "save1": "Standard layouts",
+        "save2": "Limited revisions (1-2 rounds)",
+        "save3": "Standardized material selections",
+        "riskTitle": "Risk Zone",
+        "risk1": "Insufficient planning — leads to costly changes during construction and dissatisfaction later."
+      },
+      "standard": {
+        "lifespan": "Permanent Value",
+        "saveTitle": "Where to Save",
+        "save1": "Know your must-haves early",
+        "save2": "Find designer matching your style",
+        "save3": "Limit major layout changes after initial design",
+        "riskTitle": "Risk Zone",
+        "risk1": "Skipping design phases — rushing to construction without thorough planning often leads to costly mistakes."
+      },
+      "premium": {
+        "lifespan": "Lasting Legacy",
+        "saveTitle": "Smart Savings",
+        "save1": "Clear vision and priorities from the start",
+        "save2": "Trust experienced designers to guide decisions",
+        "save3": "Focus on quality over quantity in selections",
+        "riskTitle": "Diminishing Returns",
+        "risk1": "Over-customization — excessive bespoke elements can inflate costs without proportional value increase.",
+        "risk2": "Constant revisions — frequent changes drain budget and delay timelines."
+      }
+    },
+    "constructionFinish": {
+      "definition": "The 'wet' work: smoothing walls, painting, tiling, and floor installation.",
+      "budget": {
+        "lifespan": "5-10 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Standard tile sizes 60x60, not large slabs or mosaics (higher labor).",
+        "save2": "Surface-mounted plumbing/electrical avoids expensive wall chasing.",
+        "riskTitle": "The 'Quick Fix'",
+        "risk1": "Rushing plaster drying. Painting over damp plaster causes peeling in <1 year.",
+        "risk2": "Skipping waterproofing in bathrooms. Leads to mold and leaks, regardless of tile price."
+      },
+      "standard": {
+        "lifespan": "15+ Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Simple layouts. Avoid 45° flooring angles to reduce waste and labor hours.",
+        "save2": "Quality paint over expensive wall panels.",
+        "riskTitle": "The 'Blame Game'",
+        "risk1": "Fragmented hiring. Without a Lead Contractor, the tiler blames the plumber for uneven walls.",
+        "risk2": "Skipping leveling. New floors on uneven concrete will creak and break locks."
+      },
+      "premium": {
+        "lifespan": "25+ Years",
+        "saveTitle": "Strategic Efficiency",
+        "save1": "Standard drywall, premium plaster finish. Invest in skill, not just material.",
+        "save2": "Zone-controlled underfloor heating prioritizes comfort over complex aesthetic systems.",
+        "riskTitle": "Precision & Physics",
+        "risk1": "Geometry. Shadow gaps require 90° perfect walls; slight errors look terrible.",
+        "risk2": "Over-specifying materials. Ultra-premium tiles and paints have minimal visible difference at high-end."
+      }
+    },
+    "materials": {
+      "definition": "All surface finishes: flooring, tiles, paint, wallcoverings, and decorative elements.",
+      "budget": {
+        "lifespan": "5-10 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Glued Vinyl plank. 100% waterproof, quieter, and more resilient than cheap laminate.",
+        "save2": "Ceramic wall tiles. Cheaper than porcelain, identical look on walls.",
+        "riskTitle": "Premature Wear",
+        "risk1": "Paper-foil doors. Cheapest 'wood look' doors scratch and peel instantly. Aim for CPL coating.",
+        "risk2": "White grout on floors. Turns grey/dirty in weeks. Always choose a matching grey or beige."
+      },
+      "standard": {
+        "lifespan": "10-20 Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Porcelain over Natural Stone. Identical look to marble/travertine but stain-proof, no sealing.",
+        "save2": "MDF skirting. More stable than wood, paints smoother, and doesn't warp.",
+        "riskTitle": "Functionality Compromise",
+        "risk1": "Hollow-core doors. Feel light, block zero sound. Upgrade to 'Solid Core' for privacy.",
+        "risk2": "Matte paint in hallways. Scuffs instantly. Use 'Washable/Eggshell' in high-traffic zones."
+      },
+      "premium": {
+        "lifespan": "15-25 Years",
+        "saveTitle": "Strategic Choices",
+        "save1": "Engineered Wood over Solid. More stable with underfloor heating, resists warping/gaps.",
+        "save2": "'Character' Grade Wood. Natural knots add texture; often cheaper than 'Select' clean grade.",
+        "riskTitle": "Maintenance & Damage",
+        "risk1": "Natural Marble in Showers. Absorbs soap scum, hard water stains. Requires constant resealing.",
+        "risk2": "Very Dark Floors. Show every dust particle and micro-scratch. Requires daily cleaning."
+      }
+    },
+    "kitchen": {
+      "definition": "Integrated cabinetry, worktops, and internal drawer/door systems.",
+      "budget": {
+        "lifespan": "5-10 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Melamine (LMDP) cabinets. Durable, easy to clean, cost-effective.",
+        "save2": "Standard HPL worktops. Wide range of styles, highly resistant to scratches and heat.",
+        "riskTitle": "Heat & Wear",
+        "risk1": "Thermofoil doors near oven. Heat causes plastic coating to bubble and peel within 3 years.",
+        "risk2": "Unbranded drawer runners. Sag and break under daily use, making drawers unusable."
+      },
+      "standard": {
+        "lifespan": "15-20 Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Painted MDF cabinets. Offers custom colors and a seamless look, less prone to heat issues.",
+        "save2": "Fewer drawers, better hinges. Invest in quality Blum/Hettich hinges, use shelves for less-used items.",
+        "riskTitle": "Water Damage",
+        "risk1": "Exposed chipboard edges. Unsealed edges of cabinets/worktops swell instantly with water splashes.",
+        "risk2": "Cheap sinks. Prone to dents, scratches, and transmit dishwasher/water noise."
+      },
+      "premium": {
+        "lifespan": "20-30 Years",
+        "saveTitle": "Strategic Efficiency",
+        "save1": "Standard internal cabinet boxes. Focus budget on custom facades and hardware.",
+        "save2": "Integrated bins/organizers. Improve daily function more than exotic materials.",
+        "riskTitle": "Misplaced Luxury",
+        "risk1": "Exotic wood veneers. Prone to staining, scratching, and require delicate cleaning.",
+        "risk2": "Overly thick worktops. Adds weight and cost with no functional benefit."
+      }
+    },
+    "wardrobes": {
+      "definition": "Built-in closet systems, sliding doors, internal organizers.",
+      "budget": {
+        "lifespan": "5-10 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Simple internal layouts. Focus on shelves and hanging rails (standard sizes).",
+        "save2": "Standard door sizes. Avoid custom heights/widths to save on manufacturing and installation.",
+        "riskTitle": "Daily Frustration",
+        "risk1": "Cheap sliding door tracks. Warp, jam, and make loud noise within months.",
+        "risk2": "Exposed hanging rails. Looks untidy and allows clothes to gather dust quickly."
+      },
+      "standard": {
+        "lifespan": "15-20 Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Standard panel colors for interiors. Focus budget on external facades and hardware.",
+        "save2": "Good quality hinges/soft-close mechanisms. Invest in daily function over aesthetics.",
+        "riskTitle": "Premature Failure",
+        "risk1": "Budget drawer runners. Sag and fail quickly under weight. Clothes get stuck.",
+        "risk2": "Non-soft-close doors. Slamming doors lead to wear and tear, and constant noise."
+      },
+      "premium": {
+        "lifespan": "20-25 Years",
+        "saveTitle": "Strategic Efficiency",
+        "save1": "Standard back panels. Spend on internal lighting and specific organizers (e.g., tie racks).",
+        "save2": "Optimal ventilation. Prevents mold and musty smells in shoe storage.",
+        "riskTitle": "Detail Degradation",
+        "risk1": "Ultra-thin doors. Feel flimsy and show warping over time.",
+        "risk2": "Over-complicated organizers. Often unused and add unnecessary cost."
+      }
+    },
+    "appliances": {
+      "definition": "Major white goods: Refrigerator, cooking appliances, dishwasher, and laundry units.",
+      "budget": {
+        "lifespan": "5-8 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Freestanding Fridge. Integrated models cost 30% more and have 20% less internal space.",
+        "save2": "Basic Induction. Even entry-level induction performs better and is safer than electric ceramic.",
+        "riskTitle": "Unreliable Performance",
+        "risk1": "Energy ratings — A+ costs €150+ more annually than A+++ over its shorter lifespan."
+      },
+      "standard": {
+        "lifespan": "10-15 Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Skip 'Smart' Features. Wi-Fi on ovens is rarely used. Pay for mechanics, not the app.",
+        "save2": "Standard (60cm) Dishwasher. Slim (45cm) models cost the same but hold half the load and often clean worse.",
+        "riskTitle": "The 'Combo' Trap",
+        "risk1": "Washer-Dryer Combos. Cycles take 5+ hours, drying is often damp, and breakdown rates are high. Stack separate units if possible.",
+        "risk2": "Cheap Recirculating Hoods. Loud filters that just blow smells back into the room. Always duct out if possible."
+      },
+      "premium": {
+        "lifespan": "12-15 Years",
+        "saveTitle": "Strategic Efficiency",
+        "save1": "Entry-level Luxury. A base-model Miele cleans as well as the flagship; you pay extra for touchscreens, not performance.",
+        "save2": "Separate Freezer. Buying a standalone freezer allows for a larger dedicated fridge in the kitchen.",
+        "riskTitle": "Form over Function",
+        "risk1": "Downdraft Hobs. While sleek, they struggle with tall pots compared to overhead extraction.",
+        "risk2": "Integrated Fridge Volume. Premium built-ins are deceptively small inside. Check 'Net Liters' before buying."
+      }
+    },
+    "furniture": {
+      "definition": "Movable items: sofas, dining tables, beds, chairs, and decorative pieces.",
+      "budget": {
+        "lifespan": "2-5 Years",
+        "saveTitle": "Smart Savings",
+        "save1": "Accent pieces and decorative items. Easily replaced; budget for seasonal trends.",
+        "save2": "Guest bedroom furniture. Less frequent use, allows for cost-effective choices.",
+        "riskTitle": "Daily Discomfort",
+        "risk1": "Daily-use sofa. Cheap frames sag, cushions flatten, losing support in <2 years.",
+        "risk2": "Flimsy dining chairs. Wobble, creak, and break with regular use."
+      },
+      "standard": {
+        "lifespan": "5-15 Years",
+        "saveTitle": "Smart Choices",
+        "save1": "Local manufacturers. Often offer better value and quality than unknown foreign brands.",
+        "save2": "Quality synthetic fabrics. More durable and cleanable than budget natural materials.",
+        "riskTitle": "Durability Blind Spots",
+        "risk1": "Buying online without testing. Comfort is subjective; sofa feels different in person.",
+        "risk2": "Flimsy bed frames. Lead to squeaking, sagging, and poor sleep over time."
+      },
+      "premium": {
+        "lifespan": "15-25 Years",
+        "saveTitle": "Strategic Choices",
+        "save1": "High-grade synthetic blends for upholstery. Offer luxury look with superior durability to silk/velvet.",
+        "save2": "Focus on frame quality. An expensive sofa is an investment in its structure.",
+        "riskTitle": "Misplaced Investment",
+        "risk1": "Delicate designer pieces in high-traffic areas. Not suitable for kids/pets; get damaged easily.",
+        "risk2": "Untested comfort. Expensive bespoke pieces should be experienced before commissioning."
+      }
+    },
+    "prepWork": {
+      "definition": "Demolition, waste removal, stripping old finishes, and preparing surfaces for new work.",
+      "budget": {
+        "lifespan": "One-time",
+        "saveTitle": "Where to Save",
+        "save1": "DIY demolition of non-structural elements",
+        "save2": "Batch waste disposal runs yourself",
+        "riskTitle": "Risk Zone",
+        "risk1": "Asbestos or lead paint — skipping €200 tests can create €20,000 health hazards."
+      },
+      "standard": {
+        "lifespan": "One-time",
+        "saveTitle": "Where to Save",
+        "save1": "DIY demolition of non-structural elements",
+        "save2": "Own waste disposal runs",
+        "riskTitle": "Risk Zone",
+        "risk1": "Asbestos or lead paint assessment. Skipping tests can create serious health hazards."
+      },
+      "premium": {
+        "lifespan": "One-time",
+        "saveTitle": "Smart Savings",
+        "save1": "Retain original features worth restoring",
+        "save2": "Selective demolition preserves character and reduces waste costs",
+        "riskTitle": "Diminishing Returns",
+        "risk1": "Full strip-outs — sometimes original bones are better than what replaces them."
+      }
+    }
   }
 }

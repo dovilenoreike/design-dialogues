@@ -8,11 +8,13 @@ import type { UploadType } from "@/types/design-state";
 
 
 import { getVisualization } from "@/data/visualisations";
-import { getPaletteById, palettes } from "@/data/palettes";
-import { getPaletteMaterialImages } from "@/data/palettes/material-images";
+import { getPaletteById, getRoomMaterialBubbles, getSlotAlternatives } from "@/data/palettes";
+import { getMaterialById } from "@/data/materials";
 import { getStyleById, styles } from "@/data/styles";
 import { rooms } from "@/data/rooms";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { collections } from "@/data/collections";
+import { palettesV2 } from "@/data/palettes/palettes-v2";
 
 // Map room name to translation key (nominative)
 const roomTranslationKey: Record<string, string> = {
@@ -41,6 +43,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     handleSelectCategory,
     handleSelectStyle,
     handleSelectMaterial,
+    materialOverrides,
+    setMaterialOverrides,
+    excludedSlots,
+    setExcludedSlots,
   } = useDesign();
   const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
 
@@ -84,6 +90,11 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     return generatedImage || uploadedImage || visualizationImage;
   }, [uploadedImages, generatedImages]);
 
+  // Collection/palette derivations (needed by swipe handlers below)
+  const selectedPaletteV2 = palettesV2.find((p) => p.id === selectedMaterial);
+  const currentCollection = collections.find((c) => c.id === selectedPaletteV2?.collectionId);
+  const palettesInCollection = palettesV2.filter((p) => p.collectionId === currentCollection?.id);
+
   // Swipe handlers
   const handleSwipeLeft = useCallback(() => {
     if (isGenerating || showRoomSwitchDialog || showStyleSwitchDialog) return;
@@ -97,12 +108,15 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         const nextStyle = getNextItem(selectedStyle, styles, 'left', s => s.id);
         handleSelectStyle(nextStyle.id);
         break;
-      case 'palettes':
-        const nextPalette = getNextItem(selectedMaterial, palettes, 'left', p => p.id);
-        handleSelectMaterial(nextPalette.id);
+      case 'palettes': {
+        const currentCollectionId = selectedPaletteV2?.collectionId ?? selectedMaterial ?? collections[0].id;
+        const nextCollection = getNextItem(currentCollectionId, collections, 'left', c => c.id);
+        const nextPaletteId = palettesV2.find((p) => p.collectionId === nextCollection.id)?.id;
+        if (nextPaletteId) handleSelectMaterial(nextPaletteId);
         break;
+      }
     }
-  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
+  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, selectedPaletteV2, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
 
   const handleSwipeRight = useCallback(() => {
     if (isGenerating || showRoomSwitchDialog || showStyleSwitchDialog) return;
@@ -116,12 +130,15 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         const nextStyle = getNextItem(selectedStyle, styles, 'right', s => s.id);
         handleSelectStyle(nextStyle.id);
         break;
-      case 'palettes':
-        const nextPalette = getNextItem(selectedMaterial, palettes, 'right', p => p.id);
-        handleSelectMaterial(nextPalette.id);
+      case 'palettes': {
+        const currentCollectionId = selectedPaletteV2?.collectionId ?? selectedMaterial ?? collections[0].id;
+        const prevCollection = getNextItem(currentCollectionId, collections, 'right', c => c.id);
+        const prevPaletteId = palettesV2.find((p) => p.collectionId === prevCollection.id)?.id;
+        if (prevPaletteId) handleSelectMaterial(prevPaletteId);
         break;
+      }
     }
-  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
+  }, [isGenerating, showRoomSwitchDialog, showStyleSwitchDialog, activeMode, selectedCategory, selectedStyle, selectedMaterial, selectedPaletteV2, getNextItem, handleSelectCategory, handleSelectStyle, handleSelectMaterial]);
 
   // Apply swipe gesture
   const { isDragging, dragOffset, ref } = useSwipeGesture({
@@ -194,7 +211,16 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const hasUserImage = !!uploadedImage || !!generatedImage;
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
+
   const pendingUploadTypeRef = useRef<UploadType>("photo");
+
+  // Material swap rail state — which slot's rail is open
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+
+  // Close rail when palette or room changes
+  useEffect(() => {
+    setActiveSlot(null);
+  }, [selectedMaterial, selectedCategory]);
 
   // Calculate prev/current/next based on activeMode
   const prevImage = useMemo(() => {
@@ -208,8 +234,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         return getImageForState(selectedCategory, selectedMaterial, prevStyle.id);
       }
       case 'palettes': {
-        const prevPalette = getPrevItem(selectedMaterial, palettes, p => p.id);
-        return getImageForState(selectedCategory, prevPalette.id, selectedStyle);
+        const currentCollectionId = selectedPaletteV2?.collectionId ?? selectedMaterial ?? collections[0].id;
+        const prevCollection = getPrevItem(currentCollectionId, collections, c => c.id);
+        const prevPaletteId = palettesV2.find((p) => p.collectionId === prevCollection.id)?.id ?? selectedMaterial;
+        return getImageForState(selectedCategory, prevPaletteId, selectedStyle);
       }
     }
   }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getPrevItem, getImageForState]);
@@ -227,8 +255,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         return getImageForState(selectedCategory, selectedMaterial, nextStyle.id);
       }
       case 'palettes': {
-        const nextPalette = getNextItem(selectedMaterial, palettes, 'left', p => p.id);
-        return getImageForState(selectedCategory, nextPalette.id, selectedStyle);
+        const currentCollectionId = selectedPaletteV2?.collectionId ?? selectedMaterial ?? collections[0].id;
+        const nextCollection = getNextItem(currentCollectionId, collections, 'left', c => c.id);
+        const nextPaletteId = palettesV2.find((p) => p.collectionId === nextCollection.id)?.id ?? selectedMaterial;
+        return getImageForState(selectedCategory, nextPaletteId, selectedStyle);
       }
     }
   }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getNextItem, getImageForState]);
@@ -256,6 +286,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       <div
         ref={ref}
         className="absolute inset-0 overflow-hidden"
+        onClick={() => { if (activeSlot) setActiveSlot(null); }}
       >
         {/* Inner track that slides */}
         <div
@@ -312,13 +343,18 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <button
             onClick={() => setUploadMenuOpen(true)}
-            className="pointer-events-auto flex flex-col items-center active:scale-95 transition-transform"
+            className="pointer-events-auto flex flex-col items-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-lg"
               style={{ border: '1.5px solid rgba(255,255,255,0.4)' }}
             >
               <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
             </div>
+            {(Object.keys(materialOverrides).length > 0 || excludedSlots.size > 0) && (
+              <span className="text-sm text-white/60 text-center max-w-[200px] leading-relaxed tracking-wide [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
+                {t("mobile.stage.uploadPrompt")}
+              </span>
+            )}
           </button>
         </div>
       )}
@@ -401,7 +437,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
       {/* Technical tags - bottom-left when browsing */}
       {!hasUserImage && (
-        <div className="absolute bottom-8 left-3 flex items-center gap-1.5">
+        <div className="absolute bottom-6 left-3 flex items-center gap-1.5 z-10">
           <button
             onClick={() => { onOpenSelector ? onOpenSelector("rooms") : setActiveMode("rooms"); }}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] tracking-wide uppercase font-medium active:scale-95 transition-all ${
@@ -431,32 +467,119 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         </div>
       )}
 
-      {/* Palette specimen strip - bottom-right when browsing */}
+      {/* Palette material bubbles - bottom-right when browsing */}
       {!hasUserImage && palette && (() => {
-        const swatchImages = getPaletteMaterialImages(palette.id).slice(0, 4);
-        const paletteName = t(`palette.${palette.id}`) || palette.name;
-        return swatchImages.length > 0 ? (
-          <button
-            onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
-            className="absolute bottom-12 right-1.5 flex flex-col items-center active:scale-[0.97] transition-transform max-w-[44px]"
+        const bubbles = getRoomMaterialBubbles(palette.id, roomNameRaw);
+        return bubbles.length > 0 ? (
+          <div
+            className="absolute bottom-12 right-1.5 flex flex-col items-center w-10"
           >
-            <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight">
-              {paletteName}
-            </span>
+            {palette && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const idx = palettesInCollection.findIndex((p) => p.id === selectedMaterial);
+                  if (palettesInCollection.length > 1) {
+                    const next = palettesInCollection[(idx + 1) % palettesInCollection.length];
+                    handleSelectMaterial(next.id);
+                  }
+                }}
+                className="w-full py-1.5 text-[10px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
+              >
+                {t(`palette.${palette.id}`) || palette.name}
+                {palettesInCollection.length > 1 && <ChevronDown className="w-2.5 h-2.5 text-white/50 shrink-0" strokeWidth={2} />}
+              </button>
+            )}
             <div
-              className={`flex flex-col gap-1.5 ${activeMode === "palettes" ? "p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg" : ""}`}
+              className={`relative flex flex-col gap-1.5 ${activeMode === "palettes" ? "p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg" : ""}`}
               style={activeMode === "palettes" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
             >
-              {swatchImages.map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt=""
-                  className={`w-7 h-7 rounded-full object-cover ${activeMode === "palettes" ? "" : "shadow-sm"}`}
-                />
-              ))}
+              {bubbles.map((bubble) => {
+                const isExcluded = excludedSlots.has(bubble.slotKey);
+                const overriddenImage = materialOverrides[bubble.slotKey]
+                  ? getMaterialById(materialOverrides[bubble.slotKey])?.image || bubble.image
+                  : bubble.image;
+                const isActive = activeSlot === bubble.slotKey;
+                return (
+                  <div key={bubble.slotKey} className="relative h-7">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isExcluded) {
+                          setExcludedSlots(prev => { const next = new Set(prev); next.delete(bubble.slotKey); return next; });
+                          return;
+                        }
+                        if (activeMode !== "palettes") {
+                          onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
+                        }
+                        setActiveSlot(isActive ? null : bubble.slotKey);
+                      }}
+                      className={`block active:scale-95 transition-transform relative ${isExcluded ? "opacity-[0.35]" : ""}`}
+                    >
+                      <img
+                        src={overriddenImage}
+                        alt={bubble.slotLabel}
+                        title={bubble.slotLabel}
+                        className={`w-7 h-7 rounded-full object-cover ${activeMode === "palettes" ? "" : "shadow-sm"} ${isActive ? "ring-[1.5px] ring-white" : ""}`}
+                      />
+                      {isExcluded && (
+                        <X className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={1.5} />
+                      )}
+                    </button>
+                    {/* Material swap rail */}
+                    {isActive && !isExcluded && (() => {
+                      const alternatives = getSlotAlternatives(palette.id, roomNameRaw, bubble.slotKey);
+                      const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
+                      return (
+                        <div
+                          className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-1.5 z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Exclude slot button — outside the glass pill, at far left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExcludedSlots(prev => new Set(prev).add(bubble.slotKey));
+                              setActiveSlot(null);
+                            }}
+                            className="w-6 h-6 shrink-0 flex items-center justify-center active:scale-90 transition-transform"
+                          >
+                            <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
+                          </button>
+                          {/* Glass pill with alternatives */}
+                          <div
+                            className="relative flex items-center gap-1.5 backdrop-blur-xl bg-white/20 rounded-full px-1.5 py-1"
+                            style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+                          >
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[7px] tracking-[0.2em] uppercase text-white/50 font-medium select-none whitespace-nowrap [text-shadow:0_1px_2px_rgba(0,0,0,0.4)]">
+                              {t(`surface.${bubble.slotKey}`) || bubble.slotLabel}
+                            </span>
+                            {alternatives.map((alt) => (
+                              <button
+                                key={alt.materialId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMaterialOverrides(prev => ({ ...prev, [bubble.slotKey]: alt.materialId }));
+                                  setActiveSlot(null);
+                                }}
+                                className="w-7 h-7 shrink-0 active:scale-90 transition-transform"
+                              >
+                                <img
+                                  src={alt.image}
+                                  alt={alt.materialId}
+                                  className={`w-7 h-7 rounded-full object-cover ${alt.materialId === currentMaterialId ? "ring-[1.5px] ring-white" : ""}`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })}
             </div>
-          </button>
+          </div>
         ) : null;
       })()}
 
@@ -474,37 +597,117 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         </div>
       )}
 
-      {/* Palette specimen strip - bottom-right above FAB after upload */}
+      {/* Palette material bubbles - bottom-right above FAB after upload */}
       {hasUserImage && palette && (() => {
-        const swatchImages = getPaletteMaterialImages(palette.id).slice(0, 4);
+        const bubbles = getRoomMaterialBubbles(palette.id, roomNameRaw);
         const paletteName = t(`palette.${palette.id}`) || palette.name;
-        return swatchImages.length > 0 ? (
-          <button
-            onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
-            className="absolute bottom-20 right-1.5 flex flex-col items-center active:scale-[0.97] transition-transform max-w-[44px]"
+        return bubbles.length > 0 ? (
+          <div
+            className="absolute bottom-20 right-1.5 flex flex-col items-center max-w-[44px]"
           >
-            <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight">
-              {paletteName}
-            </span>
+            <button
+              onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
+              className="active:scale-[0.97] transition-transform"
+            >
+              <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight block">
+                {paletteName}
+              </span>
+            </button>
             <div
-              className="flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
+              className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
               style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
             >
-              {swatchImages.map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt=""
-                  className="w-7 h-7 rounded-full object-cover"
-                />
-              ))}
+              {bubbles.map((bubble) => {
+                const isExcluded = excludedSlots.has(bubble.slotKey);
+                const overriddenImage = materialOverrides[bubble.slotKey]
+                  ? getMaterialById(materialOverrides[bubble.slotKey])?.image || bubble.image
+                  : bubble.image;
+                const isActive = activeSlot === bubble.slotKey;
+                return (
+                  <div key={bubble.slotKey} className="relative h-7">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isExcluded) {
+                          setExcludedSlots(prev => { const next = new Set(prev); next.delete(bubble.slotKey); return next; });
+                          return;
+                        }
+                        if (activeMode !== "palettes") {
+                          onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
+                        }
+                        setActiveSlot(isActive ? null : bubble.slotKey);
+                      }}
+                      className={`block active:scale-95 transition-transform relative ${isExcluded ? "opacity-[0.35]" : ""}`}
+                    >
+                      <img
+                        src={overriddenImage}
+                        alt={bubble.slotLabel}
+                        title={bubble.slotLabel}
+                        className={`w-7 h-7 rounded-full object-cover ${isActive ? "ring-[1.5px] ring-white" : ""}`}
+                      />
+                      {isExcluded && (
+                        <X className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={1.5} />
+                      )}
+                    </button>
+                    {/* Material swap rail */}
+                    {isActive && !isExcluded && (() => {
+                      const alternatives = getSlotAlternatives(palette.id, roomNameRaw, bubble.slotKey);
+                      const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
+                      return (
+                        <div
+                          className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-1.5 z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Exclude slot button — outside the glass pill, at far left */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExcludedSlots(prev => new Set(prev).add(bubble.slotKey));
+                              setActiveSlot(null);
+                            }}
+                            className="w-6 h-6 shrink-0 flex items-center justify-center active:scale-90 transition-transform"
+                          >
+                            <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
+                          </button>
+                          {/* Glass pill with alternatives */}
+                          <div
+                            className="relative flex items-center gap-1.5 backdrop-blur-xl bg-white/20 rounded-full px-1.5 py-1"
+                            style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+                          >
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[7px] tracking-[0.2em] uppercase text-white/50 font-medium select-none whitespace-nowrap [text-shadow:0_1px_2px_rgba(0,0,0,0.4)]">
+                              {t(`surface.${bubble.slotKey}`) || bubble.slotLabel}
+                            </span>
+                            {alternatives.map((alt) => (
+                              <button
+                                key={alt.materialId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMaterialOverrides(prev => ({ ...prev, [bubble.slotKey]: alt.materialId }));
+                                  setActiveSlot(null);
+                                }}
+                                className="w-7 h-7 shrink-0 active:scale-90 transition-transform"
+                              >
+                                <img
+                                  src={alt.image}
+                                  alt={alt.materialId}
+                                  className={`w-7 h-7 rounded-full object-cover ${alt.materialId === currentMaterialId ? "ring-[1.5px] ring-white" : ""}`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })}
             </div>
-          </button>
+          </div>
         ) : null;
       })()}
 
       {/* AI concept watermark - directly on image */}
-      <span className="absolute bottom-5 right-1.5 text-[8px] font-medium tracking-[0.2em] uppercase text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none pointer-events-none">
+      <span className="absolute bottom-1 right-1.5 text-[8px] font-medium tracking-[0.2em] uppercase text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none pointer-events-none">
         {t("result.visualizationDisclaimer")}
       </span>
 

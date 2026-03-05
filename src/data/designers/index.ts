@@ -1,4 +1,4 @@
-import type { DesignerProfile } from "@/types/palette";
+import type { DesignerProfile } from "./types";
 
 const ALL_STYLES = [
   "minimalist",

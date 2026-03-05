@@ -9,7 +9,7 @@ import type { Tier } from "./tiers";
  */
 export const baseRates: Record<Tier, number> = {
   Budget: 290,
-  Standard: 490,
+  Standard: 520,
   Premium: 780,
 };
 

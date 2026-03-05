@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Compass, Paintbrush, Sofa, Wrench, Zap, User, Baby, Minus, Plus, Check } from "lucide-react";
+import { Compass, Paintbrush, Sofa, Wrench, Zap, User, Baby, Minus, Plus, Check, Info } from "lucide-react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useDesign, Tier } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,6 +10,7 @@ import { KitchenSlider, getKitchenStatus, getRecommendedKitchen } from "@/compon
 import { calculateTotalStorage } from "@/data/layout-audit-rules";
 import ServiceDetailsSheet from "../controls/ServiceDetailsSheet";
 import FeedbackDialog from "@/components/FeedbackDialog";
+import { CostInsightSheet } from "@/components/CostInsightSheet";
 import type { ServiceSelection, FormData } from "@/types/calculator";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
@@ -142,6 +143,7 @@ export default function BudgetView() {
 
   const [isServiceSheetOpen, setIsServiceSheetOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [insightCategory, setInsightCategory] = useState<string | null>(null);
 
   // Local state for form inputs
   const [localArea, setLocalArea] = useState(data.area);
@@ -566,8 +568,13 @@ export default function BudgetView() {
                   </p>
                   {group.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center py-1">
-                      <span className="text-sm text-neutral-600">
+                      <span className="text-sm text-neutral-600 flex items-center">
                         {item.label}
+                        <Info
+                          size={11}
+                          className="ml-1 text-neutral-400 cursor-pointer hover:text-neutral-900 transition-colors"
+                          onClick={() => setInsightCategory(item.insightKey)}
+                        />
                       </span>
                       <span className="font-serif text-sm tabular-nums text-neutral-900">
                         €{item.lowValue.toLocaleString('lt-LT')} – €{item.highValue.toLocaleString('lt-LT')}
@@ -605,6 +612,14 @@ export default function BudgetView() {
 
       {/* Feedback Dialog */}
       <FeedbackDialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen} />
+
+      {/* Cost Insight Sheet */}
+      <CostInsightSheet
+        isOpen={!!insightCategory}
+        onClose={() => setInsightCategory(null)}
+        category={insightCategory ?? ""}
+        tier={selectedTier.toLowerCase() as "budget" | "standard" | "premium"}
+      />
     </div>
   );
 }

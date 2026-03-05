@@ -1,26 +1,22 @@
+/**
+ * Palette utilities — now powered by the new material system.
+ * Material images come from Material.image (no more path construction).
+ */
 import type { Palette, Material, RoomCategory, LocalizedString } from "@/types/palette";
 import type { Language } from "@/contexts/LanguageContext";
+import type { RoomType } from "@/data/rooms/surfaces";
 import { palettes } from "@/data/palettes";
-
-// Import all material images using Vite's glob import
-const materialImages = import.meta.glob<string>(
-  '/src/assets/materials/**/*.jpg',
-  { eager: true, import: 'default', query: '?url' }
-);
+import { getMaterialById } from "@/data/materials";
+import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { roomSurfaces } from "@/data/rooms/surfaces";
 
 /**
- * Derives the image path for a material based on palette ID and material key
+ * Gets the image URL for a material by its ID.
+ * In the new system, material keys in Palette.materials ARE material IDs.
  */
-export function getMaterialImagePath(paletteId: string, materialKey: string): string {
-  return `/src/assets/materials/${paletteId}/${materialKey}.jpg`;
-}
-
-/**
- * Gets the actual URL for a material image (for use in components)
- */
-export function getMaterialImageUrl(paletteId: string, materialKey: string): string | null {
-  const path = `/src/assets/materials/${paletteId}/${materialKey}.jpg`;
-  return materialImages[path] || null;
+export function getMaterialImageUrl(_paletteId: string, materialKey: string): string | null {
+  const mat = getMaterialById(materialKey);
+  return mat?.image || null;
 }
 
 /**
@@ -51,7 +47,7 @@ export function getMaterialDescription(
   language: Language = "en"
 ): string {
   if (typeof material.description === "string") {
-    return material.description; // backwards compatible with plain strings
+    return material.description;
   }
   return material.description[language] || material.description.en;
 }
@@ -93,8 +89,6 @@ export function buildDetailedMaterialPrompt(
   const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
   const materials = getMaterialsForRoom(palette, roomCategory);
 
-  // Filter to only include materials that should be in the prompt
-  // (include if true or undefined, exclude only if explicitly false)
   const promptMaterials = materials.filter(
     ({ material }) => material.includeInPrompt !== false
   );
@@ -103,15 +97,12 @@ export function buildDetailedMaterialPrompt(
     return palette.promptSnippet;
   }
 
-  // Build detailed material descriptions with purpose + description
-  // Always use English for AI prompts
   const materialDescriptions = promptMaterials.map(({ material }) => {
     const purpose = getMaterialPurpose(material, roomCategory);
     const description = getMaterialDescription(material, "en") || `${purpose} material`;
     return `- ${purpose}: ${description}`;
   });
 
-  // Combine palette aesthetic with specific material details in bullet format
   return `${palette.promptSnippet}\n\nMaterials specification:\n${materialDescriptions.join('\n')}`;
 }
 
@@ -125,11 +116,11 @@ export async function loadMaterialImagesAsBase64(
 ): Promise<string[]> {
   const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
   const materials = getMaterialsForRoom(palette, roomCategory);
-  
+
   const imagePromises = materials.map(async ({ key }) => {
     const imageUrl = getMaterialImageUrl(paletteId, key);
     if (!imageUrl) return null;
-    
+
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -142,7 +133,7 @@ export async function loadMaterialImagesAsBase64(
       return null;
     }
   });
-  
+
   const results = await Promise.all(imagePromises);
   return results.filter((img): img is string => img !== null);
 }
@@ -154,8 +145,7 @@ export interface MaterialImageWithMeta {
 }
 
 /**
- * Loads material images as base64 with metadata (purpose, description) for a given palette and room.
- * Used by the material-edit generation path to send texture references to the AI.
+ * Loads material images as base64 with metadata for AI generation.
  */
 export async function loadMaterialImagesWithMeta(
   paletteId: string,
@@ -165,7 +155,6 @@ export async function loadMaterialImagesWithMeta(
   const roomCategory = mapSpaceCategoryToRoom(spaceCategory);
   const materials = getMaterialsForRoom(palette, roomCategory);
 
-  // Only include materials that should be in the prompt
   const promptMaterials = materials.filter(
     ({ material }) => material.includeInPrompt !== false
   );
@@ -197,12 +186,134 @@ export async function loadMaterialImagesWithMeta(
   return results.filter((img): img is MaterialImageWithMeta => img !== null);
 }
 
+// Display name → RoomType mapping (matches palettes/index.ts)
+const displayNameToRoomType: Record<string, RoomType> = {
+  Kitchen: "kitchen",
+  Bathroom: "bathroom",
+  Bedroom: "bedroom",
+  "Living Room": "livingRoom",
+};
+
+/**
+ * Build detailed material prompt from v2 selections with overrides applied.
+ */
+export function buildDetailedMaterialPromptWithOverrides(
+  paletteId: string,
+  spaceCategory: string,
+  overrides: Record<string, string>,
+  palettePromptSnippet: string,
+  excludedSlots?: Set<string>,
+): string {
+  const roomType = displayNameToRoomType[spaceCategory];
+  if (!roomType) return palettePromptSnippet;
+
+  const pv2 = palettesV2.find((p) => p.id === paletteId);
+  if (!pv2) return palettePromptSnippet;
+
+  const slots = pv2.selections[roomType];
+  if (!slots) return palettePromptSnippet;
+
+  const slotDefs = roomSurfaces[roomType];
+
+  // Group slots by resolved material ID so shared materials list all their surfaces
+  const matGroups = new Map<string, string[]>();
+  const matOrder: string[] = [];
+
+  for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+    if (excludedSlots?.has(slotKey)) continue;
+    const matId = overrides[slotKey] || defaultMatId;
+    const slotDef = slotDefs[slotKey];
+    if (!slotDef) continue;
+
+    const existing = matGroups.get(matId);
+    if (existing) {
+      existing.push(slotDef.label);
+    } else {
+      matGroups.set(matId, [slotDef.label]);
+      matOrder.push(matId);
+    }
+  }
+
+  const descriptions: string[] = [];
+  for (const matId of matOrder) {
+    const mat = getMaterialById(matId);
+    if (!mat) continue;
+
+    const labels = matGroups.get(matId)!;
+    const desc = typeof mat.description === "object"
+      ? (mat.description as Record<string, string>).en || ""
+      : String(mat.description || "");
+    descriptions.push(`- ${labels.join(", ")}: ${desc || matId}`);
+  }
+
+  if (descriptions.length === 0) return palettePromptSnippet;
+  return `${palettePromptSnippet}\n\nMaterials specification:\n${descriptions.join("\n")}`;
+}
+
+/**
+ * Load material images with metadata from v2 selections with overrides applied.
+ */
+export async function loadMaterialImagesWithOverrides(
+  paletteId: string,
+  spaceCategory: string,
+  overrides: Record<string, string>,
+  excludedSlots?: Set<string>,
+): Promise<MaterialImageWithMeta[]> {
+  const roomType = displayNameToRoomType[spaceCategory];
+  if (!roomType) return [];
+
+  const pv2 = palettesV2.find((p) => p.id === paletteId);
+  if (!pv2) return [];
+
+  const slots = pv2.selections[roomType];
+  if (!slots) return [];
+
+  const slotDefs = roomSurfaces[roomType];
+
+  // One entry per slot — no deduplication so the AI gets a clear per-surface instruction
+  const items: { matId: string; purpose: string }[] = [];
+
+  for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+    if (excludedSlots?.has(slotKey)) continue;
+    const matId = overrides[slotKey] || defaultMatId;
+    const slotDef = slotDefs[slotKey];
+    if (!slotDef) continue;
+
+    items.push({ matId, purpose: slotDef.label });
+  }
+
+  const promises = items.map(async ({ matId, purpose }) => {
+    const mat = getMaterialById(matId);
+    if (!mat?.image) return null;
+
+    try {
+      const response = await fetch(mat.image);
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const desc = typeof mat.description === "object"
+        ? (mat.description as Record<string, string>).en || ""
+        : String(mat.description || "");
+
+      return { base64, purpose, description: desc };
+    } catch {
+      return null;
+    }
+  });
+
+  const results = await Promise.all(promises);
+  return results.filter((r): r is MaterialImageWithMeta => r !== null);
+}
+
 /**
  * Gets palettes that have at least one material available at the specified showroom
  */
 export function getPalettesForShowroom(showroomId: string): Palette[] {
   return palettes.filter((palette) => {
-    // Check if ANY material in this palette has the showroomId
     return Object.values(palette.materials).some(
       (material) => material.showroomIds?.includes(showroomId)
     );

@@ -1,56 +1,79 @@
+import { useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaletteById } from "@/data/palettes";
-import {
-  getMaterialsForRoom,
-  getMaterialPurpose,
-  getMaterialImageUrl,
-  mapSpaceCategoryToRoom,
-} from "@/lib/palette-utils";
+import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { getMaterialById } from "@/data/materials";
+import type { RoomType } from "@/data/rooms/surfaces";
+
+const MAX_SWATCHES = 5;
+
+const displayNameToRoomType: Record<string, RoomType> = {
+  Kitchen: "kitchen",
+  Bathroom: "bathroom",
+  Bedroom: "bedroom",
+  "Living Room": "livingRoom",
+};
 
 export default function RoomMaterials() {
-  const { design, setActiveTab } = useDesign();
+  const { design, materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t } = useLanguage();
   const { selectedMaterial, selectedCategory } = design;
 
-  if (!selectedMaterial) return null;
+  const uniqueMaterials = useMemo(() => {
+    if (!selectedMaterial) return [];
 
-  const palette = getPaletteById(selectedMaterial);
-  if (!palette) return null;
+    const roomType = displayNameToRoomType[selectedCategory || "Kitchen"];
+    if (!roomType) return [];
 
-  const roomCategory = mapSpaceCategoryToRoom(selectedCategory || "Kitchen");
-  const materials = getMaterialsForRoom(palette, roomCategory);
+    const pv2 = palettesV2.find((p) => p.id === selectedMaterial);
+    if (!pv2) return [];
 
-  if (materials.length === 0) return null;
+    const slots = pv2.selections[roomType];
+    if (!slots) return [];
+
+    const seen = new Set<string>();
+    const result: { matId: string; slotKey: string; image: string }[] = [];
+
+    for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+      if (excludedSlots.has(slotKey)) continue;
+      const matId = materialOverrides[slotKey] || defaultMatId;
+      if (seen.has(matId)) continue;
+      seen.add(matId);
+
+      const mat = getMaterialById(matId);
+      if (!mat?.image) continue;
+
+      result.push({ matId, slotKey, image: mat.image });
+      if (result.length >= MAX_SWATCHES) break;
+    }
+
+    return result;
+  }, [selectedMaterial, selectedCategory, materialOverrides, excludedSlots]);
+
+  if (uniqueMaterials.length === 0) return null;
 
   return (
     <section className="bg-neutral-50 py-5">
       <div className="px-4">
         <div className="grid grid-cols-5 gap-2">
-          {materials.map(({ key, material }) => {
-            const imageUrl = getMaterialImageUrl(selectedMaterial, key);
-            const purpose = getMaterialPurpose(material, roomCategory);
-            const translatedPurpose = t(`material.purpose.${purpose}`) || purpose;
+          {uniqueMaterials.map(({ matId, slotKey, image }) => {
+            const translatedLabel = t(`surface.${slotKey}`) || slotKey;
 
             return (
               <button
-                key={key}
+                key={matId}
                 onClick={() => setActiveTab("specs")}
                 className="flex flex-col items-start gap-1.5 active:scale-95 transition-transform"
               >
-                {/* Technical label above swatch */}
                 <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 leading-tight line-clamp-1 w-full">
-                  {translatedPurpose}
+                  {translatedLabel}
                 </span>
-                {/* Material swatch with physical feel */}
                 <div className="w-full aspect-square rounded overflow-hidden border border-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
-                  {imageUrl && (
-                    <img
-                      src={imageUrl}
-                      alt={translatedPurpose}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  <img
+                    src={image}
+                    alt={translatedLabel}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </button>
             );

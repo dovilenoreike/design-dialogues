@@ -22,16 +22,8 @@ export interface Material {
   showroomIds?: string[]; // IDs of showrooms that carry this material
 }
 
-export interface DesignerProfile {
-  name: string;
-  title: string;
-  bio: string;
-  styles: string[];
-  cities?: string[];
-  email?: string;
-  instagram?: string;
-  website?: string;
-}
+export type { DesignerProfile } from "@/data/designers/types";
+import type { DesignerProfile } from "@/data/designers/types";
 
 export interface Palette {
   id: string;
