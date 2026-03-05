@@ -87,7 +87,9 @@
     "palette": "Palette",
     "overdue": "Overdue",
     "fullHomeVision": "Full Home Vision",
-    "curatedBy": "Curated by"
+    "curatedBy": "Curated by",
+    "projectSummary": "Project Summary",
+    "viewFullSpec": "View Full Specification"
   },
   "modes": {
     "rooms": "Rooms",
@@ -136,11 +138,16 @@
     "bauhaus.desc": "Bold geometry and primary colors"
   },
   "surface": {
+    "clearAll": "Clear",
+    "fronts": "Fronts",
     "floor": "Floor",
+    "mainFronts": "Main Fronts",
+    "worktops": "Worktops",
+    "additionalFronts": "Addl. Fronts",
+    "accents": "Accents",
     "bottomCabinets": "Bottom Cabinets",
     "topCabinets": "Top Cabinets",
     "shelves": "Shelves",
-    "worktops": "Worktops",
     "backsplashes": "Backsplashes",
     "wall": "Wall",
     "accentAreas": "Accent Areas",

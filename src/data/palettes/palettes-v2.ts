@@ -316,7 +316,7 @@ export const palettesV2: PaletteV2[] = [
       kitchen: {
         floor: "solido_iconic_oak_bolsena",
         bottomCabinets: "alvi-goya-03-na",
-        topCabinets: "light-greige-matte",
+        topCabinets: "velvet_1551",
         shelves: "velvet_1551",
         worktops: "icono_marquina_cava",
         wall: "off-white-wall",

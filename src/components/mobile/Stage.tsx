@@ -472,7 +472,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         const bubbles = getRoomMaterialBubbles(palette.id, roomNameRaw);
         return bubbles.length > 0 ? (
           <div
-            className="absolute bottom-12 right-1.5 flex flex-col items-center w-10"
+            className="absolute bottom-12 right-1.5 flex flex-col items-center w-10 opacity-90"
           >
             {palette && (
               <button
@@ -484,15 +484,15 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
                     handleSelectMaterial(next.id);
                   }
                 }}
-                className="w-full py-1.5 text-[10px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
+                className="w-full py-1.5 text-[7px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
               >
                 {t(`palette.${palette.id}`) || palette.name}
                 {palettesInCollection.length > 1 && <ChevronDown className="w-2.5 h-2.5 text-white/50 shrink-0" strokeWidth={2} />}
               </button>
             )}
             <div
-              className={`relative flex flex-col gap-1.5 ${activeMode === "palettes" ? "p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg" : ""}`}
-              style={activeMode === "palettes" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
+              className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
+              style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
             >
               {bubbles.map((bubble) => {
                 const isExcluded = excludedSlots.has(bubble.slotKey);
@@ -603,7 +603,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         const paletteName = t(`palette.${palette.id}`) || palette.name;
         return bubbles.length > 0 ? (
           <div
-            className="absolute bottom-20 right-1.5 flex flex-col items-center max-w-[44px]"
+            className="absolute bottom-20 right-1.5 flex flex-col items-center max-w-[44px] opacity-100"
           >
             <button
               onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}

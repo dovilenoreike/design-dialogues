@@ -32,7 +32,7 @@ export default function ControlCenter() {
   }, [uploadedImage, selectedStyle, selectedMaterial, activeMode, setActiveMode]);
 
   return (
-    <div className="pt-4 h-[104px] overflow-hidden bg-background">
+    <div className="pt-8 h-[120px] overflow-hidden bg-background">
       {activeMode === "rooms" && <RoomCarousel />}
       {activeMode === "palettes" && <PaletteCarousel />}
       {activeMode === "styles" && <StyleCarousel />}

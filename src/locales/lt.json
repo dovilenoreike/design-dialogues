@@ -87,7 +87,9 @@
     "palette": "Paletė",
     "overdue": "Vėluoja",
     "fullHomeVision": "Viso būsto vizija",
-    "curatedBy": "Sukūrė"
+    "curatedBy": "Sukūrė",
+    "projectSummary": "Projekto suvestinė",
+    "viewFullSpec": "Peržiūrėti pilną specifikaciją"
   },
   "modes": {
     "rooms": "Kambariai",
@@ -136,12 +138,17 @@
     "bauhaus.desc": "Ryški geometrija ir pirminės spalvos"
   },
   "surface": {
+    "clearAll": "Išvalyti",
+    "fronts": "Fasadai",
     "floor": "Grindys",
+    "mainFronts": "Fasadai I",
+    "additionalFronts": "Fasadai II",
+    "worktops": "Stalviršiai",
+    "accents": "Akcentai",
     "bottomCabinets": "Apatinės spintelės",
     "topCabinets": "Viršutinės spintelės",
     "tallCabinets": "Aukštos spintelės",
     "shelves": "Lentynos",
-    "worktops": "Stalviršiai",
     "backsplashes": "Sienelė",
     "wall": "Sienos",
     "accentAreas": "Akcentinės zonos",

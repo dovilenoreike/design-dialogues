@@ -1426,7 +1426,7 @@ export const materials: Material[] = [
   solidoPearl,
   NagojaDuron,
   // Cabinet-fronts
-  EggerBrownCasellaOak,
+  // EggerBrownCasellaOak,
   EggerLightNaturalCasellaOak,
   SkinCarbonFumo,
   AlviGoya03NA,
