@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo, useEffect, useState } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown, Coins } from "lucide-react";
+import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown, Coins, RotateCcw } from "lucide-react";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,6 +22,13 @@ const roomTranslationKey: Record<string, string> = {
   "Living Room": "space.livingRoom",
   "Bedroom": "space.bedroom",
   "Bathroom": "space.bathroom",
+};
+
+const ROOM_TO_TYPE: Record<string, string> = {
+  "Kitchen": "kitchen",
+  "Living Room": "livingRoom",
+  "Bedroom": "bedroom",
+  "Bathroom": "bathroom",
 };
 
 interface StageProps {
@@ -209,6 +216,19 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(roomTranslationKey[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
+
+  // True when user's material overrides differ from the current palette defaults
+  const hasMaterialChanges = useMemo(() => {
+    if (Object.keys(materialOverrides).length === 0) return false;
+    const pv2 = palettesV2.find(p => p.id === selectedMaterial);
+    const roomType = ROOM_TO_TYPE[roomNameRaw];
+    const paletteSlots = (pv2?.selections?.[roomType as keyof typeof pv2.selections] ?? {}) as Record<string, string>;
+    return Object.entries(materialOverrides).some(([key, val]) => paletteSlots[key] !== val);
+  }, [materialOverrides, selectedMaterial, roomNameRaw]);
+
+  // Blur the pregenerated visualization when it no longer matches user's material selection
+  const isVisualizationMismatched = !hasUserImage && hasMaterialChanges;
+
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
 
@@ -311,7 +331,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             <img
               src={currentImage}
               alt={`${roomName} visualization`}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-[filter] duration-300 ${isVisualizationMismatched ? 'blur-sm' : ''}`}
             />
           </div>
 
@@ -350,7 +370,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             >
               <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
             </div>
-            {(Object.keys(materialOverrides).length > 0 || excludedSlots.size > 0) && (
+            {isVisualizationMismatched && (
               <span className="text-sm text-white/60 text-center max-w-[200px] leading-relaxed tracking-wide [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
                 {t("mobile.stage.uploadPrompt")}
               </span>
@@ -475,20 +495,32 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             className="absolute bottom-12 right-1.5 flex flex-col items-center w-10 opacity-90"
           >
             {palette && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const idx = palettesInCollection.findIndex((p) => p.id === selectedMaterial);
-                  if (palettesInCollection.length > 1) {
-                    const next = palettesInCollection[(idx + 1) % palettesInCollection.length];
-                    handleSelectMaterial(next.id);
-                  }
-                }}
-                className="w-full py-1.5 text-[7px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
-              >
-                {t(`palette.${palette.id}`) || palette.name}
-                {palettesInCollection.length > 1 && <ChevronDown className="w-2.5 h-2.5 text-white/50 shrink-0" strokeWidth={2} />}
-              </button>
+              hasMaterialChanges ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedMaterial) handleSelectMaterial(selectedMaterial);
+                  }}
+                  className="w-full py-1.5 flex justify-center active:scale-95 transition-all mb-1"
+                >
+                  <RotateCcw className="w-3 h-3 text-white/60" strokeWidth={2} />
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const idx = palettesInCollection.findIndex((p) => p.id === selectedMaterial);
+                    if (palettesInCollection.length > 1) {
+                      const next = palettesInCollection[(idx + 1) % palettesInCollection.length];
+                      handleSelectMaterial(next.id);
+                    }
+                  }}
+                  className="w-full py-1.5 text-[7px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
+                >
+                  {t(`palette.${palette.id}`) || palette.name}
+                  {palettesInCollection.length > 1 && <ChevronDown className="w-2.5 h-2.5 text-white/50 shrink-0" strokeWidth={2} />}
+                </button>
+              )
             )}
             <div
               className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
@@ -605,14 +637,26 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           <div
             className="absolute bottom-20 right-1.5 flex flex-col items-center max-w-[44px] opacity-100"
           >
-            <button
-              onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
-              className="active:scale-[0.97] transition-transform"
-            >
-              <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight block">
-                {paletteName}
-              </span>
-            </button>
+            {hasMaterialChanges ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (selectedMaterial) handleSelectMaterial(selectedMaterial);
+                }}
+                className="py-1.5 flex justify-center active:scale-95 transition-all mb-1"
+              >
+                <RotateCcw className="w-3 h-3 text-white/60" strokeWidth={2} />
+              </button>
+            ) : (
+              <button
+                onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
+                className="active:scale-[0.97] transition-transform"
+              >
+                <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight block">
+                  {paletteName}
+                </span>
+              </button>
+            )}
             <div
               className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
               style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}

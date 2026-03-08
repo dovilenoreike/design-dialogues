@@ -46,6 +46,7 @@ const App = () => (
                   <PageViewTracker />
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/moodboard" element={<Index />} />
                     <Route path="/thread" element={<Index />} />
                     <Route path="/design" element={<Index />} />
                     <Route path="/specs" element={<Index />} />

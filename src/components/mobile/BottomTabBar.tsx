@@ -1,4 +1,4 @@
-import { Palette, ClipboardList, Calculator, Calendar } from "lucide-react";
+import { Palette, ClipboardList, Calculator, Calendar, Layers2 } from "lucide-react";
 import { useDesign, BottomTab } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -8,6 +8,7 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
+  { id: "moodboard", icon: Layers2 },
   { id: "design", icon: Palette },
   { id: "specs", icon: ClipboardList },
   { id: "budget", icon: Calculator },

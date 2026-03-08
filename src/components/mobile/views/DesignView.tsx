@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RotateCcw, Plus } from "lucide-react";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
-import { getMaterialById } from "@/data/materials";
 import { collections } from "@/data/collections";
 import { palettesV2 } from "@/data/palettes/palettes-v2";
 import Stage from "../Stage";
@@ -29,6 +27,8 @@ const SLOT_TO_PALETTE_KEYS: Record<SlotKey, (room: string) => string[]> = {
   worktops: () => ["worktops"],
   additionalFronts: (room) => (room === "Kitchen" ? ["topCabinets"] : ["shelves"]),
   accents: (room) => (room === "Kitchen" ? ["shelves"] : []),
+  mainTiles: () => [],
+  additionalTiles: () => [],
 };
 
 // All palette slot keys that the slot picker can ever set — used for clear
@@ -52,13 +52,6 @@ function paletteKeyToSlot(paletteKey: string, room: string): SlotKey | null {
   }
 }
 
-const ROOM_TO_TYPE: Record<string, string> = {
-  Kitchen: "kitchen",
-  "Living Room": "livingRoom",
-  Bedroom: "bedroom",
-  Bathroom: "bathroom",
-};
-
 export default function DesignView() {
   const {
     design,
@@ -74,12 +67,15 @@ export default function DesignView() {
     cancelImageUpload,
     setMaterialOverrides,
     handleSelectMaterial,
+    materialOverrides,
   } = useDesign();
   const { t } = useLanguage();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   // Prevents the palette→squares sync from firing when the slot picker itself changed the palette
   const internalPaletteChange = useRef(false);
+  // Prevents the sync effect from overwriting null slots when the clear button is clicked
+  const internalSlotClear = useRef(false);
 
   const [slotSelections, setSlotSelections] = useState<SlotSelections>({
     floor: null,
@@ -87,6 +83,8 @@ export default function DesignView() {
     worktops: null,
     additionalFronts: null,
     accents: null,
+    mainTiles: null,
+    additionalTiles: null,
   });
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
 
@@ -132,37 +130,28 @@ export default function DesignView() {
     });
   }, [slotSelections, design.selectedCategory, design.selectedMaterial, setMaterialOverrides, handleSelectMaterial]);
 
-  const handleClearSlots = useCallback(() => {
-    setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null });
-    setMaterialOverrides((prev) => {
-      const next = { ...prev };
-      ALL_PICKER_PALETTE_KEYS.forEach((k) => { delete next[k]; });
-      return next;
-    });
-  }, [setMaterialOverrides]);
-
-  // Sync squares from palette when user picks a collection externally (carousel, etc.)
+  // Sync squares from palette + active overrides (covers bubble column changes, resets, and palette switches)
   useEffect(() => {
     if (internalPaletteChange.current) {
       internalPaletteChange.current = false;
       return;
     }
+    if (internalSlotClear.current) {
+      internalSlotClear.current = false;
+      return;
+    }
     const room = design.selectedCategory || "Kitchen";
-    const roomType = ROOM_TO_TYPE[room];
-    const pv2 = palettesV2.find((p) => p.id === design.selectedMaterial);
-    const slots = pv2?.selections[roomType as keyof typeof pv2.selections];
 
     const newSelections: SlotSelections = {
-      floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null,
+      floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null,
     };
-    if (slots) {
-      for (const [paletteKey, materialId] of Object.entries(slots)) {
-        const slotKey = paletteKeyToSlot(paletteKey, room);
-        if (slotKey) newSelections[slotKey] = materialId as string;
-      }
+    // Only reflect user-made selections (overrides) — tray is empty by default
+    for (const [paletteKey, materialId] of Object.entries(materialOverrides)) {
+      const slotKey = paletteKeyToSlot(paletteKey, room);
+      if (slotKey) newSelections[slotKey] = materialId;
     }
     setSlotSelections(newSelections);
-  }, [design.selectedMaterial, design.selectedCategory]);
+  }, [design.selectedMaterial, design.selectedCategory, materialOverrides]);
 
   const handleOpenSelector = useCallback((mode: ControlMode) => {
     setActiveMode(mode);
@@ -173,57 +162,10 @@ export default function DesignView() {
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [handleSelectCategory]);
 
-  const roomKey = design.selectedCategory || "Kitchen";
-  const hasUserImage = !!(design.uploadedImages[roomKey] || generation.generatedImages[roomKey]);
-
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-      {/* Material slot pickers — Technical Spec Tray */}
-      <div className="flex justify-center px-4 pt-4 pb-0">
-        <div className="bg-neutral-50 border border-neutral-200 rounded-2xl overflow-hidden">
-          {/* Slot squares row — no individual labels */}
-          <div className="flex items-center justify-center gap-3 px-3 pt-3 pb-2">
-            {(["floor", "mainFronts", "additionalFronts", "worktops", "accents"] as const).map((key) => {
-              const selectedId = slotSelections[key];
-              const material = selectedId ? getMaterialById(selectedId) : null;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setOpenSlot(key)}
-                  className="w-12 h-12 rounded-xl overflow-hidden bg-white border border-neutral-200 active:scale-95 transition-transform shrink-0 flex items-center justify-center"
-                >
-                  {material ? (
-                    <img
-                      src={material.image}
-                      alt={material.displayName.en}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Plus className="w-4 h-4 text-neutral-300" strokeWidth={1.5} />
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Reset — icon only */}
-            <button
-              onClick={handleClearSlots}
-              disabled={!Object.values(slotSelections).some(Boolean)}
-              className="w-6 h-12 flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 enabled:opacity-50 enabled:hover:opacity-90 ml-0.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-neutral-600" strokeWidth={1} />
-            </button>
-          </div>
-
-          {/* Single shared label row */}
-          <p className="text-center text-[8px] uppercase tracking-[0.25em] text-neutral-700 pb-3">
-            {[t("surface.floor"), t("surface.fronts"), t("surface.worktops"), t("surface.accents")].join(" · ")}
-          </p>
-        </div>
-      </div>
-
-      {/* Hero visualisation — 16px breathing room below tray */}
-      <div className="relative aspect-square w-full mt-4">
+      {/* Hero visualisation */}
+      <div className="relative w-full" style={{ aspectRatio: "4/5" }}>
         <Stage onOpenSelector={handleOpenSelector} />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
           <div className="flex items-center gap-0.5 px-1 py-1 rounded-full bg-neutral-900 shadow-lg">

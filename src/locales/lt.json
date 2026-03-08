@@ -44,6 +44,7 @@
     "hallwayAcc": "Prieškambario"
   },
   "tabs": {
+    "moodboard": "Derinys",
     "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
@@ -145,6 +146,9 @@
     "additionalFronts": "Fasadai II",
     "worktops": "Stalviršiai",
     "accents": "Akcentai",
+    "tiles": "Plytelės",
+    "mainTiles": "Plytelės I",
+    "additionalTiles": "Plytelės II",
     "bottomCabinets": "Apatinės spintelės",
     "topCabinets": "Viršutinės spintelės",
     "tallCabinets": "Aukštos spintelės",
@@ -469,7 +473,7 @@
   "mobile": {
     "stage": {
       "designingThe": "{room} konceptas",
-      "uploadPrompt": "Įkelkite nuotrauką, eskizą arba planą ir vizualizuokite savo pasirinkimus",
+      "uploadPrompt": "Vizualizuokite savo pasirinkimus",
       "visualized": "Vizualizuota {room}",
       "yourRoom": "Jūsų {room}",
       "generating": "Generuojama...",

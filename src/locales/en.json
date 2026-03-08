@@ -44,6 +44,7 @@
     "hallwayAcc": "Hallway"
   },
   "tabs": {
+    "moodboard": "Mood",
     "design": "Design",
     "specs": "Specs",
     "budget": "Budget",
@@ -145,6 +146,9 @@
     "worktops": "Worktops",
     "additionalFronts": "Addl. Fronts",
     "accents": "Accents",
+    "tiles": "Tiles",
+    "mainTiles": "Main Tiles",
+    "additionalTiles": "Addl. Tiles",
     "bottomCabinets": "Bottom Cabinets",
     "topCabinets": "Top Cabinets",
     "shelves": "Shelves",

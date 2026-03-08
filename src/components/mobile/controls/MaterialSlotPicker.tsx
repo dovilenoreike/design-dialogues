@@ -11,10 +11,10 @@ import { getMaterialsByCategory, getMaterialById } from "@/data/materials";
 import { collections } from "@/data/collections";
 import type { SurfaceCategory } from "@/data/materials/types";
 
-export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents";
+export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
 
-const SLOT_ORDER: SlotKey[] = ["floor", "mainFronts", "worktops", "additionalFronts", "accents"];
+const SLOT_ORDER: SlotKey[] = ["floor", "mainFronts", "worktops", "additionalFronts", "accents", "mainTiles", "additionalTiles"];
 
 const SLOT_CATEGORY: Record<SlotKey, SurfaceCategory> = {
   floor: "flooring",
@@ -22,6 +22,8 @@ const SLOT_CATEGORY: Record<SlotKey, SurfaceCategory> = {
   worktops: "worktops-and-backsplashes",
   additionalFronts: "cabinet-fronts",
   accents: "cabinet-fronts",
+  mainTiles: "tiles",
+  additionalTiles: "tiles",
 };
 
 function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections) {
@@ -80,7 +82,7 @@ export default function MaterialSlotPicker({
 
   return (
     <Sheet open={slot !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh] overflow-y-auto" aria-describedby={undefined}>
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh] overflow-y-auto sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
         <SheetHeader className="mb-4">
           <SheetTitle className="font-serif">
             {slot ? t(`surface.${slot}`) : ""}

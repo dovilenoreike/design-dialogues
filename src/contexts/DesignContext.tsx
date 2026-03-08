@@ -27,7 +27,7 @@ import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
-export type BottomTab = "design" | "specs" | "budget" | "plan";
+export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
 export type Tier = "Budget" | "Standard" | "Premium";
 
@@ -156,7 +156,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [excludedSlots, setExcludedSlots] = useState<Set<string>>(new Set());
 
   // Navigation state
-  const [activeTab, setActiveTabState] = useState<BottomTab>("design");
+  const [activeTab, setActiveTabState] = useState<BottomTab>("moodboard");
   const [activeMode, setActiveMode] = useState<ControlMode>("rooms");
   const [selectedTier, setSelectedTierState] = useState<Tier>("Standard");
 
