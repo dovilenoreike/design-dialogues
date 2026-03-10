@@ -1194,5 +1194,14 @@
         "risk1": "Visiškas išvalymas — kartais originalūs kaulai yra geresni nei tai, kas juos pakeičia."
       }
     }
+  },
+  "moodboard": {
+    "exploreCollections": "Kolekcijos",
+    "visualize": "Vizualizuoti",
+    "findMaterials": "Kur rasti?",
+    "pickFirst": "Pasirinkite pradinę medžiagą",
+    "pickRemaining": "Pasirinkite likusias medžiagas",
+    "ready": "Derinys paruoštas",
+    "clear": "Išvalyti"
   }
 }

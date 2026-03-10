@@ -26,8 +26,16 @@ const SLOT_CATEGORY: Record<SlotKey, SurfaceCategory> = {
   additionalTiles: "tiles",
 };
 
-function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections) {
+function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections, lockedCollectionId?: string) {
   const category = SLOT_CATEGORY[slotKey];
+
+  // If a collection is explicitly locked, only show materials from that collection's pool
+  if (lockedCollectionId) {
+    const col = collections.find((c) => c.id === lockedCollectionId);
+    const ids = new Set<string>(col?.pool[category] ?? []);
+    return getMaterialsByCategory(category).filter((m) => ids.has(m.id));
+  }
+
   const otherIds = SLOT_ORDER
     .filter((k) => k !== slotKey)
     .map((k) => selections[k])
@@ -44,7 +52,7 @@ function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections) {
   );
 
   if (compatibleCollections.length === 0) {
-    return getMaterialsByCategory(category);
+    return [];
   }
 
   const compatibleIds = new Set<string>(
@@ -59,6 +67,7 @@ interface MaterialSlotPickerProps {
   selections: SlotSelections;
   onSelect: (slotKey: SlotKey, materialId: string) => void;
   onClose: () => void;
+  lockedCollectionId?: string;
 }
 
 export default function MaterialSlotPicker({
@@ -66,13 +75,14 @@ export default function MaterialSlotPicker({
   selections,
   onSelect,
   onClose,
+  lockedCollectionId,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
 
   const available = useMemo(() => {
     if (!slot) return [];
-    return getAvailableMaterials(slot, selections);
-  }, [slot, selections]);
+    return getAvailableMaterials(slot, selections, lockedCollectionId);
+  }, [slot, selections, lockedCollectionId]);
 
   const handleSelect = (materialId: string) => {
     if (!slot) return;

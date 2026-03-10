@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
-import { RotateCcw, Plus } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ChevronRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { palettesV2 } from "@/data/palettes/palettes-v2";
 import { getMaterialById } from "@/data/materials";
 import { collections } from "@/data/collections";
-import { getDesignerWithFallback } from "@/data/designers/index";
+import { collectionThumbnails } from "@/data/collections/thumbnails";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
 import type { Material } from "@/data/materials/types";
 
@@ -48,8 +49,12 @@ function resolveMaterial(
     if (defaultId) return getMaterialById(defaultId) ?? null;
   }
 
-  if (slotKey === "mainTiles" || slotKey === "additionalTiles") {
+  if (slotKey === "mainTiles") {
     const id = collection?.pool["tiles"]?.[0];
+    if (id) return getMaterialById(id) ?? null;
+  }
+  if (slotKey === "additionalTiles") {
+    const id = collection?.pool["tiles"]?.[1] ?? collection?.pool["tiles"]?.[0];
     if (id) return getMaterialById(id) ?? null;
   }
 
@@ -126,11 +131,12 @@ const ANNOTATION_DEFS: AnnotationDef[] = [
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { design, materialOverrides, setMaterialOverrides } = useDesign();
+  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [slotSelections, setSlotSelections] = useState<SlotSelections>(() => {
     const initial: SlotSelections = {
       floor: null, mainFronts: null, worktops: null,
@@ -139,6 +145,15 @@ export default function MoodboardView() {
     for (const [paletteKey, matId] of Object.entries(materialOverrides)) {
       const slotKey = PALETTE_KEY_TO_SLOT[paletteKey];
       if (slotKey) initial[slotKey] = matId;
+    }
+    // On remount after collection-picker flow: fill remaining slots from palette defaults
+    const activePv2 = palettesV2.find((p) => p.id === design.selectedMaterial);
+    if (activePv2) {
+      const activeCol = collections.find((c) => c.id === activePv2.collectionId);
+      for (const slot of Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]) {
+        if (initial[slot]) continue;
+        initial[slot] = resolveMaterial(slot, {}, activePv2, activeCol)?.id ?? null;
+      }
     }
     return initial;
   });
@@ -151,11 +166,6 @@ export default function MoodboardView() {
     () => (pv2 ? collections.find((c) => c.id === pv2.collectionId) : undefined),
     [pv2]
   );
-  const designer = useMemo(
-    () => (pv2 ? getDesignerWithFallback(pv2.designer, "") : null),
-    [pv2]
-  );
-
   // Pre-compute all materials in one memo to avoid hook-in-loop issues
   const materials = useMemo(
     () => PIECES.map((p) => resolveMaterial(p.slot, materialOverrides, pv2, collection)),
@@ -164,25 +174,92 @@ export default function MoodboardView() {
 
   const handleSlotSelect = useCallback(
     (slotKey: SlotKey, materialId: string) => {
-      setSlotSelections((prev) => ({ ...prev, [slotKey]: materialId }));
+      const newSelections = { ...slotSelections, [slotKey]: materialId };
+      setSlotSelections(newSelections);
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       if (pk) setMaterialOverrides((prev) => ({ ...prev, [pk]: materialId }));
+
+      // Auto-select palette when picks narrow to exactly one compatible collection
+      const selectedIds = Object.values(newSelections).filter((id): id is string => id !== null);
+      const compatible = collections.filter((col) =>
+        selectedIds.every((id) => Object.values(col.pool).flat().includes(id))
+      );
+      if (compatible.length === 1) {
+        const firstPalette = palettesV2.find((p) => p.collectionId === compatible[0].id);
+        if (firstPalette) setActivePalette(firstPalette.id);
+      } else if (pv2 && !compatible.some((col) => col.id === pv2.collectionId)) {
+        setActivePalette(null); // current palette no longer compatible
+      }
     },
-    [setMaterialOverrides]
+    [slotSelections, pv2, setMaterialOverrides, setActivePalette]
   );
 
+  const allSlotsFilled = Object.values(slotSelections).every(Boolean);
+  const filledCount = Object.values(slotSelections).filter(Boolean).length;
+
+  const handleCollectionSelect = useCallback((collectionId: string) => {
+    const firstPalette = palettesV2.find((p) => p.collectionId === collectionId);
+    if (firstPalette) {
+      handleSelectMaterial(firstPalette.id);
+      const col = collections.find((c) => c.id === collectionId);
+      const newSelections = {} as SlotSelections;
+      for (const slot of Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]) {
+        newSelections[slot] = resolveMaterial(slot, {}, firstPalette, col)?.id ?? null;
+      }
+      setSlotSelections(newSelections);
+    }
+    setCollectionsOpen(false);
+  }, [handleSelectMaterial]);
+
   const handleClearSlots = useCallback(() => {
+    handleSelectMaterial(null);
     setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null });
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       Object.values(SLOT_TO_PALETTE_KEY).forEach((k) => { if (k) delete next[k]; });
       return next;
     });
-  }, [setMaterialOverrides]);
+  }, [handleSelectMaterial, setMaterialOverrides]);
+
+  const handleSlotClear = useCallback((slotKey: SlotKey) => {
+    const newSelections = { ...slotSelections, [slotKey]: null };
+    setSlotSelections(newSelections);
+    const pk = SLOT_TO_PALETTE_KEY[slotKey];
+    if (pk) setMaterialOverrides((prev) => { const next = { ...prev }; delete next[pk]; return next; });
+
+    // Re-check palette compatibility with remaining picks
+    const remainingIds = Object.values(newSelections).filter((id): id is string => id !== null);
+    if (pv2 && remainingIds.length > 0) {
+      const stillCompatible = remainingIds.every((id) =>
+        Object.values(pv2.collectionId ? collections.find((c) => c.id === pv2.collectionId)?.pool ?? {} : {}).flat().includes(id)
+      );
+      if (!stillCompatible) setActivePalette(null);
+    } else if (remainingIds.length === 0) {
+      setActivePalette(null);
+    }
+  }, [slotSelections, pv2, setMaterialOverrides, setActivePalette]);
 
   return (
     <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
       <div className="px-4 pt-4 pb-6">
+
+        {/* ── Contextual instruction ── */}
+        <div className="mb-3 flex items-center justify-center relative">
+          <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center">
+            {filledCount === 0
+              ? t("moodboard.pickFirst")
+              : allSlotsFilled
+                ? t("moodboard.ready")
+                : t("moodboard.pickRemaining")}
+          </p>
+          {filledCount > 0 && (
+            <button
+              onClick={handleClearSlots}
+              className="absolute right-0 flex items-center justify-center opacity-35 hover:opacity-60 transition-opacity active:scale-95">
+              <RotateCcw className="w-3.5 h-3.5 text-neutral-600" strokeWidth={1} />
+            </button>
+          )}
+        </div>
 
         {/* ── Architectural flatlay canvas ── */}
         <div
@@ -193,9 +270,8 @@ export default function MoodboardView() {
           {PIECES.map((piece, i) => {
             const mat = slotSelections[piece.slot] ? materials[i] : null;
             return (
-              <button
+              <div
                 key={i}
-                onClick={() => setOpenSlot(piece.slot)}
                 className="absolute overflow-hidden active:scale-[0.97] transition-transform"
                 style={{
                   top: piece.top,
@@ -208,19 +284,38 @@ export default function MoodboardView() {
                   boxShadow: piece.shadow,
                 }}
               >
-                {mat?.image ? (
-                  <img
-                    src={mat.image}
-                    alt={mat.displayName[lang] ?? mat.displayName.en}
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-neutral-300" strokeWidth={1.5} />
-                  </div>
+                <button
+                  onClick={() => setOpenSlot(piece.slot)}
+                  className="w-full h-full"
+                  aria-label={`Pick ${piece.slot}`}
+                >
+                  {mat?.image ? (
+                    <img
+                      src={mat.image}
+                      alt={mat.displayName[lang] ?? mat.displayName.en}
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                      <Plus
+                        className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  )}
+                </button>
+                {mat && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleSlotClear(piece.slot); }}
+                    className="absolute top-1 right-1 flex items-center justify-center rounded-full"
+                    style={{ zIndex: 1 }}
+                    aria-label={`Clear ${piece.slot}`}
+                  >
+                    <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.7 }} />
+                  </button>
                 )}
-              </button>
+              </div>
             );
           })}
 
@@ -263,28 +358,67 @@ export default function MoodboardView() {
           </svg>
         </div>
 
-        {/* ── Palette name + designer + reset ── */}
-        <div className="mt-4 flex items-start justify-between">
-          {pv2 ? (
-            <div className="space-y-0.5">
-              <h3 className="font-serif text-[13px] text-neutral-900 leading-tight">
-                {t(`palette.${pv2.id}`)}
-              </h3>
-              {designer && (
-                <p className="text-[8px] uppercase tracking-widest text-neutral-500">
-                  {t("thread.curatedBy")}: {designer.name}
-                </p>
-              )}
-            </div>
-          ) : <div />}
+        {/* ── Hairline separator ── */}
+        <div className="mt-5 border-t border-neutral-100" />
+
+        {/* ── Quiet architectural toolbar ── */}
+        <div className="mt-3 flex items-center gap-1.5">
           <button
-            onClick={handleClearSlots}
-            disabled={!Object.values(slotSelections).some(Boolean)}
-            className="w-6 h-6 flex items-center justify-center active:scale-95 transition-all disabled:opacity-20 enabled:opacity-50 enabled:hover:opacity-90"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-neutral-600" strokeWidth={1} />
+            onClick={() => setCollectionsOpen(true)}
+            className="flex-1 h-10 bg-transparent text-neutral-500 text-[9px] uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-0.5 hover:text-neutral-900 transition-colors active:scale-[0.98]">
+            {t("moodboard.exploreCollections")}
+            <ChevronRight className="w-3 h-3 opacity-50" strokeWidth={1.5} />
+          </button>
+
+          <button
+            onClick={() => setActiveTab("design")}
+            disabled={!allSlotsFilled}
+            className="flex-1 h-10 bg-transparent text-neutral-500 text-[9px] uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-0.5 hover:text-neutral-900 transition-colors active:scale-[0.98] disabled:opacity-25">
+            {t("moodboard.visualize")}
+            <ChevronRight className="w-3 h-3 opacity-50" strokeWidth={1.5} />
+          </button>
+
+          <button
+            onClick={() => setActiveTab("specs")}
+            disabled={!allSlotsFilled}
+            className="flex-1 h-10 bg-transparent text-neutral-500 text-[9px] uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-0.5 hover:text-neutral-900 transition-colors active:scale-[0.98] disabled:opacity-25">
+            {t("moodboard.findMaterials")}
+            <ChevronRight className="w-3 h-3 opacity-50" strokeWidth={1.5} />
           </button>
         </div>
+
+        {/* ── Collections Sheet ── */}
+        <Sheet open={collectionsOpen} onOpenChange={setCollectionsOpen}>
+          <SheetContent side="bottom" className="rounded-t-2xl pb-safe" aria-describedby={undefined}>
+            <SheetHeader className="mb-4">
+              <SheetTitle className="font-serif">{t("moodboard.exploreCollections")}</SheetTitle>
+            </SheetHeader>
+            <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide pb-4">
+              {collections.map((col) => {
+                const isSelected = pv2?.collectionId === col.id;
+                const thumbnail = collectionThumbnails[col.id];
+                return (
+                  <button key={col.id} onClick={() => handleCollectionSelect(col.id)}
+                    className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+                    <div className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 ${
+                      isSelected ? "border-neutral-900" : "border-transparent"
+                    }`}>
+                      {thumbnail && <img src={thumbnail} alt={col.name} className="w-full h-full object-cover" />}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[8px] uppercase tracking-[0.15em] text-neutral-500 text-center max-w-[64px] truncate">
+                      {col.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <MaterialSlotPicker
@@ -292,6 +426,7 @@ export default function MoodboardView() {
         selections={slotSelections}
         onSelect={handleSlotSelect}
         onClose={() => setOpenSlot(null)}
+        lockedCollectionId={collection?.id}
       />
     </div>
   );

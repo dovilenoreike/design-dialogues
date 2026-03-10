@@ -72,6 +72,7 @@ interface DesignContextValue {
   clearUploadedImage: () => void;
   handleSelectCategory: (category: string | null) => void;
   handleSelectMaterial: (material: string | null) => void;
+  setActivePalette: (paletteId: string | null) => void;
   handleSelectStyle: (style: string | null) => void;
   handleFreestyleChange: (description: string) => void;
 
@@ -846,6 +847,10 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }
   }, []);
 
+  const setActivePalette = useCallback((paletteId: string | null) => {
+    setDesign((prev) => ({ ...prev, selectedMaterial: paletteId }));
+  }, []);
+
   // Style selection - with two-table approach, switching styles may restore cached generations
   const handleSelectStyle = useCallback((style: string | null) => {
     // With two-table caching, we don't need confirmation dialogs for style switching
@@ -1443,6 +1448,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     clearUploadedImage,
     handleSelectCategory,
     handleSelectMaterial,
+    setActivePalette,
     handleSelectStyle,
     handleFreestyleChange,
     handleGenerate,

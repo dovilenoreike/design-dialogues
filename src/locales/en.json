@@ -1193,5 +1193,14 @@
         "risk1": "Full strip-outs — sometimes original bones are better than what replaces them."
       }
     }
+  },
+  "moodboard": {
+    "exploreCollections": "Explore Collections",
+    "visualize": "Visualize",
+    "findMaterials": "Find Materials",
+    "pickFirst": "Pick your first material",
+    "pickRemaining": "Pick remaining materials",
+    "ready": "Combination ready",
+    "clear": "Clear"
   }
 }
