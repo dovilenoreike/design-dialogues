@@ -1,4 +1,5 @@
 import type { RoomType } from "@/data/rooms/surfaces";
+import type { ArchetypeId } from "@/data/collections/types";
 
 // Per-room slot selections: slot key → material ID
 export type RoomSelections = Record<string, string>;
@@ -11,5 +12,18 @@ export interface PaletteV2 {
   promptTweak: string;
   // Keyed by RoomType, then by slot key within that room
   selections: Partial<Record<RoomType, RoomSelections>>;
+  status: "available" | "coming-soon";
+}
+
+// Per-room slot → archetype ID (replaces material ID in old system)
+export type ArchetypeRoomSelections = Record<string, ArchetypeId>;
+
+export interface ArchetypePalette {
+  id: string;
+  name: string;
+  collectionId: string;   // references a CollectionV2
+  designer: string;
+  promptTweak: string;
+  selections: Partial<Record<RoomType, ArchetypeRoomSelections>>;
   status: "available" | "coming-soon";
 }

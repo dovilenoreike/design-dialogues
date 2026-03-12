@@ -570,11 +570,11 @@ export default function BudgetView() {
                     <div key={index} className="flex justify-between items-center py-1">
                       <span className="text-sm text-neutral-600 flex items-center">
                         {item.label}
-                        <Info
+                        {/* <Info
                           size={11}
                           className="ml-1 text-neutral-400 cursor-pointer hover:text-neutral-900 transition-colors"
                           onClick={() => setInsightCategory(item.insightKey)}
-                        />
+                        /> */}
                       </span>
                       <span className="font-serif text-sm tabular-nums text-neutral-900">
                         €{item.lowValue.toLocaleString('lt-LT')} – €{item.highValue.toLocaleString('lt-LT')}

@@ -4,12 +4,13 @@ import { captureError } from "@/lib/sentry";
 export async function joinFeatureWaitlist(
   featureId: string,
   email: string,
-  name?: string
+  name?: string,
+  preferences?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke(
       "feature-waitlist-signup",
-      { body: { featureId, email, name } }
+      { body: { featureId, email, name, preferences } }
     );
 
     if (error) {

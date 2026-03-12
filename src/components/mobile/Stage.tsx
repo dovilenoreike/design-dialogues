@@ -10,6 +10,7 @@ import type { UploadType } from "@/types/design-state";
 import { getVisualization } from "@/data/visualisations";
 import { getPaletteById, getRoomMaterialBubbles, getSlotAlternatives } from "@/data/palettes";
 import { getMaterialById } from "@/data/materials";
+import { getArchetypeById } from "@/data/archetypes";
 import { getStyleById, styles } from "@/data/styles";
 import { rooms } from "@/data/rooms";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -528,8 +529,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             >
               {bubbles.map((bubble) => {
                 const isExcluded = excludedSlots.has(bubble.slotKey);
-                const overriddenImage = materialOverrides[bubble.slotKey]
-                  ? getMaterialById(materialOverrides[bubble.slotKey])?.image || bubble.image
+                const overrideId = materialOverrides[bubble.slotKey];
+                const overriddenImage = overrideId
+                  ? (getMaterialById(overrideId)?.image ?? getArchetypeById(overrideId)?.image ?? bubble.image)
                   : bubble.image;
                 const isActive = activeSlot === bubble.slotKey;
                 return (
@@ -663,8 +665,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
             >
               {bubbles.map((bubble) => {
                 const isExcluded = excludedSlots.has(bubble.slotKey);
-                const overriddenImage = materialOverrides[bubble.slotKey]
-                  ? getMaterialById(materialOverrides[bubble.slotKey])?.image || bubble.image
+                const overrideId = materialOverrides[bubble.slotKey];
+                const overriddenImage = overrideId
+                  ? (getMaterialById(overrideId)?.image ?? getArchetypeById(overrideId)?.image ?? bubble.image)
                   : bubble.image;
                 const isActive = activeSlot === bubble.slotKey;
                 return (

@@ -7,9 +7,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getMaterialsByCategory, getMaterialById } from "@/data/materials";
-import { collections } from "@/data/collections";
+import { getArchetypesByCategory } from "@/data/archetypes";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 import type { SurfaceCategory } from "@/data/materials/types";
+import type { MaterialArchetype } from "@/data/archetypes/types";
 
 export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
@@ -21,19 +22,19 @@ const SLOT_CATEGORY: Record<SlotKey, SurfaceCategory> = {
   mainFronts: "cabinet-fronts",
   worktops: "worktops-and-backsplashes",
   additionalFronts: "cabinet-fronts",
-  accents: "cabinet-fronts",
+  accents: "accents",
   mainTiles: "tiles",
   additionalTiles: "tiles",
 };
 
-function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections, lockedCollectionId?: string) {
+function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections, lockedCollectionId?: string): MaterialArchetype[] {
   const category = SLOT_CATEGORY[slotKey];
 
-  // If a collection is explicitly locked, only show materials from that collection's pool
+  // If a collection is explicitly locked, only show archetypes from that collection's pool
   if (lockedCollectionId) {
-    const col = collections.find((c) => c.id === lockedCollectionId);
+    const col = collectionsV2.find((c) => c.id === lockedCollectionId);
     const ids = new Set<string>(col?.pool[category] ?? []);
-    return getMaterialsByCategory(category).filter((m) => ids.has(m.id));
+    return getArchetypesByCategory(category).filter((m) => ids.has(m.id));
   }
 
   const otherIds = SLOT_ORDER
@@ -42,10 +43,13 @@ function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections, loc
     .filter((id): id is string => id !== null);
 
   if (otherIds.length === 0) {
-    return getMaterialsByCategory(category);
+    const collectionIds = new Set(
+      collectionsV2.flatMap((col) => col.pool[category] ?? [])
+    );
+    return getArchetypesByCategory(category).filter((m) => collectionIds.has(m.id));
   }
 
-  const compatibleCollections = collections.filter((col) =>
+  const compatibleCollections = collectionsV2.filter((col) =>
     otherIds.every((id) =>
       Object.values(col.pool).flat().includes(id)
     )
@@ -59,7 +63,7 @@ function getAvailableMaterials(slotKey: SlotKey, selections: SlotSelections, loc
     compatibleCollections.flatMap((col) => col.pool[category] ?? [])
   );
 
-  return getMaterialsByCategory(category).filter((m) => compatibleIds.has(m.id));
+  return getArchetypesByCategory(category).filter((m) => compatibleIds.has(m.id));
 }
 
 interface MaterialSlotPickerProps {

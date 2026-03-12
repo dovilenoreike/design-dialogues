@@ -953,7 +953,11 @@
     "submitButton": "Pranešti, kai bus paruošta",
     "successMessage": "Ačiū! Mes jums pranešime el. paštu, kai {paletteName} bus paruošta.",
     "errorMessage": "Nepavyko išsaugoti jūsų el. pašto. Bandykite dar kartą.",
-    "notificationToast": "Mes jums pranešime, kai bus paruošta!"
+    "notificationToast": "Mes jums pranešime, kai bus paruošta!",
+    "designSheetDescription": "Susisieksime, kai vizualizatorius bus paruoštas.",
+    "specsSheetDescription": "Čia rasite medžiagų specifikacijas ir kur jas įsigyti.",
+    "specsSheetModalDescription": "Susisieksime, kai specifikacijos bus paruoštos.",
+    "designSuccessMessage": "Ačiū! Informuosime jus."
   },
   "insights": {
     "lifespan": "Tarnavimo laikas",

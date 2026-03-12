@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { collections } from "@/data/collections";
-import { collectionThumbnails } from "@/data/collections/thumbnails";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { collectionsV2 } from "@/data/collections/collections-v2";
+import { palettesV2 } from "@/data/palettes/palettes-v3";
 import {
   Dialog,
   DialogContent,
@@ -39,10 +38,9 @@ export default function PaletteCarousel() {
         }`}
       >
         <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
-          {collections.map((collection) => {
+          {collectionsV2.map((collection) => {
             const isSelected = collection.id === activeCollectionId;
             const firstPaletteId = palettesV2.find((p) => p.collectionId === collection.id)?.id;
-            const thumbnail = collectionThumbnails[collection.id];
 
             return (
               <button
@@ -55,9 +53,9 @@ export default function PaletteCarousel() {
                     isSelected ? "border-foreground" : "border-transparent"
                   }`}
                 >
-                  {thumbnail && (
+                  {collection.thumbnail && (
                     <img
-                      src={thumbnail}
+                      src={collection.thumbnail}
                       alt={collection.name}
                       className="w-full h-full object-cover"
                     />

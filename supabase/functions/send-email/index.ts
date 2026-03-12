@@ -103,6 +103,7 @@ serve(async (req) => {
           <p><strong>Feature:</strong> ${data.featureId}</p>
           <p><strong>Email:</strong> ${data.email}</p>
           <p><strong>Name:</strong> ${data.name}</p>
+          ${data.preferences ? `<p><strong>Selections:</strong> ${String(data.preferences).replace(/\|/g, "<br>")}</p>` : ""}
         `;
         break;
 
@@ -117,7 +118,7 @@ serve(async (req) => {
     console.log(`Sending ${type} email to: ${toEmail}`);
 
     const { error } = await resend.emails.send({
-      from: "Dizaino Dialogai <labas@dizainodialogai.lt>", // Update to your verified domain
+      from: "Design Dialogues <onboarding@resend.dev>",
       to: [toEmail],
       subject,
       html,

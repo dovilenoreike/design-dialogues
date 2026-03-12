@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
-import { collections } from "@/data/collections";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { collectionsV2 } from "@/data/collections/collections-v2";
+import { palettesV2 } from "@/data/palettes/palettes-v3";
 import Stage from "../Stage";
 import ControlCenter from "../ControlCenter";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
@@ -14,6 +14,7 @@ import HomeRoadmapSection from "../home/HomeRoadmapSection";
 import { RoomSwitchDialog } from "../dialogs/RoomSwitchDialog";
 import { StyleSwitchDialog } from "../dialogs/StyleSwitchDialog";
 import { UploadDialog } from "../dialogs/UploadDialog";
+import { DesignNotificationSheet } from "@/components/DesignNotificationSheet";
 
 // Maps each slot picker key to the palette slot keys it controls, per room
 const SLOT_TO_PALETTE_KEYS: Record<SlotKey, (room: string) => string[]> = {
@@ -87,6 +88,7 @@ export default function DesignView() {
     additionalTiles: null,
   });
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
+  const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
 
   const handleSlotSelect = useCallback((slotKey: SlotKey, materialId: string) => {
     const newSelections = { ...slotSelections, [slotKey]: materialId };
@@ -103,7 +105,7 @@ export default function DesignView() {
 
     // Find collections compatible with every filled slot
     const filledIds = Object.values(newSelections).filter((id): id is string => id !== null);
-    const compatibleCollections = collections.filter((col) =>
+    const compatibleCollections = collectionsV2.filter((col) =>
       filledIds.every((id) => Object.values(col.pool).flat().includes(id))
     );
 
@@ -163,7 +165,22 @@ export default function DesignView() {
   }, [handleSelectCategory]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
+
+      {/* Coming soon overlay */}
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
+        <p className="text-lg font-serif mb-1">{t("comingSoon.screenTitle")}</p>
+        <p className="text-xs text-muted-foreground text-center max-w-[200px] leading-relaxed">
+          Čia galėsite vaizduoti savo erdves su pasirinktomis medžiagomis.
+        </p>
+        <button
+          onClick={() => setNotificationSheetOpen(true)}
+          className="mt-4 px-6 py-2.5 bg-foreground text-background rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation"
+        >
+          {t("comingSoon.beNotifiedButton")}
+        </button>
+      </div>
+
       {/* Hero visualisation */}
       <div className="relative w-full" style={{ aspectRatio: "4/5" }}>
         <Stage onOpenSelector={handleOpenSelector} />
@@ -243,6 +260,11 @@ export default function DesignView() {
         open={generation.showUploadDialog}
         onConfirm={confirmImageUpload}
         onCancel={cancelImageUpload}
+      />
+
+      <DesignNotificationSheet
+        isOpen={notificationSheetOpen}
+        onClose={() => setNotificationSheetOpen(false)}
       />
 
       {/* Material slot picker sheet */}

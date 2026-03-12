@@ -1,14 +1,34 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { RotateCcw, Plus, Check, X, ChevronRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
-import { getMaterialById } from "@/data/materials";
-import { collections } from "@/data/collections";
-import { collectionThumbnails } from "@/data/collections/thumbnails";
+import { palettesV2 } from "@/data/palettes/palettes-v3";
+import { getArchetypeById } from "@/data/archetypes";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
-import type { Material } from "@/data/materials/types";
+import type { MaterialArchetype } from "@/data/archetypes/types";
+
+// ─── Collection swatch preview ────────────────────────────────────────────
+// [floor, worktops] [front1, front2] [tile1, tile2] — 2-col × 3-row grid
+const COLLECTION_SWATCH_SPEC: Array<{ category: string; count: 1 | 2 }> = [
+  { category: "flooring",                    count: 1 },
+  { category: "worktops-and-backsplashes",   count: 1 },
+  { category: "cabinet-fronts",              count: 2 },
+  { category: "tiles",                       count: 2 },
+];
+
+function getCollectionSwatches(pool: Record<string, string[]>): (string | null)[] {
+  const images: (string | null)[] = [];
+  for (const { category, count } of COLLECTION_SWATCH_SPEC) {
+    const ids = pool[category] ?? [];
+    for (let i = 0; i < count; i++) {
+      const img = ids[i] ? (getArchetypeById(ids[i])?.image ?? null) : null;
+      images.push(img);
+    }
+  }
+  return images; // always 6 entries: [floor, worktops, front1, front2, tile1, tile2]
+}
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
 const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
@@ -16,7 +36,7 @@ const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
   mainFronts: "bottomCabinets",
   additionalFronts: "topCabinets",
   worktops: "worktops",
-  accents: "shelves",
+  accents: "accents",
   mainTiles: "tiles",
   additionalTiles: "additionalTiles",
 };
@@ -27,35 +47,35 @@ const PALETTE_KEY_TO_SLOT: Record<string, SlotKey> = {
   bottomCabinets: "mainFronts",
   topCabinets: "additionalFronts",
   worktops: "worktops",
-  shelves: "accents",
+  accents: "accents",
   tiles: "mainTiles",
   additionalTiles: "additionalTiles",
 };
 
-function resolveMaterial(
+function resolveArchetype(
   slotKey: SlotKey,
   overrides: Record<string, string>,
   pv2: (typeof palettesV2)[number] | undefined,
-  collection: (typeof collections)[number] | undefined
-): Material | null {
+  collection: (typeof collectionsV2)[number] | undefined
+): MaterialArchetype | null {
   const paletteKey = SLOT_TO_PALETTE_KEY[slotKey];
   if (!paletteKey) return null;
 
   const overrideId = overrides[paletteKey];
-  if (overrideId) return getMaterialById(overrideId) ?? null;
+  if (overrideId) return getArchetypeById(overrideId) ?? null;
 
   if (pv2?.selections?.kitchen) {
     const defaultId = pv2.selections.kitchen[paletteKey];
-    if (defaultId) return getMaterialById(defaultId) ?? null;
+    if (defaultId) return getArchetypeById(defaultId) ?? null;
   }
 
   if (slotKey === "mainTiles") {
     const id = collection?.pool["tiles"]?.[0];
-    if (id) return getMaterialById(id) ?? null;
+    if (id) return getArchetypeById(id) ?? null;
   }
   if (slotKey === "additionalTiles") {
     const id = collection?.pool["tiles"]?.[1] ?? collection?.pool["tiles"]?.[0];
-    if (id) return getMaterialById(id) ?? null;
+    if (id) return getArchetypeById(id) ?? null;
   }
 
   return null;
@@ -138,6 +158,13 @@ export default function MoodboardView() {
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [slotSelections, setSlotSelections] = useState<SlotSelections>(() => {
+    // Restore from localStorage if available
+    try {
+      const saved = localStorage.getItem("moodboard-slot-selections");
+      if (saved) return JSON.parse(saved) as SlotSelections;
+    } catch {}
+
+    // Fallback: derive from current DesignContext state
     const initial: SlotSelections = {
       floor: null, mainFronts: null, worktops: null,
       additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null,
@@ -146,29 +173,74 @@ export default function MoodboardView() {
       const slotKey = PALETTE_KEY_TO_SLOT[paletteKey];
       if (slotKey) initial[slotKey] = matId;
     }
-    // On remount after collection-picker flow: fill remaining slots from palette defaults
     const activePv2 = palettesV2.find((p) => p.id === design.selectedMaterial);
     if (activePv2) {
-      const activeCol = collections.find((c) => c.id === activePv2.collectionId);
+      const activeCol = collectionsV2.find((c) => c.id === activePv2.collectionId);
       for (const slot of Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]) {
         if (initial[slot]) continue;
-        initial[slot] = resolveMaterial(slot, {}, activePv2, activeCol)?.id ?? null;
+        initial[slot] = resolveArchetype(slot, {}, activePv2, activeCol)?.id ?? null;
       }
     }
+    // Default floor for brand-new users with no prior state
+    if (!initial.floor) initial.floor = "01_light_natural_wood";
     return initial;
   });
+
+  // Persist slot selections to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem("moodboard-slot-selections", JSON.stringify(slotSelections));
+  }, [slotSelections]);
+
+  // On mount: sync materialOverrides from restored localStorage data
+  useEffect(() => {
+    setMaterialOverrides((prev) => {
+      const next = { ...prev };
+      (Object.keys(slotSelections) as SlotKey[]).forEach((k) => {
+        const pk = SLOT_TO_PALETTE_KEY[k];
+        if (!pk) return;
+        if (slotSelections[k]) next[pk] = slotSelections[k]!;
+        else delete next[pk];
+      });
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally runs once on mount only
+
+  // Which collection is uniquely identified by the current slot selections
+  const selectedCollectionId = useMemo(() => {
+    const ids = Object.values(slotSelections).filter((id): id is string => id !== null);
+    if (!ids.length) return undefined;
+    const compatible = collectionsV2.filter((col) =>
+      ids.every((id) => Object.values(col.pool).flat().includes(id))
+    );
+    return compatible.length === 1 ? compatible[0].id : undefined;
+  }, [slotSelections]);
 
   const pv2 = useMemo(
     () => palettesV2.find((p) => p.id === design.selectedMaterial),
     [design.selectedMaterial]
   );
   const collection = useMemo(
-    () => (pv2 ? collections.find((c) => c.id === pv2.collectionId) : undefined),
+    () => (pv2 ? collectionsV2.find((c) => c.id === pv2.collectionId) : undefined),
     [pv2]
   );
+  // When changing a filled slot, lock only if the OTHER filled slots uniquely identify one collection
+  const pickerLockedCollectionId = useMemo(() => {
+    if (!openSlot) return undefined;
+    const otherIds = (Object.keys(slotSelections) as SlotKey[])
+      .filter((k) => k !== openSlot)
+      .map((k) => slotSelections[k])
+      .filter((id): id is string => id !== null);
+    if (otherIds.length === 0) return undefined;
+    const compatible = collectionsV2.filter((col) =>
+      otherIds.every((id) => Object.values(col.pool).flat().includes(id))
+    );
+    return compatible.length === 1 ? compatible[0].id : undefined;
+  }, [openSlot, slotSelections]);
+
   // Pre-compute all materials in one memo to avoid hook-in-loop issues
   const materials = useMemo(
-    () => PIECES.map((p) => resolveMaterial(p.slot, materialOverrides, pv2, collection)),
+    () => PIECES.map((p) => resolveArchetype(p.slot, materialOverrides, pv2, collection)),
     [materialOverrides, pv2, collection]
   );
 
@@ -179,16 +251,16 @@ export default function MoodboardView() {
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       if (pk) setMaterialOverrides((prev) => ({ ...prev, [pk]: materialId }));
 
-      // Auto-select palette when picks narrow to exactly one compatible collection
+      // Lock/unlock collection based on how many collections match all current picks
       const selectedIds = Object.values(newSelections).filter((id): id is string => id !== null);
-      const compatible = collections.filter((col) =>
+      const compatible = collectionsV2.filter((col) =>
         selectedIds.every((id) => Object.values(col.pool).flat().includes(id))
       );
       if (compatible.length === 1) {
         const firstPalette = palettesV2.find((p) => p.collectionId === compatible[0].id);
         if (firstPalette) setActivePalette(firstPalette.id);
-      } else if (pv2 && !compatible.some((col) => col.id === pv2.collectionId)) {
-        setActivePalette(null); // current palette no longer compatible
+      } else {
+        setActivePalette(null); // ambiguous or impossible — release lock
       }
     },
     [slotSelections, pv2, setMaterialOverrides, setActivePalette]
@@ -198,18 +270,40 @@ export default function MoodboardView() {
   const filledCount = Object.values(slotSelections).filter(Boolean).length;
 
   const handleCollectionSelect = useCallback((collectionId: string) => {
-    const firstPalette = palettesV2.find((p) => p.collectionId === collectionId);
-    if (firstPalette) {
-      handleSelectMaterial(firstPalette.id);
-      const col = collections.find((c) => c.id === collectionId);
-      const newSelections = {} as SlotSelections;
-      for (const slot of Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]) {
-        newSelections[slot] = resolveMaterial(slot, {}, firstPalette, col)?.id ?? null;
-      }
-      setSlotSelections(newSelections);
-    }
+    const col = collectionsV2.find((c) => c.id === collectionId);
+    if (!col) { setCollectionsOpen(false); return; }
+
+    // Derive slot selections directly from pool (first item per category)
+    const pool = col.pool as Record<string, string[]>;
+    const newSelections: SlotSelections = {
+      floor:             pool["flooring"]?.[0]                      ?? null,
+      mainFronts:        pool["cabinet-fronts"]?.[0]                ?? null,
+      additionalFronts:  pool["cabinet-fronts"]?.[1] ?? pool["cabinet-fronts"]?.[0] ?? null,
+      worktops:          pool["worktops-and-backsplashes"]?.[0]     ?? null,
+      accents:           pool["accents"]?.[0]                       ?? null,
+      mainTiles:         pool["tiles"]?.[0]                         ?? null,
+      additionalTiles:   pool["tiles"]?.[1] ?? pool["tiles"]?.[0]   ?? null,
+    };
+    setSlotSelections(newSelections);
+
+    // Sync overrides so Stage renders the picked archetypes
+    setMaterialOverrides((prev) => {
+      const next = { ...prev };
+      (Object.keys(newSelections) as SlotKey[]).forEach((k) => {
+        const pk = SLOT_TO_PALETTE_KEY[k];
+        if (!pk) return;
+        if (newSelections[k]) next[pk] = newSelections[k]!;
+        else delete next[pk];
+      });
+      return next;
+    });
+
+    // Still set the active palette when one matches, so palette carousel stays in sync
+    const matchingPalette = palettesV2.find((p) => p.collectionId === collectionId);
+    if (matchingPalette) handleSelectMaterial(matchingPalette.id);
+
     setCollectionsOpen(false);
-  }, [handleSelectMaterial]);
+  }, [handleSelectMaterial, setMaterialOverrides]);
 
   const handleClearSlots = useCallback(() => {
     handleSelectMaterial(null);
@@ -227,16 +321,12 @@ export default function MoodboardView() {
     const pk = SLOT_TO_PALETTE_KEY[slotKey];
     if (pk) setMaterialOverrides((prev) => { const next = { ...prev }; delete next[pk]; return next; });
 
-    // Re-check palette compatibility with remaining picks
+    // Re-evaluate lock: release unless remaining picks uniquely identify one collection
     const remainingIds = Object.values(newSelections).filter((id): id is string => id !== null);
-    if (pv2 && remainingIds.length > 0) {
-      const stillCompatible = remainingIds.every((id) =>
-        Object.values(pv2.collectionId ? collections.find((c) => c.id === pv2.collectionId)?.pool ?? {} : {}).flat().includes(id)
-      );
-      if (!stillCompatible) setActivePalette(null);
-    } else if (remainingIds.length === 0) {
-      setActivePalette(null);
-    }
+    const compatible = collectionsV2.filter((col) =>
+      remainingIds.every((id) => Object.values(col.pool).flat().includes(id))
+    );
+    if (compatible.length !== 1) setActivePalette(null);
   }, [slotSelections, pv2, setMaterialOverrides, setActivePalette]);
 
   return (
@@ -394,18 +484,25 @@ export default function MoodboardView() {
               <SheetTitle className="font-serif">{t("moodboard.exploreCollections")}</SheetTitle>
             </SheetHeader>
             <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide pb-4">
-              {collections.map((col) => {
-                const isSelected = pv2?.collectionId === col.id;
-                const thumbnail = collectionThumbnails[col.id];
+              {collectionsV2.map((col) => {
+                const isSelected = selectedCollectionId === col.id;
+                const swatches = getCollectionSwatches(col.pool);
                 return (
                   <button key={col.id} onClick={() => handleCollectionSelect(col.id)}
                     className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-                    <div className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 ${
-                      isSelected ? "border-neutral-900" : "border-transparent"
+                    <div className={`relative rounded-xl overflow-hidden border-2 ${
+                      isSelected ? "border-neutral-900" : "border-neutral-200"
                     }`}>
-                      {thumbnail && <img src={thumbnail} alt={col.name} className="w-full h-full object-cover" />}
+                      {/* 2-col × 3-row swatch grid */}
+                      <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 64 }}>
+                        {swatches.map((img, i) => (
+                          <div key={i} className="bg-neutral-100" style={{ height: 28 }}>
+                            {img && <img src={img} className="w-full h-full object-cover" />}
+                          </div>
+                        ))}
+                      </div>
                       {isSelected && (
-                        <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                           <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
                         </div>
                       )}
@@ -426,7 +523,7 @@ export default function MoodboardView() {
         selections={slotSelections}
         onSelect={handleSlotSelect}
         onClose={() => setOpenSlot(null)}
-        lockedCollectionId={collection?.id}
+        lockedCollectionId={pickerLockedCollectionId}
       />
     </div>
   );

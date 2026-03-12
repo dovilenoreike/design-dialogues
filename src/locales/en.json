@@ -952,7 +952,11 @@
     "submitButton": "Notify Me When Ready",
     "successMessage": "Thanks! We'll email you when {paletteName} is ready.",
     "errorMessage": "Failed to save your email. Please try again.",
-    "notificationToast": "We'll let you know when it's ready!"
+    "notificationToast": "We'll let you know when it's ready!",
+    "designSheetDescription": "We'll be in touch when the visualizer is ready.",
+    "specsSheetDescription": "Material specs and sourcing info will be available here soon.",
+    "specsSheetModalDescription": "We'll be in touch when specs are ready.",
+    "designSuccessMessage": "Thanks! We'll keep you updated."
   },
   "insights": {
     "lifespan": "Lifespan",

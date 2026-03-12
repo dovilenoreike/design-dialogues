@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { featureId, email, name } = await req.json();
+    const { featureId, email, name, preferences } = await req.json();
 
     // Validate inputs
     if (!featureId || typeof featureId !== "string") {
@@ -41,6 +41,7 @@ serve(async (req) => {
         feature_id: featureId,
         email: email.toLowerCase().trim(),
         name: name || null,
+        preferences: preferences || null,
       });
 
     // If error is not a duplicate constraint violation, throw it
@@ -62,6 +63,7 @@ serve(async (req) => {
             featureId,
             email: email.toLowerCase().trim(),
             name: name || "Not provided",
+            preferences: preferences || null,
           },
         }),
       });

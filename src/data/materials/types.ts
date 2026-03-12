@@ -1,7 +1,8 @@
 export type SurfaceCategory =
   | "tiles"
   | "flooring"
-  | "paint"
+  | "walls"
+  | "accents"
   | "worktops-and-backsplashes"
   | "cabinet-fronts"
   | "fixtures"
