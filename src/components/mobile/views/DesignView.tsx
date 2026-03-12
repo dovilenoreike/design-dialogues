@@ -165,7 +165,7 @@ export default function DesignView() {
   }, [handleSelectCategory]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
+    <div ref={scrollRef} className="flex-1 overflow-hidden min-h-0 relative">
 
       {/* Coming soon overlay */}
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
