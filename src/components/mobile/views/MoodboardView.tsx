@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { RotateCcw, Plus, Check, X, ChevronRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -248,6 +249,12 @@ export default function MoodboardView() {
     (slotKey: SlotKey, materialId: string) => {
       const newSelections = { ...slotSelections, [slotKey]: materialId };
       setSlotSelections(newSelections);
+      trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_SELECTED, {
+        slot: slotKey,
+        material_id: materialId,
+        was_replacing: slotSelections[slotKey] !== null,
+        filled_count: Object.values(newSelections).filter(Boolean).length,
+      });
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       if (pk) setMaterialOverrides((prev) => ({ ...prev, [pk]: materialId }));
 
@@ -272,6 +279,7 @@ export default function MoodboardView() {
   const handleCollectionSelect = useCallback((collectionId: string) => {
     const col = collectionsV2.find((c) => c.id === collectionId);
     if (!col) { setCollectionsOpen(false); return; }
+    trackEvent(AnalyticsEvents.MOODBOARD_COLLECTION_SELECTED, { collection_id: collectionId });
 
     // Derive slot selections directly from pool (first item per category)
     const pool = col.pool as Record<string, string[]>;
@@ -306,6 +314,7 @@ export default function MoodboardView() {
   }, [handleSelectMaterial, setMaterialOverrides]);
 
   const handleClearSlots = useCallback(() => {
+    trackEvent(AnalyticsEvents.MOODBOARD_SLOTS_RESET, {});
     handleSelectMaterial(null);
     setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null });
     setMaterialOverrides((prev) => {
@@ -316,6 +325,10 @@ export default function MoodboardView() {
   }, [handleSelectMaterial, setMaterialOverrides]);
 
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
+    trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_CLEARED, {
+      slot: slotKey,
+      material_id: slotSelections[slotKey],
+    });
     const newSelections = { ...slotSelections, [slotKey]: null };
     setSlotSelections(newSelections);
     const pk = SLOT_TO_PALETTE_KEY[slotKey];

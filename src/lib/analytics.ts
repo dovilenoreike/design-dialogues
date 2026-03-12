@@ -105,4 +105,9 @@ export const AnalyticsEvents = {
   MOVE_IN_DATE_SET: "move_in_date_set",
   // Thread tab
   THREAD_SECTION_CLICKED: "thread_section_clicked",
+  // Moodboard tab
+  MOODBOARD_MATERIAL_SELECTED: "moodboard_material_selected",
+  MOODBOARD_MATERIAL_CLEARED:  "moodboard_material_cleared",
+  MOODBOARD_COLLECTION_SELECTED: "moodboard_collection_selected",
+  MOODBOARD_SLOTS_RESET:       "moodboard_slots_reset",
 } as const;

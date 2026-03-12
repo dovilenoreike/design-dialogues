@@ -1,20 +1,19 @@
 import { Link } from "react-router-dom";
-import { Palette, ClipboardList, Calculator, Calendar } from "lucide-react";
+import { ClipboardList, Calculator, Calendar, Layers, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const stepIcons = [Palette, ClipboardList, Calculator, Calendar];
-
 const HowItWorks = () => {
   const { t } = useLanguage();
 
   const steps = [
-    { icon: stepIcons[0], titleKey: "step1Title", descKey: "step1Desc" },
-    { icon: stepIcons[1], titleKey: "step2Title", descKey: "step2Desc" },
-    { icon: stepIcons[2], titleKey: "step3Title", descKey: "step3Desc" },
-    { icon: stepIcons[3], titleKey: "step4Title", descKey: "step4Desc" },
+    { icon: Layers, titleKey: "step1Title", descKey: "step1Desc" },
+    { icon: Sparkles, titleKey: "step2Title", descKey: "step2Desc" },
+    { icon: ClipboardList, titleKey: "step3Title", descKey: "step3Desc" },
+    { icon: Calculator, titleKey: "step4Title", descKey: "step4Desc" },
+    { icon: Calendar, titleKey: "step5Title", descKey: "step5Desc" },
   ];
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -33,7 +32,7 @@ const HowItWorks = () => {
           </div>
         </section>
         
-        {/* 4-Step Process - Timeline Layout */}
+        {/* 6-Step Process - Timeline Layout */}
         <section className="py-12 md:py-20 bg-muted/30">
           <div className="container mx-auto px-4 md:px-6">
             {/* Mobile: Timeline Layout */}
@@ -75,9 +74,9 @@ const HowItWorks = () => {
               </div>
             </div>
             
-            {/* Desktop: 4-Column Grid */}
+            {/* Desktop: 3-Column Grid (2 rows) */}
             <div className="hidden md:block max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-4 gap-6 md:gap-8">
+              <div className="grid md:grid-cols-3 gap-6 md:gap-8">
                 {steps.map((step, index) => (
                   <div key={step.titleKey} className="text-center">
                     <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-background border border-border flex items-center justify-center">

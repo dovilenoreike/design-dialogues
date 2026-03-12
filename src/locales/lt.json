@@ -44,7 +44,7 @@
     "hallwayAcc": "Prieškambario"
   },
   "tabs": {
-    "moodboard": "Derinys",
+    "moodboard": "Konceptas",
     "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
@@ -305,16 +305,18 @@
   "howItWorks": {
     "title": "Kaip tai Veikia",
     "heroTitle": "Įrengimas be spėlionių",
-    "heroSubtitle": "Interjero planavimas keturiais paprastais žingsniais.",
+    "heroSubtitle": "Interjero planavimas penkiais paprastais žingsniais.",
     "step": "Žingsnis",
-    "step1Title": "Dizainas",
-    "step1Desc": "Naršykite paruoštas paletes ir stilius. Įkelkite savo erdvės planą, nuotrauką ar eskizą ir pamatykite ją transformuotą su AI vizualizacija.",
-    "step2Title": "Medžiagos",
-    "step2Desc": "Peržiūrėkite detalias medžiagų specifikacijas, parinktas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
-    "step3Title": "Biudžetas",
-    "step3Desc": "Gaukite orientacines kainas pagal Jūsų poreikius. Koreguokite parametrus pagal savo erdvę ir apimtį.",
-    "step4Title": "Planas",
-    "step4Desc": "Matykite projekto grafiką nuo pradžios iki įsikraustymo. Sekite užduotis ir etapus.",
+    "step1Title": "Konceptas",
+    "step1Desc": "Naršykite dizainerių paruoštas medžiagų kolekcijas ir atraskite realius produktus, atitinkančius jūsų stilių. Kiekviena atranka iš patikimų tiekėjų.",
+    "step2Title": "Vizualizuokite su AI",
+    "step2Desc": "Įkelkite savo erdvės planą, nuotrauką ar eskizą ir pamatykite ją transformuotą naudojant AI vizualizaciją.",
+    "step3Title": "Medžiagos",
+    "step3Desc": "Peržiūrėkite detalias medžiagų specifikacijas, parinktas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
+    "step4Title": "Biudžetas",
+    "step4Desc": "Gaukite orientacines kainas pagal Jūsų poreikius. Koreguokite parametrus pagal savo erdvę ir apimtį.",
+    "step5Title": "Planas",
+    "step5Desc": "Matykite projekto grafiką nuo pradžios iki įsikraustymo. Sekite užduotis ir etapus.",
     "cta": "Pradėti kurti"
   },
   "mission": {
@@ -1205,7 +1207,7 @@
     "findMaterials": "Kur rasti?",
     "pickFirst": "Pasirinkite pradinę medžiagą",
     "pickRemaining": "Pasirinkite likusias medžiagas",
-    "ready": "Derinys paruoštas",
+    "ready": "Konceptas paruoštas",
     "clear": "Išvalyti"
   }
 }
