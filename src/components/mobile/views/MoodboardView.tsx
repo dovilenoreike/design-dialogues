@@ -93,6 +93,7 @@ interface Piece {
   zIndex: number;
   // Shadow: tighter for large/low elements, deeper/softer for small/high ones
   shadow: string;
+  borderRadius?: string;
 }
 
 // Layering order (back → front): floor → additionalTiles → mainTiles → mainFronts → additionalFronts → worktops → accents
@@ -102,29 +103,21 @@ const PIECES: Piece[] = [
   { slot: "floor",            top: "16%", left: "10%", width: "84%", height: "63%",
     rotate: "0deg", zIndex: 1, shadow: "0 1px 2px rgba(0,0,0,0.06)" },
 
-  // ADDITIONAL TILES — small square, upper-left cluster
-  { slot: "additionalTiles",  top: "29%", left: "4%",  width: "25%", height: "23%",
-    rotate: "0deg", zIndex: 2, shadow: "0 3px 10px rgba(0,0,0,0.14), 0 1px 3px rgba(0,0,0,0.06)" },
-
-  // MAIN TILES — tall portrait, upper-left cluster
-  { slot: "mainTiles",        top: "13%", left: "24%", width: "24%", height: "34%",
-    rotate: "0deg", zIndex: 3, shadow: "0 5px 14px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.07)" },
-
   // MAIN FRONTS — large square, lower-right
-  { slot: "mainFronts",       top: "43%", left: "62%", width: "35%", height: "34%",
+  { slot: "mainFronts",       top: "31%", left: "56%", width: "42%", height: "41%",
     rotate: "0deg", zIndex: 4, shadow: "0 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.06)" },
 
   // ADDITIONAL FRONTS — medium square, lower-center
-  { slot: "additionalFronts", top: "62%", left: "28%", width: "32%", height: "27%",
+  { slot: "additionalFronts", top: "54%", left: "15%", width: "38%", height: "32%",
     rotate: "0deg", zIndex: 5, shadow: "0 6px 18px rgba(0,0,0,0.20), 0 2px 5px rgba(0,0,0,0.08)" },
 
   // WORKTOPS — sits above additionalFronts/mainFronts
-  { slot: "worktops",         top: "58%", left: "44%", width: "24%", height: "21%",
+  { slot: "worktops",         top: "49%", left: "34%", width: "29%", height: "25%",
     rotate: "0deg", zIndex: 6, shadow: "0 8px 22px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.09)" },
 
   // ACCENTS — smallest piece, highest in stack
-  { slot: "accents",          top: "74%", left: "67%", width: "15%", height: "12%",
-    rotate: "0deg", zIndex: 7, shadow: "0 10px 28px rgba(0,0,0,0.28), 0 3px 8px rgba(0,0,0,0.12)" },
+  { slot: "accents",          top: "68%", left: "62%", width: "18%", height: "14%",
+    rotate: "0deg", zIndex: 7, shadow: "0 10px 28px rgba(0,0,0,0.28), 0 3px 8px rgba(0,0,0,0.12)", borderRadius: "50%" },
 ];
 
 // ─── SVG annotation definitions ───────────────────────────────────────────
@@ -140,15 +133,15 @@ interface AnnotationDef {
 }
 
 const ANNOTATION_DEFS: AnnotationDef[] = [
-  // PLYTELĖS — top white margin → mainTiles (top=13%, left=24%..48%)
-  { surfaceKey: "mainTiles",        tx: "8%",  ty: "8%",  x1: "15%", y1: "9.5%",  px: "34%", py: "19%" },
   // GRINDYS  — top white margin → floor (top=16%, left=10%..94%)
   { surfaceKey: "floor",            tx: "56%", ty: "8%",  x1: "62%", y1: "9.5%",  px: "68%", py: "17%" },
-  // FASADAI  — bottom white margin → additionalFronts (bottom=89%, left=28%..60%)
-  { surfaceKey: "additionalFronts", tx: "10%", ty: "95%", x1: "20%", y1: "91.5%", px: "40%", py: "87%" },
-  // AKCENTAI — bottom white margin → accents (bottom=86%, left=67%..82%)
-  { surfaceKey: "accents",          tx: "58%", ty: "95%", x1: "65%", y1: "91.5%", px: "73%", py: "83%" },
+  // FASADAI  — bottom white margin → additionalFronts (top=59%, left=15%..53%, bottom=91%)
+  { surfaceKey: "additionalFronts", tx: "10%", ty: "95%", x1: "18%", y1: "91.5%", px: "28%", py: "82%" },
+  // AKCENTAI — bottom white margin → accents (top=68%, left=62%..80%, bottom=82%)
+  { surfaceKey: "accents",          tx: "58%", ty: "95%", x1: "64%", y1: "91.5%", px: "70%", py: "79%" },
 ];
+
+const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
@@ -253,7 +246,7 @@ export default function MoodboardView() {
         slot: slotKey,
         material_id: materialId,
         was_replacing: slotSelections[slotKey] !== null,
-        filled_count: Object.values(newSelections).filter(Boolean).length,
+        filled_count: DISPLAYED_SLOTS.filter((k) => Boolean(newSelections[k])).length,
       });
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       if (pk) setMaterialOverrides((prev) => ({ ...prev, [pk]: materialId }));
@@ -273,8 +266,8 @@ export default function MoodboardView() {
     [slotSelections, pv2, setMaterialOverrides, setActivePalette]
   );
 
-  const allSlotsFilled = Object.values(slotSelections).every(Boolean);
-  const filledCount = Object.values(slotSelections).filter(Boolean).length;
+  const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
+  const filledCount = DISPLAYED_SLOTS.filter((k) => Boolean(slotSelections[k])).length;
 
   const handleCollectionSelect = useCallback((collectionId: string) => {
     const col = collectionsV2.find((c) => c.id === collectionId);
@@ -358,8 +351,9 @@ export default function MoodboardView() {
           {filledCount > 0 && (
             <button
               onClick={handleClearSlots}
-              className="absolute right-0 flex items-center justify-center opacity-35 hover:opacity-60 transition-opacity active:scale-95">
-              <RotateCcw className="w-3.5 h-3.5 text-neutral-600" strokeWidth={1} />
+              className="absolute right-0 flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity active:scale-95">
+              <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">Išvalyti</span>
+              <RotateCcw className="w-3 h-3 text-neutral-600" strokeWidth={1.5} />
             </button>
           )}
         </div>
@@ -381,7 +375,7 @@ export default function MoodboardView() {
                   left: piece.left,
                   width: piece.width,
                   height: piece.height,
-                  borderRadius: "4px",
+                  borderRadius: piece.borderRadius ?? "4px",
                   transform: `rotate(${piece.rotate})`,
                   zIndex: piece.zIndex,
                   boxShadow: piece.shadow,
