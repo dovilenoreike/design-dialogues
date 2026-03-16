@@ -11,7 +11,7 @@ export const collections: Collection[] = [
     pool: {
       "flooring": ["baron"],
       "tiles": ["marazzi-confetto-kaki", "vaniglia-lux-terramater", "ragno-eterna-mix"],
-      "worktops-and-backsplashes": ["egger_premium_white_worktop"],
+      "worktops-and-backsplashes": ["egger-premium-white-worktop"],
       "cabinet-fronts": ["alvis-elitis-02-dy", "velvet-1648"],
       paint: ["off-white-wall"],
     },
@@ -38,7 +38,7 @@ export const collections: Collection[] = [
     thumbnail: collectionThumbnails["day-by-the-sea"],
     pool: {
       "flooring": ["baron"],
-      "cabinet-fronts": ["velvet-4246", "velvet-3702", "egger_light_natural_casella_oak", "egger-taupe-grey", "valchromat-chocolate"],
+      "cabinet-fronts": ["velvet-4246", "velvet-3702", "egger-light-natural-casella-oak", "egger-taupe-grey", "valchromat-chocolate"],
       "worktops-and-backsplashes": ["icono-c43-eleganza-bianco"],
       "tiles": ["living-ceramics-oda-ductile-ice-coast", "florim-sensi-lithos-white"],
       fixtures: ["brushed-bronze"],
@@ -108,9 +108,9 @@ export const collections: Collection[] = [
       "Inspired by modern urban interiors with a sophisticated, muted color palette. Decorate with neutral tones, natural textures, and metallic accents.",
     thumbnail: collectionThumbnails["urban-dusk"],
     pool: {
-      "flooring": ["solido_iconic_oak_bolsena", "nagoja_duron", "solido_pearl" ],
-      "worktops-and-backsplashes": ["icono_marquina_cava", "icono_sereno_noto"],
-      "cabinet-fronts": ["alvi-goya-03-na", "skin_carbon_fumo", "velvet_1551", "pearl_7901"],
+      "flooring": ["solido-iconic-oak-bolsena", "nagoja-duron", "solido-pearl" ],
+      "worktops-and-backsplashes": ["icono-marquina-cava", "icono-sereno-noto"],
+      "cabinet-fronts": ["alvi-goya-03-na", "skin-carbon-fumo", "velvet-1551", "pearl-7901"],
       "tiles": ["atlas-marvel-nero-marquina", "oda-classic-soft-textured", "living-ceramics-oda-ductile-classic", "living-ceramics-oda-ductile-ice-coast", "florim-sensi-lithos-grey"],
       paint: ["off-white-wall", "signal-white-paint"],
     },

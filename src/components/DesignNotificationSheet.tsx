@@ -62,7 +62,7 @@ export function DesignNotificationSheet({
           .filter(([, id]) => id !== null)
           .map(([slot, id]) => ({
             label: t(`surface.${slot}`),
-            name: getArchetypeById(id!)?.displayName[lang] ?? id!,
+            name: getArchetypeById(id!)?.label[lang] ?? id!,
             id: id!,
           }));
       }

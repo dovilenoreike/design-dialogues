@@ -20,6 +20,24 @@ export type MaterialType =
   | "MDF"
   | "Metal";
 
+// The physical substance — drives harmony and visual matching (Layer 2–5)
+export type TextureType =
+  | "wood"
+  | "stone"
+  | "marble"
+  | "concrete"
+  | "painted"
+  | "metal"
+  | "ceramic";
+
+// Visible grain/texture level
+export type TextureLevel =
+  | "smooth"
+  | "subtle"
+  | "medium"
+  | "rich"
+  | "statement";
+
 export interface LocalizedString {
   en: string;
   lt: string;
@@ -37,4 +55,7 @@ export interface Material {
   texturePrompt: string;
   showroomIds: string[];
   alternatives: Partial<Record<MaterialTier, string>>;
+  // Layer links — populated in Phase 4
+  undefinedArchetypeId?: string;
+  definedArchetypeId?: string;
 }

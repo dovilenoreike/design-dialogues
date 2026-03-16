@@ -14,7 +14,7 @@ export const palettesV2: PaletteV2[] = [
         bottomCabinets: "alvis-elitis-02-dy",
         topCabinets: "velvet-1648",
         shelves: "velvet-1648",
-        worktops: "egger_premium_white_worktop",
+        worktops: "egger-premium-white-worktop",
         wall: "off-white-wall",
       },
       bathroom: {
@@ -89,7 +89,7 @@ export const palettesV2: PaletteV2[] = [
         floor: "baron",
         bottomCabinets: "velvet-4246",
         topCabinets: "velvet-4246",
-        shelves: "egger_light_natural_casella_oak",
+        shelves: "egger-light-natural-casella-oak",
         worktops: "icono-c43-eleganza-bianco",
         wall: "off-white-wall",
       },
@@ -103,13 +103,13 @@ export const palettesV2: PaletteV2[] = [
       livingRoom: {
         floor: "baron",
         cabinetFurniture: "egger-taupe-grey",
-        shelves: "egger_light_natural_casella_oak",
+        shelves: "egger-light-natural-casella-oak",
         wall: "off-white-wall",
       },
       bedroom: {
         floor: "baron",
         wardrobes: "egger-taupe-grey",
-        shelves: "egger_light_natural_casella_oak",
+        shelves: "egger-light-natural-casella-oak",
         wall: "off-white-wall",
       },
     },
@@ -315,11 +315,11 @@ export const palettesV2: PaletteV2[] = [
     status: "coming-soon",
     selections: {
       kitchen: {
-        floor: "solido_iconic_oak_bolsena",
+        floor: "solido-iconic-oak-bolsena",
         bottomCabinets: "alvi-goya-03-na",
-        topCabinets: "velvet_1551",
-        shelves: "velvet_1551",
-        worktops: "icono_marquina_cava",
+        topCabinets: "velvet-1551",
+        shelves: "velvet-1551",
+        worktops: "icono-marquina-cava",
         wall: "off-white-wall",
       },
       bathroom: {

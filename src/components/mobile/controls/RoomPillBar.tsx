@@ -10,14 +10,19 @@ const roomTranslationKey: Record<string, string> = {
   "bathroom": "space.bathroom",
 };
 
+const ENABLED_ROOMS = new Set(["kitchen"]);
+
 export default function RoomPillBar() {
   const { design, handleSelectCategory } = useDesign();
   const { selectedCategory } = design;
   const { t } = useLanguage();
 
+  const visibleRooms = rooms.filter((r) => ENABLED_ROOMS.has(r.id));
+  if (visibleRooms.length <= 1) return null;
+
   return (
     <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
-      {rooms.map((room) => {
+      {visibleRooms.map((room) => {
         const isSelected = selectedCategory === room.name;
         const Icon = room.icon;
 

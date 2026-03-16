@@ -26,6 +26,7 @@ import { captureError, setSentryDesignContext } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
+import type { VibeTag } from "@/data/collections/types";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -106,6 +107,11 @@ interface DesignContextValue {
   excludedSlots: Set<string>;
   setExcludedSlots: React.Dispatch<React.SetStateAction<Set<string>>>;
 
+  // Moodboard vibe (Layer 1) — null until user picks a vibe
+  vibeTag: VibeTag | null;
+  setVibeTag: (vibe: VibeTag) => void;
+  clearVibeTag: () => void;
+
   // Sharing
   shareSession: () => Promise<string | null>;
   isSharing: boolean;
@@ -168,6 +174,27 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Layout audit state
   const [layoutAuditResponses, setLayoutAuditResponses] = useState<Record<string, AuditResponse>>({});
   const [layoutAuditVariables, setLayoutAuditVariables] = useState<AuditVariables>(defaultAuditVariables);
+
+  // Moodboard vibe (Layer 1) — persisted so it survives refresh
+  const [vibeTag, setVibeTagState] = useState<VibeTag | null>(() => {
+    try {
+      const saved = localStorage.getItem("moodboard-vibe");
+      if (saved === "light-and-airy" || saved === "warm-and-grounded" || saved === "bold-and-moody") {
+        return saved;
+      }
+    } catch {}
+    return null;
+  });
+
+  const setVibeTag = useCallback((vibe: VibeTag) => {
+    setVibeTagState(vibe);
+    try { localStorage.setItem("moodboard-vibe", vibe); } catch {}
+  }, []);
+
+  const clearVibeTag = useCallback(() => {
+    setVibeTagState(null);
+    try { localStorage.removeItem("moodboard-vibe"); } catch {}
+  }, []);
 
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
@@ -827,9 +854,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedCategory: category,
       lastSelectedRoom: category,
     }));
-    setMaterialOverrides({});
-    setExcludedSlots(new Set());
-  }, [generation.generatedImages, design.selectedCategory]);
+    if (!vibeTag) {
+      setMaterialOverrides({});
+      setExcludedSlots(new Set());
+    }
+  }, [generation.generatedImages, design.selectedCategory, vibeTag]);
 
   // Material selection
   const handleSelectMaterial = useCallback((material: string | null) => {
@@ -1465,6 +1494,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setMaterialOverrides,
     excludedSlots,
     setExcludedSlots,
+    vibeTag,
+    setVibeTag,
+    clearVibeTag,
     shareSession,
     isSharing,
     isSharedSession,

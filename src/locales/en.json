@@ -140,6 +140,7 @@
   },
   "surface": {
     "clearAll": "Clear",
+    "remove": "Remove material",
     "fronts": "Fronts",
     "floor": "Floor",
     "mainFronts": "Main Fronts",
@@ -169,7 +170,8 @@
     "tierComingSoon": "Coming soon!",
     "tierComingSoonDescription": "Explore our Standard selection in the meantime.",
     "selectPalette": "Select Palette",
-    "browsePalettes": "Browse Palettes"
+    "browsePalettes": "Browse Palettes",
+    "goToMoodboard": "Build Moodboard"
   },
   "material": {
     "purpose": {
@@ -1208,5 +1210,12 @@
     "pickRemaining": "Pick remaining materials",
     "ready": "Combination ready",
     "clear": "Clear"
+  },
+  "vibe": {
+    "prompt": "Choose your mood",
+    "change": "Change mood",
+    "light-and-airy": "Light & Airy",
+    "warm-and-grounded": "Warm & Grounded",
+    "bold-and-moody": "Bold & Moody"
   }
 }

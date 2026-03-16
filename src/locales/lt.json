@@ -140,6 +140,7 @@
   },
   "surface": {
     "clearAll": "Išvalyti",
+    "remove": "Pašalinti medžiagą",
     "fronts": "Fasadai",
     "floor": "Grindys",
     "mainFronts": "Fasadai I",
@@ -163,14 +164,15 @@
   "specs": {
     "fullSpecification": "Pilna specifikacija",
     "emptyTitle": "Medžiagos nepasirinktos",
-    "emptyDescription": "Pasirinkite paletę Dizaino skirtuke, kad čia matytumėte medžiagų specifikacijas.",
+    "emptyDescription": "Pasirinkite medžiagas Konceptas skirtuke, kad čia matytumėte medžiagų specifikacijas.",
     "freestyleTitle": "Jūsų Vizija",
     "freestyleSubtitle": "Individuali paletė",
     "requestMaterials": "Užsakyti medžiagų sąrašą",
     "tierComingSoon": "Jau greitai!",
     "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus.",
     "selectPalette": "Pasirinkti Paletę",
-    "browsePalettes": "Naršyti paletes"
+    "browsePalettes": "Naršyti paletes",
+    "goToMoodboard": "Rinktis medžiagas"
   },
   "material": {
     "purpose": {
@@ -197,6 +199,7 @@
     "type": {
       "Vinyl": "Vinilas",
       "Natural Stone": "Natūralus akmuo",
+      "Engineered Wood": "Parketlentės",
       "Laminate": "Laminatas",
       "Wood Veneer": "Medienos lukštas",
       "Metal": "Metalas",
@@ -1209,5 +1212,12 @@
     "pickRemaining": "Pasirinkite likusias medžiagas",
     "ready": "Konceptas paruoštas",
     "clear": "Išvalyti"
+  },
+  "vibe": {
+    "prompt": "Pasirinkite atmosferą",
+    "change": "Keisti atmosferą",
+    "light-and-airy": "Švara ir lengvumas",
+    "warm-and-grounded": "Šiluma ir jaukumas",
+    "bold-and-moody": "Charakteris ir išskirtinumas"
   }
 }

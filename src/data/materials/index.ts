@@ -50,7 +50,7 @@ import imgVelvet5983 from "@/assets/materials/behind-the-lights/material7.jpg";
 // Pure Scandi
 import imgPureScandiFloor from "@/assets/materials/pure-scandi/material1.jpg";
 import imgGreyBeigeMarble from "@/assets/materials/pure-scandi/material2.jpg";
-import imgLightOakVeneer from "@/assets/materials/pure-scandi/material3.jpg";
+import imgLightOakVeneer from "@/assets/materials/pure-scandi/material4.jpg";
 import imgOffWhiteMatte from "@/assets/materials/spicy-nord/material3.jpg";
 import imgSoftWhiteStone from "@/assets/materials/pure-scandi/material5.jpg";
 
@@ -65,6 +65,7 @@ import imgSignalWhite from "@/assets/materials/paint/ral_9003.jpg";
 
 // Cabinet Fronts
 import imgSkinCarbonFumo from "@/assets/materials/cabinet-fronts/skin_carbon_fumo.jpg";
+import imgVelvetSoftBlack from "@/assets/materials/cabinet-fronts/velvet-1302.jpg";
 import imgAlviGoya03NA from "@/assets/materials/cabinet-fronts/ALVI_GOYA 03 NA.jpg";
 
 import imgEggerLightNaturalCasellaOak from "@/assets/materials/cabinet-fronts/egger_light_natural_casella_oak.jpg";
@@ -77,14 +78,24 @@ import imgPearl7901 from "@/assets/materials/cabinet-fronts/pearl_7901.jpg";
 import imgVelvet1551 from "@/assets/materials/cabinet-fronts/velvet_1551.jpg";
 import imgVelvet3301 from "@/assets/materials/cabinet-fronts/velvet_3301.jpg";
 import imgVelvet3702 from "@/assets/materials/cabinet-fronts/velvet_3702.jpg";
+import imgVelvet3703 from "@/assets/materials/cabinet-fronts/velvet-3703.jpg";
 import imgVelvet4246 from "@/assets/materials/cabinet-fronts/velvet_4246.jpg";
+import imgVelvet7361 from "@/assets/materials/cabinet-fronts/velvet-7361.jpg";
 import imgVelvet7473 from "@/assets/materials/cabinet-fronts/velvet_7473.jpg";
+import imgAlvicGoya02 from "@/assets/materials/cabinet-fronts/alvic-goya-02.jpg";
+import imgAlvicValazquez04 from "@/assets/materials/cabinet-fronts/alvic_valazquez-04.jpg";
+import imgAlvicValazquez05 from "@/assets/materials/cabinet-fronts/alvic_valazquez-05.jpg";
+import imgEggerNaturalCasellaOak from "@/assets/materials/cabinet-fronts/egger-natural-casella-oak.jpg";
 
 
 // Worktops and Backsplashes
 import imgEggerPremiumWhite from "@/assets/materials/worktops/egger_premium_white_w1000_ST76.jpg";
 import imgIconoMarquinaCava from "@/assets/materials/worktops/icono_C35_marquina_cava.jpg";
 import imgIconoSerenoNoto from "@/assets/materials/worktops/icono_C45_sereno_noto.jpg";
+import imgIconoArabescaMarmo from "@/assets/materials/worktops/icono-c42-arabesca-marmo.jpg";
+import imgIconoPicassoMarrone from "@/assets/materials/worktops/icono-c59-picasso-marrone.jpg";
+import imgFondi32VentoMarmo from "@/assets/materials/worktops/fondi-32-vento-marmo.jpg";
+import imgEggerCremonaMarble from "@/assets/materials/worktops/egger-cremona-marble.jpg";
 
 //Flooring
 
@@ -100,8 +111,11 @@ import imgOdaDuctileCoast from "@/assets/materials/tiles/oda_ductile_coast.jpg";
 import imgFlorimSensiLithosWhite from "@/assets/materials/tiles/florim_sensi_lithos_white.jpg";
 import imgFlorimSensiLithosGrey from "@/assets/materials/tiles/florim_sensi_lithos_grey.jpg";
 
-
-
+// Accents
+import imgAgedBronze from "@/assets/materials/accents/aged_bronze.jpg";
+import imgChrome from "@/assets/materials/accents/chrome.jpg";
+import imgGold from "@/assets/materials/accents/gold.jpg";
+import imgWineRed from "@/assets/materials/accents/wine_red.jpg";
 // ─── Shared materials (used across multiple collections) ─────────────────────
 
 const baron: Material = {
@@ -1044,7 +1058,7 @@ const naturalOakVeneerAmber: Material = {
 // ─── Urban Dusk coming-soon materials ─────────────────────────────────────────
 
 const solidoIconicOakBolsena: Material = {
-  id: "solido_iconic_oak_bolsena",
+  id: "solido-iconic-oak-bolsena",
   image: imgSolidoIconicOakBolsena,
   displayName: {
     en: "Light Smoked Oak",
@@ -1064,7 +1078,7 @@ const solidoIconicOakBolsena: Material = {
 };
 
 const solidoPearl: Material = {
-  id: "solido_pearl",
+  id: "solido-pearl",
   image: imgSolidoPearl,
   displayName: {
     en: "Light concrete texture",
@@ -1084,7 +1098,7 @@ const solidoPearl: Material = {
 };
 
 const NagojaDuron: Material = {
-  id: "nagoja_duron",
+  id: "nagoja-duron",
   image: imgNagojaDuron,
   displayName: {
     en: "Light Smoked Oak",
@@ -1104,7 +1118,7 @@ const NagojaDuron: Material = {
 };
 
 const EggerLightNaturalCasellaOak: Material = {
-  id: "egger_light_natural_casella_oak",
+  id: "egger-light-natural-casella-oak",
   image: imgEggerLightNaturalCasellaOak,
   displayName: {
     en: "Light Natural Casella Oak",
@@ -1124,7 +1138,7 @@ const EggerLightNaturalCasellaOak: Material = {
 };
 
 const EggerBrownCasellaOak: Material = {
-  id: "egger_brown_casella_oak",
+  id: "egger-brown-casella-oak",
   image: imgEggerBrownCasellaOak,
   displayName: {
     en: "Brown Casella Oak",
@@ -1144,7 +1158,7 @@ const EggerBrownCasellaOak: Material = {
 };
 
 const SkinCarbonFumo: Material = {
-  id: "skin_carbon_fumo",
+  id: "skin-carbon-fumo",
   image: imgSkinCarbonFumo,
   displayName: {
     en: "Black Carbon and Wood Texture",
@@ -1183,8 +1197,148 @@ const AlviGoya03NA: Material = {
   alternatives: {},
 };
 
+const AlvicGoya02: Material = {
+  id: "alvic-goya-02",
+  image: imgAlvicGoya02,
+  displayName: {
+    en: "Alvic Goya 02",
+    lt: "Alvic Goya 02",
+  },
+  description: {
+    en: "Warm greige wood grain with vertical texture",
+    lt: "Šiltas greige medienos grūdėlių piešinys",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Alvic Goya 02",
+  texturePrompt: "Warm greige wood grain with vertical texture, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const EggerSoftBlack: Material = {
+  id: "velvet-1302",
+  image: imgVelvetSoftBlack,
+  displayName: {
+    en: "Velvet Soft Black",
+    lt: "Velvet Soft Black",
+  },
+  description: {
+    en: "Soft charcoal-black matte finish",
+    lt: "Minkšta anglies juodumo matinė tekstūra",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Velvet Soft Black",
+  texturePrompt: "Soft charcoal-black flat matte finish.",
+  showroomIds: [],
+  alternatives: {"budget": "egger-soft-black"},
+};
+
+const AlvicValazquez04: Material = {
+  id: "alvic-valazquez-04",
+  image: imgAlvicValazquez04,
+  displayName: {
+    en: "Alvic Valázquez 04",
+    lt: "Alvic Valázquez 04",
+  },
+  description: {
+    en: "Light natural oak with fine vertical grain",
+    lt: "Šviesi natūrali ąžuolo mediena su smulkiu vertikaliu grūdėliu",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Alvic Valázquez 04",
+  texturePrompt: "Light natural oak with fine vertical grain, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const AlvicValazquez05: Material = {
+  id: "alvic-valazquez-05",
+  image: imgAlvicValazquez05,
+  displayName: {
+    en: "Alvic Valázquez 05",
+    lt: "Alvic Valázquez 05",
+  },
+  description: {
+    en: "Deep warm walnut with fine vertical grain",
+    lt: "Tamsus šiltas riešutas su smulkiu vertikaliu grūdėliu",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Alvic Valázquez 05",
+  texturePrompt: "Deep warm walnut with fine vertical grain, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const Velvet3703: Material = {
+  id: "velvet-3703",
+  image: imgVelvet3703,
+  displayName: {
+    en: "Velvet 3703",
+    lt: "Velvet 3703",
+  },
+  description: {
+    en: "Sage grey matte lacquer finish",
+    lt: "Pilkai žalsvai matinė lakuota spalva",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Velvet 3703",
+  texturePrompt: "Flat sage grey matte lacquer finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const Velvet7361: Material = {
+  id: "velvet-7361",
+  image: imgVelvet7361,
+  displayName: {
+    en: "Velvet 7361",
+    lt: "Velvet 7361",
+  },
+  description: {
+    en: "Warm greige matte lacquer finish",
+    lt: "Šilta greige matinė lakuota spalva",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Velvet 7361",
+  texturePrompt: "Flat warm greige matte lacquer finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const EggerNaturalCasellaOak: Material = {
+  id: "egger-natural-casella-oak",
+  image: imgEggerNaturalCasellaOak,
+  displayName: {
+    en: "Egger Natural Casella Oak",
+    lt: "Egger Natural Casella Oak",
+  },
+  description: {
+    en: "Warm natural oak wood grain",
+    lt: "Šiltas natūralaus ąžuolo medienos raštas",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Egger Natural Casella Oak",
+  texturePrompt: "Warm natural oak wood grain, vertical texture, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
 const Velvet7473: Material = {
-  id: "velvet_7473",
+  id: "velvet-7473",
   image: imgVelvet7473,
   displayName: {
     en: "Light Greige Matte",
@@ -1204,7 +1358,7 @@ const Velvet7473: Material = {
 };
 
 const Velvet1551: Material = {
-  id: "velvet_1551",
+  id: "velvet-1551",
   image: imgVelvet1551,
   displayName: {
     en: "Off White Matte",
@@ -1224,7 +1378,7 @@ const Velvet1551: Material = {
 };
 
 const Pearl7901: Material = {
-  id: "pearl_7901",
+  id: "pearl-7901",
   image: imgPearl7901,
   displayName: {
     en: "Dark Bronze Matte",
@@ -1267,7 +1421,7 @@ const FlorimSensiLithosWhite: Material = {
 // ─── Worktops and Backsplashes ─────────────────────────────────────────
 
 const EggerPremiumWhiteWorktop: Material = {
-  id: "egger_premium_white_worktop",
+  id: "egger-premium-white-worktop",
   image: imgEggerPremiumWhite,
   displayName: { en: "Flat matte off-white", lt: "Šilta balta spalva" },
   description: {
@@ -1280,11 +1434,11 @@ const EggerPremiumWhiteWorktop: Material = {
   code: "Egger W1000 ST76",
   texturePrompt: "Flat matte off-white.",
   showroomIds: ["impeka"],
-  alternatives: {"budget": "egger_premium_white_worktop"},
+  alternatives: {"budget": "egger-premium-white-worktop"},
 };
 
 const IconoMarquinaCava: Material = {
-  id: "icono_marquina_cava",
+  id: "icono-marquina-cava",
   image: imgIconoMarquinaCava,
   displayName: {
     en: "Icono Marquina Cava",
@@ -1304,7 +1458,7 @@ const IconoMarquinaCava: Material = {
 };
 
 const IconoSerenoNoto: Material = {
-  id: "icono_sereno_noto",
+  id: "icono-sereno-noto",
   image: imgIconoSerenoNoto,
   displayName: {
     en: "Icono Sereno Noto",
@@ -1323,6 +1477,86 @@ const IconoSerenoNoto: Material = {
   alternatives: {},
 };
 
+const IconoArabescaMarmo: Material = {
+  id: "icono-arabesca-marmo",
+  image: imgIconoArabescaMarmo,
+  displayName: {
+    en: "Icono Arabesca Marmo",
+    lt: "Icono Arabesca Marmo",
+  },
+  description: {
+    en: "Light grey marble with soft white veining",
+    lt: "Šviesiai pilkas marmuras su subtiliomis baltomis gyslelėmis",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "Icono C42 Arabesca Marmo",
+  texturePrompt: "Light grey marble with soft white veining, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const IconoPicassoMarrone: Material = {
+  id: "icono-picasso-marrone",
+  image: imgIconoPicassoMarrone,
+  displayName: {
+    en: "Icono Picasso Marrone",
+    lt: "Icono Picasso Marrone",
+  },
+  description: {
+    en: "Dark grey-brown stone with warm rust veining",
+    lt: "Tamsiai pilkai rudas akmuo su šiltomis rūdžių gyslelėmis",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "Icono C59 Picasso Marrone",
+  texturePrompt: "Dark grey-brown stone with warm rust veining, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const Fondi32VentoMarmo: Material = {
+  id: "fondi-32-vento-marmo",
+  image: imgFondi32VentoMarmo,
+  displayName: {
+    en: "Fondi 32 Vento Marmo",
+    lt: "Fondi 32 Vento Marmo",
+  },
+  description: {
+    en: "Light warm marble with soft grey veining",
+    lt: "Šviesi šilta marmurinė tekstūra su subtiliomis pilkomis gyslelėmis",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "Fondi 32 Vento Marmo",
+  texturePrompt: "Light warm marble with soft grey veining, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const EggerCremonaMarble: Material = {
+  id: "egger-cremona-marble",
+  image: imgEggerCremonaMarble,
+  displayName: {
+    en: "Egger Cremona Marble",
+    lt: "Egger Kremona marmuras",
+  },
+  description: {
+    en: "Warm beige marble with soft brown veining",
+    lt: "Šiltas bežinis marmuras su subtiliomis rudomis gyslelėmis",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "Egger Cremona Marble",
+  texturePrompt: "Warm beige marble with soft brown veining, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
 // ─── Wall paint ─────────────────────────────────────────────────────────────
 
 const offWhiteWall: Material = {
@@ -1334,7 +1568,7 @@ const offWhiteWall: Material = {
     lt: "Šilta balta matinė sienų danga.",
   },
   type: "",
-  categories: ["paint"],
+  categories: ["walls"],
   tier: "optimal",
   code: "ral-9016",
   texturePrompt: "Warm off-white wall paint, matte finish.",
@@ -1351,10 +1585,79 @@ const SignalWhitePaint: Material = {
     lt: "Neutrali balta matinė sienų danga.",
   },
   type: "",
-  categories: ["paint"],
+  categories: ["walls"],
   tier: "optimal",
   code: "ral-9016",
   texturePrompt: "Neutral off-white wall paint, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+// Accents
+const agedBronze: Material = {
+  id: "aged-bronze",
+  image: imgAgedBronze,
+  displayName: { en: "Aged Bronze", lt: "Sedinta bronza" },
+  description: {
+    en: "Aged bronze finish, warm undertones.",
+    lt: "Sendintos bronzos detalės, šilti atspalviai.",
+  },
+  type: "",
+  categories: ["accents"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Aged bronze finish, warm undertones.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const chrome: Material = {
+  id: "chrome",
+  image: imgChrome,
+  displayName: { en: "Chrome", lt: "Chromas" },
+  description: {
+    en: "Chrome finish, modern look.",
+    lt: "Chromo detalės, moderni išvaizda.",
+  },
+  type: "",
+  categories: ["accents"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Chrome finish, modern look.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const gold: Material = {
+  id: "gold",
+  image: imgGold,
+  displayName: { en: "Gold", lt: "Auksas" },
+  description: {
+    en: "Gold finish, luxurious appearance.",
+    lt: "Aukso detalės, prabangi išvaizda.",
+  },
+  type: "",
+  categories: ["accents"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Gold finish, luxurious appearance.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const wineRed: Material = {
+  id: "wine-red",
+  image: imgWineRed,
+  displayName: { en: "Wine Red", lt: "Vyno raudona" },
+  description: {
+    en: "Wine red finish, rich and warm.",
+    lt: "Vyno raudonos detalės, netikėti akcentai.",
+  },
+  type: "",
+  categories: ["accents"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Wine red finish, rich and warm.",
   showroomIds: [],
   alternatives: {},
 };
@@ -1426,10 +1729,17 @@ export const materials: Material[] = [
   solidoPearl,
   NagojaDuron,
   // Cabinet-fronts
-  // EggerBrownCasellaOak,
+  EggerBrownCasellaOak,
   EggerLightNaturalCasellaOak,
   SkinCarbonFumo,
   AlviGoya03NA,
+  AlvicGoya02,
+  EggerSoftBlack,
+  AlvicValazquez04,
+  AlvicValazquez05,
+  Velvet3703,
+  Velvet7361,
+  EggerNaturalCasellaOak,
   Velvet7473,
   FlorimSensiLithosWhite,
   Pearl7901,
@@ -1437,9 +1747,18 @@ export const materials: Material[] = [
   // Worktops and Backsplashes
   IconoMarquinaCava,
   IconoSerenoNoto,
+  IconoArabescaMarmo,
+  IconoPicassoMarrone,
+  Fondi32VentoMarmo,
+  EggerCremonaMarble,
   // Wall paint
   offWhiteWall,
   SignalWhitePaint,
+  // Accents
+  agedBronze,
+  chrome,
+  gold,
+  wineRed,
 ];
 
 // ─── Lookup helpers ───────────────────────────────────────────────────────────
