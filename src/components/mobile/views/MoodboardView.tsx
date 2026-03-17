@@ -15,12 +15,11 @@ import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_CATEGORY } 
 import VibePickerView from "./VibePickerView";
 
 // ─── Collection swatch preview ────────────────────────────────────────────
-// [floor, worktops] [front1, front2] [tile1, tile2] — 2-col × 3-row grid
+// [floor, worktops, front1, front2] — 2-col × 2-row grid
 const COLLECTION_SWATCH_SPEC: Array<{ category: SurfaceCategory; count: 1 | 2 }> = [
   { category: "flooring",                    count: 1 },
   { category: "worktops-and-backsplashes",   count: 1 },
   { category: "cabinet-fronts",              count: 2 },
-  { category: "tiles",                       count: 2 },
 ];
 
 function resolveSwatchImage(
@@ -45,7 +44,7 @@ function getCollectionSwatches(pool: CollectionV2["pool"], products: CollectionV
       images.push(resolveSwatchImage(ids[i], category, products));
     }
   }
-  return images; // always 6 entries: [floor, worktops, front1, front2, tile1, tile2]
+  return images; // always 4 entries: [floor, worktops, front1, front2]
 }
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
@@ -592,7 +591,7 @@ export default function MoodboardView() {
 
         {/* ── Collections Sheet ── */}
         <Sheet open={collectionsOpen} onOpenChange={setCollectionsOpen}>
-          <SheetContent side="bottom" className="rounded-t-2xl pb-safe" aria-describedby={undefined}>
+          <SheetContent side="bottom" className="rounded-t-2xl pb-safe sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
             <SheetHeader className="mb-4">
               <SheetTitle className="font-serif">{t("moodboard.exploreCollections")}</SheetTitle>
             </SheetHeader>
@@ -606,10 +605,10 @@ export default function MoodboardView() {
                     <div className={`relative rounded-xl overflow-hidden border-2 ${
                       isSelected ? "border-neutral-900" : "border-neutral-200"
                     }`}>
-                      {/* 2-col × 3-row swatch grid */}
+                      {/* 2-col × 2-row swatch grid */}
                       <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 64 }}>
                         {swatches.map((img, i) => (
-                          <div key={i} className="bg-neutral-100" style={{ height: 28 }}>
+                          <div key={i} className="bg-neutral-100" style={{ height: 30 }}>
                             {img && <img src={img} className="w-full h-full object-cover" />}
                           </div>
                         ))}
@@ -621,7 +620,7 @@ export default function MoodboardView() {
                       )}
                     </div>
                     <span className="text-[8px] uppercase tracking-[0.15em] text-neutral-500 text-center max-w-[64px] truncate">
-                      {col.name}
+                      {col.name[language as keyof typeof col.name] ?? col.name.en}
                     </span>
                   </button>
                 );

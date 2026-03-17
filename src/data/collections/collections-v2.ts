@@ -6,7 +6,7 @@ import spicyNord from "@/assets/collections/spicy-nord.jpg";
 export const collectionsV2: CollectionV2[] = [
     {
     id: "cashmere-morning",
-    name: "Cashmere Morning",
+    name: { en: "Cashmere Morning", lt: "Kašmyro rytas" },
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -27,7 +27,7 @@ export const collectionsV2: CollectionV2[] = [
   },
   {
     id: "chili-and-pepper",
-    name: "Chili & Pepper",
+    name: { en: "Chili & Pepper", lt: "Čilis ir pipiras" },
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -47,12 +47,12 @@ export const collectionsV2: CollectionV2[] = [
   },
   {
     id: "urban-dusk",
-    name: "Urban Dusk",
+    name: { en: "Urban Dusk", lt: "Miesto sutemos" },
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
-      flooring:                  ["medium-wood", "light-wood", "concrete"],
-      "worktops-and-backsplashes": ["concrete","soft-texture-dark"],
+      flooring:                  ["light-wood", "medium-wood", "concrete"],
+      "worktops-and-backsplashes": ["soft-texture-dark", "concrete"],
       "cabinet-fronts":          ["neutral","dark-wood","metallic","black"],
       tiles:                     [],
       walls:                     ["off-white"],
@@ -68,7 +68,7 @@ export const collectionsV2: CollectionV2[] = [
   },
   {
     id: "fog-in-the-forest",
-    name: "Fog in the Forest",
+    name: { en: "Fog in the Forest", lt: "Rūkas miške" },
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -90,7 +90,7 @@ export const collectionsV2: CollectionV2[] = [
   },
   {
     id: "spicy-nord",
-    name: "Spicy Nord",
+    name: { en: "Spicy Nord", lt: "Charakteringa Šiaurė" },
     vibe: "warm-and-grounded",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -110,7 +110,7 @@ export const collectionsV2: CollectionV2[] = [
   },
     {
     id: "chocolate-wabi-sabi",
-    name: "Chocolate Wabi-Sabi",
+    name: { en: "Chocolate Wabi-Sabi", lt: "Wabi-Sabi Šokolade" },
     vibe: "warm-and-grounded",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -130,7 +130,7 @@ export const collectionsV2: CollectionV2[] = [
   },
     {
     id: "day-by-the-sea",
-    name: "Day by the Sea",
+    name: { en: "Day by the Sea", lt: "Diena prie jūros" },
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {

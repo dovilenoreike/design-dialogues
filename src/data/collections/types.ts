@@ -17,7 +17,7 @@ export interface Collection {
 
 export interface CollectionV2 {
   id: string;
-  name: string;
+  name: { en: string; lt: string };
   vibe: VibeTag;
   promptBase: string;
   // Archetypes available in this collection, grouped by surface category
