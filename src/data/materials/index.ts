@@ -102,6 +102,8 @@ import imgEggerCremonaMarble from "@/assets/materials/worktops/egger-cremona-mar
 import imgSolidoIconicOakBolsena from "@/assets/materials/flooring/solido_iconic_oak_bolsena.jpg";
 import imgNagojaDuron from "@/assets/materials/flooring/nagoja_duron.jpg";
 import imgSolidoPearl from "@/assets/materials/flooring/solido_pearl.jpg";
+import imgBleachedWoodDemo from "@/assets/materials/temporary-for-demo/bleached-wood-demo.jpg";
+import imgLightWoodDemo from "@/assets/materials/temporary-for-demo/light-wood-demo.jpg";
 
 // Tiles
 import imgAtlasNero from "@/assets/materials/tiles/atlas_nero.jpg";
@@ -1117,6 +1119,46 @@ const NagojaDuron: Material = {
   alternatives: {},
 };
 
+const bleachedWoodDemo: Material = {
+  id: "bleached-wood-demo",
+  image: imgBleachedWoodDemo,
+  displayName: {
+    en: "Bleached Oak",
+    lt: "Balinta ąžuolo mediena",
+  },
+  description: {
+    en: "Light bleached oak flooring with a natural, airy feel.",
+    lt: "Šviesi baltinta ąžuolo grindų danga.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Light bleached white oak flooring, natural airy feel.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const lightWoodDemo: Material = {
+  id: "light-wood-demo",
+  image: imgLightWoodDemo,
+  displayName: {
+    en: "Light Wood",
+    lt: "Šviesi mediena",
+  },
+  description: {
+    en: "Light natural wood flooring.",
+    lt: "Šviesi natūralios medienos grindų danga.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Light natural wood flooring, warm and airy.",
+  showroomIds: [],
+  alternatives: {},
+};
+
 const EggerLightNaturalCasellaOak: Material = {
   id: "egger-light-natural-casella-oak",
   image: imgEggerLightNaturalCasellaOak,
@@ -1728,6 +1770,8 @@ export const materials: Material[] = [
   solidoIconicOakBolsena,
   solidoPearl,
   NagojaDuron,
+  bleachedWoodDemo,
+  lightWoodDemo,
   // Cabinet-fronts
   EggerBrownCasellaOak,
   EggerLightNaturalCasellaOak,

@@ -10,7 +10,7 @@ export const collectionsV2: CollectionV2[] = [
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
-      flooring:                  ["concrete","light-wood"],
+      flooring:                  ["concrete","bleached-wood"],
       "worktops-and-backsplashes": ["soft-texture-light", "soft-texture-dark"],
       "cabinet-fronts":          ["neutral",  "medium-wood", "dark-wood",],
       tiles:                     [],
@@ -18,7 +18,7 @@ export const collectionsV2: CollectionV2[] = [
       accents:                   ["chrome"],
     },
     products: {
-      flooring:                  { "light-wood": ["solido-iconic-oak-bolsena"], "concrete": ["solido-pearl"] },
+      flooring:                  { "bleached-wood": ["bleached-wood-demo"], "concrete": ["solido-pearl"] },
       "worktops-and-backsplashes": { "soft-texture-light": ["icono-arabesca-marmo"], "soft-texture-dark": ["icono-picasso-marrone"]},
       "cabinet-fronts":          {  "neutral": ["velvet-7393"], "medium-wood": ["alvic-goya-02"], "dark-wood": ["alvi-goya-03-na"]},
       "accents":                   {"chrome": ["chrome"] },
@@ -47,7 +47,7 @@ export const collectionsV2: CollectionV2[] = [
   },
   {
     id: "urban-dusk",
-    name: { en: "Urban Dusk", lt: "Miesto sutemos" },
+    name: { en: "Urban Dusk", lt: "Miesto prieblanda" },
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -61,7 +61,7 @@ export const collectionsV2: CollectionV2[] = [
     products: {
       flooring:                  { "light-wood": ["solido-iconic-oak-bolsena"],  "medium-wood": ["nagoja-duron"], "concrete": ["solido-pearl"] },
       "worktops-and-backsplashes": { "soft-texture-dark": ["icono-marquina-cava"], "concrete": ["icono-sereno-noto"] },
-      "cabinet-fronts":          { "dark-wood": ["alvi-goya-03-na"], "black": ["skin-carbon-fumo"], "neutral": ["velvet-1551"], "metallic": ["pearl-7901"] },
+      "cabinet-fronts":          { "dark-wood": ["egger-brown-casella-oak"], "black": ["skin-carbon-fumo"], "neutral": ["velvet-1551"], "metallic": ["pearl-7901"] },
       "accents":                   { "aged-bronze": ["aged-bronze"], "chrome": ["chrome"] },
     },
     thumbnail: urbanDusk,
@@ -101,7 +101,7 @@ export const collectionsV2: CollectionV2[] = [
       accents:                   ["gold", "chrome"],
     },
     products: {
-      flooring:                  {  "light-wood": ["baron"], "concrete": ["solido-pearl"] },
+      flooring:                  {  "light-wood": ["light-wood-demo"], "concrete": ["florim-sensi-lithos-white"] },
       "worktops-and-backsplashes": {"bold-texture-light": ["fondi-32-vento-marmo"], "soft-texture-light": ["egger-cremona-marble"], "white": ["egger-premium-white-worktop"] },
       "cabinet-fronts":          { "white": ["velvet-1648"], "light-wood": ["alvic-valazquez-04"] },
       accents:                   { "gold": ["gold"], "chrome": ["chrome"] },
@@ -122,7 +122,7 @@ export const collectionsV2: CollectionV2[] = [
     },
     products: {
       flooring:                  {  "medium-wood": ["nagoja-duron"], "light-wood": ["solido-iconic-oak-bolsena"], "concrete": ["solido-pearl"] },
-      "worktops-and-backsplashes": {"soft-texture-light": ["icono-arabesca-marmo"], "soft-texture-dark": ["icono-marquina-cava"] },
+      "worktops-and-backsplashes": {"soft-texture-light": ["icono-arabesca-marmo"], "soft-texture-dark": ["icono-picasso-marrone"] },
       "cabinet-fronts":          {"medium-wood": ["egger-brown-casella-oak"], "neutral": ["velvet-7393"], "black": ["velvet-1302"]  },
       accents:                   { "aged-bronze": ["aged-bronze"], "chrome": ["chrome"] },
     },
@@ -134,16 +134,16 @@ export const collectionsV2: CollectionV2[] = [
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
-      flooring:                  [ "light-wood", "concrete"],
+      flooring:                  [ "bleached-wood", "concrete"],
       "worktops-and-backsplashes": ["white"],
-      "cabinet-fronts":          ["pastel", "neutral", "bleached-wood"],
+      "cabinet-fronts":          ["pastel", "neutral", "light-wood"],
       walls:                     ["off-white"],
       accents:                   ["gold", "chrome"],
     },
     products: {
-      flooring:                  {  "light-wood": ["solido-iconic-oak-bolsena"], "concrete": ["solido-pearl"] },
+      flooring:                  {  "bleached-wood": ["bleached-wood-demo"], "concrete": ["florim-sensi-lithos-white"] },
       "worktops-and-backsplashes": { "white": ["icono-c43-eleganza-bianco"] },
-      "cabinet-fronts":          { "pastel": ["velvet-4246"], "neutral": ["egger-taupe-grey"], "bleached-wood": ["egger-light-natural-casella-oak"] },
+      "cabinet-fronts":          { "pastel": ["velvet-4246"], "neutral": ["egger-taupe-grey"], "light-wood": ["egger-light-natural-casella-oak"] },
       accents:                   { "gold": ["gold"], "chrome": ["chrome"] },
     },
     thumbnail: spicyNord,
