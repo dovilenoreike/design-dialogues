@@ -11,6 +11,8 @@ import type { CollectionV2 } from "@/data/collections/types";
 import type { SurfaceCategory } from "@/data/materials/types";
 import { matchCollection, type SlotPick } from "@/lib/collection-matching";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_CATEGORY } from "../controls/MaterialSlotPicker";
 import VibePickerView from "./VibePickerView";
 
@@ -174,6 +176,7 @@ export default function MoodboardView() {
   const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, setVibeTag, clearVibeTag, isSharedSession, sharedMoodboardSlots } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
+  const isMobile = useIsMobile();
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
@@ -618,12 +621,9 @@ export default function MoodboardView() {
           </button>
         </div>
 
-        {/* ── Collections Sheet ── */}
-        <Sheet open={collectionsOpen} onOpenChange={setCollectionsOpen}>
-          <SheetContent side="bottom" className="rounded-t-2xl pb-safe sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
-            <SheetHeader className="mb-4">
-              <SheetTitle className="font-serif">{t("moodboard.exploreCollections")}</SheetTitle>
-            </SheetHeader>
+        {/* ── Collections Sheet (mobile) / Dialog (desktop) ── */}
+        {(() => {
+          const collectionsBody = (
             <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide pb-4">
               {collectionsV2.filter((col) => !vibeTag || col.vibe === vibeTag).map((col) => {
                 const isSelected = selectedCollectionId === col.id;
@@ -634,7 +634,6 @@ export default function MoodboardView() {
                     <div className={`relative rounded-xl overflow-hidden border-2 ${
                       isSelected ? "border-neutral-900" : "border-neutral-200"
                     }`}>
-                      {/* 2-col × 2-row swatch grid */}
                       <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 64 }}>
                         {swatches.map((img, i) => (
                           <div key={i} className="bg-neutral-100" style={{ height: 30 }}>
@@ -655,8 +654,32 @@ export default function MoodboardView() {
                 );
               })}
             </div>
-          </SheetContent>
-        </Sheet>
+          );
+
+          if (isMobile) {
+            return (
+              <Sheet open={collectionsOpen} onOpenChange={setCollectionsOpen}>
+                <SheetContent side="bottom" className="rounded-t-2xl pb-safe" aria-describedby={undefined}>
+                  <SheetHeader className="mb-4">
+                    <SheetTitle className="font-serif">{t("moodboard.exploreCollections")}</SheetTitle>
+                  </SheetHeader>
+                  {collectionsBody}
+                </SheetContent>
+              </Sheet>
+            );
+          }
+
+          return (
+            <Dialog open={collectionsOpen} onOpenChange={setCollectionsOpen}>
+              <DialogContent className="max-w-2xl" aria-describedby={undefined}>
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="font-serif">{t("moodboard.exploreCollections")}</DialogTitle>
+                </DialogHeader>
+                {collectionsBody}
+              </DialogContent>
+            </Dialog>
+          );
+        })()}
       </div>
 
       <MaterialSlotPicker

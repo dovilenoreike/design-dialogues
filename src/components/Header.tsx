@@ -186,7 +186,7 @@ const Header = () => {
             ) : (
               <Link
                 to="/"
-                onClick={() => { setActiveTab?.("design"); }}
+                onClick={() => { setActiveTab?.("moodboard"); }}
                 className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
               >
                 Interjero planuotė
@@ -241,7 +241,7 @@ const Header = () => {
               ) : (
                 <Link
                   to="/"
-                  onClick={() => setActiveTab?.("design")}
+                  onClick={() => setActiveTab?.("moodboard")}
                   className="text-2xl font-serif font-medium tracking-tight text-foreground"
                 >
                   Interjero planuotė

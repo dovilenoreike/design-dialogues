@@ -95,7 +95,7 @@ export const collectionsV2: CollectionV2[] = [
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
       flooring:                  [ "light-wood", "concrete"],
-      "worktops-and-backsplashes": ["white", "soft-texture-light", "bold-texture-light"],
+      "worktops-and-backsplashes": ["bold-texture-light", "white", "soft-texture-light", ],
       "cabinet-fronts":          ["white", "medium-wood", "neutral"],
       walls:                     ["off-white"],
       accents:                   ["gold", "chrome"],
