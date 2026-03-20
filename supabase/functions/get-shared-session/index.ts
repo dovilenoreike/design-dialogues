@@ -62,6 +62,8 @@ serve(async (req) => {
       completedTasks: data.completed_tasks || [],
       layoutAuditResponses: data.layout_audit_responses || {},
       layoutAuditVariables: data.layout_audit_variables || null,
+      vibeTag: data.vibe_tag || null,
+      moodboardSlots: data.moodboard_slots || null,
     };
 
     return new Response(

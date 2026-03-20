@@ -171,13 +171,22 @@ function toSlotPicks(selections: SlotSelections, exclude?: SlotKey): SlotPick[] 
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, setVibeTag, clearVibeTag } = useDesign();
+  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, setVibeTag, clearVibeTag, isSharedSession, sharedMoodboardSlots } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [slotSelections, setSlotSelections] = useState<SlotSelections>(() => {
+    // Shared session: use the host's selections, skip local storage
+    if (isSharedSession && sharedMoodboardSlots) {
+      return {
+        floor: null, mainFronts: null, worktops: null,
+        additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null,
+        ...sharedMoodboardSlots,
+      } as SlotSelections;
+    }
+
     // Restore from localStorage if available
     try {
       const saved = localStorage.getItem("moodboard-slot-selections");
@@ -232,46 +241,61 @@ export default function MoodboardView() {
   }, []); // intentionally runs once on mount only
 
   // Reset moodboard when user picks a new vibe
-  const prevVibeTag = useRef(vibeTag);
+  const lastNonNullVibeRef = useRef<VibeTag | null>(vibeTag);
   useEffect(() => {
-    if (prevVibeTag.current !== vibeTag && vibeTag !== null) {
-      const current = slotSelectionsRef.current;
-      const hasAnyPick = (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).some((k) => Boolean(current[k]));
-      if (hasAnyPick) {
-        // Determine which filled slots have archetypes that exist in the new vibe's collections
-        const vibeCollections = collectionsV2.filter((c) => c.vibe === vibeTag);
-        const slotsToKeep = new Set<SlotKey>(
-          (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).filter((k) => {
-            const archetypeId = current[k];
-            if (!archetypeId) return false;
-            const category = SLOT_CATEGORY[k];
-            return vibeCollections.some((c) => c.pool[category]?.includes(archetypeId));
-          })
-        );
+    if (vibeTag === null) return; // user opened picker — preserve state
 
-        // Clear slots with no pick OR whose archetype doesn't exist in the new vibe
-        setSlotSelections((prev) => {
-          const next = { ...prev };
-          (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).forEach((k) => {
-            if (!slotsToKeep.has(k)) next[k] = null;
-          });
-          return next;
-        });
-        setMaterialOverrides((prev) => {
-          const next = { ...prev };
-          (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).forEach((k) => {
-            if (!slotsToKeep.has(k)) {
-              const pk = SLOT_TO_PALETTE_KEY[k];
-              if (pk) delete next[pk];
-            }
-          });
-          return next;
-        });
-      } else {
-        handleClearSlots(); // original behavior when board is completely empty
+    const previousVibe = lastNonNullVibeRef.current;
+    lastNonNullVibeRef.current = vibeTag;
+
+    if (vibeTag === previousVibe) return; // returned to same vibe — do nothing
+
+    // Different vibe: find best-matching collection and remap
+    const current = slotSelectionsRef.current;
+    const hasAnyPick = (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).some((k) => Boolean(current[k]));
+    if (!hasAnyPick) return;
+
+    // Score each collection in the new vibe by how many current archetypes it contains
+    const vibeCollections = collectionsV2.filter((c) => c.vibe === vibeTag);
+    let bestCol: typeof vibeCollections[0] | null = null;
+    let bestScore = 0;
+    for (const col of vibeCollections) {
+      let score = 0;
+      for (const k of Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]) {
+        const aId = current[k];
+        if (aId && col.pool[SLOT_CATEGORY[k]]?.includes(aId)) score++;
       }
+      if (score > bestScore) { bestScore = score; bestCol = col; }
     }
-    prevVibeTag.current = vibeTag;
+
+    if (!bestCol) { handleClearSlots(); return; }
+
+    // Keep only slots whose archetype exists in the best collection
+    const slotsToKeep = new Set<SlotKey>(
+      (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).filter((k) => {
+        const aId = current[k];
+        return aId ? (bestCol!.pool[SLOT_CATEGORY[k]]?.includes(aId) ?? false) : false;
+      })
+    );
+
+    setSlotSelections((prev) => {
+      const next = { ...prev };
+      (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).forEach((k) => {
+        if (!slotsToKeep.has(k)) next[k] = null;
+      });
+      return next;
+    });
+
+    setMaterialOverrides((prev) => {
+      const next = { ...prev };
+      (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).forEach((k) => {
+        if (!slotsToKeep.has(k)) {
+          const pk = SLOT_TO_PALETTE_KEY[k];
+          if (pk) delete next[pk];
+        }
+      });
+      return next;
+    });
   }, [vibeTag]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Which collection matches current picks (requires 2+ picks and vibe filter)
@@ -438,21 +462,10 @@ export default function MoodboardView() {
           )}
         </div>
 
-        {/* ── Contextual instruction ── */}
-        <div className="mb-1.5 mt-6 flex items-center justify-center">
-          <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center">
-            {filledCount === 0
-              ? t("moodboard.pickFirst")
-              : allSlotsFilled
-                ? t("moodboard.ready")
-                : t("moodboard.pickRemaining")}
-          </p>
-        </div>
-
         {/* ── Architectural flatlay canvas ── */}
         <div
           className="relative w-full overflow-hidden rounded-2xl bg-neutral-50"
-          style={{ aspectRatio: "3/4" }}
+          style={{ aspectRatio: "4/5" }}
         >
           {/* Material cut-sample pieces */}
           {PIECES.map((piece, i) => {
@@ -556,38 +569,46 @@ export default function MoodboardView() {
           </svg>
         </div>
 
+        {/* ── Contextual instruction — hidden once filled ── */}
+        {!allSlotsFilled && (
+          <div className="mt-3 flex items-center justify-center">
+            <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center">
+              {filledCount === 0 ? t("moodboard.pickFirst") : t("moodboard.pickRemaining")}
+            </p>
+          </div>
+        )}
+
         {/* ── Hairline separator ── */}
-        <div className="mt-4 border-t border-neutral-100" />
+        <div className="mt-3 border-t border-neutral-100" />
 
         {/* ── CTA pills ── */}
         <div className="mt-3 flex items-center justify-between gap-2">
-          {/* Kolekcijos — local action */}
+          {/* Kolekcijos — ghost */}
           <button
             onClick={() => setCollectionsOpen(true)}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors active:scale-[0.97]">
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97]">
             <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">
               {t("moodboard.exploreCollections")}
             </span>
             <ChevronDown className="w-3 h-3 text-neutral-400" strokeWidth={1.5} />
           </button>
 
-          {/* Vizualizuoti — focal: solid ink border when ready */}
+          {/* Vizualizuoti — filled black */}
           <button
             onClick={() => setActiveTab("design")}
             disabled={!allSlotsFilled}
-            className={`flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border bg-white transition-colors active:scale-[0.97] disabled:opacity-40
-              ${allSlotsFilled ? "border-neutral-900" : "border-neutral-200"}`}>
-            <span className={`text-[8px] uppercase tracking-[0.2em] font-medium ${allSlotsFilled ? "text-neutral-900" : "text-neutral-400"}`}>
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full bg-neutral-900 hover:bg-neutral-800 transition-colors active:scale-[0.97] disabled:opacity-30">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-white">
               {t("moodboard.visualize")}
             </span>
-            <ArrowRight className={`w-3 h-3 ${allSlotsFilled ? "text-neutral-900" : "text-neutral-400"}`} strokeWidth={1} />
+            <ArrowRight className="w-3 h-3 text-white" strokeWidth={1} />
           </button>
 
-          {/* Kur rasti? — neutral-200 border, text lifts to neutral-600 when active */}
+          {/* Kur rasti? — ghost */}
           <button
             onClick={() => setActiveTab("specs")}
             disabled={!allSlotsFilled}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors active:scale-[0.97] disabled:opacity-40">
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97] disabled:opacity-30">
             <span className={`text-[8px] uppercase tracking-[0.2em] font-medium ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`}>
               {t("moodboard.findMaterials")}
             </span>

@@ -116,6 +116,7 @@ interface DesignContextValue {
   shareSession: () => Promise<string | null>;
   isSharing: boolean;
   isSharedSession: boolean;
+  sharedMoodboardSlots: Record<string, string | null> | null;
 }
 
 const DesignContext = createContext<DesignContextValue | undefined>(undefined);
@@ -133,6 +134,8 @@ interface SharedSessionData {
   completedTasks: string[];
   layoutAuditResponses?: Record<string, AuditResponse>;
   layoutAuditVariables?: AuditVariables;
+  vibeTag?: string | null;
+  moodboardSlots?: Record<string, string | null> | null;
 }
 
 interface DesignProviderProps {
@@ -175,8 +178,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [layoutAuditResponses, setLayoutAuditResponses] = useState<Record<string, AuditResponse>>({});
   const [layoutAuditVariables, setLayoutAuditVariables] = useState<AuditVariables>(defaultAuditVariables);
 
-  // Moodboard vibe (Layer 1) — persisted so it survives refresh
+  // Moodboard vibe (Layer 1) — persisted so it survives refresh; shared session takes priority
   const [vibeTag, setVibeTagState] = useState<VibeTag | null>(() => {
+    if (initialSharedSession?.vibeTag) return initialSharedSession.vibeTag as VibeTag;
     try {
       const saved = localStorage.getItem("moodboard-vibe");
       if (saved === "light-and-airy" || saved === "warm-and-grounded" || saved === "bold-and-moody") {
@@ -185,6 +189,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch {}
     return null;
   });
+
+  // Moodboard slot selections from a shared session (archetype IDs, read-only after mount)
+  const sharedMoodboardSlots = useState<Record<string, string | null> | null>(
+    initialSharedSession?.moodboardSlots ?? null
+  )[0];
 
   const setVibeTag = useCallback((vibe: VibeTag) => {
     setVibeTagState(vibe);
@@ -1261,6 +1270,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           completedTasks: Array.from(completedTasks),
           layoutAuditResponses,
           layoutAuditVariables,
+          vibeTag,
+          moodboardSlots: (() => {
+            try {
+              const raw = localStorage.getItem("moodboard-slot-selections");
+              return raw ? JSON.parse(raw) : null;
+            } catch { return null; }
+          })(),
         },
       });
 
@@ -1500,6 +1516,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     shareSession,
     isSharing,
     isSharedSession,
+    sharedMoodboardSlots,
   };
 
   return (

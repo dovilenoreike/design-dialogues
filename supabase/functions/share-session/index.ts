@@ -41,6 +41,8 @@ serve(async (req) => {
       completedTasks,
       layoutAuditResponses,
       layoutAuditVariables,
+      vibeTag,
+      moodboardSlots,
     } = body;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -102,6 +104,8 @@ serve(async (req) => {
         completed_tasks: completedTasks || [],
         layout_audit_responses: layoutAuditResponses || null,
         layout_audit_variables: layoutAuditVariables || null,
+        vibe_tag: vibeTag || null,
+        moodboard_slots: moodboardSlots || null,
       });
 
     if (insertError) {
