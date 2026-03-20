@@ -43,7 +43,7 @@ import imgFlorimOnyx from "@/assets/materials/sleeping-earth/material6.jpg";
 // Behind the Lights
 import imgCalissonOak from "@/assets/materials/behind-the-lights/material1.jpg";
 import imgValchromatBlack from "@/assets/materials/behind-the-lights/material2.jpg";
-import imgFondi40 from "@/assets/materials/behind-the-lights/material3.jpg";
+import imgFondi40 from "@/assets/materials/worktops/fondi-40-peperino-marmo.jpg";
 import imgEggerH1385 from "@/assets/materials/behind-the-lights/material4.jpg";
 import imgVelvet5983 from "@/assets/materials/behind-the-lights/material7.jpg";
 
@@ -66,7 +66,7 @@ import imgSignalWhite from "@/assets/materials/paint/ral_9003.jpg";
 // Cabinet Fronts
 import imgSkinCarbonFumo from "@/assets/materials/cabinet-fronts/skin_carbon_fumo.jpg";
 import imgVelvetSoftBlack from "@/assets/materials/cabinet-fronts/velvet-1302.jpg";
-import imgAlviGoya03NA from "@/assets/materials/cabinet-fronts/ALVI_GOYA 03 NA.jpg";
+import imgAlviGoya03NA from "@/assets/materials/cabinet-fronts/alvic-goya-03.jpg";
 
 import imgEggerLightNaturalCasellaOak from "@/assets/materials/cabinet-fronts/egger_light_natural_casella_oak.jpg";
 import imgEggerBrownCasellaOak from "@/assets/materials/cabinet-fronts/egger_brown_casella_oak.jpg";

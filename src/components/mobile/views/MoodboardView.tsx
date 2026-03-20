@@ -463,39 +463,45 @@ export default function MoodboardView() {
             return (
               <div
                 key={i}
-                className="absolute overflow-hidden active:scale-[0.97] transition-transform"
+                className="absolute active:scale-[0.97] transition-transform"
                 style={{
                   top: piece.top,
                   left: piece.left,
                   width: piece.width,
                   height: piece.height,
-                  borderRadius: piece.borderRadius ?? "4px",
                   transform: `rotate(${piece.rotate})`,
                   zIndex: piece.zIndex,
-                  boxShadow: piece.shadow,
                 }}
               >
-                <button
-                  onClick={() => setOpenSlot(piece.slot)}
-                  className="w-full h-full"
-                  aria-label={`Pick ${piece.slot}`}
+                <div
+                  className="w-full h-full overflow-hidden"
+                  style={{
+                    borderRadius: piece.borderRadius ?? "4px",
+                    boxShadow: piece.shadow,
+                  }}
                 >
-                  {tileImage ? (
-                    <img
-                      src={tileImage}
-                      alt={getArchetypeById(archetypeId, category)?.label[lang] ?? piece.slot}
-                      className="w-full h-full object-cover"
-                      draggable={false}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                      <Plus
-                        className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
-                        strokeWidth={1.5}
+                  <button
+                    onClick={() => setOpenSlot(piece.slot)}
+                    className="w-full h-full"
+                    aria-label={`Pick ${piece.slot}`}
+                  >
+                    {tileImage ? (
+                      <img
+                        src={tileImage}
+                        alt={getArchetypeById(archetypeId, category)?.label[lang] ?? piece.slot}
+                        className="w-full h-full object-cover"
+                        draggable={false}
                       />
-                    </div>
-                  )}
-                </button>
+                    ) : (
+                      <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                        <Plus
+                          className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                    )}
+                  </button>
+                </div>
                 {archetypeId && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleSlotClear(piece.slot); }}
@@ -503,7 +509,7 @@ export default function MoodboardView() {
                     style={{ zIndex: 1 }}
                     aria-label={`Clear ${piece.slot}`}
                   >
-                    <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.7 }} />
+                    <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                   </button>
                 )}
               </div>
