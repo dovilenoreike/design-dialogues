@@ -120,23 +120,23 @@ interface Piece {
 // Shadow escalates with zIndex so smaller/higher pieces visually lift off the surface.
 const PIECES: Piece[] = [
   // FLOOR — base layer, largest piece
-  { slot: "floor",            top: "16%", left: "10%", width: "84%", height: "63%",
+  { slot: "floor",            top: "13%", left: "10%", width: "84%", height: "63%",
     rotate: "0deg", zIndex: 1, shadow: "0 1px 2px rgba(0,0,0,0.06)" },
 
   // MAIN FRONTS — large square, lower-right
-  { slot: "mainFronts",       top: "31%", left: "56%", width: "42%", height: "41%",
+  { slot: "mainFronts",       top: "30%", left: "56%", width: "42%", height: "41%",
     rotate: "0deg", zIndex: 4, shadow: "0 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.06)" },
 
   // ADDITIONAL FRONTS — medium square, lower-center
-  { slot: "additionalFronts", top: "54%", left: "15%", width: "38%", height: "32%",
+  { slot: "additionalFronts", top: "53%", left: "15%", width: "38%", height: "32%",
     rotate: "0deg", zIndex: 5, shadow: "0 6px 18px rgba(0,0,0,0.20), 0 2px 5px rgba(0,0,0,0.08)" },
 
   // WORKTOPS — sits above additionalFronts/mainFronts
-  { slot: "worktops",         top: "49%", left: "34%", width: "29%", height: "25%",
+  { slot: "worktops",         top: "48%", left: "34%", width: "29%", height: "25%",
     rotate: "0deg", zIndex: 6, shadow: "0 8px 22px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.09)" },
 
   // ACCENTS — smallest piece, highest in stack
-  { slot: "accents",          top: "68%", left: "62%", width: "18%", height: "14%",
+  { slot: "accents",          top: "67%", left: "62%", width: "18%", height: "14%",
     rotate: "0deg", zIndex: 7, shadow: "0 10px 28px rgba(0,0,0,0.28), 0 3px 8px rgba(0,0,0,0.12)", borderRadius: "50%" },
 ];
 
@@ -153,12 +153,12 @@ interface AnnotationDef {
 }
 
 const ANNOTATION_DEFS: AnnotationDef[] = [
-  // GRINDYS  — top white margin, perfectly horizontal at ty="7%"
-  { surfaceKey: "floor",            tx: "56%", ty: "7%",  x1: "62%", y1: "8.5%",  px: "68%", py: "17%" },
-  // FASADAI  — bottom margin, baseline locked at ty="94%"
-  { surfaceKey: "additionalFronts", tx: "10%", ty: "94%", x1: "18%", y1: "91.5%", px: "28%", py: "82%" },
-  // AKCENTAI — bottom margin, same baseline ty="94%"
-  { surfaceKey: "accents",          tx: "58%", ty: "94%", x1: "64%", y1: "91.5%", px: "70%", py: "79%" },
+  // GRINDYS  — top white margin, perfectly horizontal at ty="4%"
+  { surfaceKey: "floor",            tx: "56%", ty: "7%",  x1: "62%", y1: "8.5%",  px: "68%", py: "14%" },
+  // FASADAI  — bottom margin, baseline locked at ty="93%"
+  { surfaceKey: "additionalFronts", tx: "10%", ty: "93%", x1: "18%", y1: "90.5%", px: "28%", py: "81%" },
+  // AKCENTAI — bottom margin, same baseline ty="93%"
+  { surfaceKey: "accents",          tx: "58%", ty: "93%", x1: "64%", y1: "90.5%", px: "70%", py: "78%" },
 ];
 
 const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
@@ -464,9 +464,11 @@ export default function MoodboardView() {
 
         {/* ── Architectural flatlay canvas ── */}
         <div
-          className="relative w-full overflow-hidden rounded-2xl bg-neutral-50"
-          style={{ aspectRatio: "4/5" }}
+          className="relative w-full overflow-hidden rounded-2xl"
+          style={{ aspectRatio: "4/4.9" }}
         >
+          {/* Background — slightly inset from the container edges */}
+          <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
           {/* Material cut-sample pieces */}
           {PIECES.map((piece, i) => {
             if (piece.slot === "accents" && !mainSlotsFilled) return null;
@@ -578,8 +580,8 @@ export default function MoodboardView() {
           </div>
         )}
 
-        {/* ── Hairline separator ── */}
-        <div className="mt-3 border-t border-neutral-100" />
+        {/* ── Hairline separator — hidden once filled ── */}
+        {!allSlotsFilled && <div className="mt-3 border-t border-neutral-100" />}
 
         {/* ── CTA pills ── */}
         <div className="mt-3 flex items-center justify-between gap-2">
