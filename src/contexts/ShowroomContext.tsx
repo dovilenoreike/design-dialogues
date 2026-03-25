@@ -15,34 +15,24 @@ const ShowroomContext = createContext<ShowroomContextType | undefined>(undefined
 
 export const ShowroomProvider = ({ children }: { children: ReactNode }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeShowroom, setActiveShowroom] = useState<ShowroomBrand | null>(null);
+  const [activeShowroom, setActiveShowroom] = useState<ShowroomBrand | null>(() => {
+    try {
+      const storedId = localStorage.getItem(STORAGE_KEY);
+      if (storedId) return showroomBrands.find((s) => s.id === storedId) ?? null;
+    } catch {}
+    return null;
+  });
 
-  // On mount: check URL param first, then localStorage
+  // On mount: check URL param and apply if present
   useEffect(() => {
     const urlShowroomId = searchParams.get("showroom");
-
-    if (urlShowroomId) {
-      // URL param takes precedence
-      const showroom = showroomBrands.find((s) => s.id === urlShowroomId);
-      if (showroom) {
-        setActiveShowroom(showroom);
-        localStorage.setItem(STORAGE_KEY, showroom.id);
-        // Clear URL param for cleaner URL
-        searchParams.delete("showroom");
-        setSearchParams(searchParams, { replace: true });
-      }
-    } else {
-      // Check localStorage
-      const storedId = localStorage.getItem(STORAGE_KEY);
-      if (storedId) {
-        const showroom = showroomBrands.find((s) => s.id === storedId);
-        if (showroom) {
-          setActiveShowroom(showroom);
-        } else {
-          // Invalid stored ID, clean up
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
+    if (!urlShowroomId) return;
+    const showroom = showroomBrands.find((s) => s.id === urlShowroomId);
+    if (showroom) {
+      setActiveShowroom(showroom);
+      localStorage.setItem(STORAGE_KEY, showroom.id);
+      searchParams.delete("showroom");
+      setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 

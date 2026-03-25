@@ -3,50 +3,20 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { RotateCcw, Plus, Check, X, ChevronDown, ArrowRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { getMaterialById } from "@/data/materials";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import type { CollectionV2 } from "@/data/collections/types";
 import type { SurfaceCategory } from "@/data/materials/types";
 import { matchCollection, type SlotPick } from "@/lib/collection-matching";
+import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_CATEGORY } from "../controls/MaterialSlotPicker";
 import VibePickerView from "./VibePickerView";
 
-// ─── Collection swatch preview ────────────────────────────────────────────
-// [floor, worktops, front1, front2] — 2-col × 2-row grid
-const COLLECTION_SWATCH_SPEC: Array<{ category: SurfaceCategory; count: 1 | 2 }> = [
-  { category: "flooring",                    count: 1 },
-  { category: "worktops-and-backsplashes",   count: 1 },
-  { category: "cabinet-fronts",              count: 2 },
-];
-
-function resolveSwatchImage(
-  archetypeId: string | null | undefined,
-  category: SurfaceCategory,
-  products: CollectionV2["products"],
-): string | null {
-  if (!archetypeId) return null;
-  const productId = products[category]?.[archetypeId]?.[0];
-  if (productId) {
-    const mat = getMaterialById(productId);
-    if (mat?.image) return mat.image;
-  }
-  return getArchetypeById(archetypeId, category)?.image ?? null;
-}
-
-function getCollectionSwatches(pool: CollectionV2["pool"], products: CollectionV2["products"]): (string | null)[] {
-  const images: (string | null)[] = [];
-  for (const { category, count } of COLLECTION_SWATCH_SPEC) {
-    const ids = pool[category] ?? [];
-    for (let i = 0; i < count; i++) {
-      images.push(resolveSwatchImage(ids[i], category, products));
-    }
-  }
-  return images; // always 4 entries: [floor, worktops, front1, front2]
-}
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
 const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
@@ -76,11 +46,16 @@ function resolveTileImage(
   category: SurfaceCategory,
   matchedCollection?: CollectionV2 | null,
   vibeTag?: string | null,
+  showroomId?: string | null,
 ): string | null {
   if (!archetypeId) return null;
   // Priority 1: real product photo from matched collection
   if (matchedCollection) {
-    const materialId = matchedCollection.products[category]?.[archetypeId]?.[0];
+    const products = matchedCollection.products[category]?.[archetypeId] ?? [];
+    let materialId = showroomId
+      ? products.find((id) => getMaterialById(id)?.showroomIds?.includes(showroomId))
+      : undefined;
+    materialId ??= products[0];
     if (materialId) {
       const mat = getMaterialById(materialId);
       if (mat?.image) return mat.image;
@@ -93,7 +68,11 @@ function resolveTileImage(
     ? collectionsV2.filter((c) => c.vibe === vibeTag)
     : collectionsV2;
   for (const col of vibeFiltered) {
-    const materialId = col.products[category]?.[archetypeId]?.[0];
+    const products = col.products[category]?.[archetypeId] ?? [];
+    let materialId = showroomId
+      ? products.find((id) => getMaterialById(id)?.showroomIds?.includes(showroomId))
+      : undefined;
+    materialId ??= products[0];
     if (materialId) {
       const mat = getMaterialById(materialId);
       if (mat?.image) return mat.image;
@@ -176,6 +155,7 @@ export default function MoodboardView() {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const isMobile = useIsMobile();
+  const { activeShowroom } = useShowroom();
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
@@ -230,7 +210,11 @@ export default function MoodboardView() {
         if (!pk) return;
         if (!aId) { delete next[pk]; return; }
         if (matched) {
-          const resolvedMatId = matched.products[SLOT_CATEGORY[k]]?.[aId]?.[0];
+          const products = matched.products[SLOT_CATEGORY[k]]?.[aId] ?? [];
+          let resolvedMatId = activeShowroom
+            ? products.find((id) => getMaterialById(id)?.showroomIds?.includes(activeShowroom.id))
+            : undefined;
+          resolvedMatId ??= products[0];
           if (resolvedMatId) next[pk] = resolvedMatId;
           else delete next[pk];
         } else {
@@ -474,7 +458,7 @@ export default function MoodboardView() {
             if (piece.slot === "accents" && !mainSlotsFilled) return null;
             const archetypeId = slotSelections[piece.slot];
             const category = SLOT_CATEGORY[piece.slot];
-            const tileImage = resolveTileImage(archetypeId, category, matchedCollection, vibeTag);
+            const tileImage = resolveTileImage(archetypeId, category, matchedCollection, vibeTag, activeShowroom?.id);
             return (
               <div
                 key={i}
@@ -622,9 +606,12 @@ export default function MoodboardView() {
         {(() => {
           const collectionsBody = (
             <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide pb-4">
-              {collectionsV2.filter((col) => !vibeTag || col.vibe === vibeTag).map((col) => {
+              {collectionsV2.filter((col) =>
+                (!vibeTag || col.vibe === vibeTag) &&
+                (!activeShowroom || collectionHasShowroom(col.id, activeShowroom.id))
+              ).map((col) => {
                 const isSelected = selectedCollectionId === col.id;
-                const swatches = getCollectionSwatches(col.pool, col.products);
+                const swatches = getCollectionSwatches(col);
                 return (
                   <button key={col.id} onClick={() => handleCollectionSelect(col.id)}
                     className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
@@ -687,6 +674,7 @@ export default function MoodboardView() {
         onClear={handleSlotClear}
         lockedCollectionId={pickerLockedCollectionId}
         vibeTag={vibeTag}
+        showroom={activeShowroom}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useCallback, useMemo, useEffect, useState, useRef } from "react";
 import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown, Coins } from "lucide-react";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
@@ -13,9 +13,9 @@ import { rooms } from "@/data/rooms";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
 import { getCollectionMaterialBubbles } from "@/lib/collection-utils";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
-import { useRef } from "react";
 
 interface StageProps {
   onOpenSelector?: (mode: ControlMode) => void;
@@ -42,6 +42,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     setExcludedSlots,
   } = useDesign();
   const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
+  const { activeShowroom } = useShowroom();
+  const showroomFilter = activeShowroom
+    ? { id: activeShowroom.id, surfaceCategories: activeShowroom.surfaceCategories }
+    : undefined;
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
@@ -193,7 +197,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   }, [prevImage, nextImage]);
 
   // Bubble data for the rail — built from materialOverrides + collection defaults
-  const bubbles = currentCollection ? getCollectionMaterialBubbles(currentCollection, roomNameRaw, materialOverrides) : [];
+  const bubbles = currentCollection
+    ? getCollectionMaterialBubbles(currentCollection, roomNameRaw, materialOverrides, showroomFilter)
+    : [];
 
   return (
     <div className="relative w-full h-full bg-surface-muted">

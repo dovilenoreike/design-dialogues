@@ -8,13 +8,14 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getCollectionSwatches } from "@/lib/collection-utils";
+import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
 
 interface PaletteSelectorSheetProps {
   isOpen: boolean;
   onClose: () => void;
   selectedPaletteId: string | null;
   onSelectPalette: (paletteId: string) => void;
+  showroomId?: string | null;
 }
 
 export default function PaletteSelectorSheet({
@@ -22,10 +23,14 @@ export default function PaletteSelectorSheet({
   onClose,
   selectedPaletteId,
   onSelectPalette,
+  showroomId,
 }: PaletteSelectorSheetProps) {
   const { t, language } = useLanguage();
 
-  const displayCollections = useMemo(() => collectionsV2, []);
+  const displayCollections = useMemo(
+    () => showroomId ? collectionsV2.filter((c) => collectionHasShowroom(c.id, showroomId)) : collectionsV2,
+    [showroomId],
+  );
 
   const handleSelect = (collectionId: string) => {
     onSelectPalette(collectionId);

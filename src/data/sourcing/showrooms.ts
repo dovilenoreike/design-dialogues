@@ -4,7 +4,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "impeka",
     name: "Impeka",
-    materialTypes: ["LMDP", "MDF", "HPL"],
+    surfaceCategories: ["cabinet-fronts"],
     isPartner: false,
     locations: {},
     // locations: {
@@ -17,7 +17,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "solido-grindys",
     name: "Solido Grindys",
-    materialTypes: ["Vinyl", "Laminate", "Engineered Wood"],
+    surfaceCategories: ["flooring"],
     isPartner: false,
     locations: {},
     // locations: {
@@ -30,7 +30,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "jusu-salonas",
     name: "Jūsų Salonas",
-    materialTypes: ["Vinyl", "Laminate", "Engineered Wood"],
+    surfaceCategories: ["flooring"],
     isPartner: false,
     locations: {},
     // locations: {
@@ -43,7 +43,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "linea",
     name: "Linea",
-    materialTypes: ["Ceramic Tile", "Tiles"],
+    surfaceCategories: ["tiles"],
     isPartner: false,
     locations: {},
     // locations: {

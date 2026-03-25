@@ -9,7 +9,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import type { CollectionV2 } from "@/data/collections/types";
-import { getCollectionSwatches } from "@/lib/collection-utils";
+import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
 import { getDesignerWithFallback } from "@/data/designers";
 import { getDesignerImage } from "@/data/designers/images";
 import DesignerContactModal from "@/components/mobile/DesignerContactModal";
@@ -25,6 +25,7 @@ interface DesignerProfileSheetProps {
   onSelectPalette?: (paletteId: string) => void;
   onSelectCollection?: (collectionId: string) => void;
   activeCollectionId?: string;
+  showroomId?: string | null;
 }
 
 // ─── Collection swatch preview ─────────────────────────────────────────────
@@ -39,6 +40,7 @@ const DesignerProfileSheet = ({
   onSelectPalette,
   onSelectCollection,
   activeCollectionId,
+  showroomId,
 }: DesignerProfileSheetProps) => {
   const { t, language } = useLanguage();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -47,7 +49,10 @@ const DesignerProfileSheet = ({
   const profile = getDesignerWithFallback(designerId, designerTitle);
   const profileImage = getDesignerImage(designerId);
 
-  const designerCollections = collectionsV2.filter((c) => c.designer === designerId);
+  const designerCollections = collectionsV2.filter((c) =>
+    c.designer === designerId &&
+    (!showroomId || collectionHasShowroom(c.id, showroomId))
+  );
 
   const collectionsSection = designerCollections.length > 0 && (
     <div className={isMobile ? "pb-8 px-6" : "pb-8"}>

@@ -13,6 +13,8 @@ import { getMaterialById } from "@/data/materials";
 import type { SurfaceCategory } from "@/data/materials/types";
 import type { VibeTag } from "@/data/collections/types";
 import type { Archetype } from "@/data/archetypes/types";
+import type { ShowroomBrand } from "@/data/sourcing/types";
+import { collectionHasShowroom } from "@/lib/collection-utils";
 
 export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
@@ -34,6 +36,7 @@ function getAvailableArchetypes(
   selections: SlotSelections,
   lockedCollectionId?: string,
   vibeTag?: VibeTag | null,
+  showroom?: ShowroomBrand | null,
 ): Archetype[] {
   const category = SLOT_CATEGORY[slotKey];
 
@@ -41,35 +44,63 @@ function getAvailableArchetypes(
     const col = collectionsV2.find((c) => c.id === lockedCollectionId);
     const poolIds = col?.pool[category] ?? [];
     const archetypeMap = new Map(getArchetypesByCategory(category).map((a) => [a.id, a]));
-    return poolIds.map((id) => archetypeMap.get(id)).filter((a): a is Archetype => a !== undefined);
+    const archetypes = poolIds.map((id) => archetypeMap.get(id)).filter((a): a is Archetype => a !== undefined);
+
+    if (showroom && showroom.surfaceCategories.includes(category)) {
+      return archetypes.filter((a) =>
+        (col?.products[category]?.[a.id] ?? []).some(
+          (matId) => getMaterialById(matId)?.showroomIds?.includes(showroom.id)
+        )
+      );
+    }
+    return archetypes;
   }
 
   const vibeFiltered = vibeTag
     ? collectionsV2.filter((col) => col.vibe === vibeTag)
     : collectionsV2;
 
+  // when showroom is active, restrict to collections that carry at least one showroom product
+  const baseCollections = showroom
+    ? vibeFiltered.filter((col) => collectionHasShowroom(col.id, showroom.id))
+    : vibeFiltered;
+
   const otherPicks = SLOT_ORDER
     .filter((k) => k !== slotKey && selections[k] !== null)
     .map((k) => ({ category: SLOT_CATEGORY[k], archetypeId: selections[k]! }));
 
+  let archetypes: Archetype[];
+
   if (otherPicks.length === 0) {
-    const collectionIds = new Set(vibeFiltered.flatMap((col) => col.pool[category] ?? []));
-    return getArchetypesByCategory(category).filter((a) => collectionIds.has(a.id));
+    const collectionIds = new Set(baseCollections.flatMap((col) => col.pool[category] ?? []));
+    archetypes = getArchetypesByCategory(category).filter((a) => collectionIds.has(a.id));
+  } else {
+    const compatibleCollections = baseCollections.filter((col) =>
+      otherPicks.every(({ category: cat, archetypeId }) =>
+        col.pool[cat]?.includes(archetypeId) ?? false
+      )
+    );
+
+    if (compatibleCollections.length === 0) return [];
+
+    const compatibleIds = new Set<string>(
+      compatibleCollections.flatMap((col) => col.pool[category] ?? [])
+    );
+
+    archetypes = getArchetypesByCategory(category).filter((a) => compatibleIds.has(a.id));
   }
 
-  const compatibleCollections = vibeFiltered.filter((col) =>
-    otherPicks.every(({ category: cat, archetypeId }) =>
-      col.pool[cat]?.includes(archetypeId) ?? false
-    )
-  );
+  if (showroom && showroom.surfaceCategories.includes(category)) {
+    return archetypes.filter((a) =>
+      baseCollections.some((col) =>
+        (col.products[category]?.[a.id] ?? []).some(
+          (matId) => getMaterialById(matId)?.showroomIds?.includes(showroom.id)
+        )
+      )
+    );
+  }
 
-  if (compatibleCollections.length === 0) return [];
-
-  const compatibleIds = new Set<string>(
-    compatibleCollections.flatMap((col) => col.pool[category] ?? [])
-  );
-
-  return getArchetypesByCategory(category).filter((a) => compatibleIds.has(a.id));
+  return archetypes;
 }
 
 function resolveProductImage(
@@ -77,6 +108,7 @@ function resolveProductImage(
   category: SurfaceCategory,
   lockedCollectionId: string | undefined,
   vibeTag: VibeTag | null | undefined,
+  showroom?: ShowroomBrand | null,
 ): string | null {
   const relevantCollections = lockedCollectionId
     ? collectionsV2.filter((c) => c.id === lockedCollectionId)
@@ -85,7 +117,10 @@ function resolveProductImage(
       : collectionsV2;
 
   for (const col of relevantCollections) {
-    const productId = col.products[category]?.[archetypeId]?.[0];
+    const products = col.products[category]?.[archetypeId] ?? [];
+    const productId = showroom
+      ? (products.find((id) => getMaterialById(id)?.showroomIds?.includes(showroom.id)) ?? products[0])
+      : products[0];
     if (productId) {
       const image = getMaterialById(productId)?.image;
       if (image) return image;
@@ -102,6 +137,7 @@ interface MaterialSlotPickerProps {
   onClear?: (slotKey: SlotKey) => void;
   lockedCollectionId?: string;
   vibeTag?: VibeTag | null;
+  showroom?: ShowroomBrand | null;
 }
 
 export default function MaterialSlotPicker({
@@ -112,6 +148,7 @@ export default function MaterialSlotPicker({
   onClear,
   lockedCollectionId,
   vibeTag,
+  showroom,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -119,15 +156,15 @@ export default function MaterialSlotPicker({
   const availableWithImages = useMemo(() => {
     if (!slot) return [];
     const cat = SLOT_CATEGORY[slot];
-    return getAvailableArchetypes(slot, selections, lockedCollectionId, vibeTag)
+    return getAvailableArchetypes(slot, selections, lockedCollectionId, vibeTag, showroom)
       .map((a) => ({
         archetype: a,
-        displayImage: resolveProductImage(a.id, cat, lockedCollectionId, vibeTag),
+        displayImage: resolveProductImage(a.id, cat, lockedCollectionId, vibeTag, showroom),
       }))
       .filter((item): item is { archetype: Archetype; displayImage: string } =>
         item.displayImage !== null
       );
-  }, [slot, selections, lockedCollectionId, vibeTag]);
+  }, [slot, selections, lockedCollectionId, vibeTag, showroom]);
 
   const selectedId = slot ? selections[slot] : null;
 

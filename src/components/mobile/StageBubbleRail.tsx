@@ -4,6 +4,7 @@ import { getArchetypeById } from "@/data/archetypes";
 import { getSlotAlternatives, type MaterialBubble } from "@/lib/collection-utils";
 import type { CollectionV2 } from "@/data/collections/types";
 import type { ControlMode } from "@/contexts/DesignContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 
 interface StageBubbleRailProps {
   collection: CollectionV2;
@@ -47,6 +48,11 @@ export default function StageBubbleRail({
   language,
   variant,
 }: StageBubbleRailProps) {
+  const { activeShowroom } = useShowroom();
+  const showroomFilter = activeShowroom
+    ? { id: activeShowroom.id, surfaceCategories: activeShowroom.surfaceCategories }
+    : undefined;
+
   if (bubbles.length === 0) return null;
 
   const bottomClass = variant === "browsing" ? "bottom-12" : "bottom-20";
@@ -130,7 +136,7 @@ export default function StageBubbleRail({
 
               {/* Material swap rail */}
               {isActive && !isExcluded && (() => {
-                const alternatives = getSlotAlternatives(collection.id, roomNameRaw, bubble.slotKey);
+                const alternatives = getSlotAlternatives(collection.id, roomNameRaw, bubble.slotKey, showroomFilter);
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
                 return (
                   <div

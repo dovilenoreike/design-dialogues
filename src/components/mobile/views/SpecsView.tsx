@@ -13,10 +13,12 @@ import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
 import { ComingSoonPaletteSheet } from "@/components/ComingSoonPaletteSheet";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 export default function SpecsView() {
   const { design, materialOverrides, excludedSlots, handleSelectMaterial, selectedTier, setActiveTab, selectCollection } = useDesign();
+  const { activeShowroom } = useShowroom();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
@@ -236,6 +238,7 @@ export default function SpecsView() {
           designerTitle={collectionDesignerTitle}
           onSelectCollection={handleSelectMaterial}
           activeCollectionId={activeCollection.id}
+          showroomId={activeShowroom?.id}
         />
       )}
 
@@ -252,6 +255,7 @@ export default function SpecsView() {
         onClose={() => setIsPaletteSelectorOpen(false)}
         selectedPaletteId={selectedMaterial}
         onSelectPalette={handleSelectMaterial}
+        showroomId={activeShowroom?.id}
       />
 
       {/* Tier Waitlist Sheet */}

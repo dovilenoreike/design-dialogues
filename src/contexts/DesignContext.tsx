@@ -29,6 +29,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
+import { useShowroom } from "@/contexts/ShowroomContext";
+import { getMaterialById, getMaterialsByCategory } from "@/data/materials";
+import type { SurfaceCategory } from "@/data/materials/types";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -158,6 +161,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Language for translated error messages
   const { t } = useLanguage();
 
+  // Showroom mode — used to filter default material selections
+  const { activeShowroom } = useShowroom();
+
   // Design state - now stores URLs from Supabase instead of base64
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -238,6 +244,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     };
 
     // Resolve archetype IDs → actual material IDs from collection products
+    // If in showroom mode, prefer a showroom-compatible material for filtered categories
     setMaterialOverrides(() => {
       const next: Record<string, string> = {};
       Object.entries(newSelections).forEach(([k, aId]) => {
@@ -245,7 +252,31 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         if (!pk || !aId) return;
         const category = SLOT_TO_CATEGORY[k];
         if (!category) return;
-        const materialId = col.products[category]?.[aId]?.[0];
+
+        let materialId: string | undefined;
+
+        // If active showroom filters this category, find first compatible material
+        if (
+          activeShowroom &&
+          (activeShowroom.surfaceCategories as string[]).includes(category)
+        ) {
+          // First try the collection pool
+          const poolMaterials = Object.values(col.products[category] ?? {}).flat();
+          materialId = poolMaterials.find(
+            (id) => getMaterialById(id)?.showroomIds.includes(activeShowroom.id)
+          );
+          // If nothing in the pool matches, pick the first showroom material from the database
+          if (!materialId) {
+            materialId = getMaterialsByCategory(category as SurfaceCategory)
+              .find((m) => m.showroomIds.includes(activeShowroom.id))?.id;
+          }
+        }
+
+        // Fall back to collection default (only when no showroom filter active)
+        if (!materialId) {
+          materialId = col.products[category]?.[aId]?.[0];
+        }
+
         if (materialId) next[pk] = materialId;
       });
       return next;
@@ -253,7 +284,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     // Sync vibe tag
     if (col.vibe !== vibeTag) setVibeTag(col.vibe);
-  }, [setMaterialOverrides, vibeTag, setVibeTag]);
+  }, [setMaterialOverrides, vibeTag, setVibeTag, activeShowroom]);
 
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
