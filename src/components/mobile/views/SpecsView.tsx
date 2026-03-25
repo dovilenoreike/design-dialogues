@@ -2,11 +2,9 @@ import { useState, useMemo } from "react";
 import { Sparkles, MessageSquare, ChevronDown } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaletteById } from "@/data/palettes";
-import { getDesignerWithFallback } from "@/data/designers";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { designers, getDesignerWithFallback } from "@/data/designers";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getMaterialById } from "@/data/materials";
-import type { RoomType } from "@/data/rooms/surfaces";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
@@ -17,15 +15,8 @@ import PaletteSelectorSheet from "../controls/PaletteSelectorSheet";
 import { ComingSoonPaletteSheet } from "@/components/ComingSoonPaletteSheet";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
-const displayNameToRoomType: Record<string, RoomType> = {
-  Kitchen: "kitchen",
-  Bathroom: "bathroom",
-  Bedroom: "bedroom",
-  "Living Room": "livingRoom",
-};
-
 export default function SpecsView() {
-  const { design, materialOverrides, excludedSlots, handleSelectMaterial, selectedTier, vibeTag, setActiveTab } = useDesign();
+  const { design, materialOverrides, excludedSlots, handleSelectMaterial, selectedTier, setActiveTab, selectCollection } = useDesign();
   const { t, language } = useLanguage();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
@@ -34,27 +25,21 @@ export default function SpecsView() {
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const { selectedMaterial, selectedCategory, freestyleDescription } = design;
 
-  const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+  // selectedMaterial is now a collection ID
+  const activeCollection = selectedMaterial ? (collectionsV2.find((c) => c.id === selectedMaterial) ?? null) : null;
+  const collectionDesignerTitle = activeCollection ? (designers[activeCollection.designer]?.title || "") : "";
 
-  // Must be before any conditional returns (rules of hooks)
+  // Single unified materials list from materialOverrides
   const groupedMaterials = useMemo(() => {
-    if (!selectedMaterial) return [];
-
-    const roomType = displayNameToRoomType[selectedCategory || "Kitchen"];
-    if (!roomType) return [];
-
-    const pv2 = palettesV2.find((p) => p.id === selectedMaterial);
-    if (!pv2) return [];
-
-    const slots = pv2.selections[roomType];
-    if (!slots) return [];
+    if (!selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
 
     const matSlots = new Map<string, string[]>();
     const matOrder: string[] = [];
 
-    for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+    for (const [slotKey, matId] of Object.entries(materialOverrides)) {
       if (excludedSlots.has(slotKey)) continue;
-      const matId = materialOverrides[slotKey] || defaultMatId;
+      const mat = getMaterialById(matId);
+      if (!mat) continue;
       const existing = matSlots.get(matId);
       if (existing) {
         existing.push(slotKey);
@@ -69,103 +54,12 @@ export default function SpecsView() {
       slotKeys: matSlots.get(matId)!,
       mat: getMaterialById(matId),
     })).filter((entry) => entry.mat != null);
-  }, [selectedMaterial, selectedCategory, materialOverrides, excludedSlots]);
-
-  const moodboardMaterials = useMemo(() => {
-    if (!vibeTag) return [];
-    const matSlots = new Map<string, string[]>();
-    const matOrder: string[] = [];
-    for (const [slotKey, matId] of Object.entries(materialOverrides)) {
-      if (excludedSlots.has(slotKey)) continue;
-      const existing = matSlots.get(matId);
-      if (existing) existing.push(slotKey);
-      else { matSlots.set(matId, [slotKey]); matOrder.push(matId); }
-    }
-    return matOrder
-      .map((matId) => ({ matId, slotKeys: matSlots.get(matId)!, mat: getMaterialById(matId) }))
-      .filter((e) => e.mat != null);
-  }, [vibeTag, materialOverrides, excludedSlots]);
-
-  const materialsToShow = vibeTag ? moodboardMaterials : groupedMaterials;
+  }, [selectedMaterial, materialOverrides, excludedSlots]);
 
   return (
     <div className="flex-1 overflow-y-auto relative">
       {/* Content */}
-      {vibeTag ? (
-        <div className="px-4 py-4">
-          {/* Sticky Room Pills + Tier */}
-          <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
-            <div className="flex items-center justify-between gap-3">
-              <RoomPillBar />
-              <TierPill />
-            </div>
-          </div>
-
-          {moodboardMaterials.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Sparkles className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
-              </div>
-              <h3 className="text-lg font-serif text-center mb-2">{t("specs.emptyTitle")}</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-xs">
-                {t("specs.emptyDescription")}
-              </p>
-              <button
-                onClick={() => setActiveTab("moodboard")}
-                className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
-              >
-                {t("specs.goToMoodboard")}
-              </button>
-            </div>
-          ) : (
-            <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
-              {materialsToShow.map(({ matId, slotKeys, mat }) => {
-                  const translatedSurfaces = slotKeys
-                    .map((sk) => t(`surface.${sk}`) || sk)
-                    .join(", ");
-
-                  const desc = typeof mat!.description === "object"
-                    ? mat!.description[language] || mat!.description.en
-                    : String(mat!.description || "");
-
-                  const typeKey = `material.type.${mat!.type}`;
-                  const translatedType = mat!.type
-                    ? (t(typeKey) === typeKey ? mat!.type : t(typeKey))
-                    : "";
-
-                  const handleMaterialClick = () => {
-                    trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
-                      material_code: mat!.code,
-                      room: selectedCategory,
-                      tab: "specs",
-                    });
-                    setSelectedMaterialInfo({
-                      name: desc?.split('.')[0] || translatedSurfaces,
-                      materialType: mat!.type,
-                      technicalCode: mat!.code,
-                      imageUrl: mat!.image || undefined,
-                      showroomIds: mat!.showroomIds,
-                    });
-                    setIsSourcingSheetOpen(true);
-                  };
-
-                  return (
-                    <MaterialCard
-                      key={matId}
-                      image={mat!.image || undefined}
-                      swatchColors={!mat!.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                      title={desc?.split('.')[0] || translatedSurfaces}
-                      category={translatedSurfaces}
-                      materialType={translatedType}
-                      technicalCode={mat!.code}
-                      onClick={handleMaterialClick}
-                    />
-                  );
-                })}
-            </div>
-          )}
-        </div>
-      ) : !selectedMaterial && !freestyleDescription ? (
+      {!selectedMaterial && !freestyleDescription ? (
         <div className="px-4 py-4">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
@@ -234,94 +128,114 @@ export default function SpecsView() {
           </div>
 
           {/* Editorial Headline */}
-          {palette && (
+          {activeCollection && (
             <div className="mb-6">
               <button
                 onClick={() => setIsPaletteSelectorOpen(true)}
                 className="flex items-center gap-1.5 group"
               >
                 <h2 className="text-2xl font-serif group-hover:text-foreground/80 transition-colors">
-                  {t(`palette.${palette.id}`) || palette.name}
+                  {activeCollection.name[language] ?? activeCollection.name.en}
                 </h2>
                 <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" strokeWidth={1.5} />
               </button>
-              <p className="text-sm text-muted-foreground mt-1">{t("result.curatedBy")} {getDesignerWithFallback(palette.designer, palette.designerTitle).name}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t("result.curatedBy")} {getDesignerWithFallback(activeCollection.designer, collectionDesignerTitle).name}</p>
             </div>
           )}
 
-          {/* Material Cards */}
-          <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
-              {groupedMaterials.map(({ matId, slotKeys, mat }) => {
-                const translatedSurfaces = slotKeys
-                  .map((sk) => t(`surface.${sk}`) || sk)
-                  .join(", ");
+          {groupedMaterials.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-serif text-center mb-2">{t("specs.emptyTitle")}</h3>
+              <p className="text-sm text-muted-foreground text-center max-w-xs">
+                {t("specs.emptyDescription")}
+              </p>
+              <button
+                onClick={() => setActiveTab("moodboard")}
+                className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
+              >
+                {t("specs.goToMoodboard")}
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Material Cards */}
+              <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
+                {groupedMaterials.map(({ matId, slotKeys, mat }) => {
+                  const translatedSurfaces = slotKeys
+                    .map((sk) => t(`surface.${sk}`) || sk)
+                    .join(", ");
 
-                const desc = typeof mat!.description === "object"
-                  ? mat!.description[language] || mat!.description.en
-                  : String(mat!.description || "");
+                  const desc = typeof mat!.description === "object"
+                    ? mat!.description[language] || mat!.description.en
+                    : String(mat!.description || "");
 
-                const typeKey = `material.type.${mat!.type}`;
-                const translatedType = mat!.type
-                  ? (t(typeKey) === typeKey ? mat!.type : t(typeKey))
-                  : "";
+                  const typeKey = `material.type.${mat!.type}`;
+                  const translatedType = mat!.type
+                    ? (t(typeKey) === typeKey ? mat!.type : t(typeKey))
+                    : "";
 
-                const handleMaterialClick = () => {
-                  trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
-                    material_code: mat!.code,
-                    room: selectedCategory,
-                    tab: "specs",
-                  });
-                  setSelectedMaterialInfo({
-                    name: desc?.split('.')[0] || translatedSurfaces,
-                    materialType: mat!.type,
-                    technicalCode: mat!.code,
-                    imageUrl: mat!.image || undefined,
-                    showroomIds: mat!.showroomIds,
-                  });
-                  setIsSourcingSheetOpen(true);
-                };
+                  const handleMaterialClick = () => {
+                    trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
+                      material_code: mat!.code,
+                      room: selectedCategory,
+                      tab: "specs",
+                    });
+                    setSelectedMaterialInfo({
+                      name: desc?.split('.')[0] || translatedSurfaces,
+                      materialType: mat!.type,
+                      technicalCode: mat!.code,
+                      imageUrl: mat!.image || undefined,
+                      showroomIds: mat!.showroomIds,
+                    });
+                    setIsSourcingSheetOpen(true);
+                  };
 
-                return (
-                  <MaterialCard
-                    key={matId}
-                    image={mat!.image || undefined}
-                    swatchColors={!mat!.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                    title={desc?.split('.')[0] || translatedSurfaces}
-                    category={translatedSurfaces}
-                    materialType={translatedType}
-                    technicalCode={mat!.code}
-                    onClick={handleMaterialClick}
-                  />
-                );
-              })}
-          </div>
+                  return (
+                    <MaterialCard
+                      key={matId}
+                      image={mat!.image || undefined}
+                      swatchColors={!mat!.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                      title={desc?.split('.')[0] || translatedSurfaces}
+                      category={translatedSurfaces}
+                      materialType={translatedType}
+                      technicalCode={mat!.code}
+                      onClick={handleMaterialClick}
+                    />
+                  );
+                })}
+              </div>
 
-          {/* Designer Compact Card */}
-          {palette && (
-            <DesignerCompactCard
-              designerId={palette.designer}
-              designerTitle={palette.designerTitle}
-              onOpenProfile={() => {
-                trackEvent(AnalyticsEvents.DESIGNER_PROFILE_OPENED, {
-                  designer_id: palette.designer,
-                  tab: "specs",
-                });
-                setIsProfileSheetOpen(true);
-              }}
-            />
+              {/* Designer Compact Card */}
+              {activeCollection && (
+                <DesignerCompactCard
+                  designerId={activeCollection.designer}
+                  designerTitle={collectionDesignerTitle}
+                  onOpenProfile={() => {
+                    trackEvent(AnalyticsEvents.DESIGNER_PROFILE_OPENED, {
+                      designer_id: activeCollection.designer,
+                      tab: "specs",
+                    });
+                    setIsProfileSheetOpen(true);
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       )}
 
       {/* Designer Profile Sheet */}
-      {palette && (
+      {activeCollection && (
         <DesignerProfileSheet
           isOpen={isProfileSheetOpen}
           onClose={() => setIsProfileSheetOpen(false)}
-          designerId={palette.designer}
-          designerTitle={palette.designerTitle}
-          currentPaletteId={palette.id}
-          onSelectPalette={handleSelectMaterial}
+          designerId={activeCollection.designer}
+          designerTitle={collectionDesignerTitle}
+          onSelectCollection={handleSelectMaterial}
+          activeCollectionId={activeCollection.id}
         />
       )}
 
@@ -345,7 +259,7 @@ export default function SpecsView() {
         isOpen={isTierWaitlistOpen}
         onClose={() => setIsTierWaitlistOpen(false)}
         paletteId={selectedMaterial || ""}
-        paletteName={palette?.id ? t(`palette.${palette.id}`) : palette?.name || ""}
+        paletteName={activeCollection ? (activeCollection.name[language] ?? activeCollection.name.en) : ""}
         selectedTier={selectedTier}
       />
 

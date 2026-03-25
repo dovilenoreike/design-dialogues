@@ -1,12 +1,10 @@
 import type { CollectionV2 } from "./types";
-import urbanDusk from "@/assets/collections/urban-dusk.jpg";
-import goldenHour from "@/assets/collections/golden-hour.jpg";
-import spicyNord from "@/assets/collections/spicy-nord.jpg";
 
 export const collectionsV2: CollectionV2[] = [
-    {
+  {
     id: "cashmere-morning",
     name: { en: "Cashmere Morning", lt: "Kašmyro rytas" },
+    designer: "dizaino_dialogai",
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -23,11 +21,11 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          {  "neutral": ["velvet-7393"], "medium-wood": ["alvic-goya-02"], "dark-wood": ["alvi-goya-03-na"]},
       "accents":                   {"chrome": ["chrome"] },
     },
-    thumbnail: urbanDusk,
   },
   {
     id: "chili-and-pepper",
     name: { en: "Chili & Pepper", lt: "Čilis ir pipiras" },
+    designer: "dizaino_dialogai",
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -43,11 +41,11 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          { "black": ["skin-carbon-fumo"], "dark-wood": ["alvi-goya-03-na"], "white": ["off-white-matte"] },
       accents:                   { "wine-red": ["wine-red"], "aged-bronze": ["aged-bronze"] },
     },
-    thumbnail: spicyNord,
   },
   {
     id: "urban-dusk",
     name: { en: "Urban Dusk", lt: "Miesto prieblanda" },
+    designer: "dizaino_dialogai",
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -64,12 +62,12 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          { "dark-wood": ["egger-brown-casella-oak"], "black": ["skin-carbon-fumo"], "neutral": ["velvet-1551"], "metallic": ["pearl-7901"] },
       "accents":                   { "aged-bronze": ["aged-bronze"], "chrome": ["chrome"] },
     },
-    thumbnail: urbanDusk,
   },
   {
     id: "fog-in-the-forest",
     name: { en: "Fog in the Forest", lt: "Rūkas miške" },
     vibe: "bold-and-moody",
+    designer: "athena_blackbird",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
       flooring:                  ["bleached-wood", "concrete"],
@@ -84,13 +82,12 @@ export const collectionsV2: CollectionV2[] = [
       "worktops-and-backsplashes": { "soft-texture-dark": ["egger-f244-st76"] },
       "cabinet-fronts":          { "dark-wood": ["egger-dark-grey-fineline"], "pastel": ["velvet-3301"] , "bleached-wood": ["egger-medium-grey-fineline"]},
       accents:                   { "aged-bronze": ["aged-bronze"] },
-      
     },
-    thumbnail: spicyNord,
   },
   {
     id: "spicy-nord",
     name: { en: "Spicy Nord", lt: "Charakteringa Šiaurė" },
+    designer: "dizaino_dialogai",
     vibe: "warm-and-grounded",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -106,11 +103,11 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          { "white": ["velvet-1648"], "medium-wood": ["alvic-valazquez-04"] },
       accents:                   { "gold": ["gold"], "chrome": ["chrome"] },
     },
-    thumbnail: spicyNord,
   },
-    {
+  {
     id: "chocolate-wabi-sabi",
     name: { en: "Chocolate Wabi-Sabi", lt: "Wabi-Sabi Šokolade" },
+    designer: "dizaino_dialogai",
     vibe: "warm-and-grounded",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -126,11 +123,11 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          {"dark-wood": ["egger-brown-casella-oak"], "neutral": ["velvet-7393"], "black": ["velvet-1302"]  },
       accents:                   { "aged-bronze": ["aged-bronze"], "chrome": ["chrome"] },
     },
-    thumbnail: spicyNord,
   },
-    {
+  {
     id: "day-by-the-sea",
     name: { en: "Day by the Sea", lt: "Diena prie jūros" },
+    designer: "heya_studio",
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -146,11 +143,11 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          { "pastel": ["velvet-4246"], "neutral": ["egger-taupe-grey"], "light-wood": ["egger-light-natural-casella-oak"] },
       accents:                   { "gold": ["gold"], "chrome": ["chrome"] },
     },
-    thumbnail: spicyNord,
   },
-{
+  {
     id: "behind-the-lights",
     name: { en: "Behind the Lights", lt: "Šviesų užkulisiai" },
+    designer: "impeka",
     vibe: "bold-and-moody",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
@@ -166,7 +163,6 @@ export const collectionsV2: CollectionV2[] = [
       "cabinet-fronts":          { "black": ["valchromat-black"], "medium-wood": ["egger-natural-casella-oak"], "bold": ["velvet-5983"] },
       accents:                   { "wine-red": ["wine-red"], "gold": ["gold"] },
     },
-    thumbnail: spicyNord,
   },
 ];
 

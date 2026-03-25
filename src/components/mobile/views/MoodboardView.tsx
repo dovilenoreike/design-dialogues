@@ -3,7 +3,6 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { RotateCcw, Plus, Check, X, ChevronDown, ArrowRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { palettesV2 } from "@/data/palettes/palettes-v3";
 import { getArchetypeById } from "@/data/archetypes";
 import { getMaterialById } from "@/data/materials";
 import { collectionsV2 } from "@/data/collections/collections-v2";
@@ -358,8 +357,7 @@ export default function MoodboardView() {
       });
 
       if (matched) {
-        const firstPalette = palettesV2.find((p) => p.collectionId === matched.id);
-        if (firstPalette) setActivePalette(firstPalette.id);
+        setActivePalette(matched.id); // selectedMaterial is now the collection ID
       } else {
         setActivePalette(null);
       }
@@ -404,9 +402,8 @@ export default function MoodboardView() {
     // Sync vibe to match the selected collection so matchCollection resolves correctly
     if (col.vibe !== vibeTag) setVibeTag(col.vibe);
 
-    // Still set the active palette when one matches, so palette carousel stays in sync
-    const matchingPalette = palettesV2.find((p) => p.collectionId === collectionId);
-    if (matchingPalette) handleSelectMaterial(matchingPalette.id);
+    // Sync palette carousel to the selected collection ID
+    handleSelectMaterial(collectionId);
 
     setCollectionsOpen(false);
   }, [handleSelectMaterial, setMaterialOverrides, vibeTag, setVibeTag]);

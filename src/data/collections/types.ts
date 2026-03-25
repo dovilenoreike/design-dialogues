@@ -12,12 +12,12 @@ export interface Collection {
   name: string;
   promptBase: string;
   pool: Partial<Record<SurfaceCategory, ArchetypeId[]>>;
-  thumbnail: string;
 }
 
 export interface CollectionV2 {
   id: string;
   name: { en: string; lt: string };
+  designer: string;
   vibe: VibeTag;
   promptBase: string;
   // Archetypes available in this collection, grouped by surface category
@@ -26,5 +26,4 @@ export interface CollectionV2 {
   // First entry is the default product; subsequent entries are alternatives
   // (may vary by tier: budget/optimal/premium, or type: Vinyl/Laminate/Engineered Wood).
   products: Partial<Record<SurfaceCategory, Record<string, string[]>>>;
-  thumbnail: string;
 }

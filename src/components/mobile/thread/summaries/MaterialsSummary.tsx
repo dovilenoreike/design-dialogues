@@ -1,49 +1,28 @@
 import { useState, useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getPaletteById } from "@/data/palettes";
 import { getDesignerWithFallback } from "@/data/designers";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getMaterialById } from "@/data/materials";
-import type { RoomType } from "@/data/rooms/surfaces";
 
 const MAX_SWATCHES = 5;
-
-const displayNameToRoomType: Record<string, RoomType> = {
-  Kitchen: "kitchen",
-  Bathroom: "bathroom",
-  Bedroom: "bedroom",
-  "Living Room": "livingRoom",
-};
 
 export function MaterialsSummary() {
   const { design, materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
-  if (!design.selectedMaterial) return null;
-
-  const palette = getPaletteById(design.selectedMaterial);
-  if (!palette) return null;
-
-  const designer = getDesignerWithFallback(palette.designer, palette.designerTitle);
+  // selectedMaterial is now a collection ID
+  const collection = design.selectedMaterial ? collectionsV2.find((c) => c.id === design.selectedMaterial) : null;
 
   const uniqueMaterials = useMemo(() => {
-    const roomType = displayNameToRoomType[design.selectedCategory || "Kitchen"];
-    if (!roomType) return [];
-
-    const pv2 = palettesV2.find((p) => p.id === design.selectedMaterial);
-    if (!pv2) return [];
-
-    const slots = pv2.selections[roomType];
-    if (!slots) return [];
+    if (!design.selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
 
     const seen = new Set<string>();
     const result: { matId: string; slotKey: string; image: string; description: string }[] = [];
 
-    for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+    for (const [slotKey, matId] of Object.entries(materialOverrides)) {
       if (excludedSlots.has(slotKey)) continue;
-      const matId = materialOverrides[slotKey] || defaultMatId;
       if (seen.has(matId)) continue;
       seen.add(matId);
 
@@ -59,7 +38,7 @@ export function MaterialsSummary() {
     }
 
     return result;
-  }, [design.selectedMaterial, design.selectedCategory, materialOverrides, excludedSlots, language]);
+  }, [design.selectedMaterial, materialOverrides, excludedSlots, language]);
 
   const handleSwatchClick = (index: number) => {
     setExpandedIndex(expandedIndex === index ? null : index);
@@ -67,16 +46,23 @@ export function MaterialsSummary() {
 
   const expandedMaterial = expandedIndex !== null ? uniqueMaterials[expandedIndex] : null;
 
+  if (!collection && uniqueMaterials.length === 0) return null;
+
+  const collectionName = collection ? (collection.name[language as keyof typeof collection.name] ?? collection.name.en) : "";
+  const designer = collection ? getDesignerWithFallback(collection.designer, "") : null;
+
   return (
     <div className="px-4 py-5 space-y-1.5">
       {/* Header */}
       <div className="space-y-0.5">
         <h3 className="font-serif text-[13px] text-neutral-900 leading-tight">
-          {t(`palette.${palette.id}`)}
+          {collectionName}
         </h3>
-        <p className="text-[8px] uppercase tracking-widest text-neutral-500">
-          {t("thread.curatedBy")}: {designer.name}
-        </p>
+        {designer && (
+          <p className="text-[8px] uppercase tracking-widest text-neutral-500">
+            {t("thread.curatedBy")}: {designer.name}
+          </p>
+        )}
       </div>
 
       {/* 5-Column Swatch Grid */}

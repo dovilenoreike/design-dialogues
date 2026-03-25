@@ -7,10 +7,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useShowroom } from "@/contexts/ShowroomContext";
-import { palettes } from "@/data/palettes";
-import { paletteThumbnails } from "@/data/palettes/thumbnails";
-import { getPalettesForShowroom } from "@/lib/palette-utils";
+import { collectionsV2 } from "@/data/collections/collections-v2";
+import { getCollectionSwatches } from "@/lib/collection-utils";
 
 interface PaletteSelectorSheetProps {
   isOpen: boolean;
@@ -25,19 +23,12 @@ export default function PaletteSelectorSheet({
   selectedPaletteId,
   onSelectPalette,
 }: PaletteSelectorSheetProps) {
-  const { t } = useLanguage();
-  const { isShowroomMode, activeShowroom } = useShowroom();
+  const { t, language } = useLanguage();
 
-  // Filter palettes in showroom mode
-  const displayPalettes = useMemo(() => {
-    if (isShowroomMode && activeShowroom) {
-      return getPalettesForShowroom(activeShowroom.id);
-    }
-    return palettes;
-  }, [isShowroomMode, activeShowroom]);
+  const displayCollections = useMemo(() => collectionsV2, []);
 
-  const handleSelect = (paletteId: string) => {
-    onSelectPalette(paletteId);
+  const handleSelect = (collectionId: string) => {
+    onSelectPalette(collectionId);
     onClose();
   };
 
@@ -49,35 +40,36 @@ export default function PaletteSelectorSheet({
         </SheetHeader>
 
         <div className="space-y-2">
-          {displayPalettes.map((palette) => {
-            const isSelected = selectedPaletteId === palette.id;
+          {displayCollections.map((collection) => {
+            const isSelected = selectedPaletteId === collection.id;
+            const displayName = collection.name[language as keyof typeof collection.name] ?? collection.name.en;
 
             return (
               <button
-                key={palette.id}
-                onClick={() => handleSelect(palette.id)}
+                key={collection.id}
+                onClick={() => handleSelect(collection.id)}
                 className={`w-full flex items-center gap-4 p-3 rounded-xl transition-colors ${
                   isSelected
                     ? "bg-foreground/5 border border-foreground/20"
                     : "hover:bg-muted border border-transparent"
                 }`}
               >
-                {/* Thumbnail */}
-                <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0">
-                  <img
-                    src={paletteThumbnails[palette.id]}
-                    alt={palette.name}
-                    className="w-full h-full object-cover"
-                  />
+                {/* Material swatch grid */}
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-200">
+                  <div className="grid grid-cols-2 gap-px bg-neutral-200 w-full h-full">
+                    {getCollectionSwatches(collection).map((img, i) => (
+                      <div key={i} className="bg-neutral-100 overflow-hidden">
+                        {img && <img src={img} className="w-full h-full object-cover" alt="" />}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 text-left">
-                  <p className="font-medium text-base">
-                    {t(`palette.${palette.id}`) || palette.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {palette.mood}
+                  <p className="font-medium text-base">{displayName}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                    {t(`vibe.${collection.vibe}`) || collection.vibe}
                   </p>
                 </div>
 

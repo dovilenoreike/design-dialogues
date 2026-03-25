@@ -3,7 +3,6 @@ import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { palettesV2 } from "@/data/palettes/palettes-v3";
 import Stage from "../Stage";
 import ControlCenter from "../ControlCenter";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
@@ -109,17 +108,12 @@ export default function DesignView() {
       filledIds.every((id) => Object.values(col.pool).flat().includes(id))
     );
 
-    // Switch palette only when the current collection is no longer compatible
+    // Switch collection only when the current one is no longer compatible
     if (compatibleCollections.length > 0) {
-      const currentPv2 = palettesV2.find((p) => p.id === design.selectedMaterial);
-      const currentStillCompatible = currentPv2 &&
-        compatibleCollections.some((c) => c.id === currentPv2.collectionId);
+      const currentStillCompatible = compatibleCollections.some((c) => c.id === design.selectedMaterial);
       if (!currentStillCompatible) {
-        const firstPalette = palettesV2.find((p) => p.collectionId === compatibleCollections[0].id);
-        if (firstPalette) {
-          internalPaletteChange.current = true;
-          handleSelectMaterial(firstPalette.id); // internally clears overrides
-        }
+        internalPaletteChange.current = true;
+        handleSelectMaterial(compatibleCollections[0].id);
       }
     }
 

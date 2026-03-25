@@ -1,3 +1,6 @@
+import type { LocalizedString } from "@/data/materials/types";
+export type { LocalizedString };
+
 export interface MaterialPurpose {
   default: string;
   kitchen?: string;
@@ -5,11 +8,6 @@ export interface MaterialPurpose {
   bedroom?: string;
   livingRoom?: string;
   other?: string;
-}
-
-export interface LocalizedString {
-  en: string;
-  lt: string;
 }
 
 export interface Material {

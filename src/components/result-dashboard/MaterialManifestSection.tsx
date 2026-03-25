@@ -7,18 +7,17 @@ import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
-import { getPaletteById } from "@/data/palettes";
-import { getDesignerWithFallback } from "@/data/designers";
-import { getMaterialPurpose, getMaterialImageUrl, getMaterialsForRoom, mapSpaceCategoryToRoom, getMaterialDescription } from "@/lib/palette-utils";
+import { collectionsV2 } from "@/data/collections/collections-v2";
+import { getMaterialById } from "@/data/materials";
 import { defaultMaterials } from "./constants";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { Tier } from "@/contexts/DesignContext";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
   selectedMaterial: string | null;
   selectedCategory: string | null;
   freestyleDescription: string;
+  materialOverrides: Record<string, string>;
   onOpenDesignerSheet: () => void;
   onOpenMaterialMatchModal: () => void;
 }
@@ -26,12 +25,12 @@ interface MaterialManifestSectionProps {
 const MaterialManifestSection = ({
   mode,
   selectedMaterial,
-  selectedCategory,
   freestyleDescription,
+  materialOverrides,
   onOpenDesignerSheet,
   onOpenMaterialMatchModal,
 }: MaterialManifestSectionProps) => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
 
@@ -73,7 +72,22 @@ const MaterialManifestSection = ({
   }
 
   // Curated Mode - Show material cards
-  const palette = selectedMaterial ? getPaletteById(selectedMaterial) : null;
+  const collection = selectedMaterial ? collectionsV2.find((c) => c.id === selectedMaterial) ?? null : null;
+  const designerName = collection?.designer || "Dizaino Dialogai";
+  const designerTitle = "Interior Designer";
+
+  // Build deduplicated material list from materialOverrides
+  const materialEntries: { matId: string; slotKeys: string[] }[] = [];
+  const seen = new Map<string, string[]>();
+  for (const [slotKey, matId] of Object.entries(materialOverrides)) {
+    const existing = seen.get(matId);
+    if (existing) {
+      existing.push(slotKey);
+    } else {
+      seen.set(matId, [slotKey]);
+      materialEntries.push({ matId, slotKeys: seen.get(matId)! });
+    }
+  }
 
   return (
     <>
@@ -88,12 +102,8 @@ const MaterialManifestSection = ({
             <User size={14} className="text-text-muted" />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-xs font-medium text-foreground">
-              {palette?.designer || "Dizaino Dialogai"}
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              {palette?.designerTitle || "Interior Designer"}
-            </p>
+            <p className="text-xs font-medium text-foreground">{designerName}</p>
+            <p className="text-[10px] text-muted-foreground">{designerTitle}</p>
           </div>
           <ChevronRight
             size={16}
@@ -104,48 +114,44 @@ const MaterialManifestSection = ({
 
       {/* Material List - Unified Container */}
       <div className="bg-surface-primary border border-ds-border-default rounded-xl overflow-hidden divide-y divide-ds-border-subtle">
-        {palette ? (
-          // Filter materials by room category
-          (() => {
-            const roomCategory = selectedCategory
-              ? mapSpaceCategoryToRoom(selectedCategory)
-              : "all";
-            const filteredMaterials = getMaterialsForRoom(palette, roomCategory);
+        {materialEntries.length > 0 ? (
+          materialEntries.map(({ matId, slotKeys }) => {
+            const mat = getMaterialById(matId);
+            if (!mat) return null;
 
-            return filteredMaterials.map(({ key, material }) => {
-              const imageUrl = getMaterialImageUrl(palette.id, key);
-              const materialPurpose = getMaterialPurpose(material, roomCategory);
-              const description = getMaterialDescription(material, language);
+            const desc = typeof mat.description === "object"
+              ? mat.description[language] || mat.description.en
+              : String(mat.description || "");
+            const title = desc?.split('.')[0] || slotKeys[0];
+            const category = slotKeys.join(", ");
+            const materialType = mat.type || "";
 
-              const materialTypeDisplay = material.materialType || "Natural Finish";
+            const handleMaterialClick = () => {
+              setSelectedMaterialInfo({
+                name: title,
+                materialType: mat.type,
+                technicalCode: mat.code,
+                imageUrl: mat.image || undefined,
+                showroomIds: mat.showroomIds,
+              });
+              setIsSourcingSheetOpen(true);
+            };
 
-              const handleMaterialClick = () => {
-                setSelectedMaterialInfo({
-                  name: description?.split('.')[0] || materialPurpose,
-                  materialType: material.materialType,
-                  technicalCode: material.technicalCode,
-                  imageUrl: imageUrl || undefined,
-                  showroomIds: material.showroomIds,
-                });
-                setIsSourcingSheetOpen(true);
-              };
-
-              return (
-                <MaterialCard
-                  key={key}
-                  image={imageUrl || undefined}
-                  swatchColors={!imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                  title={description?.split('.')[0] || materialPurpose}
-                  category={materialPurpose}
-                  materialType={materialTypeDisplay}
-                  technicalCode={material.technicalCode}
-                  onClick={handleMaterialClick}
-                />
-              );
-            });
-          })()
+            return (
+              <MaterialCard
+                key={matId}
+                image={mat.image || undefined}
+                swatchColors={!mat.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                title={title}
+                category={category}
+                materialType={materialType}
+                technicalCode={mat.code}
+                onClick={handleMaterialClick}
+              />
+            );
+          })
         ) : (
-          // Fallback only when no palette is selected
+          // Fallback only when no overrides
           defaultMaterials.map((material, index) => (
             <MaterialCard
               key={index}

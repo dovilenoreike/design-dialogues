@@ -3,7 +3,7 @@ import { Check, Plus } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { palettesV2 } from "@/data/palettes/palettes-v3";
+import { getCollectionSwatches } from "@/lib/collection-utils";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +19,8 @@ export default function PaletteCarousel() {
   const [isFreestyleOpen, setIsFreestyleOpen] = useState(false);
   const [freestyleInput, setFreestyleInput] = useState(freestyleDescription);
 
-  // Derive which collection the current palette belongs to
-  const selectedPaletteV2 = palettesV2.find((p) => p.id === selectedMaterial);
-  const activeCollectionId = selectedPaletteV2?.collectionId;
+  // selectedMaterial is now a collection ID directly
+  const activeCollectionId = selectedMaterial;
 
   const handleSaveFreestyle = () => {
     handleFreestyleChange(freestyleInput);
@@ -40,12 +39,11 @@ export default function PaletteCarousel() {
         <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
           {collectionsV2.map((collection) => {
             const isSelected = collection.id === activeCollectionId;
-            const firstPaletteId = palettesV2.find((p) => p.collectionId === collection.id)?.id;
 
             return (
               <button
                 key={collection.id}
-                onClick={() => { if (firstPaletteId) handleSelectMaterial(firstPaletteId); }}
+                onClick={() => handleSelectMaterial(collection.id)}
                 className="flex-shrink-0 transition-transform active:scale-95"
               >
                 <div
@@ -53,13 +51,13 @@ export default function PaletteCarousel() {
                     isSelected ? "border-foreground" : "border-transparent"
                   }`}
                 >
-                  {collection.thumbnail && (
-                    <img
-                      src={collection.thumbnail}
-                      alt={collection.name}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  <div className="grid grid-cols-2 gap-px bg-neutral-200 w-full h-full">
+                    {getCollectionSwatches(collection).map((img, i) => (
+                      <div key={i} className="bg-neutral-100 overflow-hidden">
+                        {img && <img src={img} className="w-full h-full object-cover" alt="" />}
+                      </div>
+                    ))}
+                  </div>
                   {isSelected && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       <Check className="w-4 h-4 text-white" strokeWidth={2.5} />

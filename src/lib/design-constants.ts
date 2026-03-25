@@ -4,6 +4,34 @@
  */
 
 // =============================================================================
+// ROOM MAPPINGS
+// =============================================================================
+
+/** Room display name → RoomType (camelCase, e.g. "livingRoom") */
+export const ROOM_DISPLAY_TO_TYPE: Record<string, string> = {
+  "Kitchen": "kitchen",
+  "Living Room": "livingRoom",
+  "Bedroom": "bedroom",
+  "Bathroom": "bathroom",
+};
+
+/** Room display name → i18n translation key */
+export const ROOM_DISPLAY_TO_TRANSLATION_KEY: Record<string, string> = {
+  "Kitchen": "space.kitchen",
+  "Living Room": "space.livingRoom",
+  "Bedroom": "space.bedroom",
+  "Bathroom": "space.bathroom",
+};
+
+/** Room ID (kebab-case, from rooms data) → i18n translation key */
+export const ROOM_ID_TO_TRANSLATION_KEY: Record<string, string> = {
+  "kitchen": "space.kitchen",
+  "living-room": "space.livingRoom",
+  "bedroom": "space.bedroom",
+  "bathroom": "space.bathroom",
+};
+
+// =============================================================================
 // COLORS
 // =============================================================================
 

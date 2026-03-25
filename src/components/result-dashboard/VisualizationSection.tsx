@@ -3,7 +3,7 @@
  */
 
 import { RefreshCw, Palette, RotateCcw, Sparkles } from "lucide-react";
-import { getPaletteById } from "@/data/palettes";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getStyleById } from "@/data/styles";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -66,7 +66,7 @@ const VisualizationSection = ({
           </span>
         ) : selectedMaterial ? (
           <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-            {getPaletteById(selectedMaterial)?.name || selectedMaterial}
+            {(() => { const c = collectionsV2.find(col => col.id === selectedMaterial); return c ? (typeof c.name === "object" ? c.name.en : c.name) : selectedMaterial; })()}
           </span>
         ) : null}
         {selectedStyle && (

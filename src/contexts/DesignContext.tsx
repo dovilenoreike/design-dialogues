@@ -9,7 +9,6 @@ import {
   UploadType,
 } from "@/types/design-state";
 import { FormData } from "@/types/calculator";
-import { getPaletteById } from "@/data/palettes";
 import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
@@ -21,12 +20,15 @@ import { defaultAuditVariables } from "@/data/layout-audit-rules";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { useMaterialOverrides } from "@/hooks/useMaterialOverrides";
+import { useGenerationState } from "@/hooks/useGenerationState";
 import { compressImage } from "@/lib/image-utils";
 import { captureError, setSentryDesignContext } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
+import { collectionsV2 } from "@/data/collections/collections-v2";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -112,6 +114,8 @@ interface DesignContextValue {
   setVibeTag: (vibe: VibeTag) => void;
   clearVibeTag: () => void;
 
+  selectCollection: (id: string) => void;
+
   // Sharing
   shareSession: () => Promise<string | null>;
   isSharing: boolean;
@@ -156,14 +160,10 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Design state - now stores URLs from Supabase instead of base64
   const [design, setDesign] = useState<DesignSelection>(initialDesignSelection);
-  const [generation, setGeneration] = useState<GenerationState>(initialGenerationState);
   const [formData, setFormData] = useState<FormData | null>(null);
 
-  // Material swap overrides (slotKey → materialId)
-  const [materialOverrides, setMaterialOverrides] = useState<Record<string, string>>({});
-
-  // Excluded material slots (slotKeys to skip in prompt/images)
-  const [excludedSlots, setExcludedSlots] = useState<Set<string>>(new Set());
+  // Material swap overrides and excluded slots
+  const { materialOverrides, setMaterialOverrides, excludedSlots, setExcludedSlots } = useMaterialOverrides();
 
   // Navigation state
   const [activeTab, setActiveTabState] = useState<BottomTab>("moodboard");
@@ -205,6 +205,56 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     try { localStorage.removeItem("moodboard-vibe"); } catch {}
   }, []);
 
+  const selectCollection = useCallback((collectionId: string) => {
+    const col = collectionsV2.find((c) => c.id === collectionId);
+    if (!col) return;
+
+    // Derive slot selections from the collection pool (first archetype per slot)
+    const pool = col.pool;
+    const newSelections = {
+      floor:            pool["flooring"]?.[0]                                             ?? null,
+      mainFronts:       pool["cabinet-fronts"]?.[0]                                       ?? null,
+      additionalFronts: pool["cabinet-fronts"]?.[1] ?? pool["cabinet-fronts"]?.[0]        ?? null,
+      worktops:         pool["worktops-and-backsplashes"]?.[0]                            ?? null,
+      accents:          pool["accents"]?.[0]                                              ?? null,
+      mainTiles:        pool["tiles"]?.[0]                                                ?? null,
+      additionalTiles:  pool["tiles"]?.[1] ?? pool["tiles"]?.[0]                          ?? null,
+    };
+
+    // Persist so MoodboardView reads the right state when it next mounts
+    try { localStorage.setItem("moodboard-slot-selections", JSON.stringify(newSelections)); } catch {}
+
+    // Map moodboard slot keys to palette override keys used in materialOverrides
+    const SLOT_TO_PK: Record<string, string | null> = {
+      floor: "floor", mainFronts: "bottomCabinets", additionalFronts: "topCabinets",
+      worktops: "worktops", accents: "accents", mainTiles: "tiles", additionalTiles: "additionalTiles",
+    };
+
+    // Map moodboard slot keys to collection category keys
+    const SLOT_TO_CATEGORY: Record<string, string> = {
+      floor: "flooring", mainFronts: "cabinet-fronts", additionalFronts: "cabinet-fronts",
+      worktops: "worktops-and-backsplashes", accents: "accents",
+      mainTiles: "tiles", additionalTiles: "tiles",
+    };
+
+    // Resolve archetype IDs → actual material IDs from collection products
+    setMaterialOverrides(() => {
+      const next: Record<string, string> = {};
+      Object.entries(newSelections).forEach(([k, aId]) => {
+        const pk = SLOT_TO_PK[k];
+        if (!pk || !aId) return;
+        const category = SLOT_TO_CATEGORY[k];
+        if (!category) return;
+        const materialId = col.products[category]?.[aId]?.[0];
+        if (materialId) next[pk] = materialId;
+      });
+      return next;
+    });
+
+    // Sync vibe tag
+    if (col.vibe !== vibeTag) setVibeTag(col.vibe);
+  }, [setMaterialOverrides, vibeTag, setVibeTag]);
+
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -213,6 +263,32 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   // Track if this is a shared session view
   const isSharedSession = !!initialSharedSession;
+
+  // Generation state and image operations
+  const {
+    generation,
+    setGeneration,
+    pendingUploadTypeRef,
+    handleSaveImage,
+    handleImageUpload,
+    clearUploadedImage,
+    handleGenerate,
+    confirmRoomSwitch,
+    cancelRoomSwitch,
+    confirmStyleSwitch,
+    cancelStyleSwitch,
+    confirmImageUpload,
+    cancelImageUpload,
+  } = useGenerationState({
+    design,
+    setDesign,
+    materialOverrides,
+    excludedSlots,
+    isSharedSession,
+    initialGeneratedImages: initialSharedSession?.generatedImage
+      ? { [initialSharedSession.selectedCategory || "Kitchen"]: initialSharedSession.generatedImage }
+      : undefined,
+  });
 
   // Load session from shared data or Supabase on mount
   useEffect(() => {
@@ -230,12 +306,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         freestyleDescription: initialSharedSession.freestyleDescription || "",
         lastSelectedRoom: initialSharedSession.selectedCategory,
       });
-      if (initialSharedSession.generatedImage) {
-        setGeneration((prev) => ({
-          ...prev,
-          generatedImages: { [currentRoom]: initialSharedSession.generatedImage },
-        }));
-      }
       setFormData(initialSharedSession.formData);
       setSelectedTierState(initialSharedSession.selectedTier);
       if (initialSharedSession.userMoveInDate) {
@@ -271,8 +341,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       setActiveTabState(urlState.tab);
     }
     if (urlState.palette) {
-      const palette = getPaletteById(urlState.palette);
-      if (palette) {
+      const collection = collectionsV2.find((c) => c.id === urlState.palette);
+      if (collection) {
         setDesign((prev) => ({ ...prev, selectedMaterial: urlState.palette }));
       }
     }
@@ -442,100 +512,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     debouncedSaveDesignState,
   ]);
 
-  // Load uploaded images from user_uploads table
-  useEffect(() => {
-    if (!user || authLoading || isSharedSession) return;
-
-    const loadUploads = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_uploads')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error('Failed to load uploads:', error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const uploaded: Record<string, string> = {};
-
-          data.forEach(upload => {
-            const { data: urlData } = supabase.storage
-              .from('user-images')
-              .getPublicUrl(upload.image_path);
-            uploaded[upload.room_category] = urlData.publicUrl;
-          });
-
-          setDesign(prev => ({
-            ...prev,
-            uploadedImages: { ...prev.uploadedImages, ...uploaded },
-          }));
-        }
-      } catch (err) {
-        console.error('Error loading uploads:', err);
-      }
-    };
-
-    loadUploads();
-  }, [user, authLoading, isSharedSession]);
-
-  // Load generated image for current room+style+palette from user_generations table
-  // This runs when any of these change, providing the caching behavior
-  useEffect(() => {
-    if (!user || authLoading || isSharedSession) return;
-
-    const room = design.selectedCategory || "Kitchen";
-    const style = design.selectedStyle;
-    // Use "freestyle" as the material value when in freestyle mode
-    const material = design.freestyleDescription?.trim()
-      ? "freestyle"
-      : design.selectedMaterial;
-
-    // Need both style and material (or freestyle) to look up a generation
-    if (!style || !material) return;
-
-    const loadGeneration = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_generations')
-          .select('image_path')
-          .eq('user_id', user.id)
-          .eq('room_category', room)
-          .eq('selected_style', style)
-          .eq('selected_material', material)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          // PGRST116 is "no rows found" - not an error for us
-          console.error('Failed to load generation:', error);
-          return;
-        }
-
-        if (data?.image_path) {
-          const { data: urlData } = supabase.storage
-            .from('user-images')
-            .getPublicUrl(data.image_path);
-          setGeneration(prev => ({
-            ...prev,
-            generatedImages: { ...prev.generatedImages, [room]: urlData.publicUrl },
-          }));
-        } else {
-          // No generation for this combo - clear it
-          setGeneration(prev => ({
-            ...prev,
-            generatedImages: { ...prev.generatedImages, [room]: null },
-          }));
-        }
-      } catch (err) {
-        console.error('Error loading generation:', err);
-      }
-    };
-
-    loadGeneration();
-  }, [user, authLoading, isSharedSession, design.selectedCategory, design.selectedStyle, design.selectedMaterial, design.freestyleDescription]);
-
   // Update URL when state changes (after initialization)
   useEffect(() => {
     if (!isUrlSyncEnabled.current) return;
@@ -654,197 +630,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
-  // Track pending upload type for confirmation dialog flow
-  const pendingUploadTypeRef = useRef<UploadType>("photo");
 
-  // Image upload handler - compresses and uploads to Supabase Storage
-  const handleImageUpload = useCallback(async (file: File, uploadType: UploadType = "photo") => {
-    if (!user) {
-      toast.error("Authentication required");
-      return;
-    }
 
-    const currentRoom = design.selectedCategory || "Kitchen";
-    const hasGeneratedImage = generation.generatedImages[currentRoom];
-
-    // If there's a generated image, show confirmation dialog
-    if (hasGeneratedImage) {
-      pendingUploadTypeRef.current = uploadType;
-      setGeneration((prev) => ({
-        ...prev,
-        pendingImageUpload: file,
-        showUploadDialog: true,
-      }));
-      return;
-    }
-
-    try {
-      // Get existing upload to delete old file
-      const { data: existing } = await supabase
-        .from('user_uploads')
-        .select('image_path')
-        .eq('user_id', user.id)
-        .eq('room_category', currentRoom)
-        .single();
-
-      // Compress the image to 1024px max dimension
-      const compressed = await compressImage(file, 1024);
-
-      // Upload to Supabase Storage
-      const path = `${user.id}/uploads/${currentRoom}_${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('user-images')
-        .upload(path, compressed, { contentType: 'image/jpeg' });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Delete old file if exists
-      if (existing?.image_path) {
-        await supabase.storage.from('user-images').remove([existing.image_path]);
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('user-images')
-        .getPublicUrl(path);
-
-      // Upsert database record (replaces old upload for this room)
-      const { error: dbError } = await supabase
-        .from('user_uploads')
-        .upsert({
-          user_id: user.id,
-          room_category: currentRoom,
-          image_path: path,
-        }, { onConflict: 'user_id,room_category' });
-
-      if (dbError) {
-        console.error('Failed to save upload record:', dbError);
-      }
-
-      // Update local state with the URL and upload type
-      setDesign(prev => ({
-        ...prev,
-        uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
-        uploadTypes: { ...prev.uploadTypes, [currentRoom]: uploadType },
-      }));
-
-      // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, upload_type: uploadType, tab: "design" });
-    } catch (err) {
-      console.error('Image upload failed:', err);
-      captureError(err, { action: "handleImageUpload" });
-      toast.error(t(getErrorTranslationKey(err)));
-    }
-  }, [user, design.selectedCategory, generation.generatedImages]);
-
-  // Clear uploaded image for current room to browse defaults
-  const clearUploadedImage = useCallback(async () => {
-    const currentRoom = design.selectedCategory || "Kitchen";
-
-    // Clear local state
-    setDesign(prev => ({
-      ...prev,
-      uploadedImages: { ...prev.uploadedImages, [currentRoom]: null },
-    }));
-    setGeneration(prev => ({
-      ...prev,
-      generatedImages: { ...prev.generatedImages, [currentRoom]: null },
-    }));
-
-    // Clear from database if user is authenticated
-    if (user) {
-      try {
-        // Get upload to delete from storage
-        const { data: upload } = await supabase
-          .from('user_uploads')
-          .select('image_path')
-          .eq('user_id', user.id)
-          .eq('room_category', currentRoom)
-          .single();
-
-        // Delete from storage
-        if (upload?.image_path) {
-          await supabase.storage.from('user-images').remove([upload.image_path]);
-        }
-
-        // Delete from user_uploads
-        await supabase
-          .from('user_uploads')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('room_category', currentRoom);
-
-        // Also delete any generations for this room
-        const { data: generations } = await supabase
-          .from('user_generations')
-          .select('image_path')
-          .eq('user_id', user.id)
-          .eq('room_category', currentRoom);
-
-        if (generations && generations.length > 0) {
-          // Delete generation files from storage
-          const paths = generations.map(g => g.image_path);
-          await supabase.storage.from('user-images').remove(paths);
-
-          // Delete from user_generations
-          await supabase
-            .from('user_generations')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('room_category', currentRoom);
-        }
-      } catch (err) {
-        console.error('Failed to clear images from database:', err);
-        captureError(err, { action: "clearUploadedImage" });
-      }
-    }
-  }, [design.selectedCategory, user]);
-
-  // Save/download generated image - mobile compatible
-  const handleSaveImage = useCallback(async () => {
-    const currentRoom = design.selectedCategory || "Kitchen";
-    const currentGeneratedImage = generation.generatedImages[currentRoom];
-    if (!currentGeneratedImage) return;
-
-    const filename = `${design.selectedCategory}-${design.selectedStyle || 'custom'}-visualization.png`;
-
-    try {
-      // Fetch image from URL and convert to blob
-      const response = await fetch(currentGeneratedImage);
-      const blob = await response.blob();
-
-      // Create object URL from blob
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Check if it's iOS (Safari on iOS doesn't support download attribute)
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-      if (isIOS) {
-        // On iOS, open image in new tab - user can long-press to save
-        window.open(blobUrl, '_blank');
-        toast.info("Long-press the image to save it to your device", { position: "top-center" });
-      } else {
-        // Standard download for other browsers
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Image saved!", { position: "top-center" });
-      }
-
-      // Clean up object URL after a delay
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-    } catch (error) {
-      console.error("Failed to save image:", error);
-      // Fallback: open image in new tab
-      window.open(currentGeneratedImage, '_blank');
-      toast.info("Image opened in new tab - save from there", { position: "top-center" });
-    }
-  }, [generation.generatedImages, design.selectedCategory, design.selectedStyle]);
 
   // Category selection - show confirmation if there's a generated image
   const handleSelectCategory = useCallback((category: string | null) => {
@@ -863,27 +650,20 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       selectedCategory: category,
       lastSelectedRoom: category,
     }));
-    if (!vibeTag) {
-      setMaterialOverrides({});
-      setExcludedSlots(new Set());
-    }
-  }, [generation.generatedImages, design.selectedCategory, vibeTag]);
+  }, [generation.generatedImages, design.selectedCategory]);
 
-  // Material selection
+  // Material selection — collectionId is now stored as selectedMaterial
   const handleSelectMaterial = useCallback((material: string | null) => {
     setDesign((prev) => ({
       ...prev,
       selectedMaterial: material,
       freestyleDescription: material ? "" : prev.freestyleDescription, // Clear freestyle if selecting curated
     }));
-    setMaterialOverrides({});
-    setExcludedSlots(new Set());
-
-    // Track palette selection
     if (material) {
+      selectCollection(material); // populates materialOverrides from collection defaults
       trackEvent(AnalyticsEvents.PALETTE_SELECTED, { palette_id: material, tab: "design" });
     }
-  }, []);
+  }, [selectCollection]);
 
   const setActivePalette = useCallback((paletteId: string | null) => {
     setDesign((prev) => ({ ...prev, selectedMaterial: paletteId }));
@@ -910,297 +690,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, []);
 
-  // Helper: store generated image to Supabase and update local state
-  const storeGeneratedImage = useCallback(async (
-    generatedImageData: string,
-    room: string,
-    style: string,
-    material: string,
-    startTime: number,
-  ): Promise<boolean> => {
-    // Check for existing generation with this combo to delete old file
-    const { data: existing } = await supabase
-      .from('user_generations')
-      .select('image_path')
-      .eq('user_id', user!.id)
-      .eq('room_category', room)
-      .eq('selected_style', style)
-      .eq('selected_material', material)
-      .single();
 
-    // Store the generated image in Supabase Storage
-    let generatedBlob: Blob;
-    if (generatedImageData.startsWith('data:')) {
-      const base64Response = await fetch(generatedImageData);
-      generatedBlob = await base64Response.blob();
-    } else {
-      const urlResponse = await fetch(generatedImageData);
-      generatedBlob = await urlResponse.blob();
-    }
 
-    const genPath = `${user!.id}/generated/${room}_${style}_${material}_${Date.now()}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from('user-images')
-      .upload(genPath, generatedBlob, { contentType: 'image/jpeg' });
-
-    if (uploadError) {
-      console.error('Failed to upload generated image:', uploadError);
-      // Fall back to using the original URL/base64
-      setGeneration(prev => ({
-        ...prev,
-        generatedImages: { ...prev.generatedImages, [room]: generatedImageData },
-        isGenerating: false,
-      }));
-      toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
-      trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
-        room, style, duration_ms: Date.now() - startTime, tab: "design",
-      });
-      return true;
-    }
-
-    // Delete old file if exists
-    if (existing?.image_path) {
-      await supabase.storage.from('user-images').remove([existing.image_path]);
-    }
-
-    // Get the public URL
-    const { data: urlData } = supabase.storage
-      .from('user-images')
-      .getPublicUrl(genPath);
-
-    // Upsert database record (keyed by room+style+palette)
-    await supabase
-      .from('user_generations')
-      .upsert({
-        user_id: user!.id,
-        room_category: room,
-        selected_style: style,
-        selected_material: material,
-        image_path: genPath,
-      }, { onConflict: 'user_id,room_category,selected_style,selected_material' });
-
-    setGeneration(prev => ({
-      ...prev,
-      generatedImages: { ...prev.generatedImages, [room]: urlData.publicUrl },
-      isGenerating: false,
-    }));
-
-    toast.success(t("toast.visualizationGenerated"), { position: "top-center" });
-    trackEvent(AnalyticsEvents.VISUALIZATION_COMPLETED, {
-      room, style, duration_ms: Date.now() - startTime, tab: "design",
-    });
-    return true;
-  }, [user, t]);
-
-  // Generate interior render - returns true if successful
-  const generateInteriorRender = useCallback(async (): Promise<boolean> => {
-    if (!uploadedImage || !selectedCategory || !user) return false;
-
-    const room = selectedCategory || "Kitchen";
-    const style = design.selectedStyle;
-    const material = design.freestyleDescription?.trim()
-      ? "freestyle"
-      : design.selectedMaterial;
-
-    if (!style) {
-      toast.error("Please select a style");
-      return false;
-    }
-
-    if (!material) {
-      toast.error("Please select a palette or enter a freestyle description");
-      return false;
-    }
-
-    const startTime = Date.now();
-
-    setSentryDesignContext({
-      room, style, palette: material, hasUploadedImage: !!uploadedImage,
-    });
-
-    try {
-      const palette = design.selectedMaterial ? getPaletteById(design.selectedMaterial) : null;
-
-      // Fetch the image from Storage URL and convert to base64
-      const imageResponse = await fetch(uploadedImage);
-      const imageBlob = await imageResponse.blob();
-      const reader = new FileReader();
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(imageBlob);
-      });
-
-      // Determine upload type for this room (default to "photo" for existing uploads)
-      const uploadType = design.uploadTypes[room] || "photo";
-      const isPhotoWithPalette = uploadType === "photo" && palette && !design.freestyleDescription?.trim();
-
-      let generatedImageData: string;
-
-      if (isPhotoWithPalette) {
-        // Photo path: use generate-material-edit with texture images + accurate model
-        try {
-          const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, excludedSlots);
-
-          // Get atmosphere prompt from selected style
-          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-          const atmosphere = styleData?.config.atmosphere
-            ? getAtmosphereById(styleData.config.atmosphere) : null;
-          const atmospherePrompt = atmosphere?.promptSnippet || null;
-
-          {
-            const rc = selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim();
-            const matInstr = materialImagesWithMeta
-              .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}. (${m.description})`)
-              .join("\n");
-            const atmoSection = atmospherePrompt ? `\nDecor and atmosphere details: ${atmospherePrompt}\n` : "";
-            console.log(`[AI Prompt] generate-material-edit →\n` +
-              `Image 1 is a photo of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\n` +
-              `PRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\n` +
-              `ONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n` +
-              `Overall aesthetic: ${palette.promptSnippet}\n${atmoSection}` +
-              `Create a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`);
-          }
-
-          const { data, error } = await supabase.functions.invoke("generate-material-edit", {
-            body: {
-              imageBase64,
-              materialImages: materialImagesWithMeta,
-              roomCategory: selectedCategory,
-              palettePromptSnippet: palette.promptSnippet,
-              atmospherePrompt,
-              quality: API_CONFIG.imageGeneration.quality,
-              model: API_CONFIG.imageGeneration.modelAccurate,
-            },
-          });
-
-          if (error) {
-            throw new Error(error.message || "Failed to generate material edit");
-          }
-
-          generatedImageData = data?.generatedImage;
-          if (!generatedImageData) {
-            throw new Error("No image returned from material edit service");
-          }
-        } catch (materialEditErr) {
-          // Fallback: use standard generate-interior path
-          console.warn("Material edit failed, falling back to generate-interior:", materialEditErr);
-
-          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-          const architecture = styleData?.config.architecture
-            ? getArchitectureById(styleData.config.architecture) : null;
-          const atmosphere = styleData?.config.atmosphere
-            ? getAtmosphereById(styleData.config.atmosphere) : null;
-
-          const materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, palette.promptSnippet, excludedSlots);
-          const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
-            .filter(Boolean).join(" ") || null;
-
-          {
-            const rc = selectedCategory ? `a ${selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
-            let p = `Transform this room into ${rc} with professional interior design.`;
-            if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
-            if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
-            else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
-            p += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
-            console.log("[AI Prompt] generate-interior (fallback) →\n" + p);
-          }
-
-          const { data, error } = await supabase.functions.invoke("generate-interior", {
-            body: {
-              imageBase64,
-              roomCategory: selectedCategory,
-              materialPrompt: materialPrompt || null,
-              stylePrompt,
-              freestyleDescription: null,
-              quality: API_CONFIG.imageGeneration.quality,
-              model: API_CONFIG.imageGeneration.modelCreative,
-            },
-          });
-
-          if (error) throw new Error(error.message || "Failed to generate interior");
-          generatedImageData = data?.generatedImage;
-          if (!generatedImageData) throw new Error("No image returned from generation service");
-        }
-      } else {
-        // Floorplan/sketch/freestyle path: use generate-interior with creative model
-        const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-        const architecture = styleData?.config.architecture
-          ? getArchitectureById(styleData.config.architecture) : null;
-        const atmosphere = styleData?.config.atmosphere
-          ? getAtmosphereById(styleData.config.atmosphere) : null;
-
-        let materialPrompt = "";
-        if (palette) {
-          materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, selectedCategory, materialOverrides, palette.promptSnippet, excludedSlots);
-        }
-
-        const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet]
-          .filter(Boolean).join(" ") || null;
-
-        {
-          const rc = selectedCategory ? `a ${selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
-          const fd = design.freestyleDescription.trim() || null;
-          let p = `Make visualisation of ${rc} with professional interior design. You must maintain the room's architecture and layout.`;
-          if (fd) p += ` Use these materials and finishes: ${fd}.`;
-          else if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
-          if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
-          else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
-          p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
-          console.log("[AI Prompt] generate-interior (creative) →\n" + p);
-        }
-
-        const { data, error } = await supabase.functions.invoke("generate-interior", {
-          body: {
-            imageBase64,
-            roomCategory: selectedCategory,
-            materialPrompt: materialPrompt || null,
-            stylePrompt,
-            freestyleDescription: design.freestyleDescription.trim() || null,
-            quality: API_CONFIG.imageGeneration.quality,
-            model: API_CONFIG.imageGeneration.modelCreative,
-          },
-        });
-
-        if (error) throw new Error(error.message || "Failed to generate interior");
-        generatedImageData = data?.generatedImage;
-        if (!generatedImageData) throw new Error("No image returned from generation service");
-      }
-
-      return await storeGeneratedImage(generatedImageData, room, style, material, startTime);
-    } catch (err: unknown) {
-      captureError(err, {
-        action: "generateInteriorRender",
-        edgeFunction: "generate-interior",
-        room,
-        style,
-        palette: material,
-      });
-      toast.error(t(getErrorTranslationKey(err)));
-      setGeneration((prev) => ({ ...prev, isGenerating: false }));
-
-      trackEvent(AnalyticsEvents.VISUALIZATION_FAILED, {
-        error_type: err instanceof Error ? err.message : "unknown",
-        tab: "design",
-      });
-      return false;
-    }
-  }, [uploadedImage, selectedCategory, design, user, storeGeneratedImage, materialOverrides, excludedSlots]);
-
-  // Handle generate button click - returns true if successful
-  const handleGenerate = useCallback(async (): Promise<boolean> => {
-    setGeneration((prev) => ({ ...prev, isProcessing: true, isGenerating: true }));
-
-    // Track visualization started
-    trackEvent(AnalyticsEvents.VISUALIZATION_STARTED, {
-      room: design.selectedCategory || "Kitchen",
-      style: design.selectedStyle,
-      palette: design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial,
-      tab: "design",
-    });
-
-    return generateInteriorRender();
-  }, [generateInteriorRender, design.selectedCategory, design.selectedStyle, design.selectedMaterial, design.freestyleDescription]);
 
   // Start fresh - reset all state and clear session
   const handleStartFresh = useCallback(async () => {
@@ -1304,166 +795,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }
   }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
 
-  // Confirm room switch - optionally save image first
-  const confirmRoomSwitch = useCallback((saveFirst: boolean) => {
-    const currentRoom = design.selectedCategory || "Kitchen";
-    const currentGeneratedImage = generation.generatedImages[currentRoom];
-
-    if (saveFirst && currentGeneratedImage) {
-      handleSaveImage();
-    }
-
-    setGeneration((prev) => ({
-      ...prev,
-      pendingRoomSwitch: null,
-      showRoomSwitchDialog: false,
-    }));
-
-    setDesign((prev) => ({
-      ...prev,
-      selectedCategory: generation.pendingRoomSwitch,
-      lastSelectedRoom: generation.pendingRoomSwitch,
-    }));
-  }, [generation.generatedImages, generation.pendingRoomSwitch, handleSaveImage, design.selectedCategory]);
-
-  // Cancel room switch
-  const cancelRoomSwitch = useCallback(() => {
-    setGeneration((prev) => ({
-      ...prev,
-      pendingRoomSwitch: null,
-      showRoomSwitchDialog: false,
-    }));
-  }, []);
-
-  // Confirm style switch - optionally save image first
-  const confirmStyleSwitch = useCallback((saveFirst: boolean) => {
-    const currentRoom = design.selectedCategory || "Kitchen";
-    const currentGeneratedImage = generation.generatedImages[currentRoom];
-
-    if (saveFirst && currentGeneratedImage) {
-      handleSaveImage();
-    }
-
-    // Clear generated image for current room
-    setGeneration((prev) => ({
-      ...prev,
-      generatedImages: { ...prev.generatedImages, [currentRoom]: null },
-      pendingStyleSwitch: null,
-      showStyleSwitchDialog: false,
-    }));
-    setDesign((prev) => ({ ...prev, selectedStyle: generation.pendingStyleSwitch }));
-  }, [generation.generatedImages, generation.pendingStyleSwitch, handleSaveImage, design.selectedCategory]);
-
-  // Cancel style switch
-  const cancelStyleSwitch = useCallback(() => {
-    setGeneration((prev) => ({
-      ...prev,
-      pendingStyleSwitch: null,
-      showStyleSwitchDialog: false,
-    }));
-  }, []);
-
-  // Confirm image upload - optionally clear generated image first
-  const confirmImageUpload = useCallback(async (clearFirst: boolean) => {
-    const currentRoom = design.selectedCategory || "Kitchen";
-    const file = generation.pendingImageUpload;
-
-    if (!file || !user) return;
-
-    // Clear the dialog state and optionally clear generated image
-    setGeneration((prev) => ({
-      ...prev,
-      pendingImageUpload: null,
-      showUploadDialog: false,
-      generatedImages: clearFirst
-        ? { ...prev.generatedImages, [currentRoom]: null }
-        : prev.generatedImages,
-    }));
-
-    try {
-      // Get existing upload to delete old file
-      const { data: existing } = await supabase
-        .from('user_uploads')
-        .select('image_path')
-        .eq('user_id', user.id)
-        .eq('room_category', currentRoom)
-        .single();
-
-      // Compress the image to 1024px max dimension
-      const compressed = await compressImage(file, 1024);
-
-      // Upload to Supabase Storage
-      const path = `${user.id}/uploads/${currentRoom}_${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('user-images')
-        .upload(path, compressed, { contentType: 'image/jpeg' });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Delete old file if exists
-      if (existing?.image_path) {
-        await supabase.storage.from('user-images').remove([existing.image_path]);
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('user-images')
-        .getPublicUrl(path);
-
-      // Upsert database record
-      await supabase
-        .from('user_uploads')
-        .upsert({
-          user_id: user.id,
-          room_category: currentRoom,
-          image_path: path,
-        }, { onConflict: 'user_id,room_category' });
-
-      // If clearing, also delete generations for this room
-      if (clearFirst) {
-        const { data: generations } = await supabase
-          .from('user_generations')
-          .select('image_path')
-          .eq('user_id', user.id)
-          .eq('room_category', currentRoom);
-
-        if (generations && generations.length > 0) {
-          const paths = generations.map(g => g.image_path);
-          await supabase.storage.from('user-images').remove(paths);
-          await supabase
-            .from('user_generations')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('room_category', currentRoom);
-        }
-      }
-
-      // Update local state with the URL and upload type
-      setDesign(prev => ({
-        ...prev,
-        uploadedImages: { ...prev.uploadedImages, [currentRoom]: urlData.publicUrl },
-        uploadTypes: { ...prev.uploadTypes, [currentRoom]: pendingUploadTypeRef.current },
-      }));
-
-      // Track image upload
-      trackEvent(AnalyticsEvents.IMAGE_UPLOADED, { room_type: currentRoom, upload_type: pendingUploadTypeRef.current, tab: "design" });
-    } catch (err) {
-      console.error('Image upload failed:', err);
-      captureError(err, { action: "confirmImageUpload" });
-      toast.error(t(getErrorTranslationKey(err)));
-    }
-  }, [design.selectedCategory, generation.pendingImageUpload, user]);
-
-  // Cancel image upload
-  const cancelImageUpload = useCallback(() => {
-    setGeneration((prev) => ({
-      ...prev,
-      pendingImageUpload: null,
-      showUploadDialog: false,
-    }));
-  }, []);
 
   const value: DesignContextValue = {
     design,
@@ -1513,6 +844,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     vibeTag,
     setVibeTag,
     clearVibeTag,
+    selectCollection,
     shareSession,
     isSharing,
     isSharedSession,

@@ -1,42 +1,23 @@
 import { useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { palettesV2 } from "@/data/palettes/palettes-v2";
 import { getMaterialById } from "@/data/materials";
-import type { RoomType } from "@/data/rooms/surfaces";
 
 const MAX_SWATCHES = 5;
-
-const displayNameToRoomType: Record<string, RoomType> = {
-  Kitchen: "kitchen",
-  Bathroom: "bathroom",
-  Bedroom: "bedroom",
-  "Living Room": "livingRoom",
-};
 
 export default function RoomMaterials() {
   const { design, materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t } = useLanguage();
-  const { selectedMaterial, selectedCategory } = design;
+  const { selectedMaterial } = design;
 
   const uniqueMaterials = useMemo(() => {
-    if (!selectedMaterial) return [];
-
-    const roomType = displayNameToRoomType[selectedCategory || "Kitchen"];
-    if (!roomType) return [];
-
-    const pv2 = palettesV2.find((p) => p.id === selectedMaterial);
-    if (!pv2) return [];
-
-    const slots = pv2.selections[roomType];
-    if (!slots) return [];
+    if (!selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
 
     const seen = new Set<string>();
     const result: { matId: string; slotKey: string; image: string }[] = [];
 
-    for (const [slotKey, defaultMatId] of Object.entries(slots)) {
+    for (const [slotKey, matId] of Object.entries(materialOverrides)) {
       if (excludedSlots.has(slotKey)) continue;
-      const matId = materialOverrides[slotKey] || defaultMatId;
       if (seen.has(matId)) continue;
       seen.add(matId);
 
@@ -48,7 +29,7 @@ export default function RoomMaterials() {
     }
 
     return result;
-  }, [selectedMaterial, selectedCategory, materialOverrides, excludedSlots]);
+  }, [selectedMaterial, materialOverrides, excludedSlots]);
 
   if (uniqueMaterials.length === 0) return null;
 

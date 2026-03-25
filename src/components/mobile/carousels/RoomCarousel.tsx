@@ -1,14 +1,7 @@
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { rooms } from "@/data/rooms";
-
-// Map room id to translation key
-const roomTranslationKey: Record<string, string> = {
-  "kitchen": "space.kitchen",
-  "living-room": "space.livingRoom",
-  "bedroom": "space.bedroom",
-  "bathroom": "space.bathroom",
-};
+import { ROOM_ID_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 
 export default function RoomCarousel() {
   const { design, handleSelectCategory } = useDesign();
@@ -47,7 +40,7 @@ export default function RoomCarousel() {
                   isSelected ? "text-neutral-900" : "text-neutral-500"
                 }`}
               >
-                {t(roomTranslationKey[room.id] || room.name)}
+                {t(ROOM_ID_TO_TRANSLATION_KEY[room.id] || room.name)}
               </span>
             </button>
           );
