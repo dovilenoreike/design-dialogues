@@ -100,15 +100,15 @@ interface Piece {
 // Shadow escalates with zIndex so smaller/higher pieces visually lift off the surface.
 const PIECES: Piece[] = [
   // FLOOR — base layer, largest piece
-  { slot: "floor",            top: "13%", left: "10%", width: "84%", height: "63%",
+  { slot: "floor",            top: "13%", left: "10%", width: "84%", height: "66%",
     rotate: "0deg", zIndex: 1, shadow: "0 1px 2px rgba(0,0,0,0.06)" },
 
-  // MAIN FRONTS — large square, lower-right
-  { slot: "mainFronts",       top: "30%", left: "56%", width: "42%", height: "41%",
+  // ADDITIONAL FRONTS — large square, lower-right
+  { slot: "additionalFronts", top: "30%", left: "56%", width: "42%", height: "41%",
     rotate: "0deg", zIndex: 4, shadow: "0 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.06)" },
 
-  // ADDITIONAL FRONTS — medium square, lower-center
-  { slot: "additionalFronts", top: "53%", left: "15%", width: "38%", height: "32%",
+  // MAIN FRONTS — medium square, lower-center
+  { slot: "mainFronts",       top: "53%", left: "15%", width: "38%", height: "32%",
     rotate: "0deg", zIndex: 5, shadow: "0 6px 18px rgba(0,0,0,0.20), 0 2px 5px rgba(0,0,0,0.08)" },
 
   // WORKTOPS — sits above additionalFronts/mainFronts
@@ -127,6 +127,7 @@ const PIECES: Piece[] = [
 // px/py  = leader line end / terminus dot (on the piece surface)
 interface AnnotationDef {
   surfaceKey: SlotKey;
+  labelKey?: string;
   tx: string; ty: string;  // label text anchor
   x1: string; y1: string;  // leader line start
   px: string; py: string;  // terminus dot on piece
@@ -136,7 +137,7 @@ const ANNOTATION_DEFS: AnnotationDef[] = [
   // GRINDYS  — top white margin, perfectly horizontal at ty="4%"
   { surfaceKey: "floor",            tx: "56%", ty: "7%",  x1: "62%", y1: "8.5%",  px: "68%", py: "14%" },
   // FASADAI  — bottom margin, baseline locked at ty="93%"
-  { surfaceKey: "additionalFronts", tx: "10%", ty: "93%", x1: "18%", y1: "90.5%", px: "28%", py: "81%" },
+  { surfaceKey: "additionalFronts", labelKey: "fronts", tx: "10%", ty: "93%", x1: "18%", y1: "90.5%", px: "28%", py: "81%" },
   // AKCENTAI — bottom margin, same baseline ty="93%"
   { surfaceKey: "accents",          tx: "58%", ty: "93%", x1: "64%", y1: "90.5%", px: "70%", py: "78%" },
 ];
@@ -522,9 +523,9 @@ export default function MoodboardView() {
             style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
             aria-hidden="true"
           >
-            {ANNOTATION_DEFS.map(({ surfaceKey, tx, ty, x1, y1, px, py }, i) => {
+            {ANNOTATION_DEFS.map(({ surfaceKey, labelKey, tx, ty, x1, y1, px, py }, i) => {
               if (surfaceKey === "accents" && !mainSlotsFilled) return null;
-              const label = t(`surface.${surfaceKey}`).toUpperCase();
+              const label = t(`surface.${labelKey ?? surfaceKey}`).toUpperCase();
               return (
                 <g key={i}>
                   {/* Hairline leader — neutral-300, 0.5px */}
