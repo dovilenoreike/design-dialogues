@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useEffect, useState, useRef } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download, ChevronDown, Coins } from "lucide-react";
+import { Upload, Sparkles, Loader2, Camera, X, Download, Coins } from "lucide-react";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -7,8 +7,7 @@ import { useCredits } from "@/contexts/CreditsContext";
 import type { UploadType } from "@/types/design-state";
 
 import { getVisualization } from "@/data/visualisations";
-import { ROOM_DISPLAY_TO_TYPE, ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
-import { getStyleById } from "@/data/styles";
+import { ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 import { rooms } from "@/data/rooms";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
@@ -109,8 +108,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     if (type) pendingUploadTypeRef.current = type;
     fileInputRef.current?.click();
   };
-
-  const style = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
 
   const styleId = design.selectedStyle || null;
   const visualizationImage = getVisualization(selectedMaterial, selectedCategory, styleId);
@@ -228,14 +225,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {/* Gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-      {/* Room label - top-left when browsing */}
-      {!hasUserImage && (
-        <div className="absolute top-4 left-3 z-10">
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
-            {String(rooms.findIndex(r => r.name === roomNameRaw) + 1).padStart(2, '0')} &bull; {roomName}
-          </span>
-        </div>
-      )}
 
       {/* Upload button - centered when browsing */}
       {!hasUserImage && (
@@ -261,9 +250,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {/* Room label + action buttons after upload */}
       {hasUserImage && (
         <div className="absolute inset-x-0 top-4 px-3">
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-neutral-500 [text-shadow:0_0_4px_rgba(255,255,255,0.8)] select-none">
-            {String(rooms.findIndex(r => r.name === roomNameRaw) + 1).padStart(2, '0')} &bull; {roomName}
-          </span>
           {generatedImage && !isGenerating && (
             <button
               onClick={handleSaveImage}
@@ -328,37 +314,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         </div>
       )}
 
-      {/* Technical tags - bottom-left when browsing */}
-      {!hasUserImage && (
-        <div className="absolute bottom-6 left-3 flex items-center gap-1.5 z-10">
-          <button
-            onClick={() => { onOpenSelector ? onOpenSelector("rooms") : setActiveMode("rooms"); }}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] tracking-wide uppercase font-medium active:scale-95 transition-all ${
-              activeMode === "rooms"
-                ? "bg-white/20 backdrop-blur-xl text-white/80"
-                : "text-white/60"
-            }`}
-            style={activeMode === "rooms" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
-          >
-            {roomName}
-            <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
-          </button>
-          {style && (
-            <button
-              onClick={() => { onOpenSelector ? onOpenSelector("styles") : setActiveMode("styles"); }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] tracking-wide uppercase font-medium active:scale-95 transition-all ${
-                activeMode === "styles"
-                  ? "bg-white/20 backdrop-blur-xl text-white/80"
-                  : "text-white/60"
-              }`}
-              style={activeMode === "styles" ? { border: '0.5px solid rgba(255,255,255,0.3)' } : undefined}
-            >
-              {t(`style.${style.id}`) || style.name}
-              <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Bubble rail - browsing mode */}
       {!hasUserImage && currentCollection && bubbles.length > 0 && (
@@ -384,19 +339,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         />
       )}
 
-      {/* Style tag after upload */}
-      {hasUserImage && style && (
-        <div className="absolute top-14 inset-x-0 flex justify-center">
-          <button
-            onClick={() => { onOpenSelector ? onOpenSelector("styles") : setActiveMode("styles"); }}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-white/20 backdrop-blur-xl rounded-full text-[10px] tracking-wide uppercase text-white/80 font-medium active:scale-95 transition-transform"
-            style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-          >
-            {t(`style.${style.id}`) || style.name}
-            <ChevronDown className="w-2.5 h-2.5 text-white/50" strokeWidth={2} />
-          </button>
-        </div>
-      )}
 
       {/* Bubble rail - uploaded mode */}
       {hasUserImage && currentCollection && bubbles.length > 0 && (
