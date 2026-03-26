@@ -156,9 +156,9 @@ export default function DesignView() {
   }, [handleSelectCategory]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 relative">
+    <div ref={scrollRef} className="flex-1 overflow-hidden min-h-0 relative">
 
-      {/* Coming soon overlay — temporarily disabled for testing
+      {/* Coming soon overlay — temporarily added untill we fix visualisations*/
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
         <p className="text-lg font-serif mb-1">{t("comingSoon.screenTitle")}</p>
         <p className="text-xs text-muted-foreground text-center max-w-[200px] leading-relaxed">
@@ -171,7 +171,7 @@ export default function DesignView() {
           {t("comingSoon.beNotifiedButton")}
         </button>
       </div>
-      */}
+      }
 
       {/* Hero visualisation */}
       <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
