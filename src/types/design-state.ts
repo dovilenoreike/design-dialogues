@@ -22,6 +22,7 @@ export interface GenerationState {
   isGenerating: boolean;
   showResults: boolean;
   generatedImages: Record<string, string | null>;
+  clayRenderImages: Record<string, string | null>;  // base64, in-memory only
   pendingRoomSwitch: string | null;
   showRoomSwitchDialog: boolean;
   pendingStyleSwitch: string | null;
@@ -45,6 +46,7 @@ export const initialGenerationState: GenerationState = {
   isGenerating: false,
   showResults: false,
   generatedImages: {},
+  clayRenderImages: {},
   pendingRoomSwitch: null,
   showRoomSwitchDialog: false,
   pendingStyleSwitch: null,

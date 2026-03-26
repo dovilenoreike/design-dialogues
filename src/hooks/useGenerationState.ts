@@ -1,11 +1,11 @@
+// Set to true to log prompts and skip API calls during prompt development
+const DEV_PROMPT_ONLY = false;
+
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getStyleById } from "@/data/styles";
-import { getArchitectureById } from "@/data/architectures";
-import { getAtmosphereById } from "@/data/atmospheres";
 import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
@@ -45,6 +45,9 @@ export function useGenerationState({
 
   const pendingUploadTypeRef = useRef<UploadType>("photo");
 
+  // Ref to access clayRenderImages inside callbacks without stale closure
+  const clayRenderImagesRef = useRef<Record<string, string | null>>({});
+
   // Load uploaded images from user_uploads table
   useEffect(() => {
     if (!user || isSharedSession) return;
@@ -63,19 +66,47 @@ export function useGenerationState({
 
         if (data && data.length > 0) {
           const uploaded: Record<string, string> = {};
-          const uploadTypes: Record<string, string> = {};
+          const uploadTypes: Record<string, UploadType> = {};
+          const floorplanRooms: string[] = [];
           data.forEach(upload => {
             const { data: urlData } = supabase.storage
               .from('user-images')
               .getPublicUrl(upload.image_path);
             uploaded[upload.room_category] = urlData.publicUrl;
-            uploadTypes[upload.room_category] = upload.upload_type || 'photo';
+            const ut = ((upload as Record<string, unknown>).upload_type as UploadType) || 'photo';
+            uploadTypes[upload.room_category] = ut;
+            if (ut === 'floorplan') floorplanRooms.push(upload.room_category);
           });
           setDesign(prev => ({
             ...prev,
             uploadedImages: { ...prev.uploadedImages, ...uploaded },
             uploadTypes: { ...prev.uploadTypes, ...uploadTypes },
           }));
+
+          // Reload persisted clay renders for floorplan rooms
+          if (floorplanRooms.length > 0) {
+            const { data: clayFiles } = await supabase.storage
+              .from('user-images')
+              .list(user.id + '/clay');
+            if (clayFiles) {
+              const clayImages: Record<string, string> = {};
+              for (const room of floorplanRooms) {
+                if (clayFiles.some(f => f.name === room + '.jpg')) {
+                  const { data: urlData } = supabase.storage
+                    .from('user-images')
+                    .getPublicUrl(user.id + '/clay/' + room + '.jpg');
+                  clayImages[room] = urlData.publicUrl;
+                  clayRenderImagesRef.current[room] = urlData.publicUrl;
+                }
+              }
+              if (Object.keys(clayImages).length > 0) {
+                setGeneration(prev => ({
+                  ...prev,
+                  clayRenderImages: { ...prev.clayRenderImages, ...clayImages },
+                }));
+              }
+            }
+          }
         }
       } catch (err) {
         console.error('Error loading uploads:', err);
@@ -243,9 +274,11 @@ export function useGenerationState({
       ...prev,
       uploadedImages: { ...prev.uploadedImages, [currentRoom]: null },
     }));
+    clayRenderImagesRef.current = { ...clayRenderImagesRef.current, [currentRoom]: null };
     setGeneration(prev => ({
       ...prev,
       generatedImages: { ...prev.generatedImages, [currentRoom]: null },
+      clayRenderImages: { ...prev.clayRenderImages, [currentRoom]: null },
     }));
 
     if (user) {
@@ -260,6 +293,9 @@ export function useGenerationState({
         if (upload?.image_path) {
           await supabase.storage.from('user-images').remove([upload.image_path]);
         }
+
+        // Remove persisted clay render if it exists
+        await supabase.storage.from('user-images').remove([`${user.id}/clay/${currentRoom}.jpg`]);
 
         await supabase
           .from('user_uploads')
@@ -380,92 +416,85 @@ export function useGenerationState({
     try {
       const collection = design.selectedMaterial ? collectionsV2.find((c) => c.id === design.selectedMaterial) ?? null : null;
 
-      const imageResponse = await fetch(uploadedImage);
-      const imageBlob = await imageResponse.blob();
-      const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
-
       const uploadType = design.uploadTypes[room] || "photo";
+      const clayRenderBase64 = uploadType === "floorplan" ? (clayRenderImagesRef.current[room] ?? null) : null;
+
+      let imageBase64: string;
+      if (clayRenderBase64) {
+        // Step 2: use clay render as input
+        const clayResponse = await fetch(clayRenderBase64);
+        const clayBlob = await clayResponse.blob();
+        imageBase64 = await resizeBlobToBase64(clayBlob, 512);
+      } else {
+        const imageResponse = await fetch(uploadedImage);
+        const imageBlob = await imageResponse.blob();
+        imageBase64 = await resizeBlobToBase64(imageBlob, 512);
+      }
+
       const isGeminiPath = (
         (uploadType === "photo" && !!collection && !design.freestyleDescription?.trim()) ||
         ((uploadType === "floorplan" || uploadType === "sketch") && !!collection)
       );
-      const geminiModel = uploadType === "photo"
+      const geminiModel = clayRenderBase64
         ? API_CONFIG.imageGeneration.modelAccurate
-        : API_CONFIG.imageGeneration.modelCreative;
-
-      console.log("[generate] routing:", { uploadType, isGeminiPath, geminiModel, hasCollection: !!collection, hasFreestyle: !!design.freestyleDescription?.trim() });
+        : uploadType === "photo"
+          ? API_CONFIG.imageGeneration.modelAccurate
+          : API_CONFIG.imageGeneration.modelCreative;
 
       let generatedImageData: string;
 
       if (isGeminiPath) {
         const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, excludedSlots);
 
-        const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-        const atmosphere = styleData?.config.atmosphere ? getAtmosphereById(styleData.config.atmosphere) : null;
-        const atmospherePrompt = atmosphere?.promptSnippet ?? null;
-        const architecture = styleData?.config.architecture ? getArchitectureById(styleData.config.architecture) : null;
-        const architecturePrompt = architecture?.promptSnippet ?? null;
-
-        {
-          const rc = design.selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim();
-          const matInstr = materialImagesWithMeta
-            .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}.`)
-            .join("\n");
-          const atmosphereSection = atmospherePrompt ? "":"";//`\nDecor: ${atmospherePrompt}\n` : "";
-          const architectureSection = architecturePrompt ? `\nInterior base style: ${architecturePrompt}\n` : "";
-          let p: string;
-          if (uploadType === "floorplan") {
-            p = `Image 1 is a 2D floor plan of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\n${architectureSection}${atmosphereSection}\nProduce a realistic interior render with accurate floorplan, materials, and professional photography quality. Do not add clutter.`;
-          } else if (uploadType === "sketch") {
-            p = `Image 1 is a rough sketch or concept drawing of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\n${architectureSection}${atmosphereSection}\nProduce a realistic interior render with natural lighting and professional photography quality.`;
-          } else {
-            p = `Image 1 is a photo of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n\nCreate a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`;
-          }
-          console.log(`[AI Prompt] generate-material-edit (${uploadType}) → model: ${geminiModel}\n` + p);
+        const matInstr = materialImagesWithMeta
+          .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}.`)
+          .join("\n");
+        let designPrompt: string;
+        if (uploadType === "floorplan" && !clayRenderBase64) {
+          designPrompt = `Image 1 is a 2D floor plan of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic magazine like 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\nProduce a professional interior render with exactly accurate floorplan, materials.`;
+        } else if (uploadType === "sketch") {
+          designPrompt = `Image 1 is a rough sketch or concept drawing of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of item as a designer. Produce a realistic interior render with natural lighting and professional photography quality.`;
+        } else {
+          designPrompt = `Image 1 is a photo of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with natural lighting and professional photography quality.`;
         }
 
-        console.log("[generate] Calling generate-material-edit with model:", geminiModel, "uploadType:", uploadType);
+        if (DEV_PROMPT_ONLY) {
+          toast.info("DEV: prompt logged, API call skipped");
+          setGeneration((prev) => ({ ...prev, isGenerating: false, isProcessing: false }));
+          return false;
+        }
+
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
             materialImages: materialImagesWithMeta,
-            roomCategory: design.selectedCategory,
-            palettePromptSnippet: collection!.promptBase,
-            atmospherePrompt,
-            architecturePrompt,
+            designPrompt,
             quality: API_CONFIG.imageGeneration.quality,
             model: geminiModel,
-            uploadType,
           },
         });
         const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
-        console.log("[generate] generate-material-edit response:", { error: error?.message, errorBody, hasImage: !!data?.generatedImage, dataKeys: data ? Object.keys(data) : null });
-
         if (error) throw new Error(errorBody?.error || error.message || "Failed to generate material edit");
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
-        const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-        const architecture = styleData?.config.architecture ? getArchitectureById(styleData.config.architecture) : null;
-        const atmosphere = styleData?.config.atmosphere ? getAtmosphereById(styleData.config.atmosphere) : null;
-
         let materialPrompt = "";
         if (collection) {
           materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, collection.promptBase, excludedSlots);
         }
 
-        const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet].filter(Boolean).join(" ") || null;
-
         {
-          const rc = design.selectedCategory ? `a ${design.selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
           const fd = design.freestyleDescription.trim() || null;
-          let p = `Make visualisation of ${rc} with professional interior design. You must maintain the room's architecture and layout.`;
+          let p = `Make a visualisation of a room with professional interior design. You must maintain the room's architecture and layout.`;
           if (fd) p += ` Use these materials and finishes: ${fd}.`;
           else if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
-          if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
-          else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
+          p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
           p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
-          console.log("[AI Prompt] generate-interior (creative) →\n" + p);
+          if (DEV_PROMPT_ONLY) {
+            toast.info("DEV: prompt logged, API call skipped");
+            setGeneration((prev) => ({ ...prev, isGenerating: false, isProcessing: false }));
+            return false;
+          }
         }
 
         const { data, error } = await supabase.functions.invoke("generate-interior", {
@@ -473,7 +502,6 @@ export function useGenerationState({
             imageBase64,
             roomCategory: design.selectedCategory,
             materialPrompt: materialPrompt || null,
-            stylePrompt,
             freestyleDescription: design.freestyleDescription.trim() || null,
             quality: API_CONFIG.imageGeneration.quality,
             model: API_CONFIG.imageGeneration.modelCreative,
@@ -559,6 +587,9 @@ export function useGenerationState({
     const file = generation.pendingImageUpload;
     if (!file || !user) return;
 
+    if (clearFirst) {
+      clayRenderImagesRef.current = { ...clayRenderImagesRef.current, [currentRoom]: null };
+    }
     setGeneration((prev) => ({
       ...prev,
       pendingImageUpload: null,
@@ -566,6 +597,9 @@ export function useGenerationState({
       generatedImages: clearFirst
         ? { ...prev.generatedImages, [currentRoom]: null }
         : prev.generatedImages,
+      clayRenderImages: clearFirst
+        ? { ...prev.clayRenderImages, [currentRoom]: null }
+        : prev.clayRenderImages,
     }));
 
     try {
@@ -635,6 +669,67 @@ export function useGenerationState({
     setGeneration((prev) => ({ ...prev, pendingImageUpload: null, showUploadDialog: false }));
   }, []);
 
+  // Generate clay render (step 1 of floorplan two-step flow)
+  const generateClayRender = useCallback(async (): Promise<void> => {
+    const room = design.selectedCategory || "Kitchen";
+    const uploadedImage = design.uploadedImages[room] || null;
+    if (!uploadedImage || !user) return;
+
+    setGeneration(prev => ({ ...prev, isGenerating: true, isProcessing: true }));
+
+    try {
+      const imageResponse = await fetch(uploadedImage);
+      const imageBlob = await imageResponse.blob();
+      const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
+
+      const designPrompt = `Create a photorealistic interior visualization based on this floorplan. Minimalist style.`;
+
+      const { data, error } = await supabase.functions.invoke("generate-material-edit", {
+        body: {
+          imageBase64,
+          materialImages: [],
+          designPrompt,
+          model: API_CONFIG.imageGeneration.modelCreative,
+        },
+      });
+
+      const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
+      if (error) throw new Error(errorBody?.error || error.message || "Failed to generate clay render");
+
+      const clayBase64 = data?.generatedImage;
+      if (!clayBase64) throw new Error("No image returned from clay render");
+
+      // Persist clay render to storage so it survives page reload
+      let clayValue = clayBase64;
+      try {
+        const clayBlobResponse = await fetch(clayBase64);
+        const clayBlob = await clayBlobResponse.blob();
+        const clayPath = `${user!.id}/clay/${room}.jpg`;
+        const { error: uploadErr } = await supabase.storage
+          .from('user-images')
+          .upload(clayPath, clayBlob, { contentType: 'image/jpeg', upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from('user-images').getPublicUrl(clayPath);
+          clayValue = urlData.publicUrl;
+        }
+      } catch {
+        // silently ignore storage persistence failure
+      }
+
+      clayRenderImagesRef.current = { ...clayRenderImagesRef.current, [room]: clayValue };
+      setGeneration(prev => ({
+        ...prev,
+        clayRenderImages: { ...prev.clayRenderImages, [room]: clayValue },
+        isGenerating: false,
+        isProcessing: false,
+      }));
+    } catch (err) {
+      captureError(err, { action: "generateClayRender", room });
+      toast.error(t(getErrorTranslationKey(err)));
+      setGeneration(prev => ({ ...prev, isGenerating: false, isProcessing: false }));
+    }
+  }, [design.selectedCategory, design.uploadedImages, user, t]);
+
   return {
     generation,
     setGeneration,
@@ -644,6 +739,7 @@ export function useGenerationState({
     clearUploadedImage,
     storeGeneratedImage,
     handleGenerate,
+    generateClayRender,
     confirmRoomSwitch,
     cancelRoomSwitch,
     confirmStyleSwitch,

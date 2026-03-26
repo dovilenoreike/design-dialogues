@@ -10,7 +10,7 @@ export const collectionsV2: CollectionV2[] = [
     pool: {
       flooring:                  ["concrete","bleached-wood"],
       "worktops-and-backsplashes": ["soft-texture-light","soft-texture-dark"],
-      "cabinet-fronts":          ["neutral",  "medium-wood", "dark-wood",],
+      "cabinet-fronts":          [ "medium-wood", "neutral", "dark-wood",],
       tiles:                     [],
       walls:                     ["off-white"],
       accents:                   ["chrome"],
@@ -31,7 +31,7 @@ export const collectionsV2: CollectionV2[] = [
     pool: {
       flooring:                  ["light-wood", "concrete", "dark-wood"],
       "worktops-and-backsplashes": ["bold-texture-light"],
-      "cabinet-fronts":          [ "white","black", "dark-wood",],
+      "cabinet-fronts":          [ "black", "white", "dark-wood",],
       walls:                     ["off-white"],
       accents:                   ["wine-red", "aged-bronze"],
     },
@@ -51,7 +51,7 @@ export const collectionsV2: CollectionV2[] = [
     pool: {
       flooring:                  ["light-wood", "dark-wood", "concrete"],
       "worktops-and-backsplashes": ["soft-texture-dark", "concrete"],
-      "cabinet-fronts":          ["neutral","dark-wood","metallic","black"],
+      "cabinet-fronts":          ["dark-wood","neutral","metallic","black"],
       tiles:                     [],
       walls:                     ["off-white"],
       accents:                   ["aged-bronze", "chrome"],
@@ -94,7 +94,7 @@ export const collectionsV2: CollectionV2[] = [
     pool: {
       flooring:                  [ "light-wood", "concrete"],
       "worktops-and-backsplashes": ["bold-texture-light", "white", "soft-texture-light", ],
-      "cabinet-fronts":          ["white", "medium-wood", "neutral"],
+      "cabinet-fronts":          ["medium-wood", "white", "neutral"],
       walls:                     ["off-white"],
       accents:                   ["gold", "chrome"],
     },
@@ -113,7 +113,7 @@ export const collectionsV2: CollectionV2[] = [
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     pool: {
       flooring:                  [ "dark-wood", "light-wood","concrete"],
-      "worktops-and-backsplashes": ["soft-texture-light","bold-texture-light","soft-texture-dark"],
+      "worktops-and-backsplashes": ["soft-texture-light", "bold-texture-light","soft-texture-dark"],
       "cabinet-fronts":          ["dark-wood", "neutral", "black"],
       walls:                     ["off-white"],
       accents:                   ["aged-bronze", "chrome"],

@@ -1,4 +1,5 @@
-import { X, ChevronDown, RotateCcw } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, RotateCcw, Plus } from "lucide-react";
 import { getMaterialById } from "@/data/materials";
 import { getArchetypeById } from "@/data/archetypes";
 import { getSlotAlternatives, type MaterialBubble } from "@/lib/collection-utils";
@@ -9,7 +10,6 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 interface StageBubbleRailProps {
   collection: CollectionV2;
   bubbles: MaterialBubble[];
-  roomNameRaw: string;
   materialOverrides: Record<string, string>;
   excludedSlots: Set<string>;
   setMaterialOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
@@ -31,7 +31,6 @@ interface StageBubbleRailProps {
 export default function StageBubbleRail({
   collection,
   bubbles,
-  roomNameRaw,
   materialOverrides,
   excludedSlots,
   setMaterialOverrides,
@@ -52,6 +51,13 @@ export default function StageBubbleRail({
   const showroomFilter = activeShowroom
     ? { id: activeShowroom.id, surfaceCategories: activeShowroom.surfaceCategories }
     : undefined;
+
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  useEffect(() => { setShowAddMenu(false); }, [activeSlot, selectedMaterial]);
+
+  const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
+  const hiddenBubbles  = bubbles.filter(b =>  excludedSlots.has(b.slotKey));
 
   if (bubbles.length === 0) return null;
 
@@ -99,8 +105,7 @@ export default function StageBubbleRail({
         className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
         style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
       >
-        {bubbles.map((bubble) => {
-          const isExcluded = excludedSlots.has(bubble.slotKey);
+        {visibleBubbles.map((bubble) => {
           const overrideId = materialOverrides[bubble.slotKey];
           const overriddenImage = overrideId
             ? (getMaterialById(overrideId)?.image ?? getArchetypeById(overrideId)?.image ?? bubble.image)
@@ -112,16 +117,12 @@ export default function StageBubbleRail({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (isExcluded) {
-                    setExcludedSlots(prev => { const next = new Set(prev); next.delete(bubble.slotKey); return next; });
-                    return;
-                  }
                   if (activeMode !== "palettes") {
                     onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
                   }
                   setActiveSlot(isActive ? null : bubble.slotKey);
                 }}
-                className={`block active:scale-95 transition-transform relative ${isExcluded ? "opacity-[0.35]" : ""}`}
+                className="block active:scale-95 transition-transform relative"
               >
                 <img
                   src={overriddenImage}
@@ -129,14 +130,11 @@ export default function StageBubbleRail({
                   title={bubble.slotLabel}
                   className={`w-7 h-7 rounded-full object-cover ${variant === "browsing" && activeMode !== "palettes" ? "shadow-sm" : ""} ${isActive ? "ring-[1.5px] ring-white" : ""}`}
                 />
-                {isExcluded && (
-                  <X className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={1.5} />
-                )}
               </button>
 
               {/* Material swap rail */}
-              {isActive && !isExcluded && (() => {
-                const alternatives = getSlotAlternatives(collection.id, roomNameRaw, bubble.slotKey, showroomFilter);
+              {isActive && (() => {
+                const alternatives = getSlotAlternatives(collection.id, bubble.slotKey, showroomFilter);
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
                 return (
                   <div
@@ -184,6 +182,40 @@ export default function StageBubbleRail({
             </div>
           );
         })}
+
+        {hiddenBubbles.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowAddMenu(v => !v); }}
+              className="w-7 h-7 rounded-full flex items-center justify-center bg-white/20 active:scale-90 transition-transform"
+              style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+            >
+              <Plus className="w-3.5 h-3.5 text-white/70" strokeWidth={2} />
+            </button>
+
+            {showAddMenu && (
+              <div
+                className="absolute right-full top-1/2 -translate-y-1/2 mr-2 z-50 flex items-center gap-1.5 backdrop-blur-xl bg-white/20 rounded-full px-2.5 py-1.5"
+                style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {hiddenBubbles.map(b => (
+                  <button
+                    key={b.slotKey}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExcludedSlots(prev => { const next = new Set(prev); next.delete(b.slotKey); return next; });
+                      if (hiddenBubbles.length === 1) setShowAddMenu(false);
+                    }}
+                    className="text-[9px] tracking-wide uppercase text-white/80 font-medium px-2 py-1 rounded-full bg-white/10 active:scale-95 transition-transform whitespace-nowrap"
+                  >
+                    {t(`surface.${b.slotKey}`) || b.slotLabel}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

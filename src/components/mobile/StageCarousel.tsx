@@ -1,4 +1,5 @@
 import React from "react";
+import { getVisualization, DEFAULT_PALETTE, DEFAULT_STYLE } from "@/data/visualisations";
 
 interface StageCarouselProps {
   prevImage: string;
@@ -23,6 +24,11 @@ export default function StageCarousel({
   isVisualizationMismatched,
   roomName,
 }: StageCarouselProps) {
+  const fallbackImage = getVisualization(DEFAULT_PALETTE, roomName, DEFAULT_STYLE);
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (e.currentTarget.src !== fallbackImage) e.currentTarget.src = fallbackImage;
+  };
+
   return (
     <div
       ref={containerRef}
@@ -44,6 +50,7 @@ export default function StageCarousel({
             src={prevImage}
             alt="Previous"
             className="w-full h-full object-cover"
+            onError={handleImgError}
           />
         </div>
 
@@ -53,6 +60,7 @@ export default function StageCarousel({
             src={currentImage}
             alt={`${roomName} visualization`}
             className={`w-full h-full object-cover transition-[filter] duration-300 ${isVisualizationMismatched ? 'blur-sm' : ''}`}
+            onError={handleImgError}
           />
         </div>
 
@@ -62,6 +70,7 @@ export default function StageCarousel({
             src={nextImage}
             alt="Next"
             className="w-full h-full object-cover"
+            onError={handleImgError}
           />
         </div>
       </div>

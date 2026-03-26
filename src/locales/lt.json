@@ -18,7 +18,12 @@
     "buyMore": "Pirkti daugiau kreditų",
     "bannerDescription": "Panaudojote visus vizualizacijos kreditus. Įsigykite daugiau, kad galėtumėte toliau kurti dizainus.",
     "dismiss": "Ne dabar",
-    "error": "Nepavyko apdoroti kredito. Bandykite dar kartą."
+    "error": "Nepavyko apdoroti kredito. Bandykite dar kartą.",
+    "requestFree": "arba prašyti nemokamų kreditų",
+    "requestEmailPlaceholder": "jūsų@el.paštas.lt",
+    "requestSubmit": "Siųsti prašymą",
+    "requestSuccess": "Prašymas gautas! Susisieksime.",
+    "requestError": "Nepavyko. Bandykite dar kartą."
   },
   "landing": {
     "title": "Interjero planuotė",
@@ -246,7 +251,7 @@
     "materialManifest": "Medžiagų Sąrašas",
     "curatedBy": "Sukurė",
     "requestCurated": "Užsakyti Medžiagų Sąrašą",
-    "visualizationDisclaimer": "AI vizualizacija",
+    "visualizationDisclaimer": "AI vizualizacija · Medžiagos gali šiek tiek skirtis",
     "seeDetails": "Žiūrėti detales",
     "budgetDetails": "Biudžeto Detalės",
     "total": "Viso",
@@ -523,8 +528,8 @@
       "2dPlanTip": "AI pasiūlys konceptą pagal esamus baldus.",
       "sketch": "ESKIZAS ARBA PIEŠINYS",
       "sketchTip": "AI patikslins Jūsų piešinį į detalų paveikslą.",
-      "photo": "NUOTRAUKA",
-      "photoTip": "Apdailos medžiagų perpiešimas. Visgi AI gali šiek tiek pakeisti erdvės proporcijas."
+      "photo": "3D NUOTRAUKA",
+      "photoTip": "Apdailos medžiagų perpiešimas."
     },
     "uploadDialog": {
       "title": "Įkelti naują nuotrauką",

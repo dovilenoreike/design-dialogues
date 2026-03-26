@@ -18,7 +18,12 @@
     "buyMore": "Buy More Credits",
     "bannerDescription": "You've used all your visualization credits. Purchase more to continue creating designs.",
     "dismiss": "Not now",
-    "error": "Failed to process credit. Please try again."
+    "error": "Failed to process credit. Please try again.",
+    "requestFree": "or request free credits",
+    "requestEmailPlaceholder": "your@email.com",
+    "requestSubmit": "Send request",
+    "requestSuccess": "Request received! We'll be in touch.",
+    "requestError": "Failed to submit. Please try again."
   },
   "landing": {
     "title": "Interior Planner",

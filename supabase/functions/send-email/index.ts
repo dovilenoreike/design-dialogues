@@ -107,6 +107,18 @@ serve(async (req) => {
         `;
         break;
 
+      case "credit-request":
+        subject = `Credit Request from ${data.email}`;
+        html = `
+          <h2>Free Credits Request</h2>
+          <p><strong>Email:</strong> ${data.email}</p>
+          <p><strong>User ID:</strong> <code>${data.userId}</code></p>
+          <hr>
+          <p>To add credits, run in Supabase SQL editor:</p>
+          <pre>UPDATE user_credits SET credits = credits + 5 WHERE user_id = '${data.userId}';</pre>
+        `;
+        break;
+
       default:
         throw new Error("Unknown email type");
     }

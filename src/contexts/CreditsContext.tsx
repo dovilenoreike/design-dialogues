@@ -55,11 +55,8 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
 
   const fetchCredits = useCallback(async () => {
     if (!user) {
-      console.log("fetchCredits: No user, skipping");
       return;
     }
-
-    console.log("fetchCredits: User ID:", user.id);
 
     try {
       setLoading(true);
@@ -67,8 +64,6 @@ export function CreditsProvider({ children }: CreditsProviderProps) {
 
       // Supabase client automatically includes the user's JWT in the Authorization header
       const { data, error: fnError } = await supabase.functions.invoke("get-credits");
-
-      console.log("fetchCredits response:", { data, error: fnError });
 
       if (fnError) {
         throw fnError;

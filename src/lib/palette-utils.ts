@@ -4,10 +4,8 @@
  */
 import type { Palette, Material, RoomCategory } from "@/types/palette";
 import type { Language } from "@/contexts/LanguageContext";
-import type { RoomType } from "@/data/rooms/surfaces";
 import { getMaterialById } from "@/data/materials";
-import { roomSurfaces } from "@/data/rooms/surfaces";
-import { ROOM_DISPLAY_TO_TYPE } from "@/lib/design-constants";
+import { surfaces } from "@/data/rooms/surfaces";
 
 /**
  * Gets the image URL for a material by its ID.
@@ -107,8 +105,10 @@ export function buildDetailedMaterialPrompt(
 
 export interface MaterialImageWithMeta {
   base64: string;
+  slotKey: string;
   purpose: string;
   description: string;
+  texturePrompt: string;
 }
 
 /**
@@ -117,24 +117,19 @@ export interface MaterialImageWithMeta {
  */
 export function buildDetailedMaterialPromptWithOverrides(
   _paletteId: string,
-  spaceCategory: string,
+  _spaceCategory: string,
   overrides: Record<string, string>,
   palettePromptSnippet: string,
   excludedSlots?: Set<string>,
 ): string {
-  const roomType = ROOM_DISPLAY_TO_TYPE[spaceCategory] as RoomType;
-  if (!roomType) return palettePromptSnippet;
-
-  const slotDefs = roomSurfaces[roomType];
-
-  // Group slots by material ID — only slots relevant to this room
+  // Group slots by material ID
   const matGroups = new Map<string, string[]>();
   const matOrder: string[] = [];
 
   for (const [slotKey, matId] of Object.entries(overrides)) {
     if (excludedSlots?.has(slotKey)) continue;
-    const slotDef = slotDefs[slotKey];
-    if (!slotDef) continue; // skip slots not in this room
+    const slotDef = surfaces[slotKey];
+    if (!slotDef) continue;
 
     const existing = matGroups.get(matId);
     if (existing) {
@@ -167,27 +162,22 @@ export function buildDetailedMaterialPromptWithOverrides(
  */
 export async function loadMaterialImagesWithOverrides(
   _paletteId: string,
-  spaceCategory: string,
+  _spaceCategory: string,
   overrides: Record<string, string>,
   excludedSlots?: Set<string>,
 ): Promise<MaterialImageWithMeta[]> {
-  const roomType = ROOM_DISPLAY_TO_TYPE[spaceCategory] as RoomType;
-  if (!roomType) return [];
-
-  const slotDefs = roomSurfaces[roomType];
-
-  // One entry per slot — only slots relevant to this room
+  // One entry per slot
   const items: { matId: string; purpose: string }[] = [];
 
   for (const [slotKey, matId] of Object.entries(overrides)) {
     if (excludedSlots?.has(slotKey)) continue;
-    const slotDef = slotDefs[slotKey];
-    if (!slotDef) continue; // skip slots not in this room
+    const slotDef = surfaces[slotKey];
+    if (!slotDef) continue;
 
-    items.push({ matId, purpose: slotDef.label });
+    items.push({ matId, slotKey, purpose: slotDef.label });
   }
 
-  const promises = items.map(async ({ matId, purpose }) => {
+  const promises = items.map(async ({ matId, slotKey, purpose }) => {
     const mat = getMaterialById(matId);
     if (!mat?.image) return null;
 
@@ -204,7 +194,7 @@ export async function loadMaterialImagesWithOverrides(
         ? (mat.description as Record<string, string>).en || ""
         : String(mat.description || "");
 
-      return { base64, purpose, description: desc };
+      return { base64, slotKey, purpose, description: desc, texturePrompt: mat.texturePrompt ?? "" };
     } catch {
       return null;
     }

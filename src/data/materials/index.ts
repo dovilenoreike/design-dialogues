@@ -1648,7 +1648,7 @@ const agedBronze: Material = {
   categories: ["accents"],
   tier: "optimal",
   code: "",
-  texturePrompt: "Aged bronze finish, warm undertones.",
+  texturePrompt: "Plumbing fixtures",
   showroomIds: [],
   alternatives: {},
 };
@@ -1665,7 +1665,7 @@ const chrome: Material = {
   categories: ["accents"],
   tier: "optimal",
   code: "",
-  texturePrompt: "Chrome finish, modern look.",
+  texturePrompt: "Chrome finish",
   showroomIds: [],
   alternatives: {},
 };
@@ -1682,7 +1682,7 @@ const gold: Material = {
   categories: ["accents"],
   tier: "optimal",
   code: "",
-  texturePrompt: "Gold finish, luxurious appearance.",
+  texturePrompt: "Gold finish",
   showroomIds: [],
   alternatives: {},
 };
@@ -1699,7 +1699,7 @@ const wineRed: Material = {
   categories: ["accents"],
   tier: "optimal",
   code: "",
-  texturePrompt: "Wine red finish, rich and warm.",
+  texturePrompt: "Wine red finish",
   showroomIds: [],
   alternatives: {},
 };

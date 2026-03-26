@@ -84,6 +84,7 @@ interface DesignContextValue {
 
   // Generation actions
   handleGenerate: () => Promise<boolean>;
+  generateClayRender: () => Promise<void>;
   handleStartFresh: () => void;
 
   // Room switch dialog actions
@@ -304,6 +305,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     handleImageUpload,
     clearUploadedImage,
     handleGenerate,
+    generateClayRender,
     confirmRoomSwitch,
     cancelRoomSwitch,
     confirmStyleSwitch,
@@ -859,6 +861,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     handleSelectStyle,
     handleFreestyleChange,
     handleGenerate,
+    generateClayRender,
     handleStartFresh,
     confirmRoomSwitch,
     cancelRoomSwitch,

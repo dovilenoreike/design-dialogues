@@ -3,9 +3,7 @@ import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getMaterialById, getMaterialsByCategory } from "@/data/materials";
 import type { SurfaceCategory } from "@/data/materials/types";
 import { getArchetypeById } from "@/data/archetypes";
-import { roomSurfaces } from "@/data/rooms/surfaces";
-import { ROOM_DISPLAY_TO_TYPE } from "@/lib/design-constants";
-import type { RoomType } from "@/data/rooms/surfaces";
+import { surfaces } from "@/data/rooms/surfaces";
 
 const SWATCH_SPEC: Array<{ category: SurfaceCategory; count: 1 | 2 }> = [
   { category: "flooring",                  count: 1 },
@@ -77,17 +75,12 @@ export const SLOT_TO_COLLECTION_CATEGORY: Record<string, string> = {
  */
 export function getCollectionMaterialBubbles(
   collection: CollectionV2,
-  roomDisplayName: string,
   materialOverrides: Record<string, string>,
   showroomFilter?: { id: string; surfaceCategories: SurfaceCategory[] },
 ): MaterialBubble[] {
-  const roomType = ROOM_DISPLAY_TO_TYPE[roomDisplayName] as RoomType;
-  if (!roomType) return [];
-
-  const slotDefs = roomSurfaces[roomType];
   const bubbles: MaterialBubble[] = [];
 
-  for (const [slotKey, slotDef] of Object.entries(slotDefs)) {
+  for (const [slotKey, slotDef] of Object.entries(surfaces)) {
     const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
 
     const applyShowroomFilter =
@@ -191,18 +184,13 @@ export function collectionHasShowroom(colId: string, showroomId: string): boolea
  */
 export function getSlotAlternatives(
   collectionId: string,
-  roomDisplayName: string,
   slotKey: string,
   showroomFilter?: { id: string; surfaceCategories: SurfaceCategory[] },
 ): { materialId: string; image: string }[] {
-  const roomType = ROOM_DISPLAY_TO_TYPE[roomDisplayName] as RoomType;
-  if (!roomType) return [];
-
   const collection = collectionsV2.find((c) => c.id === collectionId);
   if (!collection) return [];
 
-  const slotDefs = roomSurfaces[roomType];
-  if (!slotDefs[slotKey]) return [];
+  if (!surfaces[slotKey]) return [];
 
   const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
   if (!category) return [];

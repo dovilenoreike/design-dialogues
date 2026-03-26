@@ -6,11 +6,11 @@ import { useState, useCallback } from "react";
  */
 export function useMaterialOverrides() {
   const [materialOverrides, setMaterialOverrides] = useState<Record<string, string>>({});
-  const [excludedSlots, setExcludedSlots] = useState<Set<string>>(new Set());
+  const [excludedSlots, setExcludedSlots] = useState<Set<string>>(new Set(["shelves"]));
 
   const resetOverrides = useCallback(() => {
     setMaterialOverrides({});
-    setExcludedSlots(new Set());
+    setExcludedSlots(new Set(["shelves"]));
   }, []);
 
   return {

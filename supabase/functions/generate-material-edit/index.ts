@@ -46,78 +46,16 @@ serve(async (req) => {
     const {
       imageBase64,
       materialImages,
-      roomCategory,
-      palettePromptSnippet,
-      atmospherePrompt,
-      architecturePrompt,
+      designPrompt,
       quality,
       model,
-      uploadType,
     }: {
       imageBase64: string;
       materialImages: MaterialImage[];
-      roomCategory: string;
-      palettePromptSnippet: string;
-      atmospherePrompt?: string | null;
-      architecturePrompt?: string | null;
+      designPrompt: string;
       quality?: string;
       model?: string;
-      uploadType?: string;
     } = await req.json();
-
-    // Build the material mapping instructions
-    const materialInstructions = materialImages
-      .map((mat, i) => `- Image ${i + 2}: Use as ${mat.purpose}.`)
-      .join("\n");
-
-    const roomContext = roomCategory
-      ? roomCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()
-      : "interior space";
-
-    const atmosphereSection = atmospherePrompt
-      //? `\nDecor: ${atmospherePrompt}\n`
-      ? ""
-      : "";
-
-    const architectureSection = architecturePrompt
-      ? `\nInterior base style: ${architecturePrompt}\n`
-      : "";
-
-    let designPrompt: string;
-
-    if (uploadType === "floorplan") {
-      designPrompt = `Image 1 is a 2D floor plan of a ${roomContext}. Images 2..${materialImages.length + 1} are texture/material samples.
-
-Create a photorealistic 3D interior visualization of this space based on the floor plan layout.
-
-Apply the following materials and finishes to the appropriate surfaces:
-${materialInstructions}
-
-${architectureSection}${atmosphereSection}
-Produce a realistic interior render with accurate floorplan, materials, and professional photography quality. Do not add clutter.`;
-
-    } else if (uploadType === "sketch") {
-      designPrompt = `Image 1 is a rough sketch or concept drawing of a ${roomContext}. Images 2..${materialImages.length + 1} are texture/material samples.
-
-Create a photorealistic interior visualization based on this sketch.
-
-Apply the following materials and finishes:
-${materialInstructions}
-
-${architectureSection}${atmosphereSection}
-Produce a realistic interior render with natural lighting and professional photography quality.`;
-
-    } else {
-      // Default: photo — preserve layout, replace textures only
-      designPrompt = `Image 1 is a photo of a ${roomContext}. Images 2..${materialImages.length + 1} are texture/material samples.
-
-PRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.
-
-ONLY replace surface materials and finishes using the provided texture samples:
-${materialInstructions}
-
-Create a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`;
-    }
 
     const resolvedModel = model || "gpt-image-1";
     console.log("Generating material edit with prompt:", designPrompt);
@@ -136,10 +74,12 @@ Create a photorealistic result with natural lighting. The room must look identic
 
       const parts = [
         { text: designPrompt },
+        { text: "Image 1 — the room to modify:" },
         { inlineData: { mimeType: "image/png", data: stripDataPrefix(imageBase64) } },
-        ...materialImages.map((mat) => ({
-          inlineData: { mimeType: "image/png", data: stripDataPrefix(mat.base64) },
-        })),
+        ...materialImages.flatMap((mat, i) => [
+          { text: `Image ${i + 2} — material/texture for: ${mat.purpose}` },
+          { inlineData: { mimeType: "image/png", data: stripDataPrefix(mat.base64) } },
+        ]),
       ];
 
       const body = {

@@ -1,5 +1,6 @@
-import type { RoomType } from "@/data/rooms/surfaces";
 import type { ArchetypeId } from "@/data/collections/types";
+
+export type RoomType = "kitchen" | "livingRoom" | "bedroom" | "bathroom";
 
 // Per-room slot selections: slot key → material ID
 export type RoomSelections = Record<string, string>;
