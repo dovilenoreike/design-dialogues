@@ -146,8 +146,9 @@
   "surface": {
     "clearAll": "Išvalyti",
     "remove": "Pašalinti medžiagą",
-    "otherStyles": "Kiti pasirinkimai",
-    "alternativeCollections": "Taip pat",
+    "otherStyles": "Kitos idėjos",
+    "alternativeCollections": "Kiti atspalviai",
+    "matchingMaterials": "Dera kartu",
     "fronts": "Fasadai",
     "floor": "Grindys",
     "mainFronts": "Fasadai: Apatinės spintelės",

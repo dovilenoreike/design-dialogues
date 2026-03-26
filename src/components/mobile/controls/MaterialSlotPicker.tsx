@@ -217,11 +217,18 @@ export default function MaterialSlotPicker({
         );
       })
       .map((col) => {
-        const image = resolveProductImage(selectedArchetypeId, cat, col.id, vibeTag, showroom);
-        if (!image) return null;
-        return { collectionId: col.id, collectionName: col.name, displayImage: image };
+        const products = col.products[cat]?.[selectedArchetypeId] ?? [];
+        const productId = showroom
+          ? (products.find((id) => getMaterialById(id)?.showroomIds?.includes(showroom.id)) ?? products[0])
+          : products[0];
+        if (!productId) return null;
+        const material = getMaterialById(productId);
+        if (!material?.image) return null;
+        return { collectionId: col.id, displayImage: material.image, materialName: material.displayName };
       })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .filter((item, idx, arr) => arr.findIndex((o) => o.displayImage === item.displayImage) === idx)
+      .filter((item) => item.displayImage !== resolveProductImage(selectedArchetypeId, cat, currentCollectionId, vibeTag, showroom));
   }, [slot, selections, currentCollectionId, vibeTag, showroom]);
 
   const selectedId = slot ? selections[slot] : null;
@@ -245,23 +252,20 @@ export default function MaterialSlotPicker({
           </button>
         )}
 
-        {/* Section 1: Atspalviai — same archetype in other collections */}
+        {/* Section 1: Kiti atspalviai — same archetype in other collections */}
         {collectionAlternatives.length > 0 && (
           <div className="mb-5">
-            <h3 className="font-serif text-sm text-neutral-700 mb-2">Atspalviai</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {collectionAlternatives.map(({ collectionId, collectionName, displayImage }) => (
+            <h3 className="font-serif text-sm text-neutral-700 mb-2">{t("surface.alternativeCollections")}</h3>
+            <div className="grid grid-cols-5 gap-2">
+              {collectionAlternatives.map(({ collectionId, displayImage, materialName }) => (
                 <button
                   key={collectionId}
                   onClick={() => { onSelectCollection?.(collectionId); onClose(); }}
                   className="flex flex-col gap-1"
                 >
                   <div className="aspect-square rounded-[12px] overflow-hidden w-full">
-                    <img src={displayImage} alt={collectionName[lang]} className="w-full h-full object-cover" />
+                    <img src={displayImage} alt={materialName[lang]} className="w-full h-full object-cover" />
                   </div>
-                  <span className="block text-xs text-neutral-500 text-center truncate px-0.5">
-                    {collectionName[lang]}
-                  </span>
                 </button>
               ))}
             </div>
@@ -305,7 +309,7 @@ export default function MaterialSlotPicker({
             <>
               {recommended.length > 0 && (
                 <div className="mb-5">
-                  <h3 className="font-serif text-sm text-neutral-700 mb-2">Dera kartu</h3>
+                  <h3 className="font-serif text-sm text-neutral-700 mb-2">{t("surface.matchingMaterials")}</h3>
                   <div className="bg-neutral-50 rounded-xl p-3">
                     <div className="grid grid-cols-4 gap-2">
                       {recommended.map((item) => renderSwatch(item))}
@@ -315,7 +319,9 @@ export default function MaterialSlotPicker({
               )}
               {others.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="font-serif text-sm text-neutral-700 mb-2">Kitos idėjos</h3>
+                  {(recommended.length > 0 || collectionAlternatives.length > 0) && (
+                    <h3 className="font-serif text-sm text-neutral-700 mb-2">{t("surface.otherStyles")}</h3>
+                  )}
                   <div className="grid grid-cols-4 gap-2">
                     {others.map((item) => renderSwatch(item))}
                   </div>
