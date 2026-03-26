@@ -401,8 +401,8 @@ export default function MoodboardView() {
       return next;
     });
 
-    // Sync vibe to match the selected collection so matchCollection resolves correctly
-    if (col.vibe !== vibeTag) setVibeTag(col.vibe);
+    // Sync vibe only if a vibe filter was already active (don't impose one when user had none)
+    if (vibeTag !== null && col.vibe !== vibeTag) setVibeTag(col.vibe);
 
     // Anchor the selected collection so matchCollection can't overwrite it
     setSelectedCollectionId(collectionId);
@@ -719,9 +719,6 @@ export default function MoodboardView() {
                                 </div>
                               )}
                             </div>
-                            <span className="text-[8px] uppercase tracking-[0.15em] text-neutral-500 text-center max-w-[64px] truncate">
-                              {col.name[language as keyof typeof col.name] ?? col.name.en}
-                            </span>
                           </button>
                         );
                       })}

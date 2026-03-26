@@ -321,8 +321,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
       return next;
     });
 
-    // Sync vibe tag
-    if (col.vibe !== vibeTag) setVibeTag(col.vibe);
+    // Sync vibe only if a vibe filter was already active (don't impose one when user had none)
+    if (vibeTag !== null && col.vibe !== vibeTag) setVibeTag(col.vibe);
   }, [setMaterialOverrides, vibeTag, setVibeTag, activeShowroom]);
 
   // Session persistence
