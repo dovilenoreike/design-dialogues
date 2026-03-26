@@ -136,6 +136,7 @@ interface MaterialSlotPickerProps {
   onSelect: (slotKey: SlotKey, archetypeId: string) => void;
   onClose: () => void;
   onClear?: (slotKey: SlotKey) => void;
+  onSelectCollection?: (collectionId: string) => void;
   lockedCollectionId?: string;
   vibeTag?: VibeTag | null;
   showroom?: ShowroomBrand | null;
@@ -148,6 +149,7 @@ export default function MaterialSlotPicker({
   onSelect,
   onClose,
   onClear,
+  onSelectCollection,
   lockedCollectionId,
   vibeTag,
   showroom,
@@ -191,13 +193,44 @@ export default function MaterialSlotPicker({
       .sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
   }, [slot, selections, lockedCollectionId, vibeTag, showroom, currentCollectionId]);
 
+
+  const collectionAlternatives = useMemo(() => {
+    if (!slot) return [];
+    const selectedArchetypeId = selections[slot];
+    if (!selectedArchetypeId) return [];
+
+    const cat = SLOT_CATEGORY[slot];
+    const allPicks: SlotPick[] = (Object.keys(selections) as SlotKey[])
+      .filter((k) => selections[k] !== null)
+      .map((k) => ({ category: SLOT_CATEGORY[k], archetypeId: selections[k]! }));
+    if (allPicks.length < 1) return [];
+
+    const scope = vibeTag
+      ? collectionsV2.filter((c) => c.vibe === vibeTag)
+      : collectionsV2;
+
+    return scope
+      .filter((col) => {
+        if (col.id === currentCollectionId) return false;
+        return allPicks.every(({ category, archetypeId }) =>
+          col.pool[category]?.includes(archetypeId) ?? false
+        );
+      })
+      .map((col) => {
+        const image = resolveProductImage(selectedArchetypeId, cat, col.id, vibeTag, showroom);
+        if (!image) return null;
+        return { collectionId: col.id, collectionName: col.name, displayImage: image };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [slot, selections, currentCollectionId, vibeTag, showroom]);
+
   const selectedId = slot ? selections[slot] : null;
 
   return (
     <Sheet open={slot !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh] overflow-y-auto sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
-        <SheetHeader className="mb-4">
-          <SheetTitle className="font-serif">
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[75vh] overflow-y-auto sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
+        <SheetHeader className="mb-3">
+          <SheetTitle className="font-serif text-base">
             {slot ? t(`surface.${slot}`) : ""}
           </SheetTitle>
         </SheetHeader>
@@ -205,57 +238,92 @@ export default function MaterialSlotPicker({
         {selectedId && onClear && slot && (
           <button
             onClick={() => { onClear(slot); onClose(); }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 mb-3 rounded-xl text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors active:scale-[0.98]"
+            className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50 transition-colors"
           >
             <Trash2 className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
             <span className="text-[11px] uppercase tracking-[0.15em] font-medium">{t("surface.remove")}</span>
           </button>
         )}
 
-        <div className="grid grid-cols-3 gap-2 pb-4">
-          {(() => {
-            const hasOtherStyles = availableWithImages.some((i) => !i.isRecommended);
-            return availableWithImages.map(({ archetype, displayImage, isRecommended }, idx) => {
-              const prevIsRecommended = idx > 0 ? availableWithImages[idx - 1].isRecommended : true;
-              const showDivider = !isRecommended && prevIsRecommended && hasOtherStyles;
-              const isSelected = selectedId === archetype.id;
-              return (
-                <>
-                  {showDivider && (
-                    <div key={`divider-${idx}`} className="col-span-3 pt-2 pb-1">
-                      <p className="text-[9px] uppercase tracking-[0.15em] text-neutral-400">
-                        {t("surface.otherStyles")}
-                      </p>
+        {/* Section 1: Atspalviai — same archetype in other collections */}
+        {collectionAlternatives.length > 0 && (
+          <div className="mb-5">
+            <h3 className="font-serif text-sm text-neutral-700 mb-2">Atspalviai</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {collectionAlternatives.map(({ collectionId, collectionName, displayImage }) => (
+                <button
+                  key={collectionId}
+                  onClick={() => { onSelectCollection?.(collectionId); onClose(); }}
+                  className="flex flex-col gap-1"
+                >
+                  <div className="aspect-square rounded-[12px] overflow-hidden w-full">
+                    <img src={displayImage} alt={collectionName[lang]} className="w-full h-full object-cover" />
+                  </div>
+                  <span className="block text-xs text-neutral-500 text-center truncate px-0.5">
+                    {collectionName[lang]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sections 2 & 3 */}
+        {availableWithImages.length > 0 && (() => {
+          const recommended = availableWithImages.filter((i) => i.isRecommended);
+          const others = availableWithImages.filter((i) => !i.isRecommended);
+
+          const renderSwatch = ({ archetype, displayImage }: { archetype: (typeof availableWithImages)[0]["archetype"]; displayImage: string }) => {
+            const isSelected = selectedId === archetype.id;
+            return (
+              <button
+                key={`${archetype.category}-${archetype.id}`}
+                onClick={() => { onSelect(slot!, archetype.id); onClose(); }}
+                className="flex flex-col gap-1"
+              >
+                <div
+                  className={`relative aspect-square rounded-[12px] overflow-hidden w-full${isSelected ? " ring-2 ring-offset-1 ring-offset-white" : ""}`}
+                  style={isSelected ? { "--tw-ring-color": "#647d75" } as React.CSSProperties : undefined}
+                >
+                  <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
+                  {isSelected && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#647d75" }}>
+                        <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                      </div>
                     </div>
                   )}
-                  <button
-                    key={`${archetype.category}-${archetype.id}`}
-                    onClick={() => { onSelect(slot!, archetype.id); onClose(); }}
-                    className="relative flex flex-col gap-1 group"
-                  >
-                    <div className={`relative aspect-square rounded-xl overflow-hidden w-full ${isSelected ? "ring-2 ring-foreground" : ""}`}>
-                      <img
-                        src={displayImage}
-                        alt={archetype.label[lang]}
-                        className="w-full h-full object-cover"
-                      />
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                          <div className="w-6 h-6 rounded-full bg-foreground flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5 text-background" strokeWidth={2.5} />
-                          </div>
-                        </div>
-                      )}
+                </div>
+                <span className="block text-xs text-neutral-500 text-center truncate px-0.5">
+                  {archetype.label[lang]}
+                </span>
+              </button>
+            );
+          };
+
+          return (
+            <>
+              {recommended.length > 0 && (
+                <div className="mb-5">
+                  <h3 className="font-serif text-sm text-neutral-700 mb-2">Dera kartu</h3>
+                  <div className="bg-neutral-50 rounded-xl p-3">
+                    <div className="grid grid-cols-4 gap-2">
+                      {recommended.map((item) => renderSwatch(item))}
                     </div>
-                    <span className="block text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-500 text-center truncate px-0.5">
-                      {archetype.label[lang]}
-                    </span>
-                  </button>
-                </>
-              );
-            });
-          })()}
-        </div>
+                  </div>
+                </div>
+              )}
+              {others.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="font-serif text-sm text-neutral-700 mb-2">Kitos idėjos</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {others.map((item) => renderSwatch(item))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </SheetContent>
     </Sheet>
   );

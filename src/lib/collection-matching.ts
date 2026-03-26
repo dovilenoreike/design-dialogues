@@ -8,7 +8,6 @@ export interface SlotPick {
 
 /**
  * Finds the first collection that matches all picked archetypes in their correct categories.
- * Returns null until at least 2 archetypes have been picked.
  * Collection array order determines priority — first match wins.
  */
 export function matchCollection(
@@ -16,7 +15,7 @@ export function matchCollection(
   picks: SlotPick[],
   vibeTag: VibeTag | null,
 ): CollectionV2 | null {
-  if (picks.length < 2) return null;
+  if (picks.length < 1) return null;
 
   return (
     collections.find((col) => {

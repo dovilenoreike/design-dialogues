@@ -146,7 +146,8 @@
   "surface": {
     "clearAll": "Išvalyti",
     "remove": "Pašalinti medžiagą",
-    "otherStyles": "Kiti stiliai",
+    "otherStyles": "Kiti pasirinkimai",
+    "alternativeCollections": "Taip pat",
     "fronts": "Fasadai",
     "floor": "Grindys",
     "mainFronts": "Fasadai: Apatinės spintelės",

@@ -329,7 +329,7 @@ export default function MoodboardView() {
         : null;
       const canKeepCurrent =
         currentCol !== null &&
-        newPicks.length >= 2 &&
+        newPicks.length >= 1 &&
         newPicks.every(({ category, archetypeId }) =>
           currentCol.pool[category]?.includes(archetypeId) ?? false
         );
@@ -425,6 +425,26 @@ export default function MoodboardView() {
     setSelectedCollectionId(undefined);
   }, [handleSelectMaterial, setMaterialOverrides]);
 
+  const handleSwitchCollection = useCallback((collectionId: string) => {
+    const col = collectionsV2.find((c) => c.id === collectionId);
+    if (!col) return;
+    setSelectedCollectionId(collectionId);
+    setActivePalette(collectionId);
+    setMaterialOverrides((prev) => {
+      const next = { ...prev };
+      (Object.keys(slotSelections) as SlotKey[]).forEach((k) => {
+        const aId = slotSelections[k];
+        if (!aId) return;
+        const pk = SLOT_TO_PALETTE_KEY[k];
+        if (!pk) return;
+        const resolvedMatId = col.products[SLOT_CATEGORY[k]]?.[aId]?.[0];
+        if (resolvedMatId) next[pk] = resolvedMatId;
+        else delete next[pk];
+      });
+      return next;
+    });
+  }, [slotSelections, setMaterialOverrides, setActivePalette]);
+
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
     trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_CLEARED, {
       slot: slotKey,
@@ -442,7 +462,7 @@ export default function MoodboardView() {
       : null;
     const canKeepCurrent =
       currentCol !== null &&
-      remainingPicks.length >= 2 &&
+      remainingPicks.length >= 1 &&
       remainingPicks.every(({ category, archetypeId }) =>
         currentCol.pool[category]?.includes(archetypeId) ?? false
       );
@@ -744,6 +764,7 @@ export default function MoodboardView() {
         onSelect={handleSlotSelect}
         onClose={() => setOpenSlot(null)}
         onClear={handleSlotClear}
+        onSelectCollection={handleSwitchCollection}
         lockedCollectionId={pickerLockedCollectionId}
         vibeTag={vibeTag}
         showroom={activeShowroom}
