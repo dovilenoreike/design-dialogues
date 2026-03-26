@@ -116,8 +116,11 @@ interface DesignContextValue {
 
   // Moodboard vibe (Layer 1) — null until user picks a vibe
   vibeTag: VibeTag | null;
+  vibeChosen: boolean;
   setVibeTag: (vibe: VibeTag) => void;
   clearVibeTag: () => void;
+  skipVibePicker: () => void;
+  resetVibeChoice: () => void;
 
   selectCollection: (id: string) => void;
 
@@ -198,6 +201,19 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     return null;
   });
 
+  // vibeChosen: true once the user has made a deliberate choice (pick a vibe OR skip to see all)
+  const [vibeChosen, setVibeChosenState] = useState<boolean>(() => {
+    // Existing users who have a vibeTag already chose
+    if (initialSharedSession?.vibeTag) return true;
+    try {
+      if (localStorage.getItem("moodboard-vibe-chosen")) return true;
+      // Also treat a persisted vibe as chosen
+      const saved = localStorage.getItem("moodboard-vibe");
+      if (saved === "light-and-airy" || saved === "warm-and-grounded" || saved === "bold-and-moody") return true;
+    } catch {}
+    return false;
+  });
+
   // Moodboard slot selections from a shared session (archetype IDs, read-only after mount)
   const sharedMoodboardSlots = useState<Record<string, string | null> | null>(
     initialSharedSession?.moodboardSlots ?? null
@@ -205,12 +221,33 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
   const setVibeTag = useCallback((vibe: VibeTag) => {
     setVibeTagState(vibe);
-    try { localStorage.setItem("moodboard-vibe", vibe); } catch {}
+    setVibeChosenState(true);
+    try {
+      localStorage.setItem("moodboard-vibe", vibe);
+      localStorage.setItem("moodboard-vibe-chosen", "1");
+    } catch {}
   }, []);
 
+  // Clear active filter but stay in moodboard (vibeChosen remains true)
   const clearVibeTag = useCallback(() => {
     setVibeTagState(null);
     try { localStorage.removeItem("moodboard-vibe"); } catch {}
+  }, []);
+
+  // Skip picker entirely — show all materials with no vibe filter
+  const skipVibePicker = useCallback(() => {
+    setVibeChosenState(true);
+    try { localStorage.setItem("moodboard-vibe-chosen", "1"); } catch {}
+  }, []);
+
+  // Go back to picker — clears both vibeTag and vibeChosen
+  const resetVibeChoice = useCallback(() => {
+    setVibeTagState(null);
+    setVibeChosenState(false);
+    try {
+      localStorage.removeItem("moodboard-vibe");
+      localStorage.removeItem("moodboard-vibe-chosen");
+    } catch {}
   }, []);
 
   const selectCollection = useCallback((collectionId: string) => {
@@ -882,8 +919,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     excludedSlots,
     setExcludedSlots,
     vibeTag,
+    vibeChosen,
     setVibeTag,
     clearVibeTag,
+    skipVibePicker,
+    resetVibeChoice,
     selectCollection,
     shareSession,
     isSharing,

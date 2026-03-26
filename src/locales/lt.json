@@ -320,7 +320,7 @@
     "step2Title": "Vizualizuokite su AI",
     "step2Desc": "Įkelkite 3D vaizdą ar eskizą, priskirkite medžiagas paviršiams ir matykite rezultatą savo erdvėje.",
     "step3Title": "Medžiagos",
-    "step3Desc": "Peržiūrėkite detalias medžiagų specifikacijas, parinktas profesionalių dizainerių. Žinokite tiksliai, kas kur taikoma.",
+    "step3Desc": "Peržiūrėkite detalias medžiagų specifikacijas, ir raskite kur jas įsigyti.",
     "step4Title": "Biudžetas",
     "step4Desc": "Gaukite orientacines kainas pagal Jūsų poreikius. Koreguokite parametrus pagal savo erdvę ir apimtį.",
     "step5Title": "Planas",
@@ -1225,6 +1225,9 @@
     "change": "Keisti atmosferą",
     "light-and-airy": "Švara ir lengvumas",
     "warm-and-grounded": "Šiluma ir jaukumas",
-    "bold-and-moody": "Charakteris ir išskirtinumas"
+    "bold-and-moody": "Charakteris ir išskirtinumas",
+    "seeAll": "Rodyti visas medžiagas",
+    "all": "Visos medžiagos",
+    "clearFilter": "Išvalyti filtrą"
   }
 }

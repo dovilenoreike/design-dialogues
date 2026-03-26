@@ -1223,6 +1223,9 @@
     "change": "Change mood",
     "light-and-airy": "Light & Airy",
     "warm-and-grounded": "Warm & Grounded",
-    "bold-and-moody": "Bold & Moody"
+    "bold-and-moody": "Bold & Moody",
+    "seeAll": "See all materials",
+    "all": "All materials",
+    "clearFilter": "Clear filter"
   }
 }

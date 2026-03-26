@@ -15,7 +15,7 @@ const VIBES: {
 ];
 
 export default function VibePickerView() {
-  const { setVibeTag } = useDesign();
+  const { setVibeTag, skipVibePicker } = useDesign();
   const { t } = useLanguage();
 
   return (
@@ -54,6 +54,13 @@ export default function VibePickerView() {
           </button>
         ))}
       </div>
+
+      <button
+        onClick={skipVibePicker}
+        className="mt-3 text-[10px] text-muted-foreground/70 underline underline-offset-2 self-center shrink-0"
+      >
+        {t("vibe.seeAll")}
+      </button>
     </div>
   );
 }

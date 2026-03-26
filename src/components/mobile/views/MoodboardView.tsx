@@ -7,7 +7,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { getMaterialById } from "@/data/materials";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import type { CollectionV2 } from "@/data/collections/types";
+import type { CollectionV2, VibeTag } from "@/data/collections/types";
 import type { SurfaceCategory } from "@/data/materials/types";
 import { matchCollection, type SlotPick } from "@/lib/collection-matching";
 import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
@@ -152,7 +152,7 @@ function toSlotPicks(selections: SlotSelections, exclude?: SlotKey): SlotPick[] 
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, setVibeTag, clearVibeTag, isSharedSession, sharedMoodboardSlots } = useDesign();
+  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, vibeChosen, setVibeTag, clearVibeTag, skipVibePicker, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const isMobile = useIsMobile();
@@ -418,8 +418,8 @@ export default function MoodboardView() {
     if (!matchCollection(collectionsV2, toSlotPicks(newSelections), vibeTag)) setActivePalette(null);
   }, [slotSelections, setMaterialOverrides, setActivePalette]);
 
-  // Show vibe picker if no vibe has been selected yet
-  if (!vibeTag) return <VibePickerView />;
+  // Show vibe picker until user has made a deliberate choice (pick a vibe or skip to see all)
+  if (!vibeTag && !vibeChosen) return <VibePickerView />;
 
 
   return (
@@ -428,15 +428,37 @@ export default function MoodboardView() {
 
         {/* ── Vibe pill + reset row ── */}
         <div className="mb-2 flex items-center justify-between">
-          <button
-            onClick={clearVibeTag}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
-            title={t("vibe.change")}
-          >
-            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-500">
-              {t(`vibe.${vibeTag}`)}
-            </span>
-          </button>
+          {vibeTag ? (
+            <div className="flex items-center gap-1">
+              {/* Tap label → back to picker */}
+              <button
+                onClick={resetVibeChoice}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
+              >
+                <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-500">
+                  {t(`vibe.${vibeTag}`)}
+                </span>
+              </button>
+              {/* × → clear filter, stay in moodboard */}
+              <button
+                onClick={clearVibeTag}
+                className="flex items-center justify-center w-5 h-5 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
+                aria-label={t("vibe.clearFilter")}
+              >
+                <X className="w-2.5 h-2.5 text-neutral-400" strokeWidth={2} />
+              </button>
+            </div>
+          ) : (
+            /* No active vibe — show "All" pill with option to pick a vibe */
+            <button
+              onClick={resetVibeChoice}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
+            >
+              <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-500">
+                {t("vibe.all")}
+              </span>
+            </button>
+          )}
           {filledCount > 0 && (
             <button
               onClick={handleClearSlots}
@@ -605,37 +627,51 @@ export default function MoodboardView() {
 
         {/* ── Collections Sheet (mobile) / Dialog (desktop) ── */}
         {(() => {
+          const VIBE_ORDER: VibeTag[] = ["light-and-airy", "warm-and-grounded", "bold-and-moody"];
           const collectionsBody = (
-            <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide pb-4">
-              {collectionsV2.filter((col) =>
-                (!vibeTag || col.vibe === vibeTag) &&
-                (!activeShowroom || collectionHasShowroom(col.id, activeShowroom.id))
-              ).map((col) => {
-                const isSelected = selectedCollectionId === col.id;
-                const swatches = getCollectionSwatches(col);
+            <div className="flex flex-col gap-4 pb-4">
+              {VIBE_ORDER.map((vibe) => {
+                const cols = collectionsV2.filter((col) =>
+                  col.vibe === vibe &&
+                  (!activeShowroom || collectionHasShowroom(col.id, activeShowroom.id))
+                );
+                if (cols.length === 0) return null;
                 return (
-                  <button key={col.id} onClick={() => handleCollectionSelect(col.id)}
-                    className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-                    <div className={`relative rounded-xl overflow-hidden border-2 ${
-                      isSelected ? "border-neutral-900" : "border-neutral-200"
-                    }`}>
-                      <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 64 }}>
-                        {swatches.map((img, i) => (
-                          <div key={i} className="bg-neutral-100" style={{ height: 30 }}>
-                            {img && <img src={img} className="w-full h-full object-cover" />}
-                          </div>
-                        ))}
-                      </div>
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        </div>
-                      )}
+                  <div key={vibe}>
+                    <p className="px-1 mb-2 text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-400">
+                      {t(`vibe.${vibe}`)}
+                    </p>
+                    <div className="flex gap-3 px-1 overflow-x-auto scrollbar-hide">
+                      {cols.map((col) => {
+                        const isSelected = selectedCollectionId === col.id;
+                        const swatches = getCollectionSwatches(col);
+                        return (
+                          <button key={col.id} onClick={() => handleCollectionSelect(col.id)}
+                            className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+                            <div className={`relative rounded-xl overflow-hidden border-2 ${
+                              isSelected ? "border-neutral-900" : "border-neutral-200"
+                            }`}>
+                              <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 64 }}>
+                                {swatches.map((img, i) => (
+                                  <div key={i} className="bg-neutral-100" style={{ height: 30 }}>
+                                    {img && <img src={img} className="w-full h-full object-cover" />}
+                                  </div>
+                                ))}
+                              </div>
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                  <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[8px] uppercase tracking-[0.15em] text-neutral-500 text-center max-w-[64px] truncate">
+                              {col.name[language as keyof typeof col.name] ?? col.name.en}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <span className="text-[8px] uppercase tracking-[0.15em] text-neutral-500 text-center max-w-[64px] truncate">
-                      {col.name[language as keyof typeof col.name] ?? col.name.en}
-                    </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
