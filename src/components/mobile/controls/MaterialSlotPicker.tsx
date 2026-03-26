@@ -15,6 +15,7 @@ import type { VibeTag } from "@/data/collections/types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { ShowroomBrand } from "@/data/sourcing/types";
 import { collectionHasShowroom } from "@/lib/collection-utils";
+import { matchCollection, type SlotPick } from "@/lib/collection-matching";
 
 export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
@@ -138,6 +139,7 @@ interface MaterialSlotPickerProps {
   lockedCollectionId?: string;
   vibeTag?: VibeTag | null;
   showroom?: ShowroomBrand | null;
+  currentCollectionId?: string;
 }
 
 export default function MaterialSlotPicker({
@@ -149,6 +151,7 @@ export default function MaterialSlotPicker({
   lockedCollectionId,
   vibeTag,
   showroom,
+  currentCollectionId,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -156,15 +159,37 @@ export default function MaterialSlotPicker({
   const availableWithImages = useMemo(() => {
     if (!slot) return [];
     const cat = SLOT_CATEGORY[slot];
+    const currentCol = currentCollectionId
+      ? collectionsV2.find((c) => c.id === currentCollectionId) ?? null
+      : null;
     return getAvailableArchetypes(slot, selections, lockedCollectionId, vibeTag, showroom)
-      .map((a) => ({
-        archetype: a,
-        displayImage: resolveProductImage(a.id, cat, lockedCollectionId, vibeTag, showroom),
-      }))
-      .filter((item): item is { archetype: Archetype; displayImage: string } =>
+      .map((a) => {
+        // Simulate selecting this archetype + all other current picks,
+        // then find which collection would actually be matched.
+        const simulatedPicks: SlotPick[] = [
+          ...Object.entries(selections)
+            .filter(([k, v]) => k !== slot && v !== null)
+            .map(([k, v]) => ({ category: SLOT_CATEGORY[k as SlotKey], archetypeId: v! })),
+          { category: cat, archetypeId: a.id },
+        ];
+        const isRecommended = currentCol !== null &&
+          (currentCol.pool[cat]?.includes(a.id) ?? false);
+        // For recommended archetypes, resolve images from the current collection so
+        // the shown product matches what the flatlay will actually display after selection.
+        const effectiveCollectionId = isRecommended
+          ? currentCollectionId
+          : (matchCollection(collectionsV2, simulatedPicks, vibeTag ?? null)?.id ?? lockedCollectionId);
+        return {
+          archetype: a,
+          displayImage: resolveProductImage(a.id, cat, effectiveCollectionId, vibeTag, showroom),
+          isRecommended,
+        };
+      })
+      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean } =>
         item.displayImage !== null
-      );
-  }, [slot, selections, lockedCollectionId, vibeTag, showroom]);
+      )
+      .sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
+  }, [slot, selections, lockedCollectionId, vibeTag, showroom, currentCollectionId]);
 
   const selectedId = slot ? selections[slot] : null;
 
@@ -188,34 +213,48 @@ export default function MaterialSlotPicker({
         )}
 
         <div className="grid grid-cols-3 gap-2 pb-4">
-          {availableWithImages.map(({ archetype, displayImage }) => {
-            const isSelected = selectedId === archetype.id;
-            return (
-              <button
-                key={`${archetype.category}-${archetype.id}`}
-                onClick={() => { onSelect(slot!, archetype.id); onClose(); }}
-                className="relative flex flex-col gap-1 group"
-              >
-                <div className={`relative aspect-square rounded-xl overflow-hidden w-full ${isSelected ? "ring-2 ring-foreground" : ""}`}>
-                  <img
-                    src={displayImage}
-                    alt={archetype.label[lang]}
-                    className="w-full h-full object-cover"
-                  />
-                  {isSelected && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                      <div className="w-6 h-6 rounded-full bg-foreground flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-background" strokeWidth={2.5} />
-                      </div>
+          {(() => {
+            const hasOtherStyles = availableWithImages.some((i) => !i.isRecommended);
+            return availableWithImages.map(({ archetype, displayImage, isRecommended }, idx) => {
+              const prevIsRecommended = idx > 0 ? availableWithImages[idx - 1].isRecommended : true;
+              const showDivider = !isRecommended && prevIsRecommended && hasOtherStyles;
+              const isSelected = selectedId === archetype.id;
+              return (
+                <>
+                  {showDivider && (
+                    <div key={`divider-${idx}`} className="col-span-3 pt-2 pb-1">
+                      <p className="text-[9px] uppercase tracking-[0.15em] text-neutral-400">
+                        {t("surface.otherStyles")}
+                      </p>
                     </div>
                   )}
-                </div>
-                <span className="block text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-500 text-center truncate px-0.5">
-                  {archetype.label[lang]}
-                </span>
-              </button>
-            );
-          })}
+                  <button
+                    key={`${archetype.category}-${archetype.id}`}
+                    onClick={() => { onSelect(slot!, archetype.id); onClose(); }}
+                    className="relative flex flex-col gap-1 group"
+                  >
+                    <div className={`relative aspect-square rounded-xl overflow-hidden w-full ${isSelected ? "ring-2 ring-foreground" : ""}`}>
+                      <img
+                        src={displayImage}
+                        alt={archetype.label[lang]}
+                        className="w-full h-full object-cover"
+                      />
+                      {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <div className="w-6 h-6 rounded-full bg-foreground flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5 text-background" strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className="block text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-500 text-center truncate px-0.5">
+                      {archetype.label[lang]}
+                    </span>
+                  </button>
+                </>
+              );
+            });
+          })()}
         </div>
       </SheetContent>
     </Sheet>

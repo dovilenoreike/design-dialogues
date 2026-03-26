@@ -283,12 +283,15 @@ export default function MoodboardView() {
       });
       return next;
     });
+
+    setSelectedCollectionId(bestCol.id);
   }, [vibeTag]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Which collection matches current picks (requires 2+ picks and vibe filter)
-  const selectedCollectionId = useMemo(() => {
-    return matchCollection(collectionsV2, toSlotPicks(slotSelections), vibeTag)?.id;
-  }, [slotSelections, vibeTag]);
+  // Which collection matches current picks — stored as state so sticky logic in
+  // handlers can't be overwritten by a useMemo re-running "first match wins".
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | undefined>(
+    () => matchCollection(collectionsV2, toSlotPicks(slotSelections), vibeTag)?.id
+  );
 
   const matchedCollection = useMemo(
     () => collectionsV2.find(c => c.id === selectedCollectionId) ?? null,
@@ -320,7 +323,19 @@ export default function MoodboardView() {
         filled_count: DISPLAYED_SLOTS.filter((k) => Boolean(newSelections[k])).length,
       });
 
-      const matched = matchCollection(collectionsV2, toSlotPicks(newSelections), vibeTag);
+      const newPicks = toSlotPicks(newSelections);
+      const currentCol = selectedCollectionId
+        ? collectionsV2.find((c) => c.id === selectedCollectionId) ?? null
+        : null;
+      const canKeepCurrent =
+        currentCol !== null &&
+        newPicks.length >= 2 &&
+        newPicks.every(({ category, archetypeId }) =>
+          currentCol.pool[category]?.includes(archetypeId) ?? false
+        );
+      const matched = canKeepCurrent
+        ? currentCol
+        : matchCollection(collectionsV2, newPicks, vibeTag);
 
       setMaterialOverrides((prev) => {
         const next = { ...prev };
@@ -342,12 +357,14 @@ export default function MoodboardView() {
       });
 
       if (matched) {
-        setActivePalette(matched.id); // selectedMaterial is now the collection ID
+        setSelectedCollectionId(matched.id);
+        setActivePalette(matched.id);
       } else {
+        setSelectedCollectionId(undefined);
         setActivePalette(null);
       }
     },
-    [slotSelections, setMaterialOverrides, setActivePalette, vibeTag],
+    [slotSelections, setMaterialOverrides, setActivePalette, vibeTag, selectedCollectionId],
   );
 
   const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
@@ -387,6 +404,9 @@ export default function MoodboardView() {
     // Sync vibe to match the selected collection so matchCollection resolves correctly
     if (col.vibe !== vibeTag) setVibeTag(col.vibe);
 
+    // Anchor the selected collection so matchCollection can't overwrite it
+    setSelectedCollectionId(collectionId);
+
     // Sync palette carousel to the selected collection ID
     handleSelectMaterial(collectionId);
 
@@ -402,6 +422,7 @@ export default function MoodboardView() {
       Object.values(SLOT_TO_PALETTE_KEY).forEach((k) => { if (k) delete next[k]; });
       return next;
     });
+    setSelectedCollectionId(undefined);
   }, [handleSelectMaterial, setMaterialOverrides]);
 
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
@@ -414,9 +435,23 @@ export default function MoodboardView() {
     const pk = SLOT_TO_PALETTE_KEY[slotKey];
     if (pk) setMaterialOverrides((prev) => { const next = { ...prev }; delete next[pk]; return next; });
 
-    // Re-evaluate: release palette lock unless remaining picks still match
-    if (!matchCollection(collectionsV2, toSlotPicks(newSelections), vibeTag)) setActivePalette(null);
-  }, [slotSelections, setMaterialOverrides, setActivePalette]);
+    // Re-evaluate collection with sticky logic: keep current if it still fits remaining picks
+    const remainingPicks = toSlotPicks(newSelections);
+    const currentCol = selectedCollectionId
+      ? collectionsV2.find((c) => c.id === selectedCollectionId) ?? null
+      : null;
+    const canKeepCurrent =
+      currentCol !== null &&
+      remainingPicks.length >= 2 &&
+      remainingPicks.every(({ category, archetypeId }) =>
+        currentCol.pool[category]?.includes(archetypeId) ?? false
+      );
+    const nextCollectionId = canKeepCurrent
+      ? selectedCollectionId
+      : matchCollection(collectionsV2, remainingPicks, vibeTag)?.id;
+    setSelectedCollectionId(nextCollectionId);
+    if (!nextCollectionId) setActivePalette(null);
+  }, [slotSelections, setMaterialOverrides, setActivePalette, selectedCollectionId, vibeTag]);
 
   // Show vibe picker until user has made a deliberate choice (pick a vibe or skip to see all)
   if (!vibeTag && !vibeChosen) return <VibePickerView />;
@@ -712,6 +747,7 @@ export default function MoodboardView() {
         lockedCollectionId={pickerLockedCollectionId}
         vibeTag={vibeTag}
         showroom={activeShowroom}
+        currentCollectionId={selectedCollectionId}
       />
     </div>
   );

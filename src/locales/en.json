@@ -146,6 +146,7 @@
   "surface": {
     "clearAll": "Clear",
     "remove": "Remove material",
+    "otherStyles": "Other styles",
     "fronts": "Fronts",
     "floor": "Floor",
     "mainFronts": "Main Fronts",
