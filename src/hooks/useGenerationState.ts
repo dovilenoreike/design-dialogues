@@ -10,7 +10,7 @@ import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrid
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
-import { compressImage } from "@/lib/image-utils";
+import { compressImage, resizeBlobToBase64 } from "@/lib/image-utils";
 import { captureError } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -63,15 +63,18 @@ export function useGenerationState({
 
         if (data && data.length > 0) {
           const uploaded: Record<string, string> = {};
+          const uploadTypes: Record<string, string> = {};
           data.forEach(upload => {
             const { data: urlData } = supabase.storage
               .from('user-images')
               .getPublicUrl(upload.image_path);
             uploaded[upload.room_category] = urlData.publicUrl;
+            uploadTypes[upload.room_category] = upload.upload_type || 'photo';
           });
           setDesign(prev => ({
             ...prev,
             uploadedImages: { ...prev.uploadedImages, ...uploaded },
+            uploadTypes: { ...prev.uploadTypes, ...uploadTypes },
           }));
         }
       } catch (err) {
@@ -101,9 +104,11 @@ export function useGenerationState({
           .eq('room_category', room)
           .eq('selected_style', style)
           .eq('selected_material', material)
-          .single();
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Failed to load generation:', error);
           return;
         }
@@ -213,6 +218,7 @@ export function useGenerationState({
           user_id: user.id,
           room_category: currentRoom,
           image_path: path,
+          upload_type: uploadType,
         }, { onConflict: 'user_id,room_category' });
 
       setDesign(prev => ({
@@ -376,90 +382,68 @@ export function useGenerationState({
 
       const imageResponse = await fetch(uploadedImage);
       const imageBlob = await imageResponse.blob();
-      const reader = new FileReader();
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(imageBlob);
-      });
+      const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
       const uploadType = design.uploadTypes[room] || "photo";
-      const isPhotoWithPalette = uploadType === "photo" && collection && !design.freestyleDescription?.trim();
+      const isGeminiPath = (
+        (uploadType === "photo" && !!collection && !design.freestyleDescription?.trim()) ||
+        ((uploadType === "floorplan" || uploadType === "sketch") && !!collection)
+      );
+      const geminiModel = uploadType === "photo"
+        ? API_CONFIG.imageGeneration.modelAccurate
+        : API_CONFIG.imageGeneration.modelCreative;
+
+      console.log("[generate] routing:", { uploadType, isGeminiPath, geminiModel, hasCollection: !!collection, hasFreestyle: !!design.freestyleDescription?.trim() });
 
       let generatedImageData: string;
 
-      if (isPhotoWithPalette) {
-        try {
-          const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, excludedSlots);
-          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-          const atmosphere = styleData?.config.atmosphere ? getAtmosphereById(styleData.config.atmosphere) : null;
-          const atmospherePrompt = atmosphere?.promptSnippet || null;
+      if (isGeminiPath) {
+        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, excludedSlots);
 
-          {
-            const rc = design.selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim();
-            const matInstr = materialImagesWithMeta
-              .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}. (${m.description})`)
-              .join("\n");
-            const atmoSection = atmospherePrompt ? `\nDecor and atmosphere details: ${atmospherePrompt}\n` : "";
-            console.log(`[AI Prompt] generate-material-edit →\n` +
-              `Image 1 is a photo of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\n` +
-              `PRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\n` +
-              `ONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n` +
-              `Overall aesthetic: ${collection!.promptBase}\n${atmoSection}` +
-              `Create a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`);
+        const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
+        const atmosphere = styleData?.config.atmosphere ? getAtmosphereById(styleData.config.atmosphere) : null;
+        const atmospherePrompt = atmosphere?.promptSnippet ?? null;
+        const architecture = styleData?.config.architecture ? getArchitectureById(styleData.config.architecture) : null;
+        const architecturePrompt = architecture?.promptSnippet ?? null;
+
+        {
+          const rc = design.selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim();
+          const matInstr = materialImagesWithMeta
+            .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}.`)
+            .join("\n");
+          const atmosphereSection = atmospherePrompt ? "":"";//`\nDecor: ${atmospherePrompt}\n` : "";
+          const architectureSection = architecturePrompt ? `\nInterior base style: ${architecturePrompt}\n` : "";
+          let p: string;
+          if (uploadType === "floorplan") {
+            p = `Image 1 is a 2D floor plan of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\n${architectureSection}${atmosphereSection}\nProduce a realistic interior render with accurate floorplan, materials, and professional photography quality. Do not add clutter.`;
+          } else if (uploadType === "sketch") {
+            p = `Image 1 is a rough sketch or concept drawing of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\n${architectureSection}${atmosphereSection}\nProduce a realistic interior render with natural lighting and professional photography quality.`;
+          } else {
+            p = `Image 1 is a photo of a ${rc}. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n\nCreate a photorealistic result with natural lighting. The room must look identical in layout — only the materials and surface finishes should change.`;
           }
-
-          const { data, error } = await supabase.functions.invoke("generate-material-edit", {
-            body: {
-              imageBase64,
-              materialImages: materialImagesWithMeta,
-              roomCategory: design.selectedCategory,
-              palettePromptSnippet: collection!.promptBase,
-              atmospherePrompt,
-              quality: API_CONFIG.imageGeneration.quality,
-              model: API_CONFIG.imageGeneration.modelAccurate,
-            },
-          });
-
-          if (error) throw new Error(error.message || "Failed to generate material edit");
-          generatedImageData = data?.generatedImage;
-          if (!generatedImageData) throw new Error("No image returned from material edit service");
-        } catch (materialEditErr) {
-          console.warn("Material edit failed, falling back to generate-interior:", materialEditErr);
-
-          const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
-          const architecture = styleData?.config.architecture ? getArchitectureById(styleData.config.architecture) : null;
-          const atmosphere = styleData?.config.atmosphere ? getAtmosphereById(styleData.config.atmosphere) : null;
-
-          const materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, collection!.promptBase, excludedSlots);
-          const stylePrompt = [architecture?.promptSnippet, atmosphere?.promptSnippet].filter(Boolean).join(" ") || null;
-
-          {
-            const rc = design.selectedCategory ? `a ${design.selectedCategory.replace(/([A-Z])/g, " $1").toLowerCase().trim()}` : "an interior space";
-            let p = `Transform this room into ${rc} with professional interior design.`;
-            if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
-            if (stylePrompt) p += ` Design style characteristics: ${stylePrompt}.`;
-            else p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
-            p += " Create a photorealistic interior render with natural lighting, high-end finishes, and professional photography quality. Maintain the room's architecture and layout.";
-            console.log("[AI Prompt] generate-interior (fallback) →\n" + p);
-          }
-
-          const { data, error } = await supabase.functions.invoke("generate-interior", {
-            body: {
-              imageBase64,
-              roomCategory: design.selectedCategory,
-              materialPrompt: materialPrompt || null,
-              stylePrompt,
-              freestyleDescription: null,
-              quality: API_CONFIG.imageGeneration.quality,
-              model: API_CONFIG.imageGeneration.modelCreative,
-            },
-          });
-
-          if (error) throw new Error(error.message || "Failed to generate interior");
-          generatedImageData = data?.generatedImage;
-          if (!generatedImageData) throw new Error("No image returned from generation service");
+          console.log(`[AI Prompt] generate-material-edit (${uploadType}) → model: ${geminiModel}\n` + p);
         }
+
+        console.log("[generate] Calling generate-material-edit with model:", geminiModel, "uploadType:", uploadType);
+        const { data, error } = await supabase.functions.invoke("generate-material-edit", {
+          body: {
+            imageBase64,
+            materialImages: materialImagesWithMeta,
+            roomCategory: design.selectedCategory,
+            palettePromptSnippet: collection!.promptBase,
+            atmospherePrompt,
+            architecturePrompt,
+            quality: API_CONFIG.imageGeneration.quality,
+            model: geminiModel,
+            uploadType,
+          },
+        });
+        const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
+        console.log("[generate] generate-material-edit response:", { error: error?.message, errorBody, hasImage: !!data?.generatedImage, dataKeys: data ? Object.keys(data) : null });
+
+        if (error) throw new Error(errorBody?.error || error.message || "Failed to generate material edit");
+        generatedImageData = data?.generatedImage;
+        if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
         const styleData = design.selectedStyle ? getStyleById(design.selectedStyle) : null;
         const architecture = styleData?.config.architecture ? getArchitectureById(styleData.config.architecture) : null;
@@ -612,6 +596,7 @@ export function useGenerationState({
           user_id: user.id,
           room_category: currentRoom,
           image_path: path,
+          upload_type: pendingUploadTypeRef.current,
         }, { onConflict: 'user_id,room_category' });
 
       if (clearFirst) {

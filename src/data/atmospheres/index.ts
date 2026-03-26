@@ -23,7 +23,7 @@ export const atmospheres: Atmosphere[] = [
   {
     id: "contemporary",
     name: "Contemporary",
-    promptSnippet: "Contemporary atmosphere: Modern furniture and lighting with a sense of current sophistication. references: Architectural Digest, Elle Decoration, Cereal.",
+    promptSnippet: "Modern furniture and lighting with a sense of current sophistication. references: Architectural Digest, Elle Decoration, Cereal.",
   },
   {
     id: "japandi",

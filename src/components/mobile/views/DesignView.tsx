@@ -7,9 +7,6 @@ import Stage from "../Stage";
 import ControlCenter from "../ControlCenter";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
 import RoomTripletGrid from "../home/RoomTripletGrid";
-import HomeBudgetSection from "../home/HomeBudgetSection";
-import HomeAuditSection from "../home/HomeAuditSection";
-import HomeRoadmapSection from "../home/HomeRoadmapSection";
 import { RoomSwitchDialog } from "../dialogs/RoomSwitchDialog";
 import { StyleSwitchDialog } from "../dialogs/StyleSwitchDialog";
 import { UploadDialog } from "../dialogs/UploadDialog";
@@ -159,9 +156,9 @@ export default function DesignView() {
   }, [handleSelectCategory]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-hidden min-h-0 relative">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 relative">
 
-      {/* Coming soon overlay */}
+      {/* Coming soon overlay — temporarily disabled for testing
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
         <p className="text-lg font-serif mb-1">{t("comingSoon.screenTitle")}</p>
         <p className="text-xs text-muted-foreground text-center max-w-[200px] leading-relaxed">
@@ -174,9 +171,10 @@ export default function DesignView() {
           {t("comingSoon.beNotifiedButton")}
         </button>
       </div>
+      */}
 
       {/* Hero visualisation */}
-      <div className="relative w-full" style={{ aspectRatio: "4/5" }}>
+      <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
         <Stage onOpenSelector={handleOpenSelector} />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
           <div className="flex items-center gap-0.5 px-1 py-1 rounded-full bg-neutral-900 shadow-lg">
@@ -209,24 +207,6 @@ export default function DesignView() {
 
       {/* Other rooms grid */}
       <RoomTripletGrid onRoomSelect={handleRoomSelect} />
-
-      {/* Divider */}
-      <div className="mx-4 border-t border-border" />
-
-      {/* Budget estimate */}
-      <HomeBudgetSection />
-
-      {/* Divider */}
-      <div className="mx-4 border-t border-border" />
-
-      {/* Layout audit */}
-      <HomeAuditSection />
-
-      {/* Divider */}
-      <div className="mx-4 border-t border-border" />
-
-      {/* Roadmap */}
-      <HomeRoadmapSection />
 
       {/* Bottom padding for safe area */}
       <div className="h-4" />

@@ -558,6 +558,7 @@
     "uploadFailed": "Nepavyko įkelti nuotraukos. Bandykite dar kartą.",
     "paymentError": "Mokėjimo klaida. Bandykite dar kartą.",
     "serverError": "Serverio klaida. Bandykite dar kartą.",
+    "modelOverloaded": "Šis modelis šiuo metu perkrautas. Bandykite dar kartą vėliau.",
     "generic": "Kažkas nepavyko. Bandykite dar kartą.",
     "shareFailed": "Nepavyko pasidalinti dizainu. Bandykite dar kartą.",
     "sendEmailFailed": "Nepavyko išsiųsti žinutės. Bandykite dar kartą."

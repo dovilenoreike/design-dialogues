@@ -9,6 +9,11 @@ export function getErrorTranslationKey(error: unknown): string {
     return "error.rateLimit";
   }
 
+  // Model overloaded
+  if (message.includes("high demand") || message.includes("503") || message.includes("unavailable")) {
+    return "error.modelOverloaded";
+  }
+
   // Authentication/session errors
   if (
     message.includes("unauthorized") ||

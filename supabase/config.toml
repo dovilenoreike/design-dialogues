@@ -5,6 +5,9 @@ project_id = "nimrggpqcvgpgdmcermb"
 [auth]
 enable_signup = true
 
+[functions.generate-material-edit]
+verify_jwt = false
+
 [functions.generate-interior]
 verify_jwt = false
 

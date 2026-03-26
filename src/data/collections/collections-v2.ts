@@ -68,7 +68,8 @@ export const collectionsV2: CollectionV2[] = [
     name: { en: "Fog in the Forest", lt: "Rūkas miške" },
     vibe: "bold-and-moody",
     designer: "athena_blackbird",
-    promptBase: "Modern urban kitchen with warm tones and natural textures",
+    //promptBase: "Inspired by the serene and mystical atmosphere of a foggy forest, this collection evokes a sense of calm and connection to nature.",
+    promptBase: "",
     pool: {
       flooring:                  ["bleached-wood", "concrete"],
       "worktops-and-backsplashes": ["soft-texture-dark"],
