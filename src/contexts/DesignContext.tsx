@@ -58,6 +58,7 @@ interface DesignContextValue {
 
   // Computed values
   canGenerate: boolean;
+  moodboardFilled: boolean;
   uploadedImage: string | null;
   generatedImage: string | null;
   authLoading: boolean;
@@ -592,8 +593,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
   const generatedImage = generation.generatedImages[selectedCategory || "Kitchen"] || null;
 
-  // Computed: can generate if (style selected AND material selected) OR freestyle description provided
-  const canGenerate = !!((selectedStyle && selectedMaterial) || freestyleDescription.trim().length > 0);
+  // Computed: can generate if freestyle description provided, OR (style + material selected AND materials have been mapped via moodboard)
+  const canGenerate = !!(freestyleDescription.trim().length > 0 || (selectedStyle && selectedMaterial && Object.keys(materialOverrides).length > 0));
+
+  // All 5 primary moodboard slots have been picked (floor, fronts ×2, worktops, accents)
+  const REQUIRED_OVERRIDE_KEYS = ["floor", "bottomCabinets", "topCabinets", "worktops", "accents"];
+  const moodboardFilled = REQUIRED_OVERRIDE_KEYS.every((k) => !!materialOverrides[k]);
 
   // Toggle task completion status
   const toggleTask = useCallback((taskId: string) => {
@@ -841,6 +846,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     layoutAuditResponses,
     layoutAuditVariables,
     canGenerate,
+    moodboardFilled,
     uploadedImage,
     generatedImage,
     authLoading,

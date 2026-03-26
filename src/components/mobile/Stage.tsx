@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useEffect, useState, useRef } from "react";
 import { Upload, Sparkles, Loader2, Camera, X, Download, Coins } from "lucide-react";
+import { toast } from "sonner";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -28,6 +29,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     design,
     generation,
     canGenerate,
+    moodboardFilled,
+    setActiveTab,
     handleImageUpload,
     clearUploadedImage,
     handleGenerate,
@@ -72,6 +75,12 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
   // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
+    if (!moodboardFilled && !design.freestyleDescription.trim()) {
+      setActiveTab("moodboard");
+      toast(t("mobile.stage.selectMaterialsFirst"));
+      return;
+    }
+
     if (credits !== null && credits <= 0) {
       setShowNoCreditsBanner(true);
       return;
@@ -90,7 +99,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     } catch (err) {
       console.error("Generation failed:", err);
     }
-  }, [credits, handleGenerate, useCredit, refetchCredits]);
+  }, [credits, handleGenerate, useCredit, refetchCredits, moodboardFilled, design.freestyleDescription, setActiveTab, t]);
 
   // Current room's images
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;

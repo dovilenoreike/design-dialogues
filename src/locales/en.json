@@ -489,6 +489,7 @@
       "visualize": "Visualize",
       "selectStyle": "Select Style",
       "selectPalette": "Select Palette",
+      "selectMaterialsFirst": "Choose your materials in the moodboard first",
       "styleHint": "Step 1 of 2: Choose a design style",
       "paletteHint": "Step 2 of 2: Choose a palette or describe materials",
       "replace": "Replace",
