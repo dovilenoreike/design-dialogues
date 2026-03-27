@@ -144,6 +144,15 @@ const ANNOTATION_DEFS: AnnotationDef[] = [
 
 const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
 
+// Palette keys (materialOverrides) → moodboard slot keys, for the surfaces shown in the flatlay
+const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
+  floor: "floor",
+  bottomCabinets: "mainFronts",
+  topCabinets: "additionalFronts",
+  worktops: "worktops",
+  accents: "accents",
+};
+
 function toSlotPicks(selections: SlotSelections, exclude?: SlotKey): SlotPick[] {
   return (Object.keys(selections) as SlotKey[])
     .filter((k) => k !== exclude && selections[k] !== null)
@@ -210,6 +219,9 @@ export default function MoodboardView() {
   // On mount: sync materialOverrides from restored localStorage data.
   // Resolve through matchCollection so real product IDs are used (not raw archetype IDs),
   // matching the same logic in handleSlotSelect.
+  // IMPORTANT: only fills in slots that have NO existing override — this preserves
+  // any specific product choices the user made in the design tab bubble rail, so the
+  // funnel moodboard → design → specs stays coherent across tab navigation.
   useEffect(() => {
     const matched = matchCollection(collectionsV2, toSlotPicks(slotSelections), vibeTag);
     setMaterialOverrides((prev) => {
@@ -218,7 +230,8 @@ export default function MoodboardView() {
         const aId = slotSelections[k];
         const pk = SLOT_TO_PALETTE_KEY[k];
         if (!pk) return;
-        if (!aId) { delete next[pk]; return; }
+        if (pk in next) return; // preserve design-tab overrides — never overwrite on remount
+        if (!aId) return; // nothing to set for unfilled slots
         if (matched) {
           const products = matched.products[SLOT_CATEGORY[k]]?.[aId] ?? [];
           let resolvedMatId = activeShowroom
@@ -226,7 +239,6 @@ export default function MoodboardView() {
             : undefined;
           resolvedMatId ??= products[0];
           if (resolvedMatId) next[pk] = resolvedMatId;
-          else delete next[pk];
         } else {
           next[pk] = aId;
         }
@@ -235,6 +247,43 @@ export default function MoodboardView() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally runs once on mount only
+
+  // Sync slotSelections when design-tab bubble rail changes a moodboard-relevant surface.
+  // Maps palette keys → slot keys, then reverse-looks-up the archetype ID so the flatlay
+  // reflects the same archetype chosen in the design tab.
+  useEffect(() => {
+    setSlotSelections((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [pk, slotKey] of Object.entries(MOODBOARD_PK_TO_SLOT)) {
+        const matId = materialOverrides[pk];
+        if (!matId) continue;
+
+        const category = SLOT_CATEGORY[slotKey];
+
+        // Find which archetype this product belongs to across all collections
+        let archetypeId: string | null = null;
+        outer: for (const col of collectionsV2) {
+          const byArchetype = col.products[category];
+          if (!byArchetype) continue;
+          for (const [aId, matIds] of Object.entries(byArchetype)) {
+            if ((matIds as string[]).includes(matId)) { archetypeId = aId; break outer; }
+          }
+        }
+        // Fallback: matId might itself be an archetype ID (no-collection-match path)
+        if (!archetypeId && getArchetypeById(matId, category)) archetypeId = matId;
+
+        if (archetypeId && next[slotKey] !== archetypeId) {
+          next[slotKey] = archetypeId;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialOverrides]);
 
   // Reset moodboard when user picks a new vibe
   const lastNonNullVibeRef = useRef<VibeTag | null>(vibeTag);
