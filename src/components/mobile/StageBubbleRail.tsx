@@ -53,6 +53,15 @@ export default function StageBubbleRail({
     : undefined;
 
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showHint, setShowHint] = useState(() => {
+    try { return !localStorage.getItem("bubble-rail-hint-seen"); } catch { return true; }
+  });
+
+  const dismissHint = () => {
+    if (!showHint) return;
+    try { localStorage.setItem("bubble-rail-hint-seen", "1"); } catch {}
+    setShowHint(false);
+  };
 
   useEffect(() => { setShowAddMenu(false); }, [activeSlot, selectedMaterial]);
 
@@ -105,6 +114,18 @@ export default function StageBubbleRail({
         className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
         style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
       >
+        {/* Hint label — fades out on first tap */}
+        <div
+          className={`absolute right-full top-0 flex items-center mr-2 pointer-events-none transition-opacity duration-300 ${showHint && !activeSlot ? "opacity-100" : "opacity-0"}`}
+        >
+          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full px-2.5 py-1" style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}>
+            <span className="text-[9px] font-medium text-black/70 whitespace-nowrap">
+              {t("surface.personaliseHint")}
+            </span>
+            <span className="text-black/40 text-[9px]">→</span>
+          </div>
+        </div>
+
         {visibleBubbles.map((bubble) => {
           const overrideId = materialOverrides[bubble.slotKey];
           const overriddenImage = overrideId
@@ -117,6 +138,7 @@ export default function StageBubbleRail({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  dismissHint();
                   if (activeMode !== "palettes") {
                     onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
                   }

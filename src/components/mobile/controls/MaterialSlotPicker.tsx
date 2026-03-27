@@ -232,6 +232,9 @@ export default function MaterialSlotPicker({
   }, [slot, selections, currentCollectionId, vibeTag, showroom]);
 
   const selectedId = slot ? selections[slot] : null;
+  const hasOtherPicks = slot
+    ? SLOT_ORDER.some((k) => k !== slot && selections[k] !== null)
+    : false;
 
   return (
     <Sheet open={slot !== null} onOpenChange={(open) => !open && onClose()}>
@@ -274,9 +277,6 @@ export default function MaterialSlotPicker({
 
         {/* Sections 2 & 3 */}
         {availableWithImages.length > 0 && (() => {
-          const recommended = availableWithImages.filter((i) => i.isRecommended);
-          const others = availableWithImages.filter((i) => !i.isRecommended);
-
           const renderSwatch = ({ archetype, displayImage }: { archetype: (typeof availableWithImages)[0]["archetype"]; displayImage: string }) => {
             const isSelected = selectedId === archetype.id;
             return (
@@ -304,6 +304,19 @@ export default function MaterialSlotPicker({
               </button>
             );
           };
+
+          if (!hasOtherPicks) {
+            return (
+              <div className="mb-4">
+                <div className="grid grid-cols-4 gap-2">
+                  {availableWithImages.map((item) => renderSwatch(item))}
+                </div>
+              </div>
+            );
+          }
+
+          const recommended = availableWithImages.filter((i) => i.isRecommended);
+          const others = availableWithImages.filter((i) => !i.isRecommended);
 
           return (
             <>

@@ -149,6 +149,7 @@
     "otherStyles": "Kitos idėjos",
     "alternativeCollections": "Kiti atspalviai",
     "matchingMaterials": "Dera kartu",
+    "personaliseHint": "Keisk paviršius",
     "fronts": "Fasadai",
     "floor": "Grindys",
     "mainFronts": "Fasadai: Apatinės spintelės",
@@ -1220,6 +1221,7 @@
     "findMaterials": "Kur rasti?",
     "pickFirst": "Pasirinkite pradinę medžiagą",
     "pickRemaining": "Pasirinkite likusias medžiagas",
+    "tapHint": "Palieskite paviršių",
     "ready": "Konceptas paruoštas",
     "clear": "Išvalyti"
   },

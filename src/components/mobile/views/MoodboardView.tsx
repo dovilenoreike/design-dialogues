@@ -159,6 +159,15 @@ export default function MoodboardView() {
   const { activeShowroom } = useShowroom();
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
+  const [showHint, setShowHint] = useState(() => {
+    try { return !localStorage.getItem("moodboard-hint-seen"); } catch { return true; }
+  });
+
+  const dismissHint = () => {
+    if (!showHint) return;
+    try { localStorage.setItem("moodboard-hint-seen", "1"); } catch {}
+    setShowHint(false);
+  };
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [slotSelections, setSlotSelections] = useState<SlotSelections>(() => {
     // Shared session: use the host's selections, skip local storage
@@ -558,7 +567,7 @@ export default function MoodboardView() {
                   }}
                 >
                   <button
-                    onClick={() => setOpenSlot(piece.slot)}
+                    onClick={() => { dismissHint(); setOpenSlot(piece.slot); }}
                     className="w-full h-full"
                     aria-label={`Pick ${piece.slot}`}
                   >
@@ -592,6 +601,21 @@ export default function MoodboardView() {
               </div>
             );
           })}
+
+          {/* First-time hint overlay */}
+          <div
+            className={`absolute inset-x-0 bottom-4 flex justify-center pointer-events-none transition-opacity duration-300 ${showHint && filledCount === 0 ? "opacity-100" : "opacity-0"}`}
+          >
+            <div
+              className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5"
+              style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}
+            >
+              <span className="text-[9px] font-medium text-black/70 whitespace-nowrap">
+                {t("moodboard.tapHint")}
+              </span>
+              <span className="text-black/40 text-[9px]">↑</span>
+            </div>
+          </div>
 
           {/* ── Annotation overlay (SVG, pointer-events:none) ── */}
           <svg
