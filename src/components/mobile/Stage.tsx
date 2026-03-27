@@ -151,7 +151,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     return Object.keys(materialOverrides).length > 0;
   }, [materialOverrides]);
 
-  const isVisualizationMismatched = !hasUserImage && hasMaterialChanges;
+  // Always blur the stock visualization when there is no user photo — regardless of whether
+  // materials are selected — so the design tab looks consistent in both states.
+  const isVisualizationMismatched = !hasUserImage;
 
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
@@ -263,21 +265,35 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {/* Upload button - centered when browsing */}
       {!hasUserImage && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <button
-            onClick={() => setUploadMenuOpen(true)}
-            className="pointer-events-auto flex flex-col items-center gap-3 active:scale-95 transition-transform"
-          >
-            <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-lg"
-              style={{ border: '1.5px solid rgba(255,255,255,0.4)' }}
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => setUploadMenuOpen(true)}
+              className="pointer-events-auto flex flex-col items-center gap-3 active:scale-95 transition-transform"
             >
-              <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
-            </div>
-            {isVisualizationMismatched && (
-              <span className="text-sm text-white/60 text-center max-w-[200px] leading-relaxed tracking-wide [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
-                {t("mobile.stage.uploadPrompt")}
-              </span>
+              <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-lg"
+                style={{ border: '1.5px solid rgba(255,255,255,0.4)' }}
+              >
+                <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
+              </div>
+              {isVisualizationMismatched && (
+                <span className="text-sm text-white/60 text-center max-w-[200px] leading-relaxed tracking-wide [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
+                  {t("mobile.stage.uploadPrompt")}
+                </span>
+              )}
+            </button>
+            {!moodboardFilled && (
+              <button
+                onClick={() => setActiveTab("moodboard")}
+                className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-md rounded-full active:scale-95 transition-transform"
+                style={{ border: '0.5px solid rgba(255,255,255,0.25)' }}
+              >
+                <span className="text-[11px] font-medium text-white/70 whitespace-nowrap">
+                  {t("mobile.stage.chooseMaterials")}
+                </span>
+                <span className="text-white/50 text-[10px]">→</span>
+              </button>
             )}
-          </button>
+          </div>
         </div>
       )}
 
@@ -308,7 +324,15 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {/* FAB generate button */}
       {hasUserImage && (
         <div className="absolute bottom-4 right-4">
-          {isFloorplan ? (
+          {!moodboardFilled ? (
+            <button
+              onClick={() => setActiveTab("moodboard")}
+              className="flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] bg-foreground text-background active:scale-[0.98] transition-all"
+            >
+              <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+              {t("mobile.stage.chooseMaterials")}
+            </button>
+          ) : isFloorplan ? (
             // Floorplan two-step flow
             isGenerating ? (
               <button disabled className="flex items-center gap-2 px-5 py-3 bg-foreground/70 text-background rounded-full font-medium text-sm shadow-lg min-h-[44px]">
@@ -374,17 +398,15 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
                 onClick={handleGenerateWithCredits}
                 disabled={!canGenerate}
                 className={`flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] transition-all ${
-                  canGenerate
-                    ? "bg-foreground text-background active:scale-[0.98]"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                  !canGenerate
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-foreground text-background active:scale-[0.98]"
                 }`}
               >
                 <Sparkles className="w-4 h-4" strokeWidth={1.5} />
                 {canGenerate
                   ? (generatedImage ? t("mobile.stage.revisualize") : t("mobile.stage.visualize"))
-                  : (!selectedStyle
-                      ? t("mobile.stage.selectStyle")
-                      : t("mobile.stage.selectPalette"))}
+                  : t("mobile.stage.selectStyle")}
               </button>
             )
           )}

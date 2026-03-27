@@ -500,7 +500,8 @@
       "paletteHint": "2 žingsnis iš 2: Pasirinkite paletę arba aprašykite medžiagas",
       "replace": "Pakeisti",
       "share": "Dalintis",
-      "uploadLabel": "ĮKELKITE PLANĄ • ESKIZĄ • NUOTRAUKĄ"
+      "uploadLabel": "ĮKELKITE PLANĄ • ESKIZĄ • NUOTRAUKĄ",
+      "chooseMaterials": "Pasirinkite medžiagas"
     },
     "switchDialog": {
       "saveTitle": "Išsaugoti vizualizaciją?",
