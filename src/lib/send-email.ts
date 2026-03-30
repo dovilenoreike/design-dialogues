@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { captureError } from "@/lib/sentry";
 
-type EmailType = "partner" | "feedback" | "designer-inquiry" | "material-request";
+type EmailType = "partner" | "feedback" | "designer-inquiry" | "material-request" | "provider-inquiry";
 
 export async function sendEmail(type: EmailType, data: Record<string, unknown>) {
   try {

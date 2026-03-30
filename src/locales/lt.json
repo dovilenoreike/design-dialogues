@@ -553,6 +553,8 @@
     "comingSoon": "Jau greitai",
     "availableIn": "Galima įsigyti",
     "noShowrooms": "Salonų sąrašas ruošiamas",
+    "visitWebsite": "Apsilankyti svetainėje",
+    "contactComingSoon": "Kontaktai bus pateikti netrukus",
     "noProviders": "Sąrašas ruošiamas",
     "selectCity": "Pasirinkite miestą",
     "code": "Kodas"
@@ -590,6 +592,19 @@
     "sessionTitle": "Showroom sesija",
     "sessionMessage": "Šiuo metu esate {name} sesijoje.",
     "exitSession": "Grįžti į bendrą katalogą"
+  },
+  "provider": {
+    "poweredBy": "Interjero planuotė",
+    "sessionTitle": "Paslaugų teikėjo sesija",
+    "sessionMessage": "Šiuo metu esate {name} sesijoje.",
+    "exitSession": "Grįžti į bendrą katalogą",
+    "contactTitle": "Susisiekti su {name}",
+    "sendMessage": "Siųsti žinutę",
+    "sendMessageButton": "Siųsti žinutę",
+    "formMessage": "Žinutė",
+    "formMessagePlaceholder": "Trumpai aprašykite savo projektą...",
+    "successTitle": "Žinutė išsiųsta",
+    "successDescription": "Perduosime jūsų užklausą {name}"
   },
   "audit": {
     "title": "Plano Auditas",

@@ -1,4 +1,6 @@
-import { MapPin, Clock, ChevronRight, X } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Clock, ChevronRight, X, Phone, Globe } from "lucide-react";
+import type { ProviderBrand } from "@/data/sourcing/types";
 import {
   Drawer,
   DrawerContent,
@@ -17,6 +19,13 @@ import { useCity, CITIES, CITY_LABELS } from "@/contexts/CityContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getShowroomsForMaterial, getProvidersForMaterial, getSpecialtyForMaterial } from "@/data/sourcing";
+import { useProvider } from "@/contexts/ProviderContext";
+import { sendEmail } from "@/lib/send-email";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 // Map specialty to translation key
 const specialtyToTranslationKey: Record<string, string> = {
@@ -47,12 +56,48 @@ const MaterialSourcingSheet = ({
   const { t } = useLanguage();
   const { city, setCity } = useCity();
   const isMobile = useIsMobile();
+  const { activeProvider } = useProvider();
+  const [contactProvider, setContactProvider] = useState<ProviderBrand | null>(null);
+  const [msgName, setMsgName] = useState("");
+  const [msgEmail, setMsgEmail] = useState("");
+  const [msgText, setMsgText] = useState("");
+  const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+  const handleProviderMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactProvider) return;
+    setIsSendingMsg(true);
+    try {
+      await sendEmail("provider-inquiry", {
+        name: msgName,
+        email: msgEmail,
+        message: msgText,
+        providerName: contactProvider.name,
+        providerPhone: contactProvider.phone,
+      });
+      toast.success(t("provider.successTitle"), {
+        description: t("provider.successDescription").replace("{name}", contactProvider.name),
+        position: "top-center",
+      });
+      setMsgName("");
+      setMsgEmail("");
+      setMsgText("");
+      setContactProvider(null);
+    } catch {
+      toast.error(t("error.sendEmailFailed"));
+    } finally {
+      setIsSendingMsg(false);
+    }
+  };
 
   if (!material) return null;
 
   const showroomResult = getShowroomsForMaterial(city, material.showroomIds);
-  const providers = getProvidersForMaterial(city, material.materialType);
   const specialty = getSpecialtyForMaterial(material.materialType);
+  const allProviders = getProvidersForMaterial(city, material.materialType);
+  const providers = activeProvider
+    ? (activeProvider.specialty === specialty ? [activeProvider] : [])
+    : allProviders;
 
   const hasShowrooms = showroomResult.available.length > 0;
   const hasOtherCities = showroomResult.otherCities.length > 0;
@@ -165,9 +210,10 @@ const MaterialSourcingSheet = ({
         {hasProviders ? (
           <div className="space-y-2">
             {providers.map((provider) => (
-              <div
+              <button
                 key={provider.id}
-                className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setContactProvider(provider)}
+                className="w-full flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors text-left"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground">{provider.name}</p>
@@ -178,7 +224,7 @@ const MaterialSourcingSheet = ({
                   )}
                 </div>
                 <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-              </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -193,6 +239,7 @@ const MaterialSourcingSheet = ({
 
   if (isMobile) {
     return (
+      <>
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader className="pb-4">
@@ -288,9 +335,10 @@ const MaterialSourcingSheet = ({
               {hasProviders ? (
                 <div className="space-y-2">
                   {providers.map((provider) => (
-                    <div
+                    <button
                       key={provider.id}
-                      className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setContactProvider(provider)}
+                      className="w-full flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors text-left"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground">{provider.name}</p>
@@ -301,7 +349,7 @@ const MaterialSourcingSheet = ({
                         )}
                       </div>
                       <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -314,16 +362,171 @@ const MaterialSourcingSheet = ({
           </div>
         </DrawerContent>
       </Drawer>
+      {contactProvider && (
+        <Dialog open={!!contactProvider} onOpenChange={(open) => !open && setContactProvider(null)}>
+          <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+            <DialogTitle className="font-serif text-xl">
+              {t("provider.contactTitle").replace("{name}", contactProvider.name)}
+            </DialogTitle>
+            {contactProvider.description && (
+              <p className="text-sm text-muted-foreground -mt-2">{contactProvider.description}</p>
+            )}
+            <div className="space-y-3 mt-1">
+              {contactProvider.phone && (
+                <a
+                  href={`tel:${contactProvider.phone}`}
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{contactProvider.phone}</span>
+                </a>
+              )}
+              {contactProvider.website && (
+                <a
+                  href={contactProvider.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Globe size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{t("sourcing.visitWebsite")}</span>
+                </a>
+              )}
+            </div>
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
+                {t("provider.sendMessage")}
+              </p>
+              <form onSubmit={handleProviderMessage} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-name">{t("designer.formName")}</Label>
+                  <Input
+                    id="prov-name"
+                    value={msgName}
+                    onChange={(e) => setMsgName(e.target.value)}
+                    placeholder={t("designer.formName")}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-email">{t("designer.formEmail")}</Label>
+                  <Input
+                    id="prov-email"
+                    type="email"
+                    value={msgEmail}
+                    onChange={(e) => setMsgEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-msg">{t("provider.formMessage")}</Label>
+                  <Textarea
+                    id="prov-msg"
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    placeholder={t("provider.formMessagePlaceholder")}
+                    className="resize-none h-24"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSendingMsg}>
+                  {isSendingMsg ? t("designer.sending") : t("provider.sendMessageButton")}
+                </Button>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      </>
     );
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-6 gap-0" hideCloseButton aria-describedby={undefined}>
-        <DialogTitle className="sr-only">{material.name}</DialogTitle>
-        {content}
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-md p-6 gap-0" hideCloseButton aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{material.name}</DialogTitle>
+          {content}
+        </DialogContent>
+      </Dialog>
+      {contactProvider && (
+        <Dialog open={!!contactProvider} onOpenChange={(open) => !open && setContactProvider(null)}>
+          <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+            <DialogTitle className="font-serif text-xl">
+              {t("provider.contactTitle").replace("{name}", contactProvider.name)}
+            </DialogTitle>
+            {contactProvider.description && (
+              <p className="text-sm text-muted-foreground -mt-2">{contactProvider.description}</p>
+            )}
+            <div className="space-y-3 mt-1">
+              {contactProvider.phone && (
+                <a
+                  href={`tel:${contactProvider.phone}`}
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{contactProvider.phone}</span>
+                </a>
+              )}
+              {contactProvider.website && (
+                <a
+                  href={contactProvider.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Globe size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{t("sourcing.visitWebsite")}</span>
+                </a>
+              )}
+            </div>
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
+                {t("provider.sendMessage")}
+              </p>
+              <form onSubmit={handleProviderMessage} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-name">{t("designer.formName")}</Label>
+                  <Input
+                    id="prov-name"
+                    value={msgName}
+                    onChange={(e) => setMsgName(e.target.value)}
+                    placeholder={t("designer.formName")}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-email">{t("designer.formEmail")}</Label>
+                  <Input
+                    id="prov-email"
+                    type="email"
+                    value={msgEmail}
+                    onChange={(e) => setMsgEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="prov-msg">{t("provider.formMessage")}</Label>
+                  <Textarea
+                    id="prov-msg"
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    placeholder={t("provider.formMessagePlaceholder")}
+                    className="resize-none h-24"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSendingMsg}>
+                  {isSendingMsg ? t("designer.sending") : t("provider.sendMessageButton")}
+                </Button>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 };
 

@@ -551,6 +551,8 @@
     "comingSoon": "Coming soon",
     "availableIn": "Available in",
     "noShowrooms": "No showrooms listed yet",
+    "visitWebsite": "Visit website",
+    "contactComingSoon": "Contact details coming soon",
     "noProviders": "No providers listed yet",
     "selectCity": "Select city",
     "code": "Code"
@@ -588,6 +590,19 @@
     "sessionTitle": "Showroom session",
     "sessionMessage": "You are currently in a {name} session.",
     "exitSession": "Return to general catalog"
+  },
+  "provider": {
+    "poweredBy": "Interior Planner",
+    "sessionTitle": "Service provider session",
+    "sessionMessage": "You are currently in a {name} session.",
+    "exitSession": "Return to general catalog",
+    "contactTitle": "Contact {name}",
+    "sendMessage": "Send a message",
+    "sendMessageButton": "Send message",
+    "formMessage": "Message",
+    "formMessagePlaceholder": "Describe your project briefly...",
+    "successTitle": "Message sent",
+    "successDescription": "We'll forward your inquiry to {name}"
   },
   "audit": {
     "title": "Layout Audit",

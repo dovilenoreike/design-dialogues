@@ -1,13 +1,15 @@
 import type { ProviderBrand } from "./types";
 
 export const providerBrands: ProviderBrand[] = [
-  // // Cabinetry
+  // Cabinetry
   // {
   //   id: "baldu-meistrai",
   //   name: "Baldų Meistrai",
   //   specialty: "Cabinetry",
   //   description: "Custom kitchen and wardrobe specialists",
-  //   isPartner: false,
+  //   phone: "+370 600 00001",
+  //   website: "https://example.com",
+  //   isPartner: true,
   //   cities: ["vilnius"],
   // },
   // {
@@ -15,6 +17,7 @@ export const providerBrands: ProviderBrand[] = [
   //   name: "Baldų Meistrai II",
   //   specialty: "Cabinetry",
   //   description: "Custom kitchen and wardrobe specialists",
+  //   phone: "+370 600 00002",
   //   isPartner: false,
   //   cities: ["vilnius"],
   // },

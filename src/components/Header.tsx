@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, Loader2, Share2, Sparkles, ArrowLeft } from "lucide-react";
+import { Menu, Plus, Loader2, Share2, Sparkles, ArrowLeft, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,7 @@ import {
 import LanguageSelector, { LanguageSelectorInline } from "./LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
+import { useProvider } from "@/contexts/ProviderContext";
 import FeedbackDialog, { FeedbackTrigger, FeedbackMobileItem } from "./FeedbackDialog";
 import { useCredits } from "@/contexts/CreditsContext";
 import { useDesignOptional } from "@/contexts/DesignContext";
@@ -28,8 +29,10 @@ const Header = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
   const [showroomSheetOpen, setShowroomSheetOpen] = useState(false);
+  const [providerSheetOpen, setProviderSheetOpen] = useState(false);
   const { t } = useLanguage();
   const { isShowroomMode, activeShowroom, exitShowroomMode } = useShowroom();
+  const { isProviderMode, activeProvider, exitProviderMode } = useProvider();
   const { credits, loading, buyCredits, refetchCredits } = useCredits();
   const designContext = useDesignOptional();
   const shareSession = designContext?.shareSession;
@@ -113,7 +116,7 @@ const Header = () => {
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
-    ...(!isShowroomMode ? [
+    ...(!isShowroomMode && !isProviderMode ? [
       { label: t("nav.mission"), href: "/mission" },
       { label: t("nav.partner"), href: "/partner" },
     ] : []),
@@ -165,12 +168,19 @@ const Header = () => {
                 <div className="mt-auto pt-6 border-t border-border space-y-4">
                   <FeedbackMobileItem onClick={handleMobileFeedback} />
                   <LanguageSelectorInline />
-                  {isShowroomMode && (
+                  {(isShowroomMode || isProviderMode) && (
                     <button
-                      onClick={() => { exitShowroomMode(); setIsOpen(false); }}
-                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => {
+                        isShowroomMode ? setShowroomSheetOpen(true) : setProviderSheetOpen(true);
+                        setIsOpen(false);
+                      }}
+                      title={isShowroomMode ? t("showroom.exitSession") : t("provider.exitSession")}
+                      className="p-1 -ml-1 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {t("showroom.exitSession")}
+                      <LogOut size={16} />
+                      <span className="sr-only">
+                        {isShowroomMode ? t("showroom.exitSession") : t("provider.exitSession")}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -186,6 +196,16 @@ const Header = () => {
                 </span>
                 <span className="block text-[10px] text-muted-foreground tracking-wide">
                   {t("showroom.poweredBy")}
+                </span>
+              </div>
+            ) : isProviderMode && activeProvider ? (
+              <div className="flex-1 text-center px-2 truncate">
+                <span className="text-xl font-serif font-medium tracking-tight text-foreground">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
+                  {activeProvider.name}
+                </span>
+                <span className="block text-[10px] text-muted-foreground tracking-wide">
+                  {t("provider.poweredBy")}
                 </span>
               </div>
             ) : (
@@ -241,6 +261,16 @@ const Header = () => {
                   </span>
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("showroom.poweredBy")}
+                  </span>
+                </button>
+              ) : isProviderMode && activeProvider ? (
+                <button onClick={() => setProviderSheetOpen(true)} className="text-left">
+                  <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
+                    {activeProvider.name}
+                  </span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {t("provider.poweredBy")}
                   </span>
                 </button>
               ) : (
@@ -332,6 +362,27 @@ const Header = () => {
               className="text-sm font-medium text-[#647d75] underline underline-offset-4 hover:text-[#4f645d] transition-colors"
             >
               {t("showroom.exitSession")}
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Provider exit sheet */}
+      <Drawer open={providerSheetOpen} onOpenChange={setProviderSheetOpen}>
+        <DrawerContent>
+          <div className="px-6 pt-4 pb-8 text-center">
+            <DrawerTitle className="sr-only">{t("provider.sessionTitle")}</DrawerTitle>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t("provider.sessionMessage").replace("{name}", activeProvider?.name ?? "")}
+            </p>
+            <button
+              onClick={() => {
+                exitProviderMode();
+                setProviderSheetOpen(false);
+              }}
+              className="text-sm font-medium text-[#647d75] underline underline-offset-4 hover:text-[#4f645d] transition-colors"
+            >
+              {t("provider.exitSession")}
             </button>
           </div>
         </DrawerContent>

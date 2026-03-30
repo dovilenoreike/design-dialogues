@@ -73,6 +73,20 @@ serve(async (req) => {
         `;
         break;
 
+      case "provider-inquiry":
+        subject = `Service Inquiry for ${data.providerName}`;
+        html = `
+          <h2>New Service Inquiry</h2>
+          <p><strong>Provider:</strong> ${data.providerName}</p>
+          ${data.providerPhone ? `<p><strong>Provider Phone:</strong> ${data.providerPhone}</p>` : ""}
+          <p><strong>From:</strong> ${data.name} (${data.email})</p>
+          <p><strong>Message:</strong></p>
+          <p>${data.message}</p>
+          <hr>
+          <p><em>Laiškas išsiųstas pagal kliento užklausą www.interjeroplanuote.lt</em></p>
+        `;
+        break;
+
       case "material-request":
         subject = `Material List Request from ${data.name}`;
         html = `
