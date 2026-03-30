@@ -1,0 +1,259 @@
+import type { Material } from "./types";
+
+import imgBaron from "@/assets/materials/caramel-morning/material1.jpg";
+import imgConstanceChevrone from "@/assets/materials/fog-in-the-forest/material1.jpg";
+import imgComoChevrone from "@/assets/materials/morning-mist/material1.jpg";
+import imgMacadamia from "@/assets/materials/sleeping-earth/material1.jpg";
+import imgCalissonOak from "@/assets/materials/behind-the-lights/material1.jpg";
+import imgPureScandiFloor from "@/assets/materials/pure-scandi/material1.jpg";
+import imgLightConcrete from "@/assets/materials/spicy-nord/material1.jpg";
+import imgSolidoIconicOakBolsena from "@/assets/materials/flooring/solido_iconic_oak_bolsena.jpg";
+import imgSolidoPearl from "@/assets/materials/flooring/solido_pearl.jpg";
+import imgNagojaDuron from "@/assets/materials/flooring/nagoja_duron.jpg";
+import imgBleachedWoodDemo from "@/assets/materials/temporary-for-demo/bleached-wood-demo.jpg";
+import imgLightWoodDemo from "@/assets/materials/temporary-for-demo/light-wood-demo.jpg";
+
+const baron: Material = {
+  id: "baron",
+  image: imgBaron,
+  displayName: { en: "Baron", lt: "Baron" },
+  description: {
+    en: "Natural oak texture.",
+    lt: "Natūralaus ąžuolo tekstūra.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Baron",
+  texturePrompt: "Natural oak texture.",
+  showroomIds: ["jusu-salonas", "solido-grindys"],
+  alternatives: {},
+};
+
+const constanceChevrone: Material = {
+  id: "constance-chevrone",
+  image: imgConstanceChevrone,
+  displayName: {
+    en: "Constance Chevrone",
+    lt: "Constance Chevrone",
+  },
+  description: {
+    en: "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+    lt: "Pilkšva ąžuolo tekstūra.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Constance-Chevrone",
+  texturePrompt:
+    "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
+  showroomIds: ["jusu-salonas"],
+  alternatives: {},
+};
+
+const comoChevrone: Material = {
+  id: "como-chevrone",
+  image: imgComoChevrone,
+  displayName: { en: "Como Chevrone", lt: "Como Chevrone" },
+  description: {
+    en: "Light warm-oak chevron floor with a matte finish. Soft natural wood grain, gentle colour variation, classic V-shaped pattern.",
+    lt: "Šviesios šilto ąžuolo eglutės rašto grindys.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Como Chevrone",
+  texturePrompt:
+    "Light warm-oak chevron floor with a matte finish. Soft natural wood grain, gentle colour variation, classic V-shaped pattern.",
+  showroomIds: ["solido-grindys"],
+  alternatives: {},
+};
+
+const macadamia: Material = {
+  id: "macadamia",
+  image: imgMacadamia,
+  displayName: { en: "Macadamia", lt: "Macadamia" },
+  description: {
+    en: "Honeyed oak in darker medium tone and herringbone pattern",
+    lt: "Šiltas, vidutinio atspalvio natūralaus ąžuolo tekstūra",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Macadamia",
+  texturePrompt:
+    "Honeyed oak in darker medium tone and herringbone pattern",
+  showroomIds: ["solido-grindys"],
+  alternatives: {},
+};
+
+const calissonOak525: Material = {
+  id: "525-calisson-oak",
+  image: imgCalissonOak,
+  displayName: { en: "525 Calisson Oak", lt: "525 Calisson Oak" },
+  description: {
+    en: "Warm smoked oak in a herringbone pattern.",
+    lt: "Šiltas rūkytas ąžuolas eglutės raštu.",
+  },
+  type: "Laminate",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "525 Calisson oak",
+  texturePrompt: "Warm smoked oak in a herringbone pattern.",
+  showroomIds: ["impeka"],
+  alternatives: {},
+};
+
+const pureScandiFlooring: Material = {
+  id: "pure-scandi-flooring",
+  image: imgPureScandiFloor,
+  displayName: {
+    en: "Light Natural Oak Parquet",
+    lt: "Šviesaus ąžuolo parketas",
+  },
+  description: {
+    en: "Light natural oak parquet, matte finish, subtle grain, laid in a mosaic pattern, Scandinavian feel.",
+    lt: "Šviesaus ąžuolo tekstūra.",
+  },
+  type: "",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt:
+    "Light natural oak parquet, matte finish, subtle grain, laid in a mosaic pattern, Scandinavian feel.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const lightConcrete: Material = {
+  id: "light-concrete",
+  image: imgLightConcrete,
+  displayName: { en: "Light Concrete", lt: "Šviesus betonas" },
+  description: {
+    en: "Light concrete texture with subtle warm undertones, matte finish.",
+    lt: "Šviesaus betono tekstūra.",
+  },
+  type: "",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt:
+    "Light concrete texture with subtle warm undertones, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const solidoIconicOakBolsena: Material = {
+  id: "solido-iconic-oak-bolsena",
+  image: imgSolidoIconicOakBolsena,
+  displayName: {
+    en: "Light Smoked Oak",
+    lt: "Šviesiai rūkytas ąžuolas",
+  },
+  description: {
+    en: "Natural light smoked oak flooring",
+    lt: "Natūralios šviesiai rūkyto ąžuolo tekstūra",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "iconic_oak_bolsena",
+  texturePrompt: "Natural light smoked oak flooring",
+  showroomIds: ["jusu-salonas"],
+  alternatives: {},
+};
+
+const solidoPearl: Material = {
+  id: "solido-pearl",
+  image: imgSolidoPearl,
+  displayName: {
+    en: "Light concrete texture",
+    lt: "Šviesi betono tekstūra",
+  },
+  description: {
+    en: "Light concrete texture",
+    lt: "Šviesi betono tekstūra",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Pearl",
+  texturePrompt: "Light concrete texture flooring",
+  showroomIds: ["jusu-salonas"],
+  alternatives: {},
+};
+
+const NagojaDuron: Material = {
+  id: "nagoja-duron",
+  image: imgNagojaDuron,
+  displayName: {
+    en: "Light Smoked Oak",
+    lt: "Rudas ąžuolas",
+  },
+  description: {
+    en: "Natural light smoked oak flooring",
+    lt: "Natūralios šviesiai rūkyto ąžuolo tekstūra",
+  },
+  type: "Engineered Wood",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Duron",
+  texturePrompt: "Natural medium brown oak flooring",
+  showroomIds: ["jusu-salonas"],
+  alternatives: {},
+};
+
+const bleachedWoodDemo: Material = {
+  id: "bleached-wood-demo",
+  image: imgBleachedWoodDemo,
+  displayName: {
+    en: "Bleached Oak",
+    lt: "Balinta ąžuolo mediena",
+  },
+  description: {
+    en: "Light bleached oak flooring with a natural, airy feel.",
+    lt: "Šviesi baltinta ąžuolo grindų danga.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Light bleached white oak flooring, natural airy feel.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const lightWoodDemo: Material = {
+  id: "light-wood-demo",
+  image: imgLightWoodDemo,
+  displayName: {
+    en: "Light Wood",
+    lt: "Šviesi mediena",
+  },
+  description: {
+    en: "Light natural wood flooring.",
+    lt: "Šviesi natūralios medienos grindų danga.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "",
+  texturePrompt: "Light natural wood flooring, warm and airy.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+export const flooringMaterials: Material[] = [
+  baron,
+  constanceChevrone,
+  comoChevrone,
+  macadamia,
+  calissonOak525,
+  pureScandiFlooring,
+  lightConcrete,
+  solidoIconicOakBolsena,
+  solidoPearl,
+  NagojaDuron,
+  bleachedWoodDemo,
+  lightWoodDemo,
+];

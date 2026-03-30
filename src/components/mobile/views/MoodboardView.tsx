@@ -572,14 +572,23 @@ export default function MoodboardView() {
               </span>
             </button>
           )}
-          {filledCount > 0 && (
-            <button
-              onClick={handleClearSlots}
-              className="flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity active:scale-95">
-              <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">Išvalyti</span>
-              <RotateCcw className="w-3 h-3 text-neutral-600" strokeWidth={1.5} />
-            </button>
-          )}
+          {/* Right side: room context + optional clear */}
+          <div className="flex items-center gap-2">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-400">
+              {t("moodboard.room")}
+            </span>
+            {filledCount > 0 && (
+              <button
+                onClick={handleClearSlots}
+                className="flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity active:scale-95"
+              >
+                <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">
+                  {t("moodboard.clear")}
+                </span>
+                <RotateCcw className="w-3 h-3 text-neutral-600" strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Architectural flatlay canvas ── */}

@@ -73,7 +73,7 @@ export function useGenerationState({
               .from('user-images')
               .getPublicUrl(upload.image_path);
             uploaded[upload.room_category] = urlData.publicUrl;
-            const ut = ((upload as Record<string, unknown>).upload_type as UploadType) || 'photo';
+            const ut = (upload.upload_type as UploadType) || 'photo';
             uploadTypes[upload.room_category] = ut;
             if (ut === 'floorplan') floorplanRooms.push(upload.room_category);
           });
@@ -711,9 +711,13 @@ export function useGenerationState({
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from('user-images').getPublicUrl(clayPath);
           clayValue = urlData.publicUrl;
+        } else {
+          captureError(new Error(uploadErr.message), { action: "generateClayRender:storageUpload", room });
+          toast.warning("Render saved for this session only — reload to regenerate", { position: "top-center" });
         }
-      } catch {
-        // silently ignore storage persistence failure
+      } catch (storageErr) {
+        captureError(storageErr, { action: "generateClayRender:storageUpload", room });
+        toast.warning("Render saved for this session only — reload to regenerate", { position: "top-center" });
       }
 
       clayRenderImagesRef.current = { ...clayRenderImagesRef.current, [room]: clayValue };

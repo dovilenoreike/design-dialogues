@@ -485,7 +485,7 @@
   "mobile": {
     "stage": {
       "designingThe": "{room} Concept",
-      "uploadPrompt": "Upload your photo, sketch or floor plan to visualise your choices",
+      "uploadPrompt": "Upload a photo of your kitchen to see your material choices come to life",
       "visualized": "Visualized {room}",
       "yourRoom": "Your {room}",
       "generating": "Generating...",
@@ -517,7 +517,7 @@
     },
     "uploadMenu": {
       "title": "Choose how you start",
-      "sectionHeader": "SELECT INPUT TYPE",
+      "sectionHeader": "YOUR KITCHEN",
       "tabCreative": "STYLE SEARCH",
       "tabPhotorealism": "PHOTO-REALISM",
       "comingSoonTitle": "Coming soon",
@@ -1222,7 +1222,8 @@
     "pickRemaining": "Pick remaining materials",
     "tapHint": "Tap a surface to start",
     "ready": "Combination ready",
-    "clear": "Clear"
+    "clear": "Clear",
+    "room": "Kitchen"
   },
   "vibe": {
     "prompt": "Choose your mood",
