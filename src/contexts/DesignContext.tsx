@@ -31,6 +31,7 @@ import type { VibeTag } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialById, getMaterialsByCategory } from "@/data/materials";
+import { getRoomByName } from "@/data/rooms";
 import type { SurfaceCategory } from "@/data/materials/types";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
@@ -411,20 +412,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     if (urlState.tab) {
       setActiveTabState(urlState.tab);
     }
-    if (urlState.palette) {
-      const collection = collectionsV2.find((c) => c.id === urlState.palette);
-      if (collection) {
-        setDesign((prev) => ({ ...prev, selectedMaterial: urlState.palette }));
-      }
-    }
     if (urlState.room) {
       setDesign((prev) => ({ ...prev, selectedCategory: urlState.room }));
-    }
-    if (urlState.style) {
-      const style = getStyleById(urlState.style);
-      if (style) {
-        setDesign((prev) => ({ ...prev, selectedStyle: urlState.style }));
-      }
     }
     if (urlState.tier) {
       setSelectedTierState(urlState.tier);
@@ -462,7 +451,8 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
           // Restore state - URL params take precedence over saved state
           setDesign(prev => {
-            const restoredRoom = urlState.room || data.selected_category || prev.selectedCategory;
+            const savedRoom = data.selected_category && getRoomByName(data.selected_category) ? data.selected_category : null;
+            const restoredRoom = urlState.room || savedRoom || prev.selectedCategory;
             return {
               ...prev,
               selectedStyle: prev.selectedStyle || data.selected_style || null,
@@ -589,9 +579,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
 
     const newUrl = buildUrl(
       activeTab,
-      design.selectedMaterial,
       design.selectedCategory,
-      design.selectedStyle,
       selectedTier
     );
 
@@ -600,7 +588,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     if (newUrl !== currentUrl) {
       navigate(newUrl, { replace: true });
     }
-  }, [activeTab, design.selectedMaterial, design.selectedCategory, design.selectedStyle, selectedTier, navigate, location.pathname, location.search]);
+  }, [activeTab, design.selectedCategory, selectedTier, navigate, location.pathname, location.search]);
 
   // Wrapped setters that update both state and trigger URL sync
   const setActiveTab = useCallback((tab: BottomTab) => {

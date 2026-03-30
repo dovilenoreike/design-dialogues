@@ -7,9 +7,7 @@ import { BottomTab, Tier } from "@/contexts/DesignContext";
 
 export interface UrlState {
   tab: BottomTab | null;
-  palette: string | null;
   room: string | null;
-  style: string | null;
   tier: Tier | null;
 }
 
@@ -27,10 +25,7 @@ export function parseUrlState(pathname: string, search: string): UrlState {
   const pathTab = pathname.slice(1) as BottomTab; // Remove leading /
   const tab = VALID_TABS.includes(pathTab) ? pathTab : null;
 
-  // Extract query params
-  const palette = params.get("palette");
   const room = params.get("room");
-  const style = params.get("style");
   const tierParam = params.get("tier");
 
   // Validate tier
@@ -38,7 +33,7 @@ export function parseUrlState(pathname: string, search: string): UrlState {
     ? (tierParam as Tier)
     : null;
 
-  return { tab, palette, room, style, tier };
+  return { tab, room, tier };
 }
 
 /**
@@ -46,17 +41,13 @@ export function parseUrlState(pathname: string, search: string): UrlState {
  */
 export function buildUrl(
   tab: BottomTab,
-  palette: string | null,
   room: string | null,
-  style: string | null,
   tier: Tier
 ): string {
   const path = `/${tab}`;
   const params = new URLSearchParams();
 
-  if (palette) params.set("palette", palette);
   if (room) params.set("room", room);
-  if (style) params.set("style", style);
   if (tier !== "Standard") params.set("tier", tier); // Only include non-default tier
 
   const search = params.toString();
@@ -68,5 +59,5 @@ export function buildUrl(
  */
 export function hasUrlState(search: string): boolean {
   const params = new URLSearchParams(search);
-  return !!(params.get("palette") || params.get("room") || params.get("style") || params.get("tier"));
+  return !!(params.get("room") || params.get("tier"));
 }
