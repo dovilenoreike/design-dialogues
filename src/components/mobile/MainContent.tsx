@@ -27,7 +27,7 @@ export default function MainContent() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 flex flex-col min-h-0 w-full max-w-2xl mx-auto">
+      <div className="flex-1 flex flex-col min-h-0 w-full">
         {content}
       </div>
     </div>

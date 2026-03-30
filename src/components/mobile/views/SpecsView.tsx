@@ -62,7 +62,7 @@ export default function SpecsView() {
     <div className="flex-1 overflow-y-auto relative">
       {/* Content */}
       {!selectedMaterial && !freestyleDescription ? (
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
             <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export default function SpecsView() {
           </div>
         </div>
       ) : freestyleDescription ? (
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
             <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export default function SpecsView() {
           </button>
         </div>
       ) : (
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
             <div className="flex items-center justify-between gap-3">

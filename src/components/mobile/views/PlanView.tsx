@@ -61,7 +61,7 @@ export default function PlanView() {
   return (
     <div className="relative flex-1">
       <div className="absolute inset-0 overflow-y-auto">
-        <div className="px-4 py-6 pb-8">
+        <div className="px-4 py-6 pb-8 lg:max-w-2xl lg:mx-auto lg:py-10">
         {/* Header */}
         <h3 className="text-2xl font-serif mb-2">
           {t("timeline.title").replace("{weeks}", String(timeline.totalWeeks))}

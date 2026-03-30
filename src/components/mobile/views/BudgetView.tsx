@@ -289,7 +289,7 @@ export default function BudgetView() {
     <div className="flex-1 flex flex-col min-h-0">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Tier Toggle */}
           <div className="flex justify-center gap-8 mb-2">
             {tiers.map((tier) => {
@@ -339,7 +339,7 @@ export default function BudgetView() {
 
       {/* Scrollable Body */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 py-6 space-y-6">
+        <div className="px-4 py-6 space-y-6 lg:max-w-2xl lg:mx-auto">
 
           {/* HOUSEHOLD */}
           <div>

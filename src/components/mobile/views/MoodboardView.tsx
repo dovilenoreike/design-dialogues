@@ -537,10 +537,10 @@ export default function MoodboardView() {
 
   return (
     <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-      <div className="px-4 pt-4 pb-6">
+      <div className="px-4 pt-4 pb-6 lg:max-w-7xl lg:mx-auto lg:px-8 lg:py-10">
 
         {/* ── Vibe pill + reset row ── */}
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between lg:mb-6">
           {vibeTag ? (
             <div className="flex items-center gap-1">
               {/* Tap label → back to picker */}
@@ -572,8 +572,8 @@ export default function MoodboardView() {
               </span>
             </button>
           )}
-          {/* Right side: room context + optional clear */}
-          <div className="flex items-center gap-2">
+          {/* Right side: room context + optional clear — mobile only (desktop version lives above canvas) */}
+          <div className="flex items-center gap-2 lg:hidden">
             <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-400">
               {t("moodboard.room")}
             </span>
@@ -591,11 +591,35 @@ export default function MoodboardView() {
           </div>
         </div>
 
-        {/* ── Architectural flatlay canvas ── */}
-        <div
-          className="relative w-full overflow-hidden rounded-2xl"
-          style={{ aspectRatio: "4/4.9" }}
-        >
+        {/* ── Two-column grid: stacks on mobile, side-by-side on desktop ── */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-20 lg:items-center">
+
+        {/* LEFT column */}
+        <div>
+
+          {/* Desktop-only: room label left, clear right — directly above canvas */}
+          <div className="hidden lg:flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-neutral-400">
+              {t("moodboard.room")}
+            </span>
+            {filledCount > 0 && (
+              <button
+                onClick={handleClearSlots}
+                className="flex items-center gap-1.5 hover:opacity-70 transition-opacity active:scale-95"
+              >
+                <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-neutral-400">
+                  {t("moodboard.clear")}
+                </span>
+                <RotateCcw className="w-3 h-3 text-neutral-400" strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+
+          {/* Canvas */}
+          <div
+            className="relative w-full overflow-hidden rounded-2xl"
+            style={{ aspectRatio: "4/4.9" }}
+          >
           {/* Background — slightly inset from the container edges */}
           <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
           {/* Material cut-sample pieces */}
@@ -713,54 +737,64 @@ export default function MoodboardView() {
               );
             })}
           </svg>
-        </div>
+          </div>{/* end canvas */}
+        </div>{/* end LEFT column */}
 
-        {/* ── Contextual instruction — hidden once filled ── */}
+        {/* RIGHT: controls — vertically centered by grid items-center */}
+        <div className="mt-4 lg:mt-0">
+        <div className="lg:max-w-[400px] lg:mx-auto">
+
+        {/* ── Instruction — serif, sits directly above buttons ── */}
         {!allSlotsFilled && (
-          <div className="mt-3 flex items-center justify-center">
-            <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center">
+          <div className="mt-3 lg:mt-0 lg:mb-6">
+            <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center lg:font-serif lg:text-xl lg:normal-case lg:tracking-normal lg:text-neutral-700 lg:text-left">
               {filledCount === 0 ? t("moodboard.pickFirst") : t("moodboard.pickRemaining")}
             </p>
+            {/* Hairline between instruction and buttons — desktop only */}
+            <div className="hidden lg:block mt-6 border-t border-neutral-100" style={{ borderTopWidth: '0.5px' }} />
           </div>
         )}
 
-        {/* ── Hairline separator — hidden once filled ── */}
-        {!allSlotsFilled && <div className="mt-3 border-t border-neutral-100" />}
+        {/* ── CTA buttons — row on mobile, column on desktop ── */}
+        {/* Order: Visualize (primary) → Collections (outline) → Find (ghost) */}
+        <div className="mt-3 flex items-center justify-between gap-2 lg:flex-col lg:items-stretch lg:gap-3 lg:mt-6">
 
-        {/* ── CTA pills ── */}
-        <div className="mt-3 flex items-center justify-between gap-2">
-          {/* Kolekcijos — ghost */}
-          <button
-            onClick={() => setCollectionsOpen(true)}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97]">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">
-              {t("moodboard.exploreCollections")}
-            </span>
-            <ChevronDown className="w-3 h-3 text-neutral-400" strokeWidth={1.5} />
-          </button>
-
-          {/* Vizualizuoti — filled black */}
+          {/* Visualize — filled black (primary action) */}
           <button
             onClick={() => setActiveTab("design")}
             disabled={!allSlotsFilled}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full bg-neutral-900 hover:bg-neutral-800 transition-colors active:scale-[0.97] disabled:opacity-30">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-white">
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 transition-colors active:scale-[0.97] disabled:opacity-30 lg:flex-none lg:h-12 lg:px-6">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-white lg:text-sm lg:normal-case lg:tracking-normal">
               {t("moodboard.visualize")}
             </span>
-            <ArrowRight className="w-3 h-3 text-white" strokeWidth={1} />
+            <ArrowRight className="w-3 h-3 text-white lg:w-4 lg:h-4" strokeWidth={1} />
           </button>
 
-          {/* Kur rasti? — ghost */}
+          {/* Explore Collections — outline */}
+          <button
+            onClick={() => setCollectionsOpen(true)}
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97] lg:flex-none lg:h-12 lg:px-6">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600 lg:text-sm lg:normal-case lg:tracking-normal">
+              {t("moodboard.exploreCollections")}
+            </span>
+            <ChevronDown className="w-3 h-3 text-neutral-400 lg:w-4 lg:h-4" strokeWidth={1.5} />
+          </button>
+
+          {/* Where to find — ghost */}
           <button
             onClick={() => setActiveTab("specs")}
             disabled={!allSlotsFilled}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97] disabled:opacity-30">
-            <span className={`text-[8px] uppercase tracking-[0.2em] font-medium ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`}>
+            className="flex-1 h-10 px-4 flex items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97] disabled:opacity-30 lg:flex-none lg:h-12 lg:px-6">
+            <span className={`text-[8px] uppercase tracking-[0.2em] font-medium lg:text-sm lg:normal-case lg:tracking-normal ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`}>
               {t("moodboard.findMaterials")}
             </span>
-            <ArrowRight className={`w-3 h-3 ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`} strokeWidth={1} />
+            <ArrowRight className={`w-3 h-3 lg:w-4 lg:h-4 ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`} strokeWidth={1} />
           </button>
         </div>
+
+        </div>{/* end max-w-[400px] */}
+        </div>{/* end RIGHT controls */}
+        </div>{/* end two-column grid */}
 
         {/* ── Collections Sheet (mobile) / Dialog (desktop) ── */}
         {(() => {

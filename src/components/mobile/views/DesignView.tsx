@@ -132,18 +132,31 @@ export default function DesignView() {
   }, [design.selectedMaterial, design.selectedCategory, materialOverrides]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 relative">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
 
-      {/* Hero visualisation */}
-      <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
-        <Stage />
+      <div className="px-4 pt-4 pb-6 lg:max-w-7xl lg:mx-auto lg:px-8 lg:py-10">
+
+        <div className="lg:grid lg:grid-cols-2 lg:gap-20 lg:items-center">
+
+          {/* LEFT: canvas */}
+          <div>
+            <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: "1/1" }}>
+              <Stage />
+            </div>
+          </div>
+
+          {/* RIGHT: MaterialsSummary */}
+          <div className="mt-4 lg:mt-0">
+            <div className="lg:max-w-[400px] lg:mx-auto">
+              <MaterialsSummary />
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      {/* Materials summary */}
-      <MaterialsSummary />
-
-      {/* Bottom padding for safe area */}
-      <div className="h-4" />
+      {/* Bottom padding (mobile only) */}
+      <div className="h-4 md:hidden" />
 
       {/* Upload confirmation dialog */}
       <UploadDialog

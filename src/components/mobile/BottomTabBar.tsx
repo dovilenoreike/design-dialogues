@@ -20,7 +20,7 @@ export default function BottomTabBar() {
   const { t } = useLanguage();
 
   return (
-    <nav className="flex-shrink-0 bg-background border-t border-border pb-safe">
+    <nav className="flex-shrink-0 bg-background border-t border-border pb-safe md:hidden">
       <div className="w-full max-w-2xl mx-auto">
         <div className="flex items-center justify-around h-14">
           {tabs.map((tab) => {
