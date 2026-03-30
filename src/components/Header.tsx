@@ -165,16 +165,21 @@ const Header = () => {
                 <div className="mt-auto pt-6 border-t border-border space-y-4">
                   <FeedbackMobileItem onClick={handleMobileFeedback} />
                   <LanguageSelectorInline />
+                  {isShowroomMode && (
+                    <button
+                      onClick={() => { exitShowroomMode(); setIsOpen(false); }}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {t("showroom.exitSession")}
+                    </button>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
             )}
 
             {isShowroomMode && activeShowroom ? (
-              <button
-                onClick={() => setShowroomSheetOpen(true)}
-                className="flex-1 text-center px-2 truncate"
-              >
+              <div className="flex-1 text-center px-2 truncate">
                 <span className="text-xl font-serif font-medium tracking-tight text-foreground">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                   {activeShowroom.name}
@@ -182,7 +187,7 @@ const Header = () => {
                 <span className="block text-[10px] text-muted-foreground tracking-wide">
                   {t("showroom.poweredBy")}
                 </span>
-              </button>
+              </div>
             ) : (
               <Link
                 to="/"
