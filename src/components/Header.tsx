@@ -257,7 +257,7 @@ const Header = () => {
             {/* Left: Logo / Co-branding */}
             <div className="justify-self-start">
               {isShowroomMode && activeShowroom ? (
-                <button onClick={() => setShowroomSheetOpen(true)} className="text-left">
+                <div className="text-left">
                   <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
                     <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                     {activeShowroom.name}
@@ -265,9 +265,9 @@ const Header = () => {
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("showroom.poweredBy")}
                   </span>
-                </button>
+                </div>
               ) : isProviderMode && activeProvider ? (
-                <button onClick={() => setProviderSheetOpen(true)} className="text-left">
+                <div className="text-left">
                   <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
                     <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                     {activeProvider.name}
@@ -275,7 +275,7 @@ const Header = () => {
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("provider.poweredBy")}
                   </span>
-                </button>
+                </div>
               ) : (
                 <Link
                   to="/"
@@ -356,6 +356,14 @@ const Header = () => {
                   </>
                 )}
               </button>
+              {(isShowroomMode || isProviderMode) && (
+                <button
+                  onClick={() => isShowroomMode ? setShowroomSheetOpen(true) : setProviderSheetOpen(true)}
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                >
+                  <LogOut size={16} />
+                </button>
+              )}
             </div>
           </div>
         </div>
