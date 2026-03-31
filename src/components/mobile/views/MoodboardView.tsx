@@ -245,6 +245,11 @@ export default function MoodboardView() {
       });
       return next;
     });
+    // Sync design.selectedMaterial so the Design tab's bubble rail and MaterialsSummary
+    // are visible without the user having to interact with the moodboard first.
+    // Only sets if currently null — the DB reload effect will overwrite with the persisted
+    // value anyway if one exists.
+    if (matched) setActivePalette(matched.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally runs once on mount only
 

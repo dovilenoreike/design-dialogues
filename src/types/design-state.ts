@@ -3,7 +3,7 @@
  * Groups related state for cleaner component structure
  */
 
-import { DEFAULT_PALETTE, DEFAULT_STYLE, DEFAULT_ROOM } from "@/data/visualisations";
+import { DEFAULT_STYLE, DEFAULT_ROOM } from "@/data/visualisations";
 
 export type UploadType = "photo" | "sketch" | "floorplan";
 
@@ -35,7 +35,7 @@ export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
   uploadTypes: {},  // Empty - no upload types initially
   selectedCategory: DEFAULT_ROOM,
-  selectedMaterial: DEFAULT_PALETTE,
+  selectedMaterial: null,
   selectedStyle: DEFAULT_STYLE,
   freestyleDescription: "",
   lastSelectedRoom: null,  // No room selected initially

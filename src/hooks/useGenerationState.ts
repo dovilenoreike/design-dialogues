@@ -1,12 +1,9 @@
-// Set to true to log prompts and skip API calls during prompt development
-const DEV_PROMPT_ONLY = false;
-
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/palette-utils";
+import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/material-generation-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +12,7 @@ import { captureError } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
+import { TrendingUpDown } from "lucide-react";
 
 export interface UseGenerationStateParams {
   design: DesignSelection;
@@ -95,8 +93,9 @@ export function useGenerationState({
                   const { data: urlData } = supabase.storage
                     .from('user-images')
                     .getPublicUrl(user.id + '/clay/' + room + '.jpg');
-                  clayImages[room] = urlData.publicUrl;
-                  clayRenderImagesRef.current[room] = urlData.publicUrl;
+                  const clayUrl = urlData.publicUrl + `?t=${Date.now()}`;
+                  clayImages[room] = clayUrl;
+                  clayRenderImagesRef.current[room] = clayUrl;
                 }
               }
               if (Object.keys(clayImages).length > 0) {
@@ -210,8 +209,9 @@ export function useGenerationState({
 
     const currentRoom = design.selectedCategory || "Kitchen";
     const hasGeneratedImage = generation.generatedImages[currentRoom];
+    const hasClayRender = !!(clayRenderImagesRef.current[currentRoom]);
 
-    if (hasGeneratedImage) {
+    if (hasGeneratedImage || hasClayRender) {
       pendingUploadTypeRef.current = uploadType;
       setGeneration((prev) => ({
         ...prev,
@@ -220,6 +220,14 @@ export function useGenerationState({
       }));
       return;
     }
+
+    // Clear any stale visualisation immediately so the UI shows the new upload once ready
+    clayRenderImagesRef.current = { ...clayRenderImagesRef.current, [currentRoom]: null };
+    setGeneration((prev) => ({
+      ...prev,
+      generatedImages: { ...prev.generatedImages, [currentRoom]: null },
+      clayRenderImages: { ...prev.clayRenderImages, [currentRoom]: null },
+    }));
 
     try {
       const { data: existing } = await supabase
@@ -432,8 +440,8 @@ export function useGenerationState({
       }
 
       const isGeminiPath = (
-        (uploadType === "photo" && !!collection && !design.freestyleDescription?.trim()) ||
-        ((uploadType === "floorplan" || uploadType === "sketch") && !!collection)
+        (uploadType === "photo" && !!design.selectedMaterial) ||
+        (uploadType === "floorplan" || uploadType === "sketch") && !!design.selectedMaterial
       );
       const geminiModel = clayRenderBase64
         ? API_CONFIG.imageGeneration.modelAccurate
@@ -444,30 +452,35 @@ export function useGenerationState({
       let generatedImageData: string;
 
       if (isGeminiPath) {
-        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, excludedSlots);
+        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
 
-        const matInstr = materialImagesWithMeta
-          .map((m, i) => `- Image ${i + 2}: Use as ${m.purpose}.`)
+        const dedupedMaterials = Object.values(
+          materialImagesWithMeta.reduce<Record<string, MaterialImageWithMeta>>((acc, m) => {
+            if (acc[m.matId]) {
+              acc[m.matId] = { ...acc[m.matId], purpose: `${acc[m.matId].purpose} and ${m.purpose}` };
+            } else {
+              acc[m.matId] = { ...m };
+            }
+            return acc;
+          }, {})
+        );
+
+        const matInstr = dedupedMaterials
+          .map((m, i) => `- Image ${i + 2} with ${m.texturePrompt || m.description} use as ${m.purpose} texture.`)
           .join("\n");
         let designPrompt: string;
         if (uploadType === "floorplan" && !clayRenderBase64) {
-          designPrompt = `Image 1 is a 2D floor plan of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic magazine like 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\nProduce a professional interior render with exactly accurate floorplan, materials.`;
+          designPrompt = `Image 1 is a 2D floor plan of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic magazine like 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\nProduce a professional interior render with exactly accurate floorplan, materials.`;
         } else if (uploadType === "sketch") {
-          designPrompt = `Image 1 is a rough sketch or concept drawing of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of item as a designer. Produce a realistic interior render with natural lighting and professional photography quality.`;
+          designPrompt = `Image 1 is a rough sketch or concept drawing of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of item as a designer. Produce a realistic interior render with professional photography quality.`;
         } else {
-          designPrompt = `Image 1 is a photo of a room. Images 2..${materialImagesWithMeta.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with natural lighting and professional photography quality.`;
-        }
-
-        if (DEV_PROMPT_ONLY) {
-          toast.info("DEV: prompt logged, API call skipped");
-          setGeneration((prev) => ({ ...prev, isGenerating: false, isProcessing: false }));
-          return false;
+          designPrompt = `Image 1 is a photo of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with professional photography quality.`;
         }
 
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
-            materialImages: materialImagesWithMeta,
+            materialImages: dedupedMaterials,
             designPrompt,
             quality: API_CONFIG.imageGeneration.quality,
             model: geminiModel,
@@ -480,7 +493,7 @@ export function useGenerationState({
       } else {
         let materialPrompt = "";
         if (collection) {
-          materialPrompt = buildDetailedMaterialPromptWithOverrides(design.selectedMaterial!, design.selectedCategory, materialOverrides, collection.promptBase, excludedSlots);
+          materialPrompt = buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots);
         }
 
         {
@@ -490,11 +503,6 @@ export function useGenerationState({
           else if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
           p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
           p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
-          if (DEV_PROMPT_ONLY) {
-            toast.info("DEV: prompt logged, API call skipped");
-            setGeneration((prev) => ({ ...prev, isGenerating: false, isProcessing: false }));
-            return false;
-          }
         }
 
         const { data, error } = await supabase.functions.invoke("generate-interior", {
@@ -634,6 +642,9 @@ export function useGenerationState({
         }, { onConflict: 'user_id,room_category' });
 
       if (clearFirst) {
+        // Delete persisted clay render so stale result isn't reloaded next session
+        await supabase.storage.from('user-images').remove([`${user.id}/clay/${currentRoom}.jpg`]);
+
         const { data: generations } = await supabase
           .from('user_generations')
           .select('image_path')
@@ -682,7 +693,22 @@ export function useGenerationState({
       const imageBlob = await imageResponse.blob();
       const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
-      const designPrompt = `Create a photorealistic interior visualization based on this floorplan. Minimalist style.`;
+      const collection = design.selectedMaterial ? collectionsV2.find(c => c.id === design.selectedMaterial) ?? null : null;
+      const fd = design.freestyleDescription?.trim() || null;
+      const materialDescription = fd
+        ? fd
+        : collection
+          ? buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots)
+          : null;
+
+      const designPrompt = `You are an architectural visualisation assistant. Convert this 2D kitchen
+floor plan into a single photorealistic perspective render as if standing
+in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+
+Preserve: the layout, number of windows, door positions.
+Assume: standard 2.4m ceiling height, neutral white walls.
+${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
+Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
       const { data, error } = await supabase.functions.invoke("generate-material-edit", {
         body: {
@@ -710,7 +736,7 @@ export function useGenerationState({
           .upload(clayPath, clayBlob, { contentType: 'image/jpeg', upsert: true });
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from('user-images').getPublicUrl(clayPath);
-          clayValue = urlData.publicUrl;
+          clayValue = urlData.publicUrl + `?t=${Date.now()}`;
         } else {
           captureError(new Error(uploadErr.message), { action: "generateClayRender:storageUpload", room });
           toast.warning("Render saved for this session only — reload to regenerate", { position: "top-center" });
@@ -732,7 +758,7 @@ export function useGenerationState({
       toast.error(t(getErrorTranslationKey(err)));
       setGeneration(prev => ({ ...prev, isGenerating: false, isProcessing: false }));
     }
-  }, [design.selectedCategory, design.uploadedImages, user, t]);
+  }, [design, materialOverrides, excludedSlots, user, t]);
 
   return {
     generation,

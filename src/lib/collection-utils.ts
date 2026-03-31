@@ -139,15 +139,17 @@ export function getCollectionMaterialBubbles(
     if (!category) continue;
 
     const archetypeId = collection.pool[category]?.[0];
-    if (!archetypeId) continue;
-
-    const materialId = collection.products[category]?.[archetypeId]?.[0];
-    if (!materialId) continue;
-
-    const mat = getMaterialById(materialId);
-    if (mat?.image) {
-      bubbles.push({ slotKey, slotLabel: slotDef.label, materialId, image: mat.image });
+    if (archetypeId) {
+      const materialId = collection.products[category]?.[archetypeId]?.[0];
+      if (materialId) {
+        const mat = getMaterialById(materialId);
+        if (mat?.image) {
+          bubbles.push({ slotKey, slotLabel: slotDef.label, materialId, image: mat.image });
+          continue;
+        }
+      }
     }
+
   }
 
   return bubbles;

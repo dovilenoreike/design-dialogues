@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
-import { collectionsV2 } from "@/data/collections/collections-v2";
 import Stage from "../Stage";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
 import { UploadDialog } from "../dialogs/UploadDialog";
@@ -50,15 +49,10 @@ export default function DesignView() {
     confirmImageUpload,
     cancelImageUpload,
     setMaterialOverrides,
-    handleSelectMaterial,
     materialOverrides,
   } = useDesign();
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  // Prevents the palette→squares sync from firing when the slot picker itself changed the palette
-  const internalPaletteChange = useRef(false);
-  // Prevents the sync effect from overwriting null slots when the clear button is clicked
-  const internalSlotClear = useRef(false);
 
   const [slotSelections, setSlotSelections] = useState<SlotSelections>({
     floor: null,
@@ -84,40 +78,16 @@ export default function DesignView() {
       if (id) SLOT_TO_PALETTE_KEYS[k](room).forEach((pk) => { newOverrides[pk] = id; });
     });
 
-    // Find collections compatible with every filled slot
-    const filledIds = Object.values(newSelections).filter((id): id is string => id !== null);
-    const compatibleCollections = collectionsV2.filter((col) =>
-      filledIds.every((id) => Object.values(col.pool).flat().includes(id))
-    );
-
-    // Switch collection only when the current one is no longer compatible
-    if (compatibleCollections.length > 0) {
-      const currentStillCompatible = compatibleCollections.some((c) => c.id === design.selectedMaterial);
-      if (!currentStillCompatible) {
-        internalPaletteChange.current = true;
-        handleSelectMaterial(compatibleCollections[0].id);
-      }
-    }
-
-    // Apply overrides — runs after handleSelectMaterial's clear due to React 18 batching
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       ALL_PICKER_PALETTE_KEYS.forEach((k) => delete next[k]);
       Object.assign(next, newOverrides);
       return next;
     });
-  }, [slotSelections, design.selectedCategory, design.selectedMaterial, setMaterialOverrides, handleSelectMaterial]);
+  }, [slotSelections, design.selectedCategory, setMaterialOverrides]);
 
   // Sync squares from palette + active overrides (covers bubble column changes, resets, and palette switches)
   useEffect(() => {
-    if (internalPaletteChange.current) {
-      internalPaletteChange.current = false;
-      return;
-    }
-    if (internalSlotClear.current) {
-      internalSlotClear.current = false;
-      return;
-    }
     const room = design.selectedCategory || "Kitchen";
 
     const newSelections: SlotSelections = {
@@ -171,6 +141,7 @@ export default function DesignView() {
         selections={slotSelections}
         onSelect={handleSlotSelect}
         onClose={() => setOpenSlot(null)}
+        lockedCollectionId={design.selectedMaterial ?? undefined}
       />
     </div>
   );

@@ -12,7 +12,6 @@ import { FormData } from "@/types/calculator";
 import { getStyleById } from "@/data/styles";
 import { getArchitectureById } from "@/data/architectures";
 import { getAtmosphereById } from "@/data/atmospheres";
-import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/palette-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseUrlState, buildUrl } from "@/lib/url-state";
 import type { AuditResponse, AuditVariables } from "@/types/layout-audit";
@@ -450,13 +449,19 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           const urlState = parseUrlState(location.pathname, location.search);
 
           // Restore state - URL params take precedence over saved state
+          const resolvedMaterial = (() => {
+            if (!data.selected_material) return null;                                    // never set → null
+            if (collectionsV2.some(c => c.id === data.selected_material)) return data.selected_material; // valid new-system ID ✓
+            return collectionsV2[0]?.id ?? null;                                         // stale old-system ID → migrate to first collection
+          })();
+
           setDesign(prev => {
             const savedRoom = data.selected_category && getRoomByName(data.selected_category) ? data.selected_category : null;
             const restoredRoom = urlState.room || savedRoom || prev.selectedCategory;
             return {
               ...prev,
               selectedStyle: prev.selectedStyle || data.selected_style || null,
-              selectedMaterial: prev.selectedMaterial || data.selected_material || null,
+              selectedMaterial: resolvedMaterial ?? prev.selectedMaterial ?? null,
               // Only use saved room if URL didn't specify one (prev is "Kitchen" default)
               selectedCategory: restoredRoom,
               freestyleDescription: prev.freestyleDescription || data.freestyle_description || "",
@@ -464,6 +469,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
               lastSelectedRoom: prev.lastSelectedRoom || restoredRoom,
             };
           });
+
+          // Seed materialOverrides from collection defaults so bubble rail and
+          // MaterialsSummary swatches appear immediately on reload.
+          if (resolvedMaterial) {
+            selectCollection(resolvedMaterial);
+          }
 
           // Restore tier if not set via URL
           setSelectedTierState(prev => {

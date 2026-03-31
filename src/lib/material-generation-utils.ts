@@ -1,6 +1,5 @@
 /**
- * Palette utilities — now powered by the new material system.
- * Material images come from Material.image (no more path construction).
+ * Material generation utilities — builds prompts and loads images from materialOverrides.
  */
 import { getMaterialById } from "@/data/materials";
 import { surfaces } from "@/data/rooms/surfaces";
@@ -8,6 +7,7 @@ import { surfaces } from "@/data/rooms/surfaces";
 export interface MaterialImageWithMeta {
   base64: string;
   slotKey: string;
+  matId: string;
   purpose: string;
   description: string;
   texturePrompt: string;
@@ -15,11 +15,8 @@ export interface MaterialImageWithMeta {
 
 /**
  * Build detailed material prompt from materialOverrides (source of truth).
- * paletteId param is kept for call-site compatibility but no longer used.
  */
 export function buildDetailedMaterialPromptWithOverrides(
-  _paletteId: string,
-  _spaceCategory: string,
   overrides: Record<string, string>,
   palettePromptSnippet: string,
   excludedSlots?: Set<string>,
@@ -60,11 +57,8 @@ export function buildDetailedMaterialPromptWithOverrides(
 
 /**
  * Load material images with metadata from materialOverrides (source of truth).
- * paletteId param is kept for call-site compatibility but no longer used.
  */
 export async function loadMaterialImagesWithOverrides(
-  _paletteId: string,
-  _spaceCategory: string,
   overrides: Record<string, string>,
   excludedSlots?: Set<string>,
 ): Promise<MaterialImageWithMeta[]> {
@@ -96,7 +90,7 @@ export async function loadMaterialImagesWithOverrides(
         ? (mat.description as Record<string, string>).en || ""
         : String(mat.description || "");
 
-      return { base64, slotKey, purpose, description: desc, texturePrompt: mat.texturePrompt ?? "" };
+      return { base64, slotKey, matId, purpose, description: desc, texturePrompt: mat.texturePrompt ?? "" };
     } catch {
       return null;
     }
@@ -105,4 +99,3 @@ export async function loadMaterialImagesWithOverrides(
   const results = await Promise.all(promises);
   return results.filter((r): r is MaterialImageWithMeta => r !== null);
 }
-

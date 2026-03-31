@@ -58,10 +58,6 @@ serve(async (req) => {
     } = await req.json();
 
     const resolvedModel = model || "gpt-image-1";
-    console.log("Generating material edit with prompt:", designPrompt);
-    console.log("Material images count:", materialImages.length);
-    console.log("Quality setting:", quality || "low");
-    console.log("Model:", resolvedModel);
 
     let generatedImage: string | null = null;
 
@@ -73,18 +69,16 @@ serve(async (req) => {
       }
 
       const parts = [
-        { text: designPrompt },
-        { text: "Image 1 — the room to modify:" },
         { inlineData: { mimeType: "image/png", data: stripDataPrefix(imageBase64) } },
-        ...materialImages.flatMap((mat, i) => [
-          { text: `Image ${i + 2} — material/texture for: ${mat.purpose}` },
-          { inlineData: { mimeType: "image/png", data: stripDataPrefix(mat.base64) } },
-        ]),
+        ...materialImages.map((mat) => ({
+          inlineData: { mimeType: "image/png", data: stripDataPrefix(mat.base64) },
+        })),
+        { text: designPrompt },
       ];
 
       const body = {
         contents: [{ role: "user", parts }],
-        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+        generationConfig: { responseModalities: ["IMAGE"] },
       };
 
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${resolvedModel}:generateContent?key=${GEMINI_API_KEY}`;
@@ -122,19 +116,9 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      console.log("Gemini raw response shape:", JSON.stringify({
-        candidatesCount: data.candidates?.length,
-        firstCandidatePartsCount: data.candidates?.[0]?.content?.parts?.length,
-        partTypes: data.candidates?.[0]?.content?.parts?.map((p: any) =>
-          p.text !== undefined ? "text" : p.inlineData ? `inlineData:${p.inlineData.mimeType}` : "unknown"
-        ),
-        finishReason: data.candidates?.[0]?.finishReason,
-        promptFeedback: data.promptFeedback,
-      }));
 
       const imagePart = data.candidates?.[0]?.content?.parts
         ?.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
-      console.log("Gemini imagePart found:", !!imagePart);
 
       generatedImage = imagePart
         ? `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`
@@ -191,7 +175,6 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      console.log("OpenAI response received");
 
       if (data.data && data.data[0]) {
         if (data.data[0].url) {
