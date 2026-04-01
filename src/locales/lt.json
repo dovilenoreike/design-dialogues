@@ -487,7 +487,7 @@
   "mobile": {
     "stage": {
       "designingThe": "{room} konceptas",
-      "uploadPrompt": "Įkelkite virtuvės nuotrauką vizualizacijai",
+      "uploadPrompt": "Įkelkite virtuvės planą, eskizą arba nuotrauką vizualizacijai",
       "visualized": "Vizualizuota {room}",
       "yourRoom": "Jūsų {room}",
       "generating": "Generuojama...",
@@ -533,7 +533,7 @@
       "2dPlan": "2D PLANAS",
       "2dPlanTip": "AI pasiūlys konceptą pagal esamus baldus.",
       "sketch": "ESKIZAS ARBA PIEŠINYS",
-      "sketchTip": "AI patikslins Jūsų piešinį į detalų paveikslą.",
+      "sketchTip": "AI patikslins Jūsų piešinį į foto-realistinę vizualizaciją.",
       "photo": "3D NUOTRAUKA",
       "photoTip": "Apdailos medžiagų perpiešimas."
     },

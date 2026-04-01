@@ -265,7 +265,7 @@ const valchromatBlack: Material = {
   tier: "optimal",
   code: "Valchromat Black",
   texturePrompt:
-    "Graphite matte – deep dark grey surface with a smooth, velvety matte texture",
+    "Black, velvety matte",
   showroomIds: ["impeka"],
   alternatives: {},
 };

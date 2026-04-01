@@ -454,7 +454,7 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-        console.log("[generate-material-edit/floorplan] model:", API_CONFIG.imageGeneration.modelCreative, "\ndesignPrompt:\n", designPrompt);
+
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -470,19 +470,26 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       } else if (isGeminiPath) {
         const materialImagesWithMeta = await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
 
-        const dedupedMaterials = Object.values(
-          materialImagesWithMeta.reduce<Record<string, MaterialImageWithMeta>>((acc, m) => {
-            if (acc[m.matId]) {
-              acc[m.matId] = { ...acc[m.matId], purpose: `${acc[m.matId].purpose} and ${m.purpose}` };
-            } else {
-              acc[m.matId] = { ...m };
-            }
-            return acc;
-          }, {})
-        );
+        // Deduplicate by material ID, tracking all surfaces each material covers
+        type DedupEntry = MaterialImageWithMeta & { surfaces: string[] };
+        const dedupMap: Record<string, DedupEntry> = {};
+        for (const m of materialImagesWithMeta) {
+          if (dedupMap[m.matId]) {
+            dedupMap[m.matId].surfaces.push(m.purpose);
+          } else {
+            dedupMap[m.matId] = { ...m, surfaces: [m.purpose] };
+          }
+        }
+        const dedupedMaterials = Object.values(dedupMap);
 
         const matInstr = dedupedMaterials
-          .map((m, i) => `- Image ${i + 2} with ${m.texturePrompt || m.description} use as ${m.purpose} texture.`)
+          .map((m, i) => {
+            const texture = m.texturePrompt || m.description;
+            if (m.surfaces.length === 1) {
+              return `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`;
+            }
+            return `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${m.surfaces.join(", ")}.`;
+          })
           .join("\n");
         let designPrompt: string;
         if (uploadType === "sketch") {
@@ -491,7 +498,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
           designPrompt = `Image 1 is a photo of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with professional photography quality.`;
         }
 
-        console.log("[generate-material-edit] model:", geminiModel, "\ndesignPrompt:\n", designPrompt);
+
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -520,8 +527,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
           p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
         }
 
-        console.log("[generate-interior] model:", API_CONFIG.imageGeneration.modelCreative, "\nmaterialPrompt:\n", materialPrompt || "(none)");
-        console.log("[generate-interior] freestyleDescription:\n", design.freestyleDescription.trim() || "(none)");
+
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
@@ -727,7 +733,7 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-      console.log("[generate-clay-render] model:", API_CONFIG.imageGeneration.modelCreative, "\ndesignPrompt:\n", designPrompt);
+
       const { data, error } = await supabase.functions.invoke("generate-material-edit", {
         body: {
           imageBase64,
