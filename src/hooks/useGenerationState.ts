@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides } from "@/lib/material-generation-utils";
+import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides, type MaterialImageWithMeta } from "@/lib/material-generation-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +12,6 @@ import { captureError } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { TrendingUpDown } from "lucide-react";
 
 export interface UseGenerationStateParams {
   design: DesignSelection;
@@ -425,33 +424,50 @@ export function useGenerationState({
       const collection = design.selectedMaterial ? collectionsV2.find((c) => c.id === design.selectedMaterial) ?? null : null;
 
       const uploadType = design.uploadTypes[room] || "photo";
-      const clayRenderBase64 = uploadType === "floorplan" ? (clayRenderImagesRef.current[room] ?? null) : null;
 
-      let imageBase64: string;
-      if (clayRenderBase64) {
-        // Step 2: use clay render as input
-        const clayResponse = await fetch(clayRenderBase64);
-        const clayBlob = await clayResponse.blob();
-        imageBase64 = await resizeBlobToBase64(clayBlob, 512);
-      } else {
-        const imageResponse = await fetch(uploadedImage);
-        const imageBlob = await imageResponse.blob();
-        imageBase64 = await resizeBlobToBase64(imageBlob, 512);
-      }
+      const imageResponse = await fetch(uploadedImage);
+      const imageBlob = await imageResponse.blob();
+      const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
-      const isGeminiPath = (
-        (uploadType === "photo" && !!design.selectedMaterial) ||
-        (uploadType === "floorplan" || uploadType === "sketch") && !!design.selectedMaterial
-      );
-      const geminiModel = clayRenderBase64
+      const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && !!design.selectedMaterial;
+      const geminiModel = uploadType === "photo"
         ? API_CONFIG.imageGeneration.modelAccurate
-        : uploadType === "photo"
-          ? API_CONFIG.imageGeneration.modelAccurate
-          : API_CONFIG.imageGeneration.modelCreative;
+        : API_CONFIG.imageGeneration.modelCreative;
 
       let generatedImageData: string;
 
-      if (isGeminiPath) {
+      if (uploadType === "floorplan") {
+        // Single-step: use the same proven prompt as the clay render call
+        const fd = design.freestyleDescription?.trim() || null;
+        const materialDescription = fd
+          ? fd
+          : collection
+            ? buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots)
+            : null;
+
+        const designPrompt = `You are an architectural visualisation assistant. Convert this 2D kitchen
+floor plan into a single photorealistic perspective render as if standing
+in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+
+Preserve: the layout, number of windows, door positions.
+Assume: standard 2.4m ceiling height, neutral white walls.
+${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
+Output a clean, minimalist, well-lit render suitable for interior material selection.`;
+
+        console.log("[generate-material-edit/floorplan] model:", API_CONFIG.imageGeneration.modelCreative, "\ndesignPrompt:\n", designPrompt);
+        const { data, error } = await supabase.functions.invoke("generate-material-edit", {
+          body: {
+            imageBase64,
+            materialImages: [],
+            designPrompt,
+            model: API_CONFIG.imageGeneration.modelCreative,
+          },
+        });
+        const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
+        if (error) throw new Error(errorBody?.error || error.message || "Failed to generate render");
+        generatedImageData = data?.generatedImage;
+        if (!generatedImageData) throw new Error("No image returned from render service");
+      } else if (isGeminiPath) {
         const materialImagesWithMeta = await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
 
         const dedupedMaterials = Object.values(
@@ -469,14 +485,13 @@ export function useGenerationState({
           .map((m, i) => `- Image ${i + 2} with ${m.texturePrompt || m.description} use as ${m.purpose} texture.`)
           .join("\n");
         let designPrompt: string;
-        if (uploadType === "floorplan" && !clayRenderBase64) {
-          designPrompt = `Image 1 is a 2D floor plan of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic magazine like 3D interior visualization of this space based on the floor plan layout.\n\nApply the following materials and finishes to the appropriate surfaces:\n${matInstr}\n\nProduce a professional interior render with exactly accurate floorplan, materials.`;
-        } else if (uploadType === "sketch") {
+        if (uploadType === "sketch") {
           designPrompt = `Image 1 is a rough sketch or concept drawing of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of item as a designer. Produce a realistic interior render with professional photography quality.`;
         } else {
           designPrompt = `Image 1 is a photo of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\nApply the provided textures exactly accurate, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with professional photography quality.`;
         }
 
+        console.log("[generate-material-edit] model:", geminiModel, "\ndesignPrompt:\n", designPrompt);
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -505,6 +520,8 @@ export function useGenerationState({
           p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
         }
 
+        console.log("[generate-interior] model:", API_CONFIG.imageGeneration.modelCreative, "\nmaterialPrompt:\n", materialPrompt || "(none)");
+        console.log("[generate-interior] freestyleDescription:\n", design.freestyleDescription.trim() || "(none)");
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
@@ -710,6 +727,7 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
+      console.log("[generate-clay-render] model:", API_CONFIG.imageGeneration.modelCreative, "\ndesignPrompt:\n", designPrompt);
       const { data, error } = await supabase.functions.invoke("generate-material-edit", {
         body: {
           imageBase64,

@@ -38,7 +38,7 @@ export default function UploadMenuSheet({
       label: t("mobile.uploadMenu.2dPlan"),
       tip: t("mobile.uploadMenu.2dPlanTip"),
       type: "floorplan",
-      comingSoon: true,
+      comingSoon: false,
     },
   ];
 

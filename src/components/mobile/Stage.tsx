@@ -34,7 +34,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     handleImageUpload,
     clearUploadedImage,
     handleGenerate,
-    generateClayRender,
     handleSaveImage,
     setActiveMode,
     activeMode,
@@ -105,23 +104,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
   const generatedImage = generatedImages[selectedCategory || "Kitchen"] || null;
 
-  const uploadType = design.uploadTypes[selectedCategory || "Kitchen"] || "photo";
-  const isFloorplan = uploadType === "floorplan";
-  const clayRender = generation.clayRenderImages?.[selectedCategory || "Kitchen"] ?? null;
-  const [isGeneratingClay, setIsGeneratingClay] = useState(false);
-
-  const handleGenerateClayRenderClick = useCallback(async () => {
-    setIsGeneratingClay(true);
-    await generateClayRender();
-    setIsGeneratingClay(false);
-  }, [generateClayRender]);
-
-  const handleRegenerateClayClick = useCallback(async () => {
-    setIsGeneratingClay(true);
-    await generateClayRender();
-    setIsGeneratingClay(false);
-  }, [generateClayRender]);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingUploadTypeRef = useRef<UploadType>("photo");
 
@@ -141,7 +123,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
   const styleId = design.selectedStyle || null;
   const visualizationImage = getVisualization(selectedMaterial, selectedCategory, styleId);
-  const displayImage = generatedImage || (isFloorplan && clayRender ? clayRender : null) || uploadedImage || visualizationImage;
+  const displayImage = generatedImage || uploadedImage || visualizationImage;
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
@@ -177,10 +159,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     const roomName = category || "Kitchen";
     const uploaded = uploadedImages[roomName];
     const generated = generatedImages[roomName];
-    const clay = generation.clayRenderImages?.[roomName] ?? null;
-    const uploadTypeForRoom = design.uploadTypes[roomName] || "photo";
-    return generated || (uploadTypeForRoom === "floorplan" && clay ? clay : null) || uploaded || getVisualization(material, category, style);
-  }, [uploadedImages, generatedImages, generation.clayRenderImages, design.uploadTypes]);
+    return generated || uploaded || getVisualization(material, category, style);
+  }, [uploadedImages, generatedImages]);
 
   // Prev/current/next images for carousel
   const prevImage = useMemo(() => {
@@ -332,63 +312,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
               <Sparkles className="w-4 h-4" strokeWidth={1.5} />
               {t("mobile.stage.chooseMaterials")}
             </button>
-          ) : isFloorplan ? (
-            // Floorplan two-step flow
-            isGenerating ? (
-              <button disabled className="flex items-center gap-2 px-5 py-3 bg-foreground/70 text-background rounded-full font-medium text-sm shadow-lg min-h-[44px]">
-                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                {isGeneratingClay ? "Generating Clay..." : t("mobile.stage.generating")}
-              </button>
-            ) : !clayRender && !generatedImage ? (
-              // Step 1: no clay render yet
-              <button
-                onClick={handleGenerateClayRenderClick}
-                className="flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] transition-all bg-foreground text-background active:scale-[0.98]"
-              >
-                <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-                Generate Clay Render
-              </button>
-            ) : clayRender && !generatedImage ? (
-              // Between steps: clay render exists, no final image
-              <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={handleRegenerateClayClick}
-                  className="flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-xl text-white/80 rounded-full text-xs font-medium shadow-md active:scale-[0.98] transition-transform"
-                  style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-                >
-                  Regenerate Clay
-                </button>
-                <button
-                  onClick={handleGenerateWithCredits}
-                  disabled={!canGenerate}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] transition-all ${
-                    canGenerate
-                      ? "bg-foreground text-background active:scale-[0.98]"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-                  Add Textures
-                </button>
-              </div>
-            ) : (
-              // Final image exists: normal UI
-              <button
-                onClick={handleGenerateWithCredits}
-                disabled={!canGenerate}
-                className={`flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] transition-all ${
-                  canGenerate
-                    ? "bg-foreground text-background active:scale-[0.98]"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                }`}
-              >
-                <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-                {t("mobile.stage.revisualize")}
-              </button>
-            )
-          ) : (
-            // Non-floorplan: existing UI
-            isGenerating ? (
+          ) : isGenerating ? (
               <button disabled className="flex items-center gap-2 px-5 py-3 bg-foreground/70 text-background rounded-full font-medium text-sm shadow-lg min-h-[44px]">
                 <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
                 {t("mobile.stage.generating")}
@@ -409,7 +333,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
                   : t("mobile.stage.selectStyle")}
               </button>
             )
-          )}
+          }
         </div>
       )}
 
