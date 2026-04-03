@@ -10,7 +10,7 @@ export const collectionsV2: CollectionV2[] = [
     pool: {
       flooring:                  ["concrete","light-wood"],
       "worktops-and-backsplashes": ["soft-texture-light","soft-texture-medium"],
-      "cabinet-fronts":          [ "medium-wood", "neutral", "dark-wood",],
+      "cabinet-fronts":          [ "medium-wood", "neutral", "light-wood", "dark-wood",],
       tiles:                     [],
       walls:                     ["off-white"],
       accents:                   ["chrome"],
@@ -18,7 +18,7 @@ export const collectionsV2: CollectionV2[] = [
     products: {
       flooring:                  { "light-wood": ["solido-bolsena"], "concrete": ["solido-pearl"] },
       "worktops-and-backsplashes": { "soft-texture-light": ["icono-arabesca-marmo"], "soft-texture-medium": ["icono-picasso-marrone"]},
-      "cabinet-fronts":          {  "neutral": ["velvet-7393"], "medium-wood": ["alvic-goya-02"], "dark-wood": ["alvi-goya-03-na"]},
+      "cabinet-fronts":          {  "neutral": ["velvet-7393"], "medium-wood": ["alvic-goya-02"], "dark-wood": ["alvi-goya-03-na"], "light-wood": ["alvic-goya-01"] },
       "accents":                   {"chrome": ["chrome"] },
     },
   },

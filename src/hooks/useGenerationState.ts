@@ -437,29 +437,46 @@ export function useGenerationState({
       let generatedImageData: string;
 
       if (uploadType === "floorplan") {
-        // Single-step: use the same proven prompt as the clay render call
         const fd = design.freestyleDescription?.trim() || null;
-        const materialDescription = fd
-          ? fd
-          : collection
-            ? buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots)
-            : null;
 
-        const designPrompt = `You are an architectural visualisation assistant. Convert this 2D kitchen
-floor plan into a single photorealistic perspective render as if standing
-in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+        // Load texture images — same dedup logic as sketch/photo path
+        const materialImagesWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
+        type FpDedupEntry = MaterialImageWithMeta & { surfaces: string[] };
+        const fpDedupMap: Record<string, FpDedupEntry> = {};
+        for (const m of materialImagesWithMeta) {
+          if (fpDedupMap[m.matId]) { fpDedupMap[m.matId].surfaces.push(m.purpose); }
+          else { fpDedupMap[m.matId] = { ...m, surfaces: [m.purpose] }; }
+        }
+        const dedupedMaterials = Object.values(fpDedupMap);
+
+        let materialSection = "";
+        if (fd) {
+          materialSection = `\nApply these surface materials and finishes: ${fd}`;
+        } else if (dedupedMaterials.length > 0) {
+          const matInstr = dedupedMaterials
+            .map((m, i) => {
+              const texture = m.texturePrompt || m.description;
+              return m.surfaces.length === 1
+                ? `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`
+                : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${m.surfaces.join(", ")}.`;
+            })
+            .join("\n");
+          materialSection = `\nImages 2..${dedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
+        }
+
+        const designPrompt = `Image 1 is a 2D kitchen floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
 
 Preserve: the layout, number of windows, door positions.
 Assume: standard 2.4m ceiling height, neutral white walls.
-${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
+${materialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-
         console.log("[gen:floorplan] designPrompt:\n", designPrompt);
+        console.log("[gen:floorplan] materials (%d unique):", dedupedMaterials.length, dedupedMaterials.map(m => ({ matId: m.matId, surfaces: m.surfaces, texturePrompt: m.texturePrompt })));
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
-            materialImages: [],
+            materialImages: dedupedMaterials,
             designPrompt,
             model: API_CONFIG.imageGeneration.modelCreative,
           },
@@ -721,29 +738,46 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       const imageBlob = await imageResponse.blob();
       const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
-      const collection = design.selectedMaterial ? collectionsV2.find(c => c.id === design.selectedMaterial) ?? null : null;
       const fd = design.freestyleDescription?.trim() || null;
-      const materialDescription = fd
-        ? fd
-        : collection
-          ? buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots)
-          : null;
 
-      const designPrompt = `You are an architectural visualisation assistant. Convert this 2D kitchen
-floor plan into a single photorealistic perspective render as if standing
-in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+      // Load texture images — same dedup logic as sketch/photo path
+      const clayMaterialsWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
+      type ClayDedupEntry = MaterialImageWithMeta & { surfaces: string[] };
+      const clayDedupMap: Record<string, ClayDedupEntry> = {};
+      for (const m of clayMaterialsWithMeta) {
+        if (clayDedupMap[m.matId]) { clayDedupMap[m.matId].surfaces.push(m.purpose); }
+        else { clayDedupMap[m.matId] = { ...m, surfaces: [m.purpose] }; }
+      }
+      const clayDedupedMaterials = Object.values(clayDedupMap);
+
+      let clayMaterialSection = "";
+      if (fd) {
+        clayMaterialSection = `\nApply these surface materials and finishes: ${fd}`;
+      } else if (clayDedupedMaterials.length > 0) {
+        const matInstr = clayDedupedMaterials
+          .map((m, i) => {
+            const texture = m.texturePrompt || m.description;
+            return m.surfaces.length === 1
+              ? `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`
+              : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${m.surfaces.join(", ")}.`;
+          })
+          .join("\n");
+        clayMaterialSection = `\nImages 2..${clayDedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
+      }
+
+      const designPrompt = `Image 1 is a 2D kitchen floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
 
 Preserve: the layout, number of windows, door positions.
 Assume: standard 2.4m ceiling height, neutral white walls.
-${materialDescription ? `\nApply these surface materials and finishes: ${materialDescription}` : ""}
+${clayMaterialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-
       console.log("[gen:clay] designPrompt:\n", designPrompt);
+      console.log("[gen:clay] materials (%d unique):", clayDedupedMaterials.length, clayDedupedMaterials.map(m => ({ matId: m.matId, surfaces: m.surfaces, texturePrompt: m.texturePrompt })));
       const { data, error } = await supabase.functions.invoke("generate-material-edit", {
         body: {
           imageBase64,
-          materialImages: [],
+          materialImages: clayDedupedMaterials,
           designPrompt,
           model: API_CONFIG.imageGeneration.modelCreative,
         },

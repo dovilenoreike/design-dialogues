@@ -23,6 +23,7 @@ import imgEggerDarkBrownEucalypthus from "@/assets/materials/cabinet-fronts/egge
 import imgSkinCarbonFumo from "@/assets/materials/cabinet-fronts/skin_carbon_fumo.jpg";
 import imgAlviGoya03NA from "@/assets/materials/cabinet-fronts/alvic-goya-03.jpg";
 import imgAlvicGoya02 from "@/assets/materials/cabinet-fronts/alvic-goya-02.jpg";
+import imgAlvicGoya01 from "@/assets/materials/cabinet-fronts/alvic-goya-01.jpg";
 import imgVelvetSoftBlack from "@/assets/materials/cabinet-fronts/velvet-1302.jpg";
 import imgAlvicValazquez04 from "@/assets/materials/cabinet-fronts/alvic_valazquez-04.jpg";
 import imgAlvicValazquez05 from "@/assets/materials/cabinet-fronts/alvic_valazquez-05.jpg";
@@ -448,6 +449,26 @@ const AlvicGoya02: Material = {
   alternatives: {},
 };
 
+const AlvicGoya01: Material = {
+  id: "alvic-goya-01",
+  image: imgAlvicGoya01,
+  displayName: {
+    en: "Alvic Goya 01",
+    lt: "Alvic Goya 01",
+  },
+  description: {
+    en: "Warm greige wood grain with vertical texture",
+    lt: "Šiltas greige medienos grūdėlių piešinys",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "Alvic Goya 01",
+  texturePrompt: "Light greige wood grain with vertical texture, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
 const EggerSoftBlack: Material = {
   id: "velvet-1302",
   image: imgVelvetSoftBlack,
@@ -722,6 +743,7 @@ export const cabinetFrontsMaterials: Material[] = [
   SkinCarbonFumo,
   AlviGoya03NA,
   AlvicGoya02,
+  AlvicGoya01,
   EggerSoftBlack,
   AlvicValazquez04,
   AlvicValazquez05,
