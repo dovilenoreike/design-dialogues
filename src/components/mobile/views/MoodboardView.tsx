@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ChevronDown, ArrowRight } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -9,7 +9,7 @@ import { getMaterialById } from "@/data/materials";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import type { CollectionV2, VibeTag } from "@/data/collections/types";
 import type { SurfaceCategory } from "@/data/materials/types";
-import { matchCollection, type SlotPick } from "@/lib/collection-matching";
+import { matchCollection, findBestMatchCollection, resolveArchetypeToMaterial, resolveProductFromCollection, type SlotPick } from "@/lib/collection-matching";
 import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -211,6 +211,11 @@ export default function MoodboardView() {
   const slotSelectionsRef = useRef(slotSelections);
   slotSelectionsRef.current = slotSelections; // kept current on every render (no useEffect needed)
 
+  // Tracks whether the current selectedCollectionId was set by an explicit user action
+  // (handleCollectionSelect / handleSwitchCollection). When true, handleSlotSelect will
+  // not overwrite selectedCollectionId as long as the new archetype still fits.
+  const isCollectionManuallySelected = useRef(false);
+
   // Persist slot selections to localStorage on every change
   useEffect(() => {
     localStorage.setItem("moodboard-slot-selections", JSON.stringify(slotSelections));
@@ -339,9 +344,19 @@ export default function MoodboardView() {
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       (Object.keys(SLOT_TO_PALETTE_KEY) as SlotKey[]).forEach((k) => {
+        const pk = SLOT_TO_PALETTE_KEY[k];
+        if (!pk) return;
         if (!slotsToKeep.has(k)) {
-          const pk = SLOT_TO_PALETTE_KEY[k];
-          if (pk) delete next[pk];
+          delete next[pk];
+        } else {
+          // Re-resolve the kept slot through the new vibe's best collection so
+          // the flatlay shows products from the new vibe, not the old one (Bug 3).
+          const aId = current[k];
+          if (aId && bestCol) {
+            const resolvedMatId = resolveProductFromCollection(bestCol, aId, SLOT_CATEGORY[k], activeShowroom);
+            if (resolvedMatId) next[pk] = resolvedMatId;
+            else delete next[pk];
+          }
         }
       });
       return next;
@@ -361,20 +376,6 @@ export default function MoodboardView() {
     [selectedCollectionId]
   );
 
-  // Lock picker to one collection only when other picks (≥1) uniquely identify it (vibe-filtered)
-  const pickerLockedCollectionId = useMemo(() => {
-    if (!openSlot) return undefined;
-    const otherPicks = toSlotPicks(slotSelections, openSlot);
-    if (otherPicks.length === 0) return undefined;
-    const compatible = collectionsV2.filter((col) => {
-      if (vibeTag && col.vibe !== vibeTag) return false;
-      return otherPicks.every(({ category, archetypeId }) =>
-        col.pool[category]?.includes(archetypeId) ?? false
-      );
-    });
-    return compatible.length === 1 ? compatible[0].id : undefined;
-  }, [openSlot, slotSelections, vibeTag]);
-
   const handleSlotSelect = useCallback(
     (slotKey: SlotKey, archetypeId: string) => {
       const newSelections = { ...slotSelections, [slotKey]: archetypeId };
@@ -386,48 +387,48 @@ export default function MoodboardView() {
         filled_count: DISPLAYED_SLOTS.filter((k) => Boolean(newSelections[k])).length,
       });
 
+      // Resolve material ID using the same collection + showroom priority the picker used
+      // to display the image, guaranteeing picker ↔ flatlay parity.
+      // Priority: current selected collection (if archetype is in it) → matchCollection → global first-match fallback
+      const category = SLOT_CATEGORY[slotKey];
+      const pk = SLOT_TO_PALETTE_KEY[slotKey];
       const newPicks = toSlotPicks(newSelections);
+
       const currentCol = selectedCollectionId
         ? collectionsV2.find((c) => c.id === selectedCollectionId) ?? null
         : null;
-      const canKeepCurrent =
-        currentCol !== null &&
-        newPicks.length >= 1 &&
-        newPicks.every(({ category, archetypeId }) =>
-          currentCol.pool[category]?.includes(archetypeId) ?? false
-        );
-      const matched = canKeepCurrent
-        ? currentCol
-        : matchCollection(collectionsV2, newPicks, vibeTag);
+      const effectiveCol =
+        (currentCol?.pool[category]?.includes(archetypeId) ? currentCol : null) ??
+        matchCollection(collectionsV2, newPicks, vibeTag);
 
-      setMaterialOverrides((prev) => {
-        const next = { ...prev };
-        if (matched) {
-          (Object.keys(newSelections) as SlotKey[]).forEach((k) => {
-            const aId = newSelections[k];
-            if (!aId) return;
-            const pk = SLOT_TO_PALETTE_KEY[k];
-            if (!pk) return;
-            const resolvedMatId = matched.products[SLOT_CATEGORY[k]]?.[aId]?.[0];
-            if (resolvedMatId) next[pk] = resolvedMatId;
-            else delete next[pk];
-          });
-        } else {
-          const pk = SLOT_TO_PALETTE_KEY[slotKey];
-          if (pk) next[pk] = archetypeId;
-        }
-        return next;
-      });
+      let resolvedMatId: string | null = null;
+      if (effectiveCol) {
+        const products = effectiveCol.products[category]?.[archetypeId] ?? [];
+        resolvedMatId = activeShowroom
+          ? (products.find((id) => getMaterialById(id)?.showroomIds?.includes(activeShowroom.id)) ?? products[0] ?? null)
+          : (products[0] ?? null);
+      }
+      resolvedMatId ??= resolveArchetypeToMaterial(archetypeId, category);
 
-      if (matched) {
-        setSelectedCollectionId(matched.id);
-        setActivePalette(matched.id);
-      } else {
-        setSelectedCollectionId(undefined);
-        setActivePalette(null);
+      if (pk) {
+        setMaterialOverrides((prev) => ({ ...prev, [pk]: resolvedMatId ?? archetypeId }));
+      }
+
+      // Update suggested collection for the ✨ chip.
+      // If the user manually picked a collection and the new archetype still fits in it,
+      // keep it anchored — don't let scored matching overwrite an explicit choice (Bug 2).
+      const stickyCol = isCollectionManuallySelected.current && selectedCollectionId
+        ? collectionsV2.find((c) => c.id === selectedCollectionId) ?? null
+        : null;
+      const stickyStillFits = stickyCol !== null && (stickyCol.pool[category]?.includes(archetypeId) ?? false);
+      if (!stickyStillFits) {
+        isCollectionManuallySelected.current = false;
+        const suggested = findBestMatchCollection(collectionsV2, newPicks, vibeTag);
+        setSelectedCollectionId(suggested?.id ?? undefined);
+        setActivePalette(suggested?.id ?? null);
       }
     },
-    [slotSelections, setMaterialOverrides, setActivePalette, vibeTag, selectedCollectionId],
+    [slotSelections, setMaterialOverrides, setActivePalette, vibeTag, selectedCollectionId, activeShowroom],
   );
 
   const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
@@ -452,14 +453,17 @@ export default function MoodboardView() {
     };
     setSlotSelections(newSelections);
 
-    // Sync overrides so Stage renders the picked archetypes
+    // Sync overrides — resolve each archetype to a real product ID using the collection's
+    // products map (with showroom preference), not raw archetype IDs (Bug 1).
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       (Object.keys(newSelections) as SlotKey[]).forEach((k) => {
         const pk = SLOT_TO_PALETTE_KEY[k];
         if (!pk) return;
-        if (newSelections[k]) next[pk] = newSelections[k]!;
-        else delete next[pk];
+        const aId = newSelections[k];
+        if (!aId) { delete next[pk]; return; }
+        const resolvedMatId = resolveProductFromCollection(col, aId, SLOT_CATEGORY[k], activeShowroom);
+        next[pk] = resolvedMatId ?? aId;
       });
       return next;
     });
@@ -467,17 +471,19 @@ export default function MoodboardView() {
     // Sync vibe only if a vibe filter was already active (don't impose one when user had none)
     if (vibeTag !== null && col.vibe !== vibeTag) setVibeTag(col.vibe);
 
-    // Anchor the selected collection so matchCollection can't overwrite it
+    // Anchor the selected collection; mark as manual so handleSlotSelect won't overwrite it
+    isCollectionManuallySelected.current = true;
     setSelectedCollectionId(collectionId);
 
     // Sync palette carousel to the selected collection ID
     handleSelectMaterial(collectionId);
 
     setCollectionsOpen(false);
-  }, [handleSelectMaterial, setMaterialOverrides, vibeTag, setVibeTag]);
+  }, [handleSelectMaterial, setMaterialOverrides, vibeTag, setVibeTag, activeShowroom]);
 
   const handleClearSlots = useCallback(() => {
     trackEvent(AnalyticsEvents.MOODBOARD_SLOTS_RESET, {});
+    isCollectionManuallySelected.current = false;
     handleSelectMaterial(null);
     setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null });
     setMaterialOverrides((prev) => {
@@ -488,25 +494,41 @@ export default function MoodboardView() {
     setSelectedCollectionId(undefined);
   }, [handleSelectMaterial, setMaterialOverrides]);
 
-  const handleSwitchCollection = useCallback((collectionId: string) => {
+  const handleSwitchCollection = useCallback((collectionId: string, slotKey?: SlotKey, materialId?: string) => {
     const col = collectionsV2.find((c) => c.id === collectionId);
     if (!col) return;
+
+    if (slotKey) {
+      // Per-slot path (from "Other Shades"): only update the tapped slot.
+      // Use the exact materialId passed from the picker to guarantee picker ↔ flatlay parity.
+      // Fall back to [0] only if no materialId provided (e.g., future non-picker callers).
+      const pk = SLOT_TO_PALETTE_KEY[slotKey];
+      if (pk) {
+        const aId = slotSelections[slotKey];
+        const matId = materialId ?? col.products[SLOT_CATEGORY[slotKey]]?.[aId ?? ""]?.[0];
+        if (matId) setMaterialOverrides((prev) => ({ ...prev, [pk]: matId }));
+      }
+    } else {
+      // Full-alignment path (collections explorer): re-resolve all slots with showroom filter
+      setMaterialOverrides((prev) => {
+        const next = { ...prev };
+        (Object.keys(slotSelections) as SlotKey[]).forEach((k) => {
+          const aId = slotSelections[k];
+          if (!aId) return;
+          const pk = SLOT_TO_PALETTE_KEY[k];
+          if (!pk) return;
+          const resolvedMatId = resolveProductFromCollection(col, aId, SLOT_CATEGORY[k], activeShowroom);
+          if (resolvedMatId) next[pk] = resolvedMatId;
+          else delete next[pk];
+        });
+        return next;
+      });
+    }
+
+    isCollectionManuallySelected.current = true;
     setSelectedCollectionId(collectionId);
     setActivePalette(collectionId);
-    setMaterialOverrides((prev) => {
-      const next = { ...prev };
-      (Object.keys(slotSelections) as SlotKey[]).forEach((k) => {
-        const aId = slotSelections[k];
-        if (!aId) return;
-        const pk = SLOT_TO_PALETTE_KEY[k];
-        if (!pk) return;
-        const resolvedMatId = col.products[SLOT_CATEGORY[k]]?.[aId]?.[0];
-        if (resolvedMatId) next[pk] = resolvedMatId;
-        else delete next[pk];
-      });
-      return next;
-    });
-  }, [slotSelections, setMaterialOverrides, setActivePalette]);
+  }, [slotSelections, setMaterialOverrides, setActivePalette, activeShowroom]);
 
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
     trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_CLEARED, {
@@ -529,6 +551,7 @@ export default function MoodboardView() {
       remainingPicks.every(({ category, archetypeId }) =>
         currentCol.pool[category]?.includes(archetypeId) ?? false
       );
+    if (!canKeepCurrent) isCollectionManuallySelected.current = false;
     const nextCollectionId = canKeepCurrent
       ? selectedCollectionId
       : matchCollection(collectionsV2, remainingPicks, vibeTag)?.id;
@@ -632,7 +655,18 @@ export default function MoodboardView() {
             if (piece.slot === "accents" && !mainSlotsFilled) return null;
             const archetypeId = slotSelections[piece.slot];
             const category = SLOT_CATEGORY[piece.slot];
-            const tileImage = resolveTileImage(archetypeId, category, matchedCollection, vibeTag, activeShowroom?.id);
+            // Use the stored material override image as the primary source of truth —
+            // this preserves "Other Shades" picks even when selectedCollectionId changes.
+            const pk = SLOT_TO_PALETTE_KEY[piece.slot];
+            const overrideMat = pk ? getMaterialById(materialOverrides[pk] ?? "") : null;
+            const tileImage = overrideMat?.image
+              ?? resolveTileImage(archetypeId, category, matchedCollection, vibeTag, activeShowroom?.id);
+            const suggestedCol = selectedCollectionId
+              ? collectionsV2.find((c) => c.id === selectedCollectionId) ?? null
+              : null;
+            const suggestedMatId = suggestedCol?.products[category]?.[archetypeId ?? ""]?.[0] ?? null;
+            const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
+            const showNudge = !!(archetypeId && suggestedMatId && suggestedMatId !== currentMatId);
             return (
               <div
                 key={i}
@@ -683,6 +717,19 @@ export default function MoodboardView() {
                     aria-label={`Clear ${piece.slot}`}
                   >
                     <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                  </button>
+                )}
+                {showNudge && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (pk && suggestedMatId) setMaterialOverrides((prev) => ({ ...prev, [pk]: suggestedMatId }));
+                    }}
+                    className="absolute top-1 left-1 flex items-center justify-center"
+                    style={{ zIndex: 1 }}
+                    aria-label={`Sync ${piece.slot} to suggested collection`}
+                  >
+                    <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
                   </button>
                 )}
               </div>
@@ -883,11 +930,12 @@ export default function MoodboardView() {
         onClose={() => setOpenSlot(null)}
         onClear={handleSlotClear}
         onSelectCollection={handleSwitchCollection}
-        lockedCollectionId={pickerLockedCollectionId}
+        suggestedCollectionId={selectedCollectionId}
         vibeTag={vibeTag}
         showroom={activeShowroom}
         currentCollectionId={selectedCollectionId}
       />
+
     </div>
   );
 }

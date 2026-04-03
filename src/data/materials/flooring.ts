@@ -1,21 +1,25 @@
 import type { Material } from "./types";
 
-import imgBaron from "@/assets/materials/caramel-morning/material1.jpg";
+import imgAspectaBaron from "@/assets/materials/flooring/aspecta-baron.jpg";
 import imgConstanceChevrone from "@/assets/materials/fog-in-the-forest/material1.jpg";
-import imgComoChevrone from "@/assets/materials/morning-mist/material1.jpg";
+import imgComoChevrone from "@/assets/materials/flooring/aspecta-como.jpg";
 import imgMacadamia from "@/assets/materials/sleeping-earth/material1.jpg";
 import imgCalissonOak from "@/assets/materials/behind-the-lights/material1.jpg";
 import imgPureScandiFloor from "@/assets/materials/pure-scandi/material1.jpg";
 import imgLightConcrete from "@/assets/materials/spicy-nord/material1.jpg";
-import imgSolidoIconicOakBolsena from "@/assets/materials/flooring/solido_iconic_oak_bolsena.jpg";
+import imgSolidoIconicOakBolsena from "@/assets/materials/flooring/aspecta-bolsena.jpg";
 import imgSolidoPearl from "@/assets/materials/flooring/solido_pearl.jpg";
 import imgNagojaDuron from "@/assets/materials/flooring/nagoja_duron.jpg";
-import imgBleachedWoodDemo from "@/assets/materials/temporary-for-demo/bleached-wood-demo.jpg";
-import imgLightWoodDemo from "@/assets/materials/temporary-for-demo/light-wood-demo.jpg";
+import imgAspectaAlmond from "@/assets/materials/flooring/aspecta-almond.jpg";
+import imgAspectaBrienz from "@/assets/materials/flooring/aspecta-brienz.jpg";
+import imgAspectaMaggiore from "@/assets/materials/flooring/aspecta-maggiore.jpg";
+import imgAspectaBurned from "@/assets/materials/flooring/aspecta-burned.jpg";
 
-const baron: Material = {
-  id: "baron",
-  image: imgBaron,
+
+
+const aspectaBaron: Material = {
+  id: "aspecta-baron",
+  image: imgAspectaBaron,
   displayName: { en: "Baron", lt: "Baron" },
   description: {
     en: "Natural oak texture.",
@@ -26,7 +30,7 @@ const baron: Material = {
   tier: "optimal",
   code: "Baron",
   texturePrompt: "Natural oak texture.",
-  showroomIds: ["jusu-salonas", "solido-grindys"],
+  showroomIds: ["solido-grindys"],
   alternatives: {},
 };
 
@@ -52,7 +56,7 @@ const constanceChevrone: Material = {
 };
 
 const comoChevrone: Material = {
-  id: "como-chevrone",
+  id: "solido-como",
   image: imgComoChevrone,
   displayName: { en: "Como Chevrone", lt: "Como Chevrone" },
   description: {
@@ -144,7 +148,7 @@ const lightConcrete: Material = {
 };
 
 const solidoIconicOakBolsena: Material = {
-  id: "solido-iconic-oak-bolsena",
+  id: "solido-bolsena",
   image: imgSolidoIconicOakBolsena,
   displayName: {
     en: "Light Smoked Oak",
@@ -203,48 +207,76 @@ const NagojaDuron: Material = {
   alternatives: {},
 };
 
-const bleachedWoodDemo: Material = {
-  id: "bleached-wood-demo",
-  image: imgBleachedWoodDemo,
-  displayName: {
-    en: "Bleached Oak",
-    lt: "Balinta ąžuolo mediena",
-  },
+const aspectaAlmond: Material = {
+  id: "aspecta-almond",
+  image: imgAspectaAlmond,
+  displayName: { en: "Almond", lt: "Almond" },
   description: {
-    en: "Light bleached oak flooring with a natural, airy feel.",
-    lt: "Šviesi baltinta ąžuolo grindų danga.",
+    en: "Warm almond-toned oak vinyl flooring, matte finish.",
+    lt: "Šilto migdolo tono ąžuolo vinilinės grindys, matinis paviršius.",
   },
   type: "Vinyl",
   categories: ["flooring"],
   tier: "optimal",
-  code: "",
-  texturePrompt: "Light bleached white oak flooring, natural airy feel.",
-  showroomIds: [],
+  code: "Almond",
+  texturePrompt: "Warm almond-toned oak vinyl flooring, matte finish.",
+  showroomIds: ['solido-grindys'],
   alternatives: {},
 };
 
-const lightWoodDemo: Material = {
-  id: "light-wood-demo",
-  image: imgLightWoodDemo,
-  displayName: {
-    en: "Light Wood",
-    lt: "Šviesi mediena",
-  },
+const aspectaBrienz: Material = {
+  id: "aspecta-brienz",
+  image: imgAspectaBrienz,
+  displayName: { en: "Brienz", lt: "Brienz" },
   description: {
-    en: "Light natural wood flooring.",
-    lt: "Šviesi natūralios medienos grindų danga.",
+    en: "Cool grey-toned oak vinyl flooring, matte finish.",
+    lt: "Vėsaus pilko tono ąžuolo vinilinės grindys, matinis paviršius.",
   },
   type: "Vinyl",
   categories: ["flooring"],
   tier: "optimal",
-  code: "",
-  texturePrompt: "Light natural wood flooring, warm and airy.",
-  showroomIds: [],
+  code: "Brienz",
+  texturePrompt: "Cool grey-toned oak vinyl flooring, matte finish.",
+  showroomIds: ['solido-grindys'],
+  alternatives: {},
+};
+
+const aspectaMaggiore: Material = {
+  id: "aspecta-maggiore",
+  image: imgAspectaMaggiore,
+  displayName: { en: "Maggiore", lt: "Maggiore" },
+  description: {
+    en: "Warm brown-toned oak vinyl flooring, matte finish.",
+    lt: "Rudo ąžuolo vinilinės grindys, matinis paviršius.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Maggiore",
+  texturePrompt: "Warm brown-toned oak vinyl",
+  showroomIds: ['solido-grindys'],
+  alternatives: {},
+};
+
+const aspectaBurned: Material = {
+  id: "aspecta-burned",
+  image: imgAspectaBurned,
+  displayName: { en: "Burned", lt: "Burned" },
+  description: {
+    en: "Warm brown-toned oak vinyl flooring, matte finish.",
+    lt: "Tamsaus ąžuolo vinilinės grindys, matinis paviršius.",
+  },
+  type: "Vinyl",
+  categories: ["flooring"],
+  tier: "optimal",
+  code: "Burned",
+  texturePrompt: "Dark brown-toned oak",
+  showroomIds: ['solido-grindys'],
   alternatives: {},
 };
 
 export const flooringMaterials: Material[] = [
-  baron,
+  aspectaBaron,
   constanceChevrone,
   comoChevrone,
   macadamia,
@@ -254,6 +286,8 @@ export const flooringMaterials: Material[] = [
   solidoIconicOakBolsena,
   solidoPearl,
   NagojaDuron,
-  bleachedWoodDemo,
-  lightWoodDemo,
+  aspectaAlmond,
+  aspectaBrienz,
+  aspectaMaggiore,
+  aspectaBurned,
 ];

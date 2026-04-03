@@ -19,6 +19,7 @@ import imgLightOakVeneer from "@/assets/materials/pure-scandi/material4.jpg";
 import imgOakVeneerAmber from "@/assets/materials/spicy-nord/material4.jpg";
 import imgEggerBrownCasellaOak from "@/assets/materials/cabinet-fronts/egger_brown_casella_oak.jpg";
 import imgEggerLightNaturalCasellaOak from "@/assets/materials/cabinet-fronts/egger_light_natural_casella_oak.jpg";
+import imgEggerDarkBrownEucalypthus from "@/assets/materials/cabinet-fronts/egger-dark-brown-eucalypthus.jpg";
 import imgSkinCarbonFumo from "@/assets/materials/cabinet-fronts/skin_carbon_fumo.jpg";
 import imgAlviGoya03NA from "@/assets/materials/cabinet-fronts/alvic-goya-03.jpg";
 import imgAlvicGoya02 from "@/assets/materials/cabinet-fronts/alvic-goya-02.jpg";
@@ -121,7 +122,7 @@ const velvet4246: Material = {
   tier: "optimal",
   code: "Velvet 4246",
   texturePrompt:
-    "Fjord Green flat texture, a pastel grey-blue with green undertones",
+    "A pastel grey-blue with green undertones",
   showroomIds: ["impeka"],
   alternatives: {},
 };
@@ -522,7 +523,7 @@ const Velvet3703: Material = {
   categories: ["cabinet-fronts"],
   tier: "optimal",
   code: "Velvet 3703",
-  texturePrompt: "Flat sage grey matte lacquer finish.",
+  texturePrompt: "Flat sage grey matte finish.",
   showroomIds: [],
   alternatives: {},
 };
@@ -542,7 +543,7 @@ const Velvet7361: Material = {
   categories: ["cabinet-fronts"],
   tier: "optimal",
   code: "Velvet 7361",
-  texturePrompt: "Flat warm greige matte lacquer finish.",
+  texturePrompt: "Flat warm greige matte finish.",
   showroomIds: [],
   alternatives: {},
 };
@@ -563,6 +564,26 @@ const EggerNaturalCasellaOak: Material = {
   tier: "optimal",
   code: "Egger Natural Casella Oak",
   texturePrompt: "Warm natural oak wood grain, vertical texture, matte finish.",
+  showroomIds: [],
+  alternatives: {},
+};
+
+const EggerDarkBrownEucalypthus: Material = {
+  id: "egger-dark-brown-eucalypthus",
+  image: imgEggerDarkBrownEucalypthus,
+  displayName: {
+    en: "Egger Dark",
+    lt: "Egger Dark",
+  },
+  description: {
+    en: "Warm natural oak wood grain",
+    lt: "Šiltas natūralaus ąžuolo medienos raštas",
+  },
+  type: "LMDP",
+  categories: ["cabinet-fronts"],
+  tier: "optimal",
+  code: "H3043 ST12",
+  texturePrompt: "Dark brown-toned oak veneer texture.",
   showroomIds: [],
   alternatives: {},
 };
@@ -673,7 +694,7 @@ const velvet7393: Material = {
   categories: ["cabinet-fronts"],
   tier: "optimal",
   code: "Velvet 7393",
-  texturePrompt: "Light grey texture",
+  texturePrompt: "Light grey cashmere colour with flat matte finish",
   showroomIds: ["impeka"],
   alternatives: {},
 };
@@ -707,6 +728,7 @@ export const cabinetFrontsMaterials: Material[] = [
   Velvet3703,
   Velvet7361,
   EggerNaturalCasellaOak,
+  EggerDarkBrownEucalypthus,
   Velvet7473,
   Velvet1551,
   Pearl7901,

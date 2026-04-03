@@ -63,6 +63,8 @@ export const archetypes: Archetype[] = [
   { id: "soft-texture-dark",   category: "worktops-and-backsplashes", label: { en: "Soft Texture Dark",  lt: "Švelni faktūra tamsi"  }, image: wtSoftTextureLight, value: "#c8c0b4" },
   { id: "bold-texture-light",  category: "worktops-and-backsplashes", label: { en: "Bold Texture Light", lt: "Ryški faktūra šviesi"  }, image: wtBoldTextureLight, value: "#d8cfc0" },
   { id: "bold-texture-dark",   category: "worktops-and-backsplashes", label: { en: "Bold Texture Dark",  lt: "Ryški faktūra tamsi"   }, image: wtBoldTextureLight, value: "#8c8070" },
+  { id: "soft-texture-medium", category: "worktops-and-backsplashes", label: { en: "Soft Texture Medium", lt: "Švelni faktūra vidutinė" }, image: wtSoftTextureLight, value: "#d8d0c4" },
+  { id: "bold-texture-medium", category: "worktops-and-backsplashes", label: { en: "Bold Texture Medium", lt: "Ryški faktūra vidutinė" }, image: wtBoldTextureLight, value: "#b8a890" },
   { id: "white",               category: "worktops-and-backsplashes", label: { en: "White",              lt: "Balta"                }, image: wtWhite,            value: "#f0ede8" },
   { id: "concrete",            category: "worktops-and-backsplashes", label: { en: "Concrete",           lt: "Betonas"              }, image: wtConcrete,         value: "#c0bbb4" },
   { id: "black",               category: "worktops-and-backsplashes", label: { en: "Black",              lt: "Juoda"                }, image: wtBlack,            value: "#1e1e1e" },

@@ -531,11 +531,11 @@
       "waitlistSuccess": "Ačiū! Pranešime kai bus paruošta.",
       "waitlistError": "Nepavyko. Bandykite dar kartą.",
       "2dPlan": "2D PLANAS",
-      "2dPlanTip": "AI pasiūlys konceptą pagal esamus baldus.",
+      "2dPlanTip": "AI pasiūlys konceptą pagal esamus baldus. (šiek tiek mažiau tikslus medžiagų atvaizdavimas)",
       "sketch": "ESKIZAS ARBA PIEŠINYS",
-      "sketchTip": "AI patikslins Jūsų piešinį į foto-realistinę vizualizaciją.",
+      "sketchTip": "AI patikslins Jūsų ranka pieštą piešinį į foto-realistinę vizualizaciją.",
       "photo": "3D NUOTRAUKA",
-      "photoTip": "Apdailos medžiagų perpiešimas."
+      "photoTip": "3d modelio arba esamos erdvės nuotrauka. Apdailos medžiagų perpiešimas."
     },
     "uploadDialog": {
       "title": "Įkelti naują nuotrauką",

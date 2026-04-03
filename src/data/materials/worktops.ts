@@ -12,8 +12,10 @@ import imgIconoMarquinaCava from "@/assets/materials/worktops/icono_C35_marquina
 import imgIconoSerenoNoto from "@/assets/materials/worktops/icono_C45_sereno_noto.jpg";
 import imgIconoArabescaMarmo from "@/assets/materials/worktops/icono-c42-arabesca-marmo.jpg";
 import imgIconoPicassoMarrone from "@/assets/materials/worktops/icono-c59-picasso-marrone.jpg";
+import imgIconoLaurentCarrata from "@/assets/materials/worktops/icono-c31-laurent-carata.jpg";
 import imgFondi32VentoMarmo from "@/assets/materials/worktops/fondi-32-vento-marmo.jpg";
 import imgEggerCremonaMarble from "@/assets/materials/worktops/egger-cremona-marble.jpg";
+import imgEggerSoftBlack from "@/assets/materials/worktops/egger-soft-black.jpg";
 
 const eggerF244ST76: Material = {
   id: "egger-f244-st76",
@@ -142,7 +144,7 @@ const calacattaViola: Material = {
   code: "",
   texturePrompt:
     "Bold white and black marble calacatta viola texture.",
-  showroomIds: [],
+  showroomIds: [  ],
   alternatives: {},
 };
 
@@ -163,7 +165,7 @@ const greyBeigeMarble: Material = {
   code: "",
   texturePrompt:
     "Natural soft grey-beige marble, cloudy movement, dark rich veins.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -183,7 +185,7 @@ const IconoMarquinaCava: Material = {
   tier: "optimal",
   code: "Icono Marquina Cava",
   texturePrompt: "Black marble featuring white veining",
-  showroomIds: [],
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -203,7 +205,7 @@ const IconoSerenoNoto: Material = {
   tier: "optimal",
   code: "Icono Sereno Noto",
   texturePrompt: "Grey concrete texture with subtle warm undertones, matte finish.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -223,7 +225,7 @@ const IconoArabescaMarmo: Material = {
   tier: "optimal",
   code: "Icono C42 Arabesca Marmo",
   texturePrompt: "Light grey marble with soft white veining, matte finish.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -243,7 +245,27 @@ const IconoPicassoMarrone: Material = {
   tier: "optimal",
   code: "Icono C59 Picasso Marrone",
   texturePrompt: "Dark grey-brown stone with warm rust veining, matte finish.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
+  alternatives: {},
+};
+
+const IconoLaurentCarrata: Material = {
+  id: "icono-laurent-carrata",
+  image: imgIconoLaurentCarrata,
+  displayName: {
+    en: "Icono Laurent Carrata",
+    lt: "Icono Laurent Carrata",
+  },
+  description: {
+    en: "White stone with bold texture",
+    lt: "Baltas akmuo su charakteringu raštu",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "Icono C31 Laurent Carrata",
+  texturePrompt: "White stone with bold texture.",
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -263,7 +285,7 @@ const Fondi32VentoMarmo: Material = {
   tier: "optimal",
   code: "Fondi 32 Vento Marmo",
   texturePrompt: "Light warm marble with soft grey veining, matte finish.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -283,7 +305,27 @@ const EggerCremonaMarble: Material = {
   tier: "optimal",
   code: "Egger Cremona Marble",
   texturePrompt: "Warm beige marble with soft brown veining, matte finish.",
-  showroomIds: [],
+  showroomIds: ["impeka"],
+  alternatives: {},
+};
+
+const EggerSoftBlack: Material = {
+  id: "egger-soft-black",
+  image: imgEggerSoftBlack,
+  displayName: {
+    en: "Egger Soft Black",
+    lt: "Egger Soft Black",
+  },
+  description: {
+    en: "Dark grey-black marble with subtle white veining",
+    lt: "Tamsiai pilkai juodas marmuras su subtiliomis baltomis gyslelėmis",
+  },
+  type: "Compact HPL",
+  categories: ["worktops-and-backsplashes"],
+  tier: "optimal",
+  code: "U899 ST9",
+  texturePrompt: "Dark grey-black color matte finish.",
+  showroomIds: ["impeka"],
   alternatives: {},
 };
 
@@ -300,6 +342,7 @@ export const worktopsMaterials: Material[] = [
   IconoSerenoNoto,
   IconoArabescaMarmo,
   IconoPicassoMarrone,
+  IconoLaurentCarrata,
   Fondi32VentoMarmo,
   EggerCremonaMarble,
 ];
