@@ -48,10 +48,10 @@ const constanceChevrone: Material = {
   type: "Vinyl",
   categories: ["flooring"],
   tier: "optimal",
-  code: "Constance-Chevrone",
+  code: "Constance",
   texturePrompt:
     "Medium dark grey chevron vinyl flooring with irregular tone, wood-effect finish. Soft matte finish, subtle grain, gentle variation in tone.",
-  showroomIds: ["jusu-salonas"],
+  showroomIds: ["solido-grindys"],
   alternatives: {},
 };
 
@@ -161,9 +161,9 @@ const solidoIconicOakBolsena: Material = {
   type: "Vinyl",
   categories: ["flooring"],
   tier: "optimal",
-  code: "iconic_oak_bolsena",
+  code: "Bolsena",
   texturePrompt: "Natural light smoked oak flooring",
-  showroomIds: ["jusu-salonas"],
+  showroomIds: ["Solido grindys"],
   alternatives: {},
 };
 
