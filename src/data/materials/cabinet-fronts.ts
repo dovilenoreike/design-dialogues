@@ -423,9 +423,9 @@ const AlviGoya03NA: Material = {
   type: "LMDP",
   categories: ["cabinet-fronts"],
   tier: "optimal",
-  code: "Alvi Goya 03 NA",
+  code: "Alvic Goya 03",
   texturePrompt: "Dark wood vertical texture and matte finish",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -445,7 +445,7 @@ const AlvicGoya02: Material = {
   tier: "optimal",
   code: "Alvic Goya 02",
   texturePrompt: "Warm greige wood grain with vertical texture, matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -465,7 +465,7 @@ const AlvicGoya01: Material = {
   tier: "optimal",
   code: "Alvic Goya 01",
   texturePrompt: "Light greige wood grain with vertical texture, matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -485,7 +485,7 @@ const EggerSoftBlack: Material = {
   tier: "optimal",
   code: "Velvet Soft Black",
   texturePrompt: "Soft charcoal-black flat matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {"budget": "egger-soft-black"},
 };
 
@@ -505,7 +505,7 @@ const AlvicValazquez04: Material = {
   tier: "optimal",
   code: "Alvic Valázquez 04",
   texturePrompt: "Light natural oak with fine vertical grain, matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -525,7 +525,7 @@ const AlvicValazquez05: Material = {
   tier: "optimal",
   code: "Alvic Valázquez 05",
   texturePrompt: "Deep warm walnut with fine vertical grain, matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -545,7 +545,7 @@ const Velvet3703: Material = {
   tier: "optimal",
   code: "Velvet 3703",
   texturePrompt: "Flat sage grey matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -565,7 +565,7 @@ const Velvet7361: Material = {
   tier: "optimal",
   code: "Velvet 7361",
   texturePrompt: "Flat warm greige matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -585,7 +585,7 @@ const EggerNaturalCasellaOak: Material = {
   tier: "optimal",
   code: "Egger Natural Casella Oak",
   texturePrompt: "Warm natural oak wood grain, vertical texture, matte finish.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -605,7 +605,7 @@ const EggerDarkBrownEucalypthus: Material = {
   tier: "optimal",
   code: "H3043 ST12",
   texturePrompt: "Dark brown-toned oak veneer texture.",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -625,7 +625,7 @@ const Velvet7473: Material = {
   tier: "optimal",
   code: "Velvet 7473",
   texturePrompt: "Light greige flat matte finish",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -645,7 +645,7 @@ const Velvet1551: Material = {
   tier: "optimal",
   code: "Velvet 1551",
   texturePrompt: "Off white flat matte finish",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 
@@ -665,7 +665,7 @@ const Pearl7901: Material = {
   tier: "optimal",
   code: "Pearl 7901",
   texturePrompt: "Dark bronze flat matte finish",
-  showroomIds: [],
+  showroomIds: ['impeka'],
   alternatives: {},
 };
 

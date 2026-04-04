@@ -163,7 +163,7 @@ const solidoIconicOakBolsena: Material = {
   tier: "optimal",
   code: "Bolsena",
   texturePrompt: "Natural light smoked oak flooring",
-  showroomIds: ["Solido grindys"],
+  showroomIds: ["solido-grindys"],
   alternatives: {},
 };
 
