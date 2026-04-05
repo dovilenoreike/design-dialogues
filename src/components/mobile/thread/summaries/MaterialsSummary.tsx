@@ -1,22 +1,17 @@
 import { useState, useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getDesignerWithFallback } from "@/data/designers";
-import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 
 const MAX_SWATCHES = 5;
 
 export function MaterialsSummary() {
-  const { design, materialOverrides, excludedSlots, setActiveTab } = useDesign();
+  const { materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
-  // selectedMaterial is now a collection ID
-  const collection = design.selectedMaterial ? collectionsV2.find((c) => c.id === design.selectedMaterial) : null;
-
   const uniqueMaterials = useMemo(() => {
-    if (!design.selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
+    if (Object.keys(materialOverrides).length === 0) return [];
 
     const seen = new Set<string>();
     const result: { matId: string; slotKey: string; image: string; description: string }[] = [];
@@ -26,19 +21,18 @@ export function MaterialsSummary() {
       if (seen.has(matId)) continue;
       seen.add(matId);
 
-      const mat = getMaterialById(matId);
-      if (!mat?.image) continue;
+      const mat = getMaterialByCode(matId);
+      if (!mat?.imageUrl) continue;
 
-      const desc = typeof mat.description === "object"
-        ? mat.description[language] || mat.description.en
-        : String(mat.description || "");
+      const lang = language as "en" | "lt";
+      const displayName = mat.name?.[lang] || mat.name?.en || "";
 
-      result.push({ matId, slotKey, image: mat.image, description: desc });
+      result.push({ matId, slotKey, image: mat.imageUrl, description: displayName });
       if (result.length >= MAX_SWATCHES) break;
     }
 
     return result;
-  }, [design.selectedMaterial, materialOverrides, excludedSlots, language]);
+  }, [materialOverrides, excludedSlots, language]);
 
   const handleSwatchClick = (index: number) => {
     setExpandedIndex(expandedIndex === index ? null : index);
@@ -46,25 +40,10 @@ export function MaterialsSummary() {
 
   const expandedMaterial = expandedIndex !== null ? uniqueMaterials[expandedIndex] : null;
 
-  if (!collection && uniqueMaterials.length === 0) return null;
-
-  const collectionName = collection ? (collection.name[language as keyof typeof collection.name] ?? collection.name.en) : "";
-  const designer = collection ? getDesignerWithFallback(collection.designer, "") : null;
+  if (uniqueMaterials.length === 0) return null;
 
   return (
     <div className="px-4 py-5 space-y-1.5">
-      {/* Header */}
-      <div className="space-y-0.5">
-        <h3 className="font-serif text-[13px] text-neutral-900 leading-tight">
-          {collectionName}
-        </h3>
-        {designer && (
-          <p className="text-[8px] uppercase tracking-widest text-neutral-500">
-            {t("thread.curatedBy")}: {designer.name}
-          </p>
-        )}
-      </div>
-
       {/* 5-Column Swatch Grid */}
       {uniqueMaterials.length > 0 && (
         <div className="grid grid-cols-5 gap-1.5 pb-2">

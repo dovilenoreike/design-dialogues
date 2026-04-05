@@ -1,29 +1,28 @@
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import type { Language } from "@/contexts/LanguageContext";
 import type { VibeTag } from "@/data/collections/types";
-import imgVelvet7393 from "@/assets/materials/sleeping-earth/material4.jpg";
-import imgEggerNaturalCasellaOak from "@/assets/materials/cabinet-fronts/egger-natural-casella-oak.jpg";
-import imgIconoMarquinaCava from "@/assets/materials/worktops/icono_C35_marquina_cava.jpg";
 
+// Material codes that represent each vibe — images come from Supabase
 const VIBES: {
   id: VibeTag;
-  image: string;
+  code: string;
   legend: Record<Language, string>;
 }[] = [
   {
     id: "light-and-airy",
-    image: imgVelvet7393,
+    code: "velvet-7393",
     legend: { en: "NATURAL PLASTER • WHITE CONCRETE", lt: "NATŪRALUS TINKAS • BALTAS BETONAS" },
   },
   {
     id: "warm-and-grounded",
-    image: imgEggerNaturalCasellaOak,
+    code: "egger-natural-casella-oak",
     legend: { en: "NATURAL OAK • SAND PLASTER", lt: "NATŪRALUS ĄŽUOLAS • SMĖLIO TINKAS" },
   },
   {
     id: "bold-and-moody",
-    image: imgIconoMarquinaCava,
+    code: "icono-marquina-cava",
     legend: { en: "BLACK MARBLE • MATTE METAL", lt: "JUODAS MARMURAS • MATINIS METALAS" },
   },
 ];
@@ -66,7 +65,7 @@ export default function VibePickerView() {
             >
               {/* Texture photo — slightly desaturated at rest, full color on hover */}
               <img
-                src={vibe.image}
+                src={getMaterialByCode(vibe.code)?.imageUrl ?? ""}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover transition-all duration-500 lg:saturate-[0.65] lg:group-hover:saturate-100"
                 draggable={false}

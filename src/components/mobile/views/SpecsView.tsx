@@ -4,7 +4,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { designers, getDesignerWithFallback } from "@/data/designers";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
@@ -33,14 +33,14 @@ export default function SpecsView() {
 
   // Single unified materials list from materialOverrides
   const groupedMaterials = useMemo(() => {
-    if (!selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
+    if (Object.keys(materialOverrides).length === 0) return [];
 
     const matSlots = new Map<string, string[]>();
     const matOrder: string[] = [];
 
     for (const [slotKey, matId] of Object.entries(materialOverrides)) {
       if (excludedSlots.has(slotKey)) continue;
-      const mat = getMaterialById(matId);
+      const mat = getMaterialByCode(matId);
       if (!mat) continue;
       const existing = matSlots.get(matId);
       if (existing) {
@@ -54,14 +54,14 @@ export default function SpecsView() {
     return matOrder.map((matId) => ({
       matId,
       slotKeys: matSlots.get(matId)!,
-      mat: getMaterialById(matId),
+      mat: getMaterialByCode(matId),
     })).filter((entry) => entry.mat != null);
-  }, [selectedMaterial, materialOverrides, excludedSlots]);
+  }, [materialOverrides, excludedSlots]);
 
   return (
     <div className="flex-1 overflow-y-auto relative">
       {/* Content */}
-      {!selectedMaterial && !freestyleDescription ? (
+      {!selectedMaterial && !freestyleDescription && Object.keys(materialOverrides).length === 0 ? (
         <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
@@ -170,26 +170,25 @@ export default function SpecsView() {
                     .map((sk) => t(`surface.${sk}`) || sk)
                     .join(", ");
 
-                  const desc = typeof mat!.description === "object"
-                    ? mat!.description[language] || mat!.description.en
-                    : String(mat!.description || "");
+                  const lang = language as "en" | "lt";
+                  const displayName = mat!.name?.[lang] || mat!.name?.en || translatedSurfaces;
 
-                  const typeKey = `material.type.${mat!.type}`;
-                  const translatedType = mat!.type
-                    ? (t(typeKey) === typeKey ? mat!.type : t(typeKey))
+                  const typeKey = `material.type.${mat!.materialType}`;
+                  const translatedType = mat!.materialType
+                    ? (t(typeKey) === typeKey ? mat!.materialType : t(typeKey))
                     : "";
 
                   const handleMaterialClick = () => {
                     trackEvent(AnalyticsEvents.MATERIAL_CLICKED, {
-                      material_code: mat!.code,
+                      material_code: mat!.technicalCode,
                       room: selectedCategory,
                       tab: "specs",
                     });
                     setSelectedMaterialInfo({
-                      name: desc?.split('.')[0] || translatedSurfaces,
-                      materialType: mat!.type,
-                      technicalCode: mat!.code,
-                      imageUrl: mat!.image || undefined,
+                      name: displayName,
+                      materialType: mat!.materialType,
+                      technicalCode: mat!.technicalCode,
+                      imageUrl: mat!.imageUrl || undefined,
                       showroomIds: mat!.showroomIds,
                     });
                     setIsSourcingSheetOpen(true);
@@ -198,12 +197,12 @@ export default function SpecsView() {
                   return (
                     <MaterialCard
                       key={matId}
-                      image={mat!.image || undefined}
-                      swatchColors={!mat!.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
-                      title={desc?.split('.')[0] || translatedSurfaces}
+                      image={mat!.imageUrl || undefined}
+                      swatchColors={!mat!.imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                      title={displayName}
                       category={translatedSurfaces}
                       materialType={translatedType}
-                      technicalCode={mat!.code}
+                      technicalCode={mat!.technicalCode}
                       onClick={handleMaterialClick}
                     />
                   );

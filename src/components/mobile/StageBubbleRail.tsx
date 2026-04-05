@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { X, RotateCcw, Plus } from "lucide-react";
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
-import { getSlotAlternatives, type MaterialBubble } from "@/lib/collection-utils";
-import type { CollectionV2 } from "@/data/collections/types";
+import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
 import type { ControlMode } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 
 interface StageBubbleRailProps {
-  collection: CollectionV2;
   bubbles: MaterialBubble[];
   materialOverrides: Record<string, string>;
   excludedSlots: Set<string>;
@@ -20,16 +18,14 @@ interface StageBubbleRailProps {
   onOpenSelector?: (mode: ControlMode) => void;
   setActiveMode: (mode: ControlMode) => void;
   hasMaterialChanges: boolean;
-  handleSelectMaterial: (id: string | null) => void;
-  selectedMaterial: string | null;
   t: (key: string) => string;
   language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
+  getCompatibleMaterialCodes?: (selectedCodes: string[], targetRole?: string) => string[];
 }
 
 export default function StageBubbleRail({
-  collection,
   bubbles,
   materialOverrides,
   excludedSlots,
@@ -41,11 +37,10 @@ export default function StageBubbleRail({
   onOpenSelector,
   setActiveMode,
   hasMaterialChanges,
-  handleSelectMaterial,
-  selectedMaterial,
   t,
   language,
   variant,
+  getCompatibleMaterialCodes,
 }: StageBubbleRailProps) {
   const { activeShowroom } = useShowroom();
   const showroomFilter = activeShowroom
@@ -63,7 +58,7 @@ export default function StageBubbleRail({
     setShowHint(false);
   };
 
-  useEffect(() => { setShowAddMenu(false); }, [activeSlot, selectedMaterial]);
+  useEffect(() => { setShowAddMenu(false); }, [activeSlot]);
 
   const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
   const hiddenBubbles  = bubbles.filter(b =>  excludedSlots.has(b.slotKey));
@@ -75,38 +70,17 @@ export default function StageBubbleRail({
     ? "absolute right-1.5 flex flex-col items-center w-10 opacity-90"
     : "absolute right-1.5 flex flex-col items-center max-w-[44px] opacity-100";
 
-  const collectionName = collection.name[language as keyof typeof collection.name] ?? collection.name.en;
-
   return (
     <div className={`${containerClass} ${bottomClass}`}>
-      {hasMaterialChanges ? (
+      {hasMaterialChanges && (
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (selectedMaterial) handleSelectMaterial(selectedMaterial);
+            setMaterialOverrides({});
           }}
           className={`${variant === "browsing" ? "w-full" : ""} py-1.5 flex justify-center active:scale-95 transition-all mb-1`}
         >
           <RotateCcw className="w-3 h-3 text-white/60" strokeWidth={2} />
-        </button>
-      ) : variant === "browsing" ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
-          }}
-          className="w-full py-1.5 text-[7px] tracking-wide uppercase font-medium text-white/60 active:scale-95 transition-all mb-1 text-center leading-tight break-words"
-        >
-          {collectionName}
-        </button>
-      ) : (
-        <button
-          onClick={() => { onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes"); }}
-          className="active:scale-[0.97] transition-transform"
-        >
-          <span className="text-[7px] font-medium tracking-[0.2em] uppercase text-white/50 [text-shadow:0_1px_2px_rgba(0,0,0,0.4)] select-none mb-1 text-center leading-tight block">
-            {collectionName}
-          </span>
         </button>
       )}
 
@@ -129,7 +103,7 @@ export default function StageBubbleRail({
         {visibleBubbles.map((bubble) => {
           const overrideId = materialOverrides[bubble.slotKey];
           const overriddenImage = overrideId
-            ? (getMaterialById(overrideId)?.image ?? getArchetypeById(overrideId)?.image ?? bubble.image)
+            ? (getMaterialByCode(overrideId)?.imageUrl ?? getArchetypeById(overrideId)?.image ?? bubble.image)
             : bubble.image;
           const isActive = activeSlot === bubble.slotKey;
 
@@ -156,7 +130,34 @@ export default function StageBubbleRail({
 
               {/* Material swap rail */}
               {isActive && (() => {
-                const alternatives = getSlotAlternatives(collection.id, bubble.slotKey, showroomFilter);
+                const slotRole = SLOT_TO_ROLE[bubble.slotKey];
+                const otherCodes = visibleBubbles
+                  .filter((b) => b.slotKey !== bubble.slotKey)
+                  .map((b) => materialOverrides[b.slotKey] ?? b.materialId)
+                  .filter(Boolean) as string[];
+                const graphCodes = (getCompatibleMaterialCodes && otherCodes.length > 0)
+                  ? getCompatibleMaterialCodes(otherCodes, slotRole)
+                  : [];
+                const fallbackAlternatives = (() => {
+                  if (!slotRole) return [];
+                  return getMaterialsByRole(slotRole)
+                    .filter((m) => !!m.imageUrl && (!showroomFilter || m.showroomIds.includes(showroomFilter.id)))
+                    .map((m) => ({
+                      materialId: m.technicalCode,
+                      image: m.imageUrl!,
+                    }));
+                })();
+                const alternatives = graphCodes.length > 0
+                  ? graphCodes
+                      .map((code) => {
+                        const img = getMaterialByCode(code)?.imageUrl;
+                        const ids = getMaterialByCode(code)?.showroomIds ?? [];
+                        return img ? { materialId: code, image: img, showroomIds: ids } : null;
+                      })
+                      .filter((m): m is NonNullable<typeof m> => m !== null)
+                      .filter((m) => !showroomFilter || m.showroomIds.includes(showroomFilter.id))
+                      .map(({ materialId, image }) => ({ materialId, image }))
+                  : fallbackAlternatives;
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
                 return (
                   <div

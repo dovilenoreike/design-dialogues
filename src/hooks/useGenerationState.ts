@@ -412,12 +412,6 @@ export function useGenerationState({
     if (!uploadedImage || !design.selectedCategory || !user) return false;
 
     const room = design.selectedCategory;
-    const style = design.selectedStyle;
-    const material = design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial;
-
-    if (!style) { toast.error("Please select a style"); return false; }
-    if (!material) { toast.error("Please select a palette or enter a freestyle description"); return false; }
-
     const startTime = Date.now();
 
     try {
@@ -429,7 +423,8 @@ export function useGenerationState({
       const imageBlob = await imageResponse.blob();
       const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
-      const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && !!design.selectedMaterial;
+      const hasOverrides = Object.keys(materialOverrides).length > 0;
+      const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && (!!design.selectedMaterial || hasOverrides);
       const geminiModel = uploadType === "photo"
         ? API_CONFIG.imageGeneration.modelAccurate
         : API_CONFIG.imageGeneration.modelCreative;
@@ -566,14 +561,12 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         if (!generatedImageData) throw new Error("No image returned from generation service");
       }
 
-      return await storeGeneratedImage(generatedImageData, room, style, material, startTime);
+      return await storeGeneratedImage(generatedImageData, room, null, null, startTime);
     } catch (err: unknown) {
       captureError(err, {
         action: "generateInteriorRender",
         edgeFunction: "generate-interior",
         room,
-        style,
-        palette: material,
       });
       toast.error(t(getErrorTranslationKey(err)));
       setGeneration((prev) => ({ ...prev, isGenerating: false }));

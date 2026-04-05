@@ -1,43 +1,20 @@
 import type { CollectionV2 } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialById, getMaterialsByCategory } from "@/data/materials";
-import type { SurfaceCategory } from "@/data/materials/types";
-import { getArchetypeById } from "@/data/archetypes";
+import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
+import type { SurfaceCategory } from "@/types/material-types";
+import type { MaterialRole } from "@/types/material-types";
 import { surfaces } from "@/data/rooms/surfaces";
 
-const SWATCH_SPEC: Array<{ category: SurfaceCategory; count: 1 | 2 }> = [
-  { category: "flooring",                  count: 1 },
-  { category: "worktops-and-backsplashes", count: 1 },
-  { category: "cabinet-fronts",            count: 2 },
-];
-
-function resolveSwatchImage(
-  archetypeId: string | null | undefined,
-  category: SurfaceCategory,
-  products: CollectionV2["products"],
-): string | null {
-  if (!archetypeId) return null;
-  const productId = products[category]?.[archetypeId]?.[0];
-  if (productId) {
-    const mat = getMaterialById(productId);
-    if (mat?.image) return mat.image;
-  }
-  return getArchetypeById(archetypeId, category)?.image ?? null;
-}
-
 /**
- * Returns 4 swatch images (flooring×1, worktops×1, cabinet-fronts×2)
+ * Returns 4 swatch images (floor, worktops, mainFronts, additionalFronts)
  * for use in collection preview grids.
  */
 export function getCollectionSwatches(col: CollectionV2): (string | null)[] {
-  const images: (string | null)[] = [];
-  for (const { category, count } of SWATCH_SPEC) {
-    const ids = col.pool[category] ?? [];
-    for (let i = 0; i < count; i++) {
-      images.push(resolveSwatchImage(ids[i], category, col.products));
-    }
-  }
-  return images;
+  const slots = ["floor", "worktops", "mainFronts", "additionalFronts"] as const;
+  return slots.map((s) => {
+    const code = col.defaults[s];
+    return code ? (getMaterialByCode(code)?.imageUrl ?? null) : null;
+  });
 }
 
 export interface MaterialBubble {
@@ -67,162 +44,96 @@ export const SLOT_TO_COLLECTION_CATEGORY: Record<string, string> = {
 };
 
 /**
- * Builds MaterialBubble[] for the Stage bubble rail.
- * Uses materialOverrides (material IDs) as primary source,
- * falls back to collection's default products.
- * When showroomFilter is provided, slots in the showroom's surfaceCategories
- * will only show materials belonging to that showroom.
+ * Direct map from palette slot key → material role.
+ */
+export const SLOT_TO_ROLE: Record<string, MaterialRole> = {
+  floor: "floor",
+  bottomCabinets: "front",
+  topCabinets: "front",
+  cabinetFurniture: "front",
+  wardrobes: "front",
+  vanityUnit: "front",
+  shelves: "front",
+  worktops: "worktop",
+  backsplashes: "worktop",
+  accents: "accent",
+  tiles: "tile",
+  additionalTiles: "tile",
+  accentAreas: "tile",
+};
+
+/**
+ * Builds MaterialBubble[] for the Stage bubble rail from materialOverrides only.
+ * When showroomFilter is provided, slots outside the showroom's surfaceCategories
+ * are skipped.
  */
 export function getCollectionMaterialBubbles(
-  collection: CollectionV2,
   materialOverrides: Record<string, string>,
   showroomFilter?: { id: string; surfaceCategories: SurfaceCategory[] },
 ): MaterialBubble[] {
   const bubbles: MaterialBubble[] = [];
 
   for (const [slotKey, slotDef] of Object.entries(surfaces)) {
-    const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
-
-    const applyShowroomFilter =
-      showroomFilter &&
-      category &&
-      (showroomFilter.surfaceCategories as string[]).includes(category);
-
-    if (applyShowroomFilter) {
-      // 1. Check override — use only if it belongs to the showroom
-      const overrideMaterialId = materialOverrides[slotKey];
-      if (overrideMaterialId) {
-        const mat = getMaterialById(overrideMaterialId);
-        if (mat?.image && mat.showroomIds.includes(showroomFilter!.id)) {
-          bubbles.push({ slotKey, slotLabel: slotDef.label, materialId: overrideMaterialId, image: mat.image });
-          continue;
-        }
-      }
-
-      // 2. Search collection pool for first showroom-compatible material
-      const poolMaterials = Object.values(collection.products[category!] ?? {}).flat();
-      const poolMatch = poolMaterials.find(
-        (id) => {
-          const m = getMaterialById(id);
-          return m?.image && m.showroomIds.includes(showroomFilter!.id);
-        }
-      );
-      if (poolMatch) {
-        const mat = getMaterialById(poolMatch)!;
-        bubbles.push({ slotKey, slotLabel: slotDef.label, materialId: poolMatch, image: mat.image! });
-        continue;
-      }
-
-      // 3. Search all database materials of this category for a showroom match
-      const dbMatch = getMaterialsByCategory(category!).find(
-        (m) => m.image && m.showroomIds.includes(showroomFilter!.id)
-      );
-      if (dbMatch) {
-        bubbles.push({ slotKey, slotLabel: slotDef.label, materialId: dbMatch.id, image: dbMatch.image! });
-        continue;
-      }
-
-      // 4. No showroom material found — skip slot entirely
-      continue;
-    }
-
-    // Non-showroom slot: original behavior
     const overrideMaterialId = materialOverrides[slotKey];
-    if (overrideMaterialId) {
-      const mat = getMaterialById(overrideMaterialId);
-      if (mat?.image) {
-        bubbles.push({ slotKey, slotLabel: slotDef.label, materialId: overrideMaterialId, image: mat.image });
-        continue;
-      }
+    if (!overrideMaterialId) continue;
+
+    const mat = getMaterialByCode(overrideMaterialId);
+    if (!mat?.imageUrl) continue;
+
+    if (showroomFilter) {
+      const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
+      const appliesFilter = category && (showroomFilter.surfaceCategories as string[]).includes(category);
+      if (appliesFilter && !mat.showroomIds.includes(showroomFilter.id)) continue;
     }
 
-    if (!category) continue;
-
-    const archetypeId = collection.pool[category]?.[0];
-    if (archetypeId) {
-      const materialId = collection.products[category]?.[archetypeId]?.[0];
-      if (materialId) {
-        const mat = getMaterialById(materialId);
-        if (mat?.image) {
-          bubbles.push({ slotKey, slotLabel: slotDef.label, materialId, image: mat.image });
-          continue;
-        }
-      }
-    }
-
+    bubbles.push({ slotKey, slotLabel: slotDef.label, materialId: overrideMaterialId, image: mat.imageUrl });
   }
 
   return bubbles;
 }
 
 /**
- * Precomputed: for each collection, the set of showroom IDs that carry
- * at least one product in that collection.
- * Single source of truth: derived from material.showroomIds.
+ * Precomputed: for each collection, the set of showroom IDs that appear in its defaults.
+ * Lazy-initialized on first call to collectionHasShowroom.
  */
-const _collectionShowroomIds: Map<string, Set<string>> = new Map(
-  collectionsV2.map((col) => {
-    const ids = new Set<string>();
-    for (const byArchetype of Object.values(col.products)) {
-      for (const matIds of Object.values(byArchetype)) {
-        for (const matId of matIds) {
-          getMaterialById(matId)?.showroomIds.forEach((s) => ids.add(s));
-        }
+let _collectionShowroomIds: Map<string, Set<string>> | null = null;
+
+function buildCollectionShowroomIds(): Map<string, Set<string>> {
+  return new Map(
+    collectionsV2.map((col) => {
+      const ids = new Set<string>();
+      for (const code of Object.values(col.defaults)) {
+        if (code) getMaterialByCode(code)?.showroomIds.forEach((s) => ids.add(s));
       }
-    }
-    return [col.id, ids];
-  })
-);
+      return [col.id, ids];
+    })
+  );
+}
 
 export function collectionHasShowroom(colId: string, showroomId: string): boolean {
+  if (!_collectionShowroomIds) {
+    _collectionShowroomIds = buildCollectionShowroomIds();
+  }
   return _collectionShowroomIds.get(colId)?.has(showroomId) ?? false;
 }
 
 /**
- * Get collection alternatives for a specific slot.
- * Returns all materials from the collection pool that match the slot's surface category.
- * If showroomFilter is provided and the slot's category is in the showroom's surfaceCategories,
- * only materials with showroomFilter.id in their showroomIds are returned.
+ * Invalidate the collection showroom cache so it is rebuilt on the next call.
+ * Call this after the Supabase graph cache loads.
  */
-export function getSlotAlternatives(
-  collectionId: string,
-  slotKey: string,
-  showroomFilter?: { id: string; surfaceCategories: SurfaceCategory[] },
+export function invalidateCollectionShowroomCache(): void {
+  _collectionShowroomIds = null;
+}
+
+/**
+ * Get showroom-compatible materials for a specific slot role.
+ * Used as a fallback when the active showroom filter is applied.
+ */
+export function getShowroomMaterialsForRole(
+  role: MaterialRole,
+  showroomId: string,
 ): { materialId: string; image: string }[] {
-  const collection = collectionsV2.find((c) => c.id === collectionId);
-  if (!collection) return [];
-
-  if (!surfaces[slotKey]) return [];
-
-  const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
-  if (!category) return [];
-
-  const productsByArchetype = collection.products[category];
-  if (!productsByArchetype) return [];
-
-  const materialIds = Object.values(productsByArchetype).flat();
-  const results: { materialId: string; image: string }[] = [];
-
-  const applyShowroomFilter =
-    showroomFilter &&
-    (showroomFilter.surfaceCategories as string[]).includes(category);
-
-  for (const materialId of materialIds) {
-    const mat = getMaterialById(materialId);
-    if (!mat?.image) continue;
-    if (applyShowroomFilter && !mat.showroomIds.includes(showroomFilter!.id)) continue;
-    results.push({ materialId, image: mat.image });
-  }
-
-  // If showroom filter is active but the collection pool had no showroom materials,
-  // fall back to all database materials for that category belonging to the showroom.
-  if (applyShowroomFilter && results.length === 0) {
-    for (const mat of getMaterialsByCategory(category)) {
-      if (mat.image && mat.showroomIds.includes(showroomFilter!.id)) {
-        results.push({ materialId: mat.id, image: mat.image });
-      }
-    }
-  }
-
-  return results;
+  return getMaterialsByRole(role)
+    .filter((m) => m.imageUrl && m.showroomIds.includes(showroomId))
+    .map((m) => ({ materialId: m.technicalCode, image: m.imageUrl! }));
 }

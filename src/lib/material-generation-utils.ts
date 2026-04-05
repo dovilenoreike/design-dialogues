@@ -1,7 +1,7 @@
 /**
  * Material generation utilities — builds prompts and loads images from materialOverrides.
  */
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 
 export interface MaterialImageWithMeta {
@@ -41,14 +41,12 @@ export function buildDetailedMaterialPromptWithOverrides(
 
   const descriptions: string[] = [];
   for (const matId of matOrder) {
-    const mat = getMaterialById(matId);
+    const mat = getMaterialByCode(matId);
     if (!mat) continue;
 
     const labels = matGroups.get(matId)!;
-    const desc = typeof mat.description === "object"
-      ? (mat.description as Record<string, string>).en || ""
-      : String(mat.description || "");
-    descriptions.push(`- ${labels.join(", ")}: ${desc || matId}`);
+    const desc = mat.description?.en || mat.texturePrompt || matId;
+    descriptions.push(`- ${labels.join(", ")}: ${desc}`);
   }
 
   if (descriptions.length === 0) return palettePromptSnippet;
@@ -74,11 +72,11 @@ export async function loadMaterialImagesWithOverrides(
   }
 
   const promises = items.map(async ({ matId, slotKey, purpose }) => {
-    const mat = getMaterialById(matId);
-    if (!mat?.image) return null;
+    const mat = getMaterialByCode(matId);
+    if (!mat?.imageUrl) return null;
 
     try {
-      const response = await fetch(mat.image);
+      const response = await fetch(mat.imageUrl);
       const blob = await response.blob();
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -86,9 +84,7 @@ export async function loadMaterialImagesWithOverrides(
         reader.readAsDataURL(blob);
       });
 
-      const desc = typeof mat.description === "object"
-        ? (mat.description as Record<string, string>).en || ""
-        : String(mat.description || "");
+      const desc = mat.description?.en || mat.texturePrompt || "";
 
       return { base64, slotKey, matId, purpose, description: desc, texturePrompt: mat.texturePrompt ?? "" };
     } catch {

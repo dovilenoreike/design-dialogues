@@ -8,7 +8,7 @@ import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { defaultMaterials } from "./constants";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -116,22 +116,20 @@ const MaterialManifestSection = ({
       <div className="bg-surface-primary border border-ds-border-default rounded-xl overflow-hidden divide-y divide-ds-border-subtle">
         {materialEntries.length > 0 ? (
           materialEntries.map(({ matId, slotKeys }) => {
-            const mat = getMaterialById(matId);
+            const mat = getMaterialByCode(matId);
             if (!mat) return null;
 
-            const desc = typeof mat.description === "object"
-              ? mat.description[language] || mat.description.en
-              : String(mat.description || "");
+            const desc = mat.description?.[language as "en" | "lt"] || mat.description?.en || mat.texturePrompt || "";
             const title = desc?.split('.')[0] || slotKeys[0];
             const category = slotKeys.join(", ");
-            const materialType = mat.type || "";
+            const materialType = mat.materialType || "";
 
             const handleMaterialClick = () => {
               setSelectedMaterialInfo({
                 name: title,
-                materialType: mat.type,
-                technicalCode: mat.code,
-                imageUrl: mat.image || undefined,
+                materialType: mat.materialType,
+                technicalCode: mat.technicalCode,
+                imageUrl: mat.imageUrl || undefined,
                 showroomIds: mat.showroomIds,
               });
               setIsSourcingSheetOpen(true);
@@ -140,12 +138,12 @@ const MaterialManifestSection = ({
             return (
               <MaterialCard
                 key={matId}
-                image={mat.image || undefined}
-                swatchColors={!mat.image ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
+                image={mat.imageUrl || undefined}
+                swatchColors={!mat.imageUrl ? ["bg-neutral-200", "bg-neutral-300", "bg-neutral-100"] : undefined}
                 title={title}
                 category={category}
                 materialType={materialType}
-                technicalCode={mat.code}
+                technicalCode={mat.technicalCode}
                 onClick={handleMaterialClick}
               />
             );

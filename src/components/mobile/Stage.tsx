@@ -14,10 +14,31 @@ import { ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 import { rooms } from "@/data/rooms";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
-import { getCollectionMaterialBubbles } from "@/lib/collection-utils";
-import { useShowroom } from "@/contexts/ShowroomContext";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getArchetypeById } from "@/data/archetypes";
+import { type MaterialBubble } from "@/lib/collection-utils";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
+import { useGraphMaterials } from "@/hooks/useGraphMaterials";
+
+const BUBBLE_RAIL_SLOT_ORDER = [
+  "floor", "bottomCabinets", "topCabinets", "worktops", "accents", "tiles", "additionalTiles",
+];
+
+function buildBubblesFromOverrides(
+  overrides: Record<string, string>,
+  t: (key: string) => string,
+): MaterialBubble[] {
+  return BUBBLE_RAIL_SLOT_ORDER
+    .filter((k) => overrides[k])
+    .map((slotKey) => {
+      const matId = overrides[slotKey];
+      const image = getMaterialByCode(matId)?.imageUrl ?? getArchetypeById(matId)?.image;
+      if (!image) return null;
+      return { slotKey, materialId: matId, image, slotLabel: t(`surface.${slotKey}`) || slotKey };
+    })
+    .filter((b): b is MaterialBubble => b !== null);
+}
 
 interface StageProps {
   onOpenSelector?: (mode: ControlMode) => void;
@@ -47,16 +68,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   } = useDesign();
   const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
   const { user } = useAuth();
-  const { activeShowroom } = useShowroom();
-  const showroomFilter = activeShowroom
-    ? { id: activeShowroom.id, surfaceCategories: activeShowroom.surfaceCategories }
-    : undefined;
+  const { getCompatibleMaterialCodes } = useGraphMaterials();
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
-
-  // selectedMaterial is now a collection ID directly
-  const currentCollection = selectedMaterial ? collectionsV2.find((c) => c.id === selectedMaterial) : null;
 
   // Swipe gesture hook
   const { isDragging, dragOffset, ref } = useStageSwipe({
@@ -209,10 +224,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     });
   }, [prevImage, nextImage]);
 
-  // Bubble data for the rail — built from materialOverrides + collection defaults
-  const bubbles = currentCollection
-    ? getCollectionMaterialBubbles(currentCollection, materialOverrides, showroomFilter)
-    : [];
+  // Bubble data for the rail — built directly from materialOverrides
+  const bubbles = buildBubblesFromOverrides(materialOverrides, t);
 
   return (
     <div className="relative w-full h-full bg-surface-muted">
@@ -330,7 +343,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
                 <Sparkles className="w-4 h-4" strokeWidth={1.5} />
                 {canGenerate
                   ? (generatedImage ? t("mobile.stage.revisualize") : t("mobile.stage.visualize"))
-                  : t("mobile.stage.selectStyle")}
+                  : t("mobile.stage.visualize")}
               </button>
             )
           }
@@ -353,11 +366,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
 
       {/* Bubble rail - browsing mode */}
-      {!hasUserImage && currentCollection && bubbles.length > 0 && (
+      {!hasUserImage && bubbles.length > 0 && (
         <StageBubbleRail
-          collection={currentCollection}
           bubbles={bubbles}
-
           materialOverrides={materialOverrides}
           excludedSlots={excludedSlots}
           setMaterialOverrides={setMaterialOverrides}
@@ -368,21 +379,18 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
           hasMaterialChanges={hasMaterialChanges}
-          handleSelectMaterial={handleSelectMaterial}
-          selectedMaterial={selectedMaterial}
           t={t}
           language={language}
           variant="browsing"
+          getCompatibleMaterialCodes={getCompatibleMaterialCodes}
         />
       )}
 
 
       {/* Bubble rail - uploaded mode */}
-      {hasUserImage && currentCollection && bubbles.length > 0 && (
+      {hasUserImage && bubbles.length > 0 && (
         <StageBubbleRail
-          collection={currentCollection}
           bubbles={bubbles}
-
           materialOverrides={materialOverrides}
           excludedSlots={excludedSlots}
           setMaterialOverrides={setMaterialOverrides}
@@ -393,11 +401,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
           hasMaterialChanges={hasMaterialChanges}
-          handleSelectMaterial={handleSelectMaterial}
-          selectedMaterial={selectedMaterial}
           t={t}
           language={language}
           variant="uploaded"
+          getCompatibleMaterialCodes={getCompatibleMaterialCodes}
         />
       )}
 

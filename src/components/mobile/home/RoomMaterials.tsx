@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getMaterialById } from "@/data/materials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 
 const MAX_SWATCHES = 5;
 
@@ -21,10 +21,10 @@ export default function RoomMaterials() {
       if (seen.has(matId)) continue;
       seen.add(matId);
 
-      const mat = getMaterialById(matId);
-      if (!mat?.image) continue;
+      const mat = getMaterialByCode(matId);
+      if (!mat?.imageUrl) continue;
 
-      result.push({ matId, slotKey, image: mat.image });
+      result.push({ matId, slotKey, image: mat.imageUrl });
       if (result.length >= MAX_SWATCHES) break;
     }
 

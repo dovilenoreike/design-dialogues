@@ -1,4 +1,4 @@
-import type { SurfaceCategory } from "@/data/materials/types";
+import type { SurfaceCategory } from "@/types/material-types";
 
 export type SurfaceSlot = {
   label: string;

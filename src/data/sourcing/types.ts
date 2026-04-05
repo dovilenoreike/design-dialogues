@@ -1,5 +1,5 @@
 import type { City } from "@/contexts/CityContext";
-import type { SurfaceCategory } from "@/data/materials/types";
+import type { SurfaceCategory } from "@/types/material-types";
 
 export interface ShowroomLocation {
   address: string;

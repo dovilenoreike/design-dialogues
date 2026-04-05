@@ -7,117 +7,37 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getArchetypesByCategory } from "@/data/archetypes";
-import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialById } from "@/data/materials";
-import type { SurfaceCategory } from "@/data/materials/types";
-import type { VibeTag } from "@/data/collections/types";
+import { getArchetypesByRole } from "@/data/archetypes";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
-import type { ShowroomBrand } from "@/data/sourcing/types";
-import { collectionHasShowroom } from "@/lib/collection-utils";
-import { matchCollection, resolveProductFromCollection, type SlotPick } from "@/lib/collection-matching";
+import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 
 
 export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
 
-
-export const SLOT_CATEGORY: Record<SlotKey, SurfaceCategory> = {
-  floor: "flooring",
-  mainFronts: "cabinet-fronts",
-  worktops: "worktops-and-backsplashes",
-  additionalFronts: "cabinet-fronts",
-  accents: "accents",
-  mainTiles: "tiles",
-  additionalTiles: "tiles",
+export const SLOT_KEY_TO_ROLE: Record<SlotKey, MaterialRole> = {
+  floor: "floor",
+  mainFronts: "front",
+  additionalFronts: "front",
+  worktops: "worktop",
+  accents: "accent",
+  mainTiles: "tile",
+  additionalTiles: "tile",
 };
-
-function getAvailableArchetypes(
-  slotKey: SlotKey,
-  lockedCollectionId?: string,
-  vibeTag?: VibeTag | null,
-  showroom?: ShowroomBrand | null,
-): Archetype[] {
-  const category = SLOT_CATEGORY[slotKey];
-
-  if (lockedCollectionId) {
-    const col = collectionsV2.find((c) => c.id === lockedCollectionId);
-    const poolIds = col?.pool[category] ?? [];
-    const archetypeMap = new Map(getArchetypesByCategory(category).map((a) => [a.id, a]));
-    const archetypes = poolIds.map((id) => archetypeMap.get(id)).filter((a): a is Archetype => a !== undefined);
-
-    if (showroom && showroom.surfaceCategories.includes(category)) {
-      return archetypes.filter((a) =>
-        (col?.products[category]?.[a.id] ?? []).some(
-          (matId) => getMaterialById(matId)?.showroomIds?.includes(showroom.id)
-        )
-      );
-    }
-    return archetypes;
-  }
-
-  const vibeFiltered = vibeTag
-    ? collectionsV2.filter((col) => col.vibe === vibeTag)
-    : collectionsV2;
-
-  // when showroom is active, restrict to collections that carry at least one showroom product
-  const baseCollections = showroom
-    ? vibeFiltered.filter((col) => collectionHasShowroom(col.id, showroom.id))
-    : vibeFiltered;
-
-  // No locked collection — show the full vibe/showroom-filtered pool regardless of other picks.
-  // Collections are guidance only; enforcement happens via the ✨ chip in the moodboard.
-  const collectionIds = new Set(baseCollections.flatMap((col) => col.pool[category] ?? []));
-  let archetypes = getArchetypesByCategory(category).filter((a) => collectionIds.has(a.id));
-
-  if (showroom && showroom.surfaceCategories.includes(category)) {
-    return archetypes.filter((a) =>
-      baseCollections.some((col) =>
-        (col.products[category]?.[a.id] ?? []).some(
-          (matId) => getMaterialById(matId)?.showroomIds?.includes(showroom.id)
-        )
-      )
-    );
-  }
-
-  return archetypes;
-}
-
-function resolveProductImage(
-  archetypeId: string,
-  category: SurfaceCategory,
-  lockedCollectionId: string | undefined,
-  vibeTag: VibeTag | null | undefined,
-  showroom?: ShowroomBrand | null,
-): string | null {
-  const relevantCollections = lockedCollectionId
-    ? collectionsV2.filter((c) => c.id === lockedCollectionId)
-    : vibeTag
-      ? collectionsV2.filter((c) => c.vibe === vibeTag)
-      : collectionsV2;
-
-  for (const col of relevantCollections) {
-    const productId = resolveProductFromCollection(col, archetypeId, category, showroom);
-    if (productId) {
-      const image = getMaterialById(productId)?.image;
-      if (image) return image;
-    }
-  }
-  return null;
-}
 
 interface MaterialSlotPickerProps {
   slot: SlotKey | null;
   selections: SlotSelections;
-  onSelect: (slotKey: SlotKey, archetypeId: string) => void;
+  // resolvedCode: the specific product code to land on the flatlay (from the picker's recommendation logic)
+  onSelect: (slotKey: SlotKey, archetypeId: string, resolvedCode?: string) => void;
   onClose: () => void;
   onClear?: (slotKey: SlotKey) => void;
-  onSelectCollection?: (collectionId: string, slotKey?: SlotKey, materialId?: string) => void;
-  lockedCollectionId?: string;
-  suggestedCollectionId?: string;
-  vibeTag?: VibeTag | null;
-  showroom?: ShowroomBrand | null;
-  currentCollectionId?: string;
+  otherMaterialCodes?: string[];
+  selectedMaterialCode?: string;
+  getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
+  graphMaterials?: SupabaseMaterial[];
 }
 
 export default function MaterialSlotPicker({
@@ -126,92 +46,86 @@ export default function MaterialSlotPicker({
   onSelect,
   onClose,
   onClear,
-  onSelectCollection,
-  lockedCollectionId,
-  suggestedCollectionId,
-  vibeTag,
-  showroom,
-  currentCollectionId,
+  otherMaterialCodes,
+  selectedMaterialCode,
+  getRecommendedCodes,
+  graphMaterials,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
 
+  // All other shades within the same archetype as the current selection
+  const otherShadesForSelected = useMemo(() => {
+    if (!slot || !selectedMaterialCode || !selections[slot] || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const currentArchetypeId = selections[slot];
+
+    const recommendedCodes = new Set(
+      getRecommendedCodes
+        ? getRecommendedCodes(null, otherMaterialCodes ?? [], role)
+        : []
+    );
+
+    return graphMaterials
+      .filter(m =>
+        m.archetypeId === currentArchetypeId &&
+        m.role.includes(role) &&
+        m.technicalCode !== selectedMaterialCode
+      )
+      .map(m => {
+        const image = m.imageUrl;
+        const isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(m.technicalCode);
+        return image ? { code: m.technicalCode, image, isRecommended } : null;
+      })
+      .filter((s): s is { code: string; image: string; isRecommended: boolean } => s !== null);
+  }, [slot, selections, selectedMaterialCode, graphMaterials, getRecommendedCodes, otherMaterialCodes]);
+
   const availableWithImages = useMemo(() => {
     if (!slot) return [];
-    const cat = SLOT_CATEGORY[slot];
-    // Use suggestedCollectionId for badging when provided; fall back to currentCollectionId
-    const referenceCollectionId = suggestedCollectionId ?? currentCollectionId;
-    const referenceCol = referenceCollectionId
-      ? collectionsV2.find((c) => c.id === referenceCollectionId) ?? null
-      : null;
-    return getAvailableArchetypes(slot, lockedCollectionId, vibeTag, showroom)
+    const role = SLOT_KEY_TO_ROLE[slot];
+
+    const recommendedCodes = new Set(
+      getRecommendedCodes
+        ? getRecommendedCodes(null, otherMaterialCodes ?? [], role)
+        : []
+    );
+
+    const mats = graphMaterials ?? [];
+
+    return getArchetypesByRole(role)
       .map((a) => {
-        // Simulate selecting this archetype + all other current picks,
-        // then find which collection would actually be matched.
-        const simulatedPicks: SlotPick[] = [
-          ...Object.entries(selections)
-            .filter(([k, v]) => k !== slot && v !== null)
-            .map(([k, v]) => ({ category: SLOT_CATEGORY[k as SlotKey], archetypeId: v! })),
-          { category: cat, archetypeId: a.id },
-        ];
-        const isRecommended = referenceCol !== null &&
-          (referenceCol.pool[cat]?.includes(a.id) ?? false);
-        // For recommended archetypes, resolve images from the reference collection so
-        // the shown product matches what the flatlay will actually display after selection.
-        const effectiveCollectionId = isRecommended
-          ? referenceCollectionId
-          : (matchCollection(collectionsV2, simulatedPicks, vibeTag ?? null)?.id ?? lockedCollectionId);
-        return {
-          archetype: a,
-          displayImage: resolveProductImage(a.id, cat, effectiveCollectionId, vibeTag, showroom),
-          isRecommended,
-        };
+        const archetypeMats = mats.filter((m) => m.archetypeId === a.id && m.role.includes(role));
+
+        // The recommended material for this archetype (first one in recommendedCodes).
+        // This drives both the badge and the image — ensuring what you see is what gets selected.
+        const recommendedMat = archetypeMats.find((m) => recommendedCodes.has(m.technicalCode));
+
+        let displayImage: string | null | undefined;
+        let resolvedCode: string | undefined;
+        let isRecommended: boolean;
+
+        if (selectedMaterialCode && a.id === selections[slot]) {
+          // Currently selected slot: show the actual flatlay override image.
+          // isRecommended must reflect the PLACED code, not a sibling in the same archetype.
+          displayImage = getMaterialByCode(selectedMaterialCode)?.imageUrl ?? a.image;
+          resolvedCode = selectedMaterialCode;
+          isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(selectedMaterialCode);
+        } else {
+          // Use the recommended material if available, otherwise the first material in the archetype.
+          // This guarantees image ↔ selection parity: the tile you see is the product that lands.
+          const primaryMat = recommendedMat ?? archetypeMats[0];
+          resolvedCode = primaryMat?.technicalCode;
+          displayImage = (resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null) ?? a.image;
+          isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
+        }
+
+        return { archetype: a, displayImage, isRecommended, resolvedCode };
       })
-      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean } =>
-        item.displayImage !== null
+      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined } =>
+        item.displayImage !== null && item.displayImage !== undefined
       )
       .sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
-  }, [slot, selections, lockedCollectionId, suggestedCollectionId, vibeTag, showroom, currentCollectionId]);
-
-
-
-  const collectionAlternatives = useMemo(() => {
-    if (!slot) return [];
-    const selectedArchetypeId = selections[slot];
-    if (!selectedArchetypeId) return [];
-
-    const cat = SLOT_CATEGORY[slot];
-
-    const scope = vibeTag
-      ? collectionsV2.filter((c) => c.vibe === vibeTag)
-      : collectionsV2;
-
-    return scope
-      .filter((col) => {
-        if (col.id === currentCollectionId) return false;
-        return col.pool[cat]?.includes(selectedArchetypeId) ?? false;
-      })
-      .map((col) => {
-        const productId = resolveProductFromCollection(col, selectedArchetypeId, cat, showroom);
-        if (!productId) return null;
-        const material = getMaterialById(productId);
-        if (!material?.image) return null;
-        return { collectionId: col.id, productId, displayImage: material.image, materialName: material.displayName };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
-      .filter((item, idx, arr) => arr.findIndex((o) => o.displayImage === item.displayImage) === idx)
-      .filter((item) => item.displayImage !== resolveProductImage(selectedArchetypeId, cat, currentCollectionId, vibeTag, showroom))
-      .map((item) => {
-        const otherPicks = (Object.keys(selections) as SlotKey[])
-          .filter((k) => k !== slot && selections[k] !== null)
-          .map((k) => ({ category: SLOT_CATEGORY[k], archetypeId: selections[k]! }));
-        const score = otherPicks.filter(({ category, archetypeId }) =>
-          collectionsV2.find((c) => c.id === item.collectionId)?.pool[category]?.includes(archetypeId) ?? false
-        ).length;
-        return { ...item, score };
-      })
-      .sort((a, b) => b.score - a.score);
-  }, [slot, selections, currentCollectionId, vibeTag, showroom]);
+  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials]);
 
   const selectedId = slot ? selections[slot] : null;
 
@@ -234,36 +148,42 @@ export default function MaterialSlotPicker({
           </button>
         )}
 
-        {/* Other shades — same archetype rendered from alternative collections */}
-        {collectionAlternatives.length > 0 && (
-          <div className="mb-5">
-            <h3 className="font-serif text-sm text-neutral-700 mb-2">{t("surface.alternativeCollections")}</h3>
-            <div className="grid grid-cols-5 gap-2">
-              {collectionAlternatives.map(({ collectionId, productId, displayImage, materialName }) => (
+        {otherShadesForSelected.length > 0 && (
+          <div className="mb-4">
+            <p className="text-[9px] uppercase tracking-[0.2em] font-medium text-neutral-400 mb-2">
+              {t("surface.alternativeCollections")}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {otherShadesForSelected.map(shade => (
                 <button
-                  key={collectionId}
-                  onClick={() => { onSelectCollection?.(collectionId, slot!, productId); onClose(); }}
-                  className="flex flex-col gap-1"
+                  key={shade.code}
+                  onClick={() => { onSelect(slot!, selections[slot!]!, shade.code); onClose(); }}
+                  className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 ring-offset-1 ring-offset-white hover:ring-2"
+                  style={{ "--tw-ring-color": "#647d75" } as React.CSSProperties}
                 >
-                  <div className="aspect-square rounded-[12px] overflow-hidden w-full">
-                    <img src={displayImage} alt={materialName[lang]} className="w-full h-full object-cover" />
-                  </div>
+                  <img src={shade.image} alt={shade.code} className="w-full h-full object-cover" />
+                  {shade.isRecommended && (
+                    <div className="absolute bottom-1 inset-x-1 flex justify-center">
+                      <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
+                        {t("surface.matchingMaterials")}
+                      </span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Flat grid — recommended archetypes get a sage-green ring badge */}
         {availableWithImages.length > 0 && (
           <div className="mb-4">
             <div className="grid grid-cols-4 gap-2">
-              {availableWithImages.map(({ archetype, displayImage, isRecommended }) => {
+              {availableWithImages.map(({ archetype, displayImage, isRecommended, resolvedCode }) => {
                 const isSelected = selectedId === archetype.id;
                 return (
                   <button
                     key={`${archetype.category}-${archetype.id}`}
-                    onClick={() => { onSelect(slot!, archetype.id); onClose(); }}
+                    onClick={() => { onSelect(slot!, archetype.id, resolvedCode); onClose(); }}
                     className="flex flex-col gap-1"
                   >
                     <div

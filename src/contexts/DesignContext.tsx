@@ -29,9 +29,9 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useShowroom } from "@/contexts/ShowroomContext";
-import { getMaterialById, getMaterialsByCategory } from "@/data/materials";
+import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
-import type { SurfaceCategory } from "@/data/materials/types";
+import type { SurfaceCategory } from "@/types/material-types";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -254,70 +254,35 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     const col = collectionsV2.find((c) => c.id === collectionId);
     if (!col) return;
 
-    // Derive slot selections from the collection pool (first archetype per slot)
-    const pool = col.pool;
-    const newSelections = {
-      floor:            pool["flooring"]?.[0]                                             ?? null,
-      mainFronts:       pool["cabinet-fronts"]?.[0]                                       ?? null,
-      additionalFronts: pool["cabinet-fronts"]?.[1] ?? pool["cabinet-fronts"]?.[0]        ?? null,
-      worktops:         pool["worktops-and-backsplashes"]?.[0]                            ?? null,
-      accents:          pool["accents"]?.[0]                                              ?? null,
-      mainTiles:        pool["tiles"]?.[0]                                                ?? null,
-      additionalTiles:  pool["tiles"]?.[1] ?? pool["tiles"]?.[0]                          ?? null,
-    };
-
-    // Persist so MoodboardView reads the right state when it next mounts
-    try { localStorage.setItem("moodboard-slot-selections", JSON.stringify(newSelections)); } catch {}
-
-    // Map moodboard slot keys to palette override keys used in materialOverrides
-    const SLOT_TO_PK: Record<string, string | null> = {
+    // Map defaults slot keys to palette override keys used in materialOverrides
+    const SLOT_TO_PK: Record<string, string> = {
       floor: "floor", mainFronts: "bottomCabinets", additionalFronts: "topCabinets",
       worktops: "worktops", accents: "accents", mainTiles: "tiles", additionalTiles: "additionalTiles",
     };
 
-    // Map moodboard slot keys to collection category keys
-    const SLOT_TO_CATEGORY: Record<string, string> = {
-      floor: "flooring", mainFronts: "cabinet-fronts", additionalFronts: "cabinet-fronts",
-      worktops: "worktops-and-backsplashes", accents: "accents",
-      mainTiles: "tiles", additionalTiles: "tiles",
+    const SLOT_TO_ROLE_LOCAL: Record<string, string> = {
+      floor: "floor", mainFronts: "front", additionalFronts: "front",
+      worktops: "worktop", accents: "accent", mainTiles: "tile", additionalTiles: "tile",
     };
 
-    // Resolve archetype IDs → actual material IDs from collection products
-    // If in showroom mode, prefer a showroom-compatible material for filtered categories
     setMaterialOverrides(() => {
       const next: Record<string, string> = {};
-      Object.entries(newSelections).forEach(([k, aId]) => {
-        const pk = SLOT_TO_PK[k];
-        if (!pk || !aId) return;
-        const category = SLOT_TO_CATEGORY[k];
-        if (!category) return;
+      for (const [slotKey, code] of Object.entries(col.defaults)) {
+        if (!code) continue;
+        const pk = SLOT_TO_PK[slotKey];
+        if (!pk) continue;
 
-        let materialId: string | undefined;
-
-        // If active showroom filters this category, find first compatible material
-        if (
-          activeShowroom &&
-          (activeShowroom.surfaceCategories as string[]).includes(category)
-        ) {
-          // First try the collection pool
-          const poolMaterials = Object.values(col.products[category] ?? {}).flat();
-          materialId = poolMaterials.find(
-            (id) => getMaterialById(id)?.showroomIds.includes(activeShowroom.id)
-          );
-          // If nothing in the pool matches, pick the first showroom material from the database
-          if (!materialId) {
-            materialId = getMaterialsByCategory(category as SurfaceCategory)
-              .find((m) => m.showroomIds.includes(activeShowroom.id))?.id;
-          }
+        // If active showroom filters this role, prefer a showroom-compatible material
+        if (activeShowroom) {
+          const role = SLOT_TO_ROLE_LOCAL[slotKey];
+          const showroomMat = role
+            ? getMaterialsByRole(role).find((m) => m.showroomIds.includes(activeShowroom.id))
+            : undefined;
+          if (showroomMat) { next[pk] = showroomMat.technicalCode; continue; }
         }
 
-        // Fall back to collection default (only when no showroom filter active)
-        if (!materialId) {
-          materialId = col.products[category]?.[aId]?.[0];
-        }
-
-        if (materialId) next[pk] = materialId;
-      });
+        next[pk] = code;
+      }
       return next;
     });
 
@@ -623,14 +588,14 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   }, []);
 
   // Destructure for convenience
-  const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle, freestyleDescription } = design;
+  const { uploadedImages, selectedCategory, freestyleDescription } = design;
 
   // Get current room's uploaded and generated images (now URLs from Supabase)
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
   const generatedImage = generation.generatedImages[selectedCategory || "Kitchen"] || null;
 
-  // Computed: can generate if freestyle description provided, OR (style + material selected AND materials have been mapped via moodboard)
-  const canGenerate = !!(freestyleDescription.trim().length > 0 || (selectedStyle && selectedMaterial && Object.keys(materialOverrides).length > 0));
+  // Computed: can generate if freestyle description provided, OR any material overrides applied
+  const canGenerate = !!(freestyleDescription.trim().length > 0 || Object.keys(materialOverrides).length > 0);
 
   // All 5 primary moodboard slots have been picked (floor, fronts ×2, worktops, accents)
   const REQUIRED_OVERRIDE_KEYS = ["floor", "bottomCabinets", "topCabinets", "worktops", "accents"];

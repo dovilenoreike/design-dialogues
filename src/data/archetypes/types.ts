@@ -1,8 +1,8 @@
-import type { LocalizedString, SurfaceCategory } from "@/data/materials/types";
+import type { LocalizedString, MaterialRole } from "@/types/material-types";
 
 export interface Archetype {
   id: string;
-  category: SurfaceCategory;
+  role: MaterialRole;
   label: LocalizedString;
   image: string | null;
   value: string; // CSS color fallback
