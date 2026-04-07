@@ -523,4 +523,14 @@ INSERT INTO materials (technical_code, name, role, texture, lightness, warmth, p
   'Gold finish',
   '/assets/materials/accents/gold.jpg',
   ARRAY[]::text[]
+),
+(
+  'black',
+  '{"en":"Black","lt":"Juoda"}',
+  ARRAY['accent'],
+  'plain',
+  5, 0.0, 5,
+  'Matte black finish',
+  'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/accents/black.jpg',
+  ARRAY[]::text[]
 );

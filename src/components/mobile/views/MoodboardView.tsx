@@ -4,7 +4,7 @@ import { RotateCcw, Plus, Check, X, ArrowRight, Sparkles } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
-import { getArchetypeById } from "@/data/archetypes";
+import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import type { VibeTag } from "@/data/collections/types";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import VibePickerView from "./VibePickerView";
@@ -117,10 +117,26 @@ export default function MoodboardView() {
       } as SlotSelections;
     }
 
-    // Restore from localStorage if available
+    // Restore from localStorage if available, fixing any stale archetype IDs
     try {
       const saved = localStorage.getItem("moodboard-slot-selections");
-      if (saved) return JSON.parse(saved) as SlotSelections;
+      if (saved) {
+        const parsed = JSON.parse(saved) as SlotSelections;
+        // Validate each slot's stored archetypeId against the actual archetypes.
+        // Stale values (e.g. 'metallic' for accents) are replaced with the
+        // materialOverrides technical code, which for accents equals the archetype ID.
+        (Object.keys(parsed) as SlotKey[]).forEach((k) => {
+          const id = parsed[k];
+          if (!id) return;
+          const role = SLOT_KEY_TO_ROLE[k];
+          const valid = getArchetypesByRole(role).some((a) => a.id === id);
+          if (!valid) {
+            const pk = SLOT_TO_PALETTE_KEY[k];
+            parsed[k] = (pk ? materialOverrides[pk] : null) ?? null;
+          }
+        });
+        return parsed;
+      }
     } catch {}
 
     // Fallback: derive from current DesignContext state

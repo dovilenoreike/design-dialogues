@@ -148,7 +148,7 @@ export default function MaterialSlotPicker({
           </button>
         )}
 
-        {otherShadesForSelected.length > 0 && (
+        {otherShadesForSelected.length > 0 && slot !== "accents" && (
           <div className="mb-4">
             <p className="text-[9px] uppercase tracking-[0.2em] font-medium text-neutral-400 mb-2">
               {t("surface.alternativeCollections")}
