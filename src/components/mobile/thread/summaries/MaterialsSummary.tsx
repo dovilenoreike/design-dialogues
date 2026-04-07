@@ -25,7 +25,7 @@ export function MaterialsSummary() {
       if (!mat?.imageUrl) continue;
 
       const lang = language as "en" | "lt";
-      const displayName = mat.name?.[lang] || mat.name?.en || "";
+      const displayName = mat.description?.[lang] || mat.description?.en || mat.name?.[lang] || mat.name?.en || "";
 
       result.push({ matId, slotKey, image: mat.imageUrl, description: displayName });
       if (result.length >= MAX_SWATCHES) break;

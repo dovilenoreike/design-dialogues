@@ -171,7 +171,7 @@ export default function SpecsView() {
                     .join(", ");
 
                   const lang = language as "en" | "lt";
-                  const displayName = mat!.name?.[lang] || mat!.name?.en || translatedSurfaces;
+                  const displayName = mat!.description?.[lang] || mat!.description?.en || mat!.name?.[lang] || mat!.name?.en || translatedSurfaces;
 
                   const typeKey = `material.type.${mat!.materialType}`;
                   const translatedType = mat!.materialType

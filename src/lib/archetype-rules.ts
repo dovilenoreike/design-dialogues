@@ -23,11 +23,9 @@ export function deriveArchetypeId(
 
   // Cabinet front plain
   if (role === 'front' && texture === 'plain') {
-    if (lightness >= 88) return 'white';
     if (lightness >= 68) return 'pastel';
     if (lightness >= 55) return 'neutral';
-    if (lightness >= 15) return pattern > 40 ? 'bold' : 'dark';
-    return 'black';
+    return pattern > 40 ? 'bold' : 'dark';
   }
 
   // Worktop
