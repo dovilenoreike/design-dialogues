@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarLightness } from '@/lib/graph-compatibility';
+import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarLightness, countCompatible } from '@/lib/graph-compatibility';
 import { deriveArchetypeId } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -134,32 +134,37 @@ export function useGraphMaterials() {
     if (!_cached || otherCodes.length === 0) return [];
     const { codeToId, idToCode, pairs, graphMaterials: mats } = _cached;
     const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
-    // Strict coverage: every code must resolve to a known UUID
-    if (otherUuids.length !== otherCodes.length) return [];
-    const compatible = getCompatibleCandidates(otherUuids, mats, pairs, targetRole);
-    if (!currentCode) {
-      return compatible.map((m) => idToCode.get(m.id)!).filter(Boolean);
-    }
-    const currentUuid = codeToId.get(currentCode);
+    if (otherUuids.length === 0) return [];
+    const threshold = Math.min(2, otherUuids.length);
+    let pool = mats.filter((m) => {
+      if (otherUuids.includes(m.id)) return false;
+      if (targetRole && !m.role.includes(targetRole)) return false;
+      return countCompatible(m.id, otherUuids, pairs) >= threshold;
+    });
+    if (pool.length === 0) return [];
+    // Narrow to same texture + similar lightness as current slot's material
+    const currentUuid = currentCode ? codeToId.get(currentCode) : undefined;
     const slotMat = currentUuid ? mats.find((m) => m.id === currentUuid) : undefined;
-    if (!slotMat) {
-      return compatible.map((m) => idToCode.get(m.id)!).filter(Boolean);
+    if (slotMat) {
+      const narrowed = pool.filter((m) =>
+        m.texture === slotMat.texture && isSimilarLightness(m.lightness, slotMat.lightness)
+      );
+      if (narrowed.length > 0) pool = narrowed;
     }
-    const narrowed = compatible.filter((m) =>
-      m.texture === slotMat.texture && isSimilarLightness(m.lightness, slotMat.lightness)
-    );
-    const pool = narrowed.length > 0 ? narrowed : compatible;
-    return pool.map((m) => idToCode.get(m.id)!).filter(Boolean);
+    return rankByCompatibility(pool, otherUuids, pairs)
+      .map((m) => idToCode.get(m.id)!)
+      .filter(Boolean);
   }
 
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
-    if (!_cached || otherCodes.length === 0) return true;
+    if (!_cached || otherCodes.length === 0) return false;
     const { codeToId, pairs } = _cached;
     const slotUuid = codeToId.get(slotCode);
     if (!slotUuid) return false;
-    const otherUuids = otherCodes.map(c => codeToId.get(c)).filter((id): id is string => !!id);
-    if (otherUuids.length !== otherCodes.length) return false;
-    return isCompatibleWithAll(slotUuid, otherUuids, pairs);
+    const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
+    if (otherUuids.length === 0) return false;
+    const threshold = Math.min(2, otherUuids.length);
+    return countCompatible(slotUuid, otherUuids, pairs) >= threshold;
   }
 
   return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers };

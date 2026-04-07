@@ -22,7 +22,7 @@ interface StageBubbleRailProps {
   language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
-  getCompatibleMaterialCodes?: (selectedCodes: string[], targetRole?: string) => string[];
+  getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], targetRole?: string) => string[];
 }
 
 export default function StageBubbleRail({
@@ -40,7 +40,7 @@ export default function StageBubbleRail({
   t,
   language,
   variant,
-  getCompatibleMaterialCodes,
+  getRecommendedCodes,
 }: StageBubbleRailProps) {
   const { activeShowroom } = useShowroom();
   const showroomFilter = activeShowroom
@@ -135,13 +135,15 @@ export default function StageBubbleRail({
                   .filter((b) => b.slotKey !== bubble.slotKey)
                   .map((b) => materialOverrides[b.slotKey] ?? b.materialId)
                   .filter(Boolean) as string[];
-                const graphCodes = (getCompatibleMaterialCodes && otherCodes.length > 0)
-                  ? getCompatibleMaterialCodes(otherCodes, slotRole)
+                const currentCode = materialOverrides[bubble.slotKey] || bubble.materialId;
+                const graphCodes = (getRecommendedCodes && otherCodes.length > 0)
+                  ? getRecommendedCodes(currentCode, otherCodes, slotRole).slice(0, 4)
                   : [];
                 const fallbackAlternatives = (() => {
                   if (!slotRole) return [];
                   return getMaterialsByRole(slotRole)
                     .filter((m) => !!m.imageUrl && (!showroomFilter || m.showroomIds.includes(showroomFilter.id)))
+                    .slice(0, 4)
                     .map((m) => ({
                       materialId: m.technicalCode,
                       image: m.imageUrl!,

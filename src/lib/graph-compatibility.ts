@@ -39,6 +39,14 @@ export function getCompatibleCandidates(
   });
 }
 
+export function countCompatible(
+  candidateUuid: string,
+  selectedUuids: string[],
+  pairs: Set<string>,
+): number {
+  return selectedUuids.filter((sel) => pairs.has(pairKey(candidateUuid, sel))).length;
+}
+
 export function rankByCompatibility(
   candidates: GraphMaterial[],
   selectedUuids: string[],
