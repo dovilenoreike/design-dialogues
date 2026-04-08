@@ -20,6 +20,7 @@ interface GraphCache {
   codeToId: Map<string, string>;
   idToCode: Map<string, string>;
   byCode: Map<string, SupabaseMaterial>;
+  pairCountByUuid: Map<string, number>;
 }
 
 let _cached: GraphCache | null = null;
@@ -64,8 +65,16 @@ async function loadGraphData(): Promise<GraphCache> {
   const pairs = new Set<string>(
     (pc ?? []).map((r: any) => pairKey(r.material_a, r.material_b))
   );
+  const pairCountByUuid = new Map<string, number>();
+  for (const key of pairs) {
+    const sep = key.indexOf('::');
+    const a = key.slice(0, sep);
+    const b = key.slice(sep + 2);
+    pairCountByUuid.set(a, (pairCountByUuid.get(a) ?? 0) + 1);
+    pairCountByUuid.set(b, (pairCountByUuid.get(b) ?? 0) + 1);
+  }
   /* eslint-enable @typescript-eslint/no-explicit-any */
-  return { graphMaterials, pairs, codeToId, idToCode, byCode };
+  return { graphMaterials, pairs, codeToId, idToCode, byCode, pairCountByUuid };
 }
 
 // ─── Module-level synchronous lookups (readable once cache is warm) ───────────
@@ -73,6 +82,13 @@ async function loadGraphData(): Promise<GraphCache> {
 /** Returns the full SupabaseMaterial for a technical_code, or undefined if not cached. */
 export function getMaterialByCode(code: string): SupabaseMaterial | undefined {
   return _cached?.byCode.get(code);
+}
+
+/** Returns the total number of pair_compatibility entries for a given technical_code. */
+export function getPairCountByCode(code: string): number {
+  const id = _cached?.codeToId.get(code);
+  if (!id) return 0;
+  return _cached?.pairCountByUuid.get(id) ?? 0;
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */

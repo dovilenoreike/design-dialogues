@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -136,12 +136,18 @@ export default function MaterialSlotPicker({
           isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
         }
 
-        return { archetype: a, displayImage, isRecommended, resolvedCode };
+        const archetypePairScore = archetypeMats.reduce(
+          (sum, m) => sum + getPairCountByCode(m.technicalCode), 0
+        );
+        return { archetype: a, displayImage, isRecommended, resolvedCode, archetypePairScore };
       })
-      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined } =>
+      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypePairScore: number } =>
         item.displayImage !== null && item.displayImage !== undefined
       )
-      .sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
+      .sort((a, b) =>
+        Number(b.isRecommended) - Number(a.isRecommended) ||
+        b.archetypePairScore - a.archetypePairScore
+      );
   }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
 
   const selectedId = slot ? selections[slot] : null;
