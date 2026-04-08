@@ -398,9 +398,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           .from('user_design_state')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Failed to load design state:', error);
           return;
         }

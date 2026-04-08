@@ -234,7 +234,7 @@ export function useGenerationState({
         .select('image_path')
         .eq('user_id', user.id)
         .eq('room_category', currentRoom)
-        .single();
+        .maybeSingle();
 
       const compressed = await compressImage(file, 1024);
       const path = `${user.id}/uploads/${currentRoom}_${Date.now()}.jpg`;
@@ -295,7 +295,7 @@ export function useGenerationState({
           .select('image_path')
           .eq('user_id', user.id)
           .eq('room_category', currentRoom)
-          .single();
+          .maybeSingle();
 
         if (upload?.image_path) {
           await supabase.storage.from('user-images').remove([upload.image_path]);
@@ -347,7 +347,7 @@ export function useGenerationState({
       .eq('room_category', room)
       .eq('selected_style', style)
       .eq('selected_material', material)
-      .single();
+      .maybeSingle();
 
     let generatedBlob: Blob;
     if (generatedImageData.startsWith('data:')) {
@@ -648,7 +648,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         .select('image_path')
         .eq('user_id', user.id)
         .eq('room_category', currentRoom)
-        .single();
+        .maybeSingle();
 
       const compressed = await compressImage(file, 1024);
       const path = `${user.id}/uploads/${currentRoom}_${Date.now()}.jpg`;
