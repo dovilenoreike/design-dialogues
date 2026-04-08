@@ -131,6 +131,9 @@ export default function StageBubbleRail({
               {/* Material swap rail */}
               {isActive && (() => {
                 const slotRole = SLOT_TO_ROLE[bubble.slotKey];
+                // Showroom filter only applies to categories this showroom covers
+                const showroomAppliesToSlot = !!(showroomFilter && slotRole &&
+                  showroomFilter.surfaceCategories.includes(slotRole as string));
                 const otherCodes = visibleBubbles
                   .filter((b) => b.slotKey !== bubble.slotKey)
                   .map((b) => materialOverrides[b.slotKey] ?? b.materialId)
@@ -142,7 +145,7 @@ export default function StageBubbleRail({
                 const fallbackAlternatives = (() => {
                   if (!slotRole) return [];
                   return getMaterialsByRole(slotRole)
-                    .filter((m) => !!m.imageUrl && (!showroomFilter || m.showroomIds.includes(showroomFilter.id)))
+                    .filter((m) => !!m.imageUrl && (!showroomAppliesToSlot || m.showroomIds.includes(showroomFilter!.id)))
                     .slice(0, 4)
                     .map((m) => ({
                       materialId: m.technicalCode,
@@ -157,7 +160,7 @@ export default function StageBubbleRail({
                         return img ? { materialId: code, image: img, showroomIds: ids } : null;
                       })
                       .filter((m): m is NonNullable<typeof m> => m !== null)
-                      .filter((m) => !showroomFilter || m.showroomIds.includes(showroomFilter.id))
+                      .filter((m) => !showroomAppliesToSlot || m.showroomIds.includes(showroomFilter!.id))
                       .map(({ materialId, image }) => ({ materialId, image }))
                   : fallbackAlternatives;
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;

@@ -168,6 +168,7 @@ export default function MoodboardView() {
 
   // On mount (after graph loads): resolve archetype IDs → product codes in materialOverrides.
   // Skips slots that already have a valid technical code; replaces stale archetype IDs.
+  // When in showroom mode, prefers showroom materials for the showroom's own categories.
   useEffect(() => {
     if (graphLoading) return;
     const validCodes = new Set(graphMaterials.map((m) => m.technicalCode));
@@ -180,7 +181,11 @@ export default function MoodboardView() {
         // Skip if already set to a real product code
         if (next[pk] && validCodes.has(next[pk])) return;
         const role = SLOT_KEY_TO_ROLE[k];
-        const resolved = graphMaterials.find((m) => m.archetypeId === aId && m.role.includes(role));
+        // In showroom mode, prefer showroom materials for the showroom's own surface categories
+        const showroomPool = activeShowroom && activeShowroom.surfaceCategories.includes(role)
+          ? graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id))
+          : graphMaterials;
+        const resolved = showroomPool.find((m) => m.archetypeId === aId && m.role.includes(role));
         if (resolved) next[pk] = resolved.technicalCode;
       });
       return next;
@@ -390,9 +395,15 @@ export default function MoodboardView() {
               .filter(([k]) => k !== piece.slot)
               .map(([, v]) => v ? materialOverrides[v] : null)
               .filter((c): c is string => !!c);
-            const graphBestCode = (!graphLoading && currentMatId && otherCodes.length > 0)
-              ? getBestSwapCode(currentMatId, otherCodes, SLOT_KEY_TO_ROLE[piece.slot])
+            const slotRole = SLOT_KEY_TO_ROLE[piece.slot];
+            const rawBestCode = (!graphLoading && currentMatId && otherCodes.length > 0)
+              ? getBestSwapCode(currentMatId, otherCodes, slotRole)
               : null;
+            // In showroom mode, suppress swap nudge if suggestion belongs to a competitor showroom
+            const showroomCoversSlot = activeShowroom && activeShowroom.surfaceCategories.includes(slotRole);
+            const graphBestCode = (rawBestCode && showroomCoversSlot)
+              ? (getMaterialByCode(rawBestCode)?.showroomIds.includes(activeShowroom!.id) ? rawBestCode : null)
+              : rawBestCode;
             const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && otherCodes.length > 0;
             const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
             const showVerified = isCompatible === true;
@@ -580,6 +591,8 @@ export default function MoodboardView() {
         selectedMaterialCode={openSlot && SLOT_TO_PALETTE_KEY[openSlot] ? (materialOverrides[SLOT_TO_PALETTE_KEY[openSlot]!] ?? undefined) : undefined}
         getRecommendedCodes={getRecommendedCodes}
         graphMaterials={graphLoading ? undefined : showroomMaterials}
+        filterEmptyArchetypes={!graphLoading && !!activeShowroom && !!openSlot &&
+          activeShowroom.surfaceCategories.includes(SLOT_KEY_TO_ROLE[openSlot])}
       />
 
     </div>

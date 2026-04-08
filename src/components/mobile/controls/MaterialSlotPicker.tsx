@@ -38,6 +38,8 @@ interface MaterialSlotPickerProps {
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
   graphMaterials?: SupabaseMaterial[];
+  /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
+  filterEmptyArchetypes?: boolean;
 }
 
 export default function MaterialSlotPicker({
@@ -50,6 +52,7 @@ export default function MaterialSlotPicker({
   selectedMaterialCode,
   getRecommendedCodes,
   graphMaterials,
+  filterEmptyArchetypes = false,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -119,7 +122,7 @@ export default function MaterialSlotPicker({
           resolvedCode = primaryMat?.technicalCode;
           // When the graph is loaded but this archetype has no materials (e.g. showroom filter
           // applied and showroom doesn't carry this archetype), exclude it from the grid.
-          if (graphLoaded && !resolvedCode) {
+          if (filterEmptyArchetypes && graphLoaded && !resolvedCode) {
             return { archetype: a, displayImage: null as null, isRecommended: false, resolvedCode: undefined };
           }
           displayImage = (resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null) ?? a.image;
@@ -132,7 +135,7 @@ export default function MaterialSlotPicker({
         item.displayImage !== null && item.displayImage !== undefined
       )
       .sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
-  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials]);
+  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
 
   const selectedId = slot ? selections[slot] : null;
 
