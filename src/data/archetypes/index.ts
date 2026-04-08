@@ -8,6 +8,7 @@ import floorDarkWood from "@/assets/archetypes/flooring/04-dark_wood.jpg";
 import floorConcrete from "@/assets/archetypes/flooring/05-concete.jpg";
 
 // --- Cabinet Fronts images ---
+import cfWhite from "@/assets/archetypes/cabinet-fronts/05-white.jpg";
 import cfLightWood from "@/assets/archetypes/cabinet-fronts/02-light_wood.jpg";
 import cfMediumWood from "@/assets/archetypes/cabinet-fronts/03-medium_wood.jpg";
 import cfDarkWood from "@/assets/archetypes/cabinet-fronts/04-dark_wood.jpg";
@@ -42,7 +43,8 @@ export const archetypes: Archetype[] = [
   { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",   lt: "Tamsi mediena"    }, image: floorDarkWood,   value: "#5c3d2a" },
   { id: "concrete",    role: "floor", label: { en: "Concrete",    lt: "Betonas"          }, image: floorConcrete,   value: "#c8c4bc" },
 
-  // ── Front / Cabinet Fronts (8) ────────────────────────────────────────────
+  // ── Front / Cabinet Fronts (9) ────────────────────────────────────────────
+  { id: "white",       role: "front", label: { en: "White",       lt: "Balta"            }, image: cfWhite,      value: "#f5f5f3" },
   { id: "light-wood",  role: "front", label: { en: "Light Wood",  lt: "Šviesi mediena"   }, image: cfLightWood,  value: "#ddd0b8" },
   { id: "medium-wood", role: "front", label: { en: "Medium Wood", lt: "Vidutinė mediena" }, image: cfMediumWood, value: "#b89870" },
   { id: "dark-wood",   role: "front", label: { en: "Dark Wood",   lt: "Tamsi mediena"    }, image: cfDarkWood,   value: "#5c3d2a" },

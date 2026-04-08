@@ -29,7 +29,7 @@ async function loadGraphData(): Promise<GraphCache> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: mats }, { data: pc }] = await Promise.all([
     supabase.from('materials' as any).select(
-      'id, technical_code, role, texture, lightness, warmth, pattern, name, description, image_url, material_type, tier, showroom_ids, texture_prompt'
+      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, name, description, image_url, material_type, tier, showroom_ids, texture_prompt'
     ),
     supabase.from('pair_compatibility' as any).select('material_a, material_b'),
   ]);
@@ -41,6 +41,7 @@ async function loadGraphData(): Promise<GraphCache> {
     lightness: r.lightness,
     warmth: r.warmth,
     pattern: r.pattern ?? 0,
+    chroma: r.chroma ?? 0,
     archetypeId: null,
     // extended display fields
     name: r.name ?? null,
@@ -54,7 +55,7 @@ async function loadGraphData(): Promise<GraphCache> {
   graphMaterials.forEach((m) => {
     const primaryRole = m.role[0];
     if (primaryRole) {
-      m.archetypeId = deriveArchetypeId(primaryRole, m.texture, m.lightness, m.warmth, m.pattern);
+      m.archetypeId = deriveArchetypeId(primaryRole, m.texture, m.lightness, m.warmth, m.pattern, m.chroma);
     }
   });
   const codeToId = new Map(graphMaterials.map((m) => [m.technicalCode, m.id]));

@@ -6,13 +6,13 @@ export function deriveArchetypeId(
   lightness: number,
   warmth: number,
   pattern: number,
+  chroma: number = 0,
 ): string | null {
   // Metal: any role
   if (texture === 'metal') return 'metallic';
 
   // Wood: any role except worktop
   if (texture === 'wood' && role !== 'worktop') {
-    if (lightness >= 80) return 'bleached-wood';
     if (lightness >= 60) return 'light-wood';
     if (lightness >= 35) return 'medium-wood';
     return 'dark-wood';
@@ -21,11 +21,17 @@ export function deriveArchetypeId(
   // Floor stone/plain → concrete
   if (role === 'floor' && (texture === 'stone' || texture === 'plain')) return 'concrete';
 
-  // Cabinet front plain
+  // Cabinet front plain — chroma distinguishes achromatic from chromatic
   if (role === 'front' && texture === 'plain') {
-    if (lightness >= 68) return 'pastel';
-    if (lightness >= 55) return 'neutral';
-    return pattern > 40 ? 'bold' : 'dark';
+    if (chroma < 15) {
+      // Achromatic: whites, greys, beiges, taupes
+      if (lightness >= 80) return 'white';
+      if (lightness >= 45) return 'neutral';
+      return 'dark';
+    } else {
+      // Chromatic: pastels and bold colours
+      return lightness >= 55 ? 'pastel' : 'bold';
+    }
   }
 
   // Worktop

@@ -6,6 +6,7 @@ export interface GraphMaterial {
   lightness: number;
   warmth: number;
   pattern: number;
+  chroma: number;
   archetypeId: string | null;
 }
 

@@ -1,0 +1,1 @@
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS chroma integer NOT NULL DEFAULT 0;

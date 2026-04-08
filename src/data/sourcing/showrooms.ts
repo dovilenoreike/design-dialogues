@@ -14,6 +14,18 @@ export const showroomBrands: ShowroomBrand[] = [
     url: "https://impekahome.lt/",
   },
   {
+    id: "trukme",
+    name: "Trukmė",
+    surfaceCategories: ["cabinet-fronts"],
+    isPartner: false,
+    locations: {
+      vilnius: { address: "Verkių g. 44, (PC Unideco, II aukštas), Vilnius" },
+      kaunas: { address: "Pramonės pr. 8e, (NIC namų idėjų centras), Kaunas" },
+      klaipeda: { address: "Minijos g. 42, (NIC namų Idėjų Centras), Klaipėda" },
+    },
+    url: "https://trukme.lt/",
+  },
+  {
     id: "solido-grindys",
     name: "Solido Grindys",
     surfaceCategories: ["flooring"],
