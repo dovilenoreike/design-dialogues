@@ -595,8 +595,7 @@ export default function MoodboardView() {
         selectedMaterialCode={openSlot && SLOT_TO_PALETTE_KEY[openSlot] ? (materialOverrides[SLOT_TO_PALETTE_KEY[openSlot]!] ?? undefined) : undefined}
         getRecommendedCodes={getRecommendedCodes}
         graphMaterials={graphLoading ? undefined : showroomMaterials}
-        filterEmptyArchetypes={!graphLoading && !!activeShowroom && !!openSlot &&
-          activeShowroom.surfaceCategories.includes(SLOT_KEY_TO_ROLE[openSlot])}
+        filterEmptyArchetypes={!graphLoading}
       />
 
     </div>
