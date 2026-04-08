@@ -122,8 +122,15 @@ export default function MaterialSlotPicker({
           resolvedCode = primaryMat?.technicalCode;
           // When the graph is loaded but this archetype has no materials (e.g. showroom filter
           // applied and showroom doesn't carry this archetype), exclude it from the grid.
-          if (filterEmptyArchetypes && graphLoaded && !resolvedCode) {
+          // Only apply this for roles that are actually in the graph — roles like accent use
+          // archetype IDs directly and would be incorrectly filtered otherwise.
+          // Accent archetypes (gold, chrome, etc.) are direct picks — always show them.
+          // For all other roles, skip archetypes with no graph materials when showroom-filtering.
+          if (filterEmptyArchetypes && graphLoaded && !resolvedCode && role !== "accent") {
             return { archetype: a, displayImage: null as null, isRecommended: false, resolvedCode: undefined };
+          }
+          if (!resolvedCode) {
+            resolvedCode = a.id;
           }
           displayImage = (resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null) ?? a.image;
           isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
