@@ -434,9 +434,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
             };
           });
 
-          // Seed materialOverrides from collection defaults so bubble rail and
-          // MaterialsSummary swatches appear immediately on reload.
-          if (resolvedMaterial) {
+          // Seed materialOverrides from collection defaults only when nothing is persisted yet.
+          // If localStorage already has overrides, skip — those are the user's exact choices.
+          if (resolvedMaterial && Object.keys(materialOverrides).length === 0) {
             selectCollection(resolvedMaterial);
           }
 
