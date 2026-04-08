@@ -1,15 +1,8 @@
-export type SurfaceCategory =
-  | "tiles"
-  | "flooring"
-  | "walls"
-  | "accents"
-  | "worktops-and-backsplashes"
-  | "cabinet-fronts"
-  | "fixtures"
-  | "curtains-and-upholstery";
+// Canonical role strings used in Supabase materials.role[] and as surface category keys.
+export type MaterialRole = "floor" | "front" | "worktop" | "tile" | "accent" | "wall";
 
-// Canonical role strings used in Supabase materials.role[].
-export type MaterialRole = "floor" | "front" | "worktop" | "tile" | "accent";
+/** @deprecated Use MaterialRole instead */
+export type SurfaceCategory = MaterialRole;
 
 export type MaterialTier = "budget" | "optimal" | "premium";
 

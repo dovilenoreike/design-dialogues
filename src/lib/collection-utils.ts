@@ -1,7 +1,6 @@
 import type { CollectionV2 } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
-import type { SurfaceCategory } from "@/types/material-types";
 import type { MaterialRole } from "@/types/material-types";
 import { surfaces } from "@/data/rooms/surfaces";
 
@@ -24,24 +23,6 @@ export interface MaterialBubble {
   image: string;
 }
 
-/**
- * Maps palette slot keys (used in materialOverrides) to collection category keys.
- */
-export const SLOT_TO_COLLECTION_CATEGORY: Record<string, string> = {
-  floor: "flooring",
-  bottomCabinets: "cabinet-fronts",
-  topCabinets: "cabinet-fronts",
-  cabinetFurniture: "cabinet-fronts",
-  wardrobes: "cabinet-fronts",
-  vanityUnit: "cabinet-fronts",
-  shelves: "cabinet-fronts",
-  worktops: "worktops-and-backsplashes",
-  backsplashes: "worktops-and-backsplashes",
-  accents: "accents",
-  tiles: "tiles",
-  additionalTiles: "tiles",
-  accentAreas: "tiles",
-};
 
 /**
  * Direct map from palette slot key → material role.
@@ -69,7 +50,7 @@ export const SLOT_TO_ROLE: Record<string, MaterialRole> = {
  */
 export function getCollectionMaterialBubbles(
   materialOverrides: Record<string, string>,
-  showroomFilter?: { id: string; surfaceCategories: SurfaceCategory[] },
+  showroomFilter?: { id: string; surfaceCategories: MaterialRole[] },
 ): MaterialBubble[] {
   const bubbles: MaterialBubble[] = [];
 
@@ -81,8 +62,8 @@ export function getCollectionMaterialBubbles(
     if (!mat?.imageUrl) continue;
 
     if (showroomFilter) {
-      const category = SLOT_TO_COLLECTION_CATEGORY[slotKey] as SurfaceCategory | undefined;
-      const appliesFilter = category && (showroomFilter.surfaceCategories as string[]).includes(category);
+      const role = SLOT_TO_ROLE[slotKey] as MaterialRole | undefined;
+      const appliesFilter = role && showroomFilter.surfaceCategories.includes(role);
       if (appliesFilter && !mat.showroomIds.includes(showroomFilter.id)) continue;
     }
 

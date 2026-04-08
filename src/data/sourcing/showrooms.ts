@@ -4,7 +4,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "impeka",
     name: "Impeka",
-    surfaceCategories: ["cabinet-fronts"],
+    surfaceCategories:  ["front", "worktop"],
     isPartner: false,
     locations: {
       vilnius: { address: "Vytenio g. 48, Vilnius" },
@@ -16,7 +16,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "trukme",
     name: "Trukmė",
-    surfaceCategories: ["cabinet-fronts"],
+    surfaceCategories: ["front", "worktop"],
     isPartner: false,
     locations: {
       vilnius: { address: "Verkių g. 44, (PC Unideco, II aukštas), Vilnius" },
@@ -28,7 +28,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "solido-grindys",
     name: "Solido Grindys",
-    surfaceCategories: ["flooring"],
+    surfaceCategories: ["floor"],
     isPartner: false,
     locations: {
       vilnius: { address: " P. Lukšio g. 32, Vilnius (DOMUS Galerija)" },
@@ -40,7 +40,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "jusu-salonas",
     name: "Jūsų Salonas",
-    surfaceCategories: ["flooring"],
+    surfaceCategories: ["floor"],
     isPartner: false,
     locations: {},
     // locations: {
@@ -53,7 +53,7 @@ export const showroomBrands: ShowroomBrand[] = [
   {
     id: "linea",
     name: "Linea",
-    surfaceCategories: ["tiles"],
+    surfaceCategories: ["tile"],
     isPartner: false,
     locations: {
       vilnius: { address: "Kęstučio g. 53, Vilnius" },

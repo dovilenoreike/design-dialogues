@@ -31,7 +31,6 @@ import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
-import type { SurfaceCategory } from "@/types/material-types";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";

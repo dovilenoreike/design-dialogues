@@ -91,6 +91,8 @@ export default function MaterialSlotPicker({
     );
 
     const mats = graphMaterials ?? [];
+    // If mats is non-empty the graph has loaded; exclude archetypes with no matching materials.
+    const graphLoaded = mats.length > 0;
 
     return getArchetypesByRole(role)
       .map((a) => {
@@ -115,6 +117,11 @@ export default function MaterialSlotPicker({
           // This guarantees image ↔ selection parity: the tile you see is the product that lands.
           const primaryMat = recommendedMat ?? archetypeMats[0];
           resolvedCode = primaryMat?.technicalCode;
+          // When the graph is loaded but this archetype has no materials (e.g. showroom filter
+          // applied and showroom doesn't carry this archetype), exclude it from the grid.
+          if (graphLoaded && !resolvedCode) {
+            return { archetype: a, displayImage: null as null, isRecommended: false, resolvedCode: undefined };
+          }
           displayImage = (resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null) ?? a.image;
           isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
         }
@@ -182,7 +189,7 @@ export default function MaterialSlotPicker({
                 const isSelected = selectedId === archetype.id;
                 return (
                   <button
-                    key={`${archetype.category}-${archetype.id}`}
+                    key={`${archetype.role}-${archetype.id}`}
                     onClick={() => { onSelect(slot!, archetype.id, resolvedCode); onClose(); }}
                     className="flex flex-col gap-1"
                   >

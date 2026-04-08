@@ -212,6 +212,17 @@ export default function MoodboardView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialOverrides, graphLoading]);
 
+  // When in showroom mode, restrict picker to showroom materials ONLY for the showroom's
+  // own surface categories (matched by MaterialRole). Other categories show all materials.
+  const showroomMaterials = useMemo(() => {
+    if (!activeShowroom || !openSlot) return graphMaterials;
+    const slotRole = SLOT_KEY_TO_ROLE[openSlot];
+    if (!slotRole || !activeShowroom.surfaceCategories.includes(slotRole)) {
+      return graphMaterials; // slot not in this showroom's scope — show everything
+    }
+    return graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id));
+  }, [graphMaterials, activeShowroom, openSlot]);
+
   // Actual displayed material codes for all slots other than the open one
   const otherMaterialCodesForPicker = useMemo(() => {
     if (!openSlot) return [];
@@ -237,13 +248,13 @@ export default function MoodboardView() {
       // Fall back to first graph candidate, then archetypeId itself — always update
       // materialOverrides so the flatlay image and compatibility icons never lag behind.
       const matCode = resolvedCode
-        ?? graphMaterials.find((m) => m.archetypeId === archetypeId && m.role.includes(SLOT_KEY_TO_ROLE[slotKey]))?.technicalCode
+        ?? showroomMaterials.find((m) => m.archetypeId === archetypeId && m.role.includes(SLOT_KEY_TO_ROLE[slotKey]))?.technicalCode
         ?? archetypeId;
       if (pk) {
         setMaterialOverrides((prev) => ({ ...prev, [pk]: matCode }));
       }
     },
-    [slotSelections, setMaterialOverrides, graphMaterials],
+    [slotSelections, setMaterialOverrides, showroomMaterials],
   );
 
   const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
@@ -568,7 +579,7 @@ export default function MoodboardView() {
         otherMaterialCodes={otherMaterialCodesForPicker}
         selectedMaterialCode={openSlot && SLOT_TO_PALETTE_KEY[openSlot] ? (materialOverrides[SLOT_TO_PALETTE_KEY[openSlot]!] ?? undefined) : undefined}
         getRecommendedCodes={getRecommendedCodes}
-        graphMaterials={graphMaterials}
+        graphMaterials={graphLoading ? undefined : showroomMaterials}
       />
 
     </div>

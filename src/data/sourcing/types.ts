@@ -1,5 +1,5 @@
 import type { City } from "@/contexts/CityContext";
-import type { SurfaceCategory } from "@/types/material-types";
+import type { MaterialRole } from "@/types/material-types";
 
 export interface ShowroomLocation {
   address: string;
@@ -10,7 +10,7 @@ export interface ShowroomBrand {
   id: string;
   name: string;
   url?: string;
-  surfaceCategories: SurfaceCategory[];
+  surfaceCategories: MaterialRole[];
   isPartner?: boolean;
   locations: Partial<Record<City, ShowroomLocation>>;
 }
