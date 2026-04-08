@@ -466,8 +466,6 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-        console.log("[gen:floorplan] designPrompt:\n", designPrompt);
-        console.log("[gen:floorplan] materials (%d unique):", dedupedMaterials.length, dedupedMaterials.map(m => ({ matId: m.matId, surfaces: m.surfaces, texturePrompt: m.texturePrompt })));
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -512,8 +510,6 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         }
 
 
-        console.log("[gen:gemini] designPrompt:\n", designPrompt);
-        console.log("[gen:gemini] materials (%d slots, %d unique):", materialImagesWithMeta.length, dedupedMaterials.length, dedupedMaterials.map(m => ({ matId: m.matId, surfaces: m.surfaces, texturePrompt: m.texturePrompt })));
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -543,8 +539,6 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         }
 
 
-        console.log("[gen:interior] materialPrompt:\n", materialPrompt || null);
-        console.log("[gen:interior] freestyle:", design.freestyleDescription.trim() || null);
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
@@ -765,8 +759,6 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${clayMaterialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-      console.log("[gen:clay] designPrompt:\n", designPrompt);
-      console.log("[gen:clay] materials (%d unique):", clayDedupedMaterials.length, clayDedupedMaterials.map(m => ({ matId: m.matId, surfaces: m.surfaces, texturePrompt: m.texturePrompt })));
       const { data, error } = await supabase.functions.invoke("generate-material-edit", {
         body: {
           imageBase64,

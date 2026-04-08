@@ -7,7 +7,6 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import type { VibeTag } from "@/data/collections/types";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
-import VibePickerView from "./VibePickerView";
 import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { invalidateCollectionShowroomCache } from "@/lib/collection-utils";
 
@@ -89,7 +88,7 @@ const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { design, materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, setActivePalette, vibeTag, vibeChosen, setVibeTag, clearVibeTag, skipVibePicker, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
+  const { materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
@@ -186,7 +185,13 @@ export default function MoodboardView() {
           ? graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id))
           : graphMaterials;
         const resolved = showroomPool.find((m) => m.archetypeId === aId && m.role.includes(role));
-        if (resolved) next[pk] = resolved.technicalCode;
+        if (resolved) {
+          next[pk] = resolved.technicalCode;
+        } else if (!next[pk]) {
+          // No graph material found for this archetype (e.g. accent archetypes like 'gold').
+          // Use the archetype ID directly — same fallback as handleSlotSelect.
+          next[pk] = aId;
+        }
       });
       return next;
     });
@@ -288,8 +293,7 @@ export default function MoodboardView() {
     if (pk) setMaterialOverrides((prev) => { const next = { ...prev }; delete next[pk]; return next; });
   }, [slotSelections, setMaterialOverrides]);
 
-  // Show vibe picker until user has made a deliberate choice (pick a vibe or skip to see all)
-  if (!vibeTag && !vibeChosen) return <VibePickerView />;
+  // Vibe picker hidden for now — skipped unconditionally
 
 
   return (

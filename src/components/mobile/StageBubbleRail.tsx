@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { X, RotateCcw, Plus } from "lucide-react";
-import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
 import type { ControlMode } from "@/contexts/DesignContext";
-import { useShowroom } from "@/contexts/ShowroomContext";
 
 interface StageBubbleRailProps {
   bubbles: MaterialBubble[];
@@ -22,7 +21,8 @@ interface StageBubbleRailProps {
   language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
-  getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], targetRole?: string) => string[];
+  /** role → unique material codes chosen on the flatlay; stable snapshot used for swap options */
+  flatlayRoleMaterials?: Record<string, string[]>;
 }
 
 export default function StageBubbleRail({
@@ -40,12 +40,8 @@ export default function StageBubbleRail({
   t,
   language,
   variant,
-  getRecommendedCodes,
+  flatlayRoleMaterials = {},
 }: StageBubbleRailProps) {
-  const { activeShowroom } = useShowroom();
-  const showroomFilter = activeShowroom
-    ? { id: activeShowroom.id, surfaceCategories: activeShowroom.surfaceCategories }
-    : undefined;
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showHint, setShowHint] = useState(() => {
@@ -131,39 +127,17 @@ export default function StageBubbleRail({
               {/* Material swap rail */}
               {isActive && (() => {
                 const slotRole = SLOT_TO_ROLE[bubble.slotKey];
-                // Showroom filter only applies to categories this showroom covers
-                const showroomAppliesToSlot = !!(showroomFilter && slotRole &&
-                  showroomFilter.surfaceCategories.includes(slotRole as string));
-                const otherCodes = visibleBubbles
-                  .filter((b) => b.slotKey !== bubble.slotKey)
-                  .map((b) => materialOverrides[b.slotKey] ?? b.materialId)
-                  .filter(Boolean) as string[];
-                const currentCode = materialOverrides[bubble.slotKey] || bubble.materialId;
-                const graphCodes = (getRecommendedCodes && otherCodes.length > 0)
-                  ? getRecommendedCodes(currentCode, otherCodes, slotRole).slice(0, 4)
-                  : [];
-                const fallbackAlternatives = (() => {
-                  if (!slotRole) return [];
-                  return getMaterialsByRole(slotRole)
-                    .filter((m) => !!m.imageUrl && (!showroomAppliesToSlot || m.showroomIds.includes(showroomFilter!.id)))
-                    .slice(0, 4)
-                    .map((m) => ({
-                      materialId: m.technicalCode,
-                      image: m.imageUrl!,
-                    }));
-                })();
-                const alternatives = graphCodes.length > 0
-                  ? graphCodes
-                      .map((code) => {
-                        const img = getMaterialByCode(code)?.imageUrl;
-                        const ids = getMaterialByCode(code)?.showroomIds ?? [];
-                        return img ? { materialId: code, image: img, showroomIds: ids } : null;
-                      })
-                      .filter((m): m is NonNullable<typeof m> => m !== null)
-                      .filter((m) => !showroomAppliesToSlot || m.showroomIds.includes(showroomFilter!.id))
-                      .map(({ materialId, image }) => ({ materialId, image }))
-                  : fallbackAlternatives;
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
+                // Alternatives = the other unique materials chosen on the flatlay for this role.
+                // Uses a stable snapshot so swapping doesn't shrink the option list.
+                const roleCodes = flatlayRoleMaterials[slotRole ?? ""] ?? [];
+                const alternatives = roleCodes
+                  .filter(code => code !== currentMaterialId)
+                  .map(code => {
+                    const img = getMaterialByCode(code)?.imageUrl ?? getArchetypeById(code)?.image;
+                    return img ? { materialId: code, image: img } : null;
+                  })
+                  .filter((x): x is { materialId: string; image: string } => x !== null);
                 return (
                   <div
                     className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-1.5 z-50"
