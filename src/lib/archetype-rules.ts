@@ -18,6 +18,11 @@ export function deriveArchetypeId(
     return 'dark-wood';
   }
 
+  // Stone floor
+  if (texture === 'stone' && role === 'floor') {
+    return lightness >= 55 ? 'light-stone' : 'dark-stone';
+  }
+
   // Cabinet front plain — chroma distinguishes achromatic from chromatic
   if (role === 'front' && texture === 'plain') {
     if (chroma < 15) {

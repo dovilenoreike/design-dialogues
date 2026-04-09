@@ -5,6 +5,7 @@ import type { MaterialRole } from "@/types/material-types";
 import floorLightWood from "@/assets/archetypes/flooring/02-light_wood.jpg";
 import floorMediumWood from "@/assets/archetypes/flooring/03-medium_wood.jpg";
 import floorDarkWood from "@/assets/archetypes/flooring/04-dark_wood.jpg";
+import floorLightStone from "@/assets/archetypes/flooring/05-concete.jpg";
 
 // --- Cabinet Fronts images ---
 import cfWhite from "@/assets/archetypes/cabinet-fronts/05-white.jpg";
@@ -33,10 +34,12 @@ import accentBlack from "@/assets/archetypes/accents/black.jpg";
 
 
 export const archetypes: Archetype[] = [
-  // ── Floor (3) ─────────────────────────────────────────────────────────────
-  { id: "light-wood",  role: "floor", label: { en: "Light Wood",  lt: "Šviesi mediena"   }, image: floorLightWood,  value: "#ddd5c4" },
-  { id: "medium-wood", role: "floor", label: { en: "Medium Wood", lt: "Vidutinė mediena" }, image: floorMediumWood, value: "#b89870" },
-  { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",   lt: "Tamsi mediena"    }, image: floorDarkWood,   value: "#5c3d2a" },
+  // ── Floor (5) ─────────────────────────────────────────────────────────────
+  { id: "light-wood",  role: "floor", label: { en: "Light Wood",   lt: "Šviesi mediena"   }, image: floorLightWood,  value: "#ddd5c4" },
+  { id: "medium-wood", role: "floor", label: { en: "Medium Wood",  lt: "Vidutinė mediena" }, image: floorMediumWood, value: "#b89870" },
+  { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",    lt: "Tamsi mediena"    }, image: floorDarkWood,   value: "#5c3d2a" },
+  { id: "light-stone", role: "floor", label: { en: "Light Stone",  lt: "Šviesus akmuo"    }, image: floorLightStone, value: "#d8d4cc" },
+  { id: "dark-stone",  role: "floor", label: { en: "Dark Stone",   lt: "Tamsus akmuo"     }, image: null,            value: "#6a6560" },
 
   // ── Front / Cabinet Fronts (9) ────────────────────────────────────────────
   { id: "white",       role: "front", label: { en: "White",       lt: "Balta"            }, image: cfWhite,      value: "#f5f5f3" },
