@@ -91,6 +91,17 @@ export function getPairCountByCode(code: string): number {
   return _cached?.pairCountByUuid.get(id) ?? 0;
 }
 
+/** Returns how many of the given otherCodes this material is compatible with. */
+export function getCompatibilityScore(code: string, otherCodes: string[]): number {
+  if (!_cached || otherCodes.length === 0) return 0;
+  const { codeToId, pairs } = _cached;
+  const id = codeToId.get(code);
+  if (!id) return 0;
+  const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
+  if (otherUuids.length === 0) return 0;
+  return countCompatible(id, otherUuids, pairs);
+}
+
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
 export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -116,9 +116,15 @@ export default function MaterialSlotPicker({
           resolvedCode = selectedMaterialCode;
           isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(selectedMaterialCode);
         } else {
-          // Use the recommended material if available, otherwise the first material in the archetype.
-          // This guarantees image ↔ selection parity: the tile you see is the product that lands.
-          const primaryMat = recommendedMat ?? archetypeMats[0];
+          // Use the recommended material if available, otherwise the material with the most pairs
+          // (so the most globally relevant product represents the archetype tile).
+          const primaryMat = recommendedMat ?? (
+            archetypeMats.length > 0
+              ? archetypeMats.reduce((best, m) =>
+                  getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
+                )
+              : undefined
+          );
           resolvedCode = primaryMat?.technicalCode;
           // When the graph is loaded but this archetype has no materials (e.g. showroom filter
           // applied and showroom doesn't carry this archetype), exclude it from the grid.
@@ -139,13 +145,17 @@ export default function MaterialSlotPicker({
         const archetypePairScore = archetypeMats.reduce(
           (sum, m) => sum + getPairCountByCode(m.technicalCode), 0
         );
-        return { archetype: a, displayImage, isRecommended, resolvedCode, archetypePairScore };
+        const archetypePartialScore = archetypeMats.reduce((max, m) =>
+          Math.max(max, getCompatibilityScore(m.technicalCode, otherMaterialCodes ?? [])), 0
+        );
+        return { archetype: a, displayImage, isRecommended, resolvedCode, archetypePairScore, archetypePartialScore };
       })
-      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypePairScore: number } =>
+      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypePairScore: number; archetypePartialScore: number } =>
         item.displayImage !== null && item.displayImage !== undefined
       )
       .sort((a, b) =>
         Number(b.isRecommended) - Number(a.isRecommended) ||
+        b.archetypePartialScore - a.archetypePartialScore ||
         b.archetypePairScore - a.archetypePairScore
       );
   }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
