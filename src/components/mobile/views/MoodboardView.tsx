@@ -475,11 +475,13 @@ export default function MoodboardView() {
                       e.stopPropagation();
                       if (pk && graphBestCode) setMaterialOverrides((prev) => ({ ...prev, [pk]: graphBestCode }));
                     }}
-                    className="absolute top-1 left-1 flex items-center justify-center rounded-full bg-white/20 p-0.5 active:scale-90 transition-transform"
+                    className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
                     style={{ zIndex: 1 }}
                     aria-label={`Sync ${piece.slot} to suggested material`}
                   >
-                    <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
+                    <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
+                      <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
+                    </span>
                   </button>
                 )}
               </div>
