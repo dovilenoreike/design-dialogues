@@ -43,9 +43,9 @@ export const archetypes: Archetype[] = [
 
   // ── Front / Cabinet Fronts (9) ────────────────────────────────────────────
   { id: "white",       role: "front", label: { en: "White",       lt: "Balta"            }, image: cfWhite,      value: "#f5f5f3" },
-  { id: "light-wood",  role: "front", label: { en: "Light Wood",  lt: "Šviesi mediena"   }, image: cfLightWood,  value: "#ddd0b8" },
-  { id: "medium-wood", role: "front", label: { en: "Medium Wood", lt: "Vidutinė mediena" }, image: cfMediumWood, value: "#b89870" },
-  { id: "dark-wood",   role: "front", label: { en: "Dark Wood",   lt: "Tamsi mediena"    }, image: cfDarkWood,   value: "#5c3d2a" },
+  { id: "light-wood",  role: "front", label: { en: "Light Wood",  lt: "Šviesus medis"   }, image: cfLightWood,  value: "#ddd0b8" },
+  { id: "medium-wood", role: "front", label: { en: "Medium Wood", lt: "Vidutinis medis" }, image: cfMediumWood, value: "#b89870" },
+  { id: "dark-wood",   role: "front", label: { en: "Dark Wood",   lt: "Tamsus medis"    }, image: cfDarkWood,   value: "#5c3d2a" },
   { id: "neutral",     role: "front", label: { en: "Neutral",     lt: "Neutrali"         }, image: cfNeutral,    value: "#e0d4c0" },
   { id: "pastel",      role: "front", label: { en: "Pastel",      lt: "Pastelinė"        }, image: cfPastel,     value: "#ccd8d0" },
   { id: "bold",        role: "front", label: { en: "Bold",        lt: "Ryški"            }, image: cfBold,       value: "#4a6058" },
@@ -56,16 +56,16 @@ export const archetypes: Archetype[] = [
   { id: "wood",               role: "worktop", label: { en: "Wood",              lt: "Mediena"              }, image: wtWood,             value: "#c4a882" },
   { id: "white",              role: "worktop", label: { en: "White",             lt: "Balta"                }, image: wtWhite,            value: "#f5f5f3" },
   { id: "dark",               role: "worktop", label: { en: "Dark",              lt: "Tamsi"                }, image: wtDark,             value: "#1a1a1a" },
-  { id: "soft-texture-light", role: "worktop", label: { en: "Soft Texture Light", lt: "Švelni faktūra šviesi" }, image: wtSoftTextureLight, value: "#e8e4de" },
-  { id: "soft-texture-dark",  role: "worktop", label: { en: "Soft Texture Dark",  lt: "Švelni faktūra tamsi"  }, image: wtSoftTextureLight, value: "#c8c0b4" },
-  { id: "bold-texture-light", role: "worktop", label: { en: "Bold Texture Light", lt: "Ryški faktūra šviesi"  }, image: wtBoldTextureLight, value: "#d8cfc0" },
-  { id: "bold-texture-dark",  role: "worktop", label: { en: "Bold Texture Dark",  lt: "Ryški faktūra tamsi"   }, image: wtBoldTextureLight, value: "#8c8070" },
+  { id: "soft-texture-light", role: "worktop", label: { en: "Soft Texture Light", lt: "Ramus šviesus" }, image: wtSoftTextureLight, value: "#e8e4de" },
+  { id: "soft-texture-dark",  role: "worktop", label: { en: "Soft Texture Dark",  lt: "Ramus tamsus"  }, image: wtSoftTextureLight, value: "#c8c0b4" },
+  { id: "bold-texture-light", role: "worktop", label: { en: "Bold Texture Light", lt: "Išraiškingas šviesus"  }, image: wtBoldTextureLight, value: "#d8cfc0" },
+  { id: "bold-texture-dark",  role: "worktop", label: { en: "Bold Texture Dark",  lt: "Išraiškingas tamsus"   }, image: wtBoldTextureLight, value: "#8c8070" },
 
   // ── Accent (5) ────────────────────────────────────────────────────────────
   { id: "gold",        role: "accent", label: { en: "Gold",        lt: "Auksas"          }, image: accentGold,       value: "#c8a84c" },
   { id: "chrome",      role: "accent", label: { en: "Chrome",      lt: "Chromas"         }, image: accentChrome,     value: "#c0c4cc" },
-  { id: "wine-red",    role: "accent", label: { en: "Wine Red",    lt: "Vyno raudona"    }, image: accentWineRed,    value: "#5c1a1a" },
-  { id: "aged-bronze", role: "accent", label: { en: "Aged Bronze", lt: "Sendinta bronza" }, image: accentAgedBronze, value: "#8c7055" },
+  { id: "wine-red",    role: "accent", label: { en: "Wine Red",    lt: "Bordo"    }, image: accentWineRed,    value: "#5c1a1a" },
+  { id: "aged-bronze", role: "accent", label: { en: "Aged Bronze", lt: "Bronza" }, image: accentAgedBronze, value: "#8c7055" },
   { id: "black",       role: "accent", label: { en: "Black",       lt: "Juoda"           }, image: accentBlack,      value: "#1a1a1a" },
 ];
 

@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Check, Trash2, X } from "lucide-react";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,7 +30,6 @@ export const SLOT_KEY_TO_ROLE: Record<SlotKey, MaterialRole> = {
 interface MaterialSlotPickerProps {
   slot: SlotKey | null;
   selections: SlotSelections;
-  // resolvedCode: the specific product code to land on the flatlay (from the picker's recommendation logic)
   onSelect: (slotKey: SlotKey, archetypeId: string, resolvedCode?: string) => void;
   onClose: () => void;
   onClear?: (slotKey: SlotKey) => void;
@@ -57,32 +56,13 @@ export default function MaterialSlotPicker({
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
 
-  // All other shades within the same archetype as the current selection
-  const otherShadesForSelected = useMemo(() => {
-    if (!slot || !selectedMaterialCode || !selections[slot] || !graphMaterials) return [];
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const currentArchetypeId = selections[slot];
+  // Which archetype chip is expanded in the variants row (user-driven)
+  const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
 
-    const recommendedCodes = new Set(
-      getRecommendedCodes
-        ? getRecommendedCodes(null, otherMaterialCodes ?? [], role)
-        : []
-    );
+  // Reset when a different slot opens
+  useEffect(() => { setActiveArchetypeId(null); }, [slot]);
 
-    return graphMaterials
-      .filter(m =>
-        m.archetypeId === currentArchetypeId &&
-        m.role.includes(role) &&
-        m.technicalCode !== selectedMaterialCode
-      )
-      .map(m => {
-        const image = m.imageUrl;
-        const isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(m.technicalCode);
-        return image ? { code: m.technicalCode, image, isRecommended } : null;
-      })
-      .filter((s): s is { code: string; image: string; isRecommended: boolean } => s !== null);
-  }, [slot, selections, selectedMaterialCode, graphMaterials, getRecommendedCodes, otherMaterialCodes]);
-
+  // ─── Archetype chips data (sorted by priority) ──────────────────────────────
   const availableWithImages = useMemo(() => {
     if (!slot) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
@@ -94,15 +74,11 @@ export default function MaterialSlotPicker({
     );
 
     const mats = graphMaterials ?? [];
-    // If mats is non-empty the graph has loaded; exclude archetypes with no matching materials.
     const graphLoaded = mats.length > 0;
 
     return getArchetypesByRole(role)
       .map((a) => {
         const archetypeMats = mats.filter((m) => m.archetypeId === a.id && m.role.includes(role));
-
-        // The recommended material for this archetype (first one in recommendedCodes).
-        // This drives both the badge and the image — ensuring what you see is what gets selected.
         const recommendedMat = archetypeMats.find((m) => recommendedCodes.has(m.technicalCode));
 
         let displayImage: string | null | undefined;
@@ -110,14 +86,10 @@ export default function MaterialSlotPicker({
         let isRecommended: boolean;
 
         if (selectedMaterialCode && a.id === selections[slot]) {
-          // Currently selected slot: show the actual flatlay override image.
-          // isRecommended must reflect the PLACED code, not a sibling in the same archetype.
           displayImage = getMaterialByCode(selectedMaterialCode)?.imageUrl ?? a.image;
           resolvedCode = selectedMaterialCode;
           isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(selectedMaterialCode);
         } else {
-          // Use the recommended material if available, otherwise the material with the most pairs
-          // (so the most globally relevant product represents the archetype tile).
           const primaryMat = recommendedMat ?? (
             archetypeMats.length > 0
               ? archetypeMats.reduce((best, m) =>
@@ -126,12 +98,6 @@ export default function MaterialSlotPicker({
               : undefined
           );
           resolvedCode = primaryMat?.technicalCode;
-          // When the graph is loaded but this archetype has no materials (e.g. showroom filter
-          // applied and showroom doesn't carry this archetype), exclude it from the grid.
-          // Only apply this for roles that are actually in the graph — roles like accent use
-          // archetype IDs directly and would be incorrectly filtered otherwise.
-          // Accent archetypes (gold, chrome, etc.) are direct picks — always show them.
-          // For all other roles, skip archetypes with no graph materials when showroom-filtering.
           if (filterEmptyArchetypes && graphLoaded && !resolvedCode && role !== "accent") {
             return { archetype: a, displayImage: null as null, isRecommended: false, resolvedCode: undefined };
           }
@@ -160,96 +126,238 @@ export default function MaterialSlotPicker({
       );
   }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
 
+  // ─── Effective active archetype ─────────────────────────────────────────────
+  // Priority: user click → current flatlay selection → first in sorted list
+  const effectiveActiveId = useMemo(() => {
+    if (activeArchetypeId && availableWithImages.some(i => i.archetype.id === activeArchetypeId)) return activeArchetypeId;
+    const selId = slot ? selections[slot] : null;
+    if (selId && availableWithImages.some(i => i.archetype.id === selId)) return selId;
+    return availableWithImages[0]?.archetype.id ?? null;
+  }, [activeArchetypeId, availableWithImages, slot, selections]);
+
+  // ─── Variants for active archetype ──────────────────────────────────────────
+  const activeVariants = useMemo(() => {
+    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const mats = graphMaterials ?? [];
+    const recommendedCodes = new Set(
+      getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []
+    );
+    return mats
+      .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl)
+      .map(m => ({
+        code: m.technicalCode,
+        image: m.imageUrl!,
+        name: m.name?.[lang] ?? m.technicalCode,
+        isSelected: m.technicalCode === selectedMaterialCode,
+        isRecommended: recommendedCodes.size > 0 && recommendedCodes.has(m.technicalCode),
+      }))
+      .sort((a, b) =>
+        Number(b.isSelected) - Number(a.isSelected) ||
+        Number(b.isRecommended) - Number(a.isRecommended) ||
+        getPairCountByCode(b.code) - getPairCountByCode(a.code)
+      );
+  }, [slot, effectiveActiveId, graphMaterials, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+
   const selectedId = slot ? selections[slot] : null;
+  const isFirstPick = !selectedId;
+  const activeArchetypeLabel = availableWithImages.find(i => i.archetype.id === effectiveActiveId)?.archetype.label[lang] ?? "";
+
+  const handleArchetypeClick = (archetypeId: string, resolvedCode?: string) => {
+    // Accents have no individual materials — always select directly
+    if (slot && SLOT_KEY_TO_ROLE[slot] === "accent") {
+      onSelect(slot, archetypeId, archetypeId);
+      setTimeout(onClose, 200);
+      return;
+    }
+    // First pick: no material placed yet — select the archetype's best material immediately
+    if (isFirstPick) {
+      onSelect(slot!, archetypeId, resolvedCode);
+      setTimeout(onClose, 200);
+      return;
+    }
+    // Changing existing selection: expand variants row
+    setActiveArchetypeId(archetypeId);
+  };
+
+  const handleVariantSelect = (code: string) => {
+    if (!slot || !effectiveActiveId) return;
+    onSelect(slot, effectiveActiveId, code);
+    setTimeout(onClose, 200);
+  };
 
   return (
     <Sheet open={slot !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[75vh] overflow-y-auto sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2" aria-describedby={undefined}>
-        <SheetHeader className="mb-3">
-          <SheetTitle className="font-serif text-base">
+      {/* [&>button.absolute]:hidden suppresses the SheetContent built-in X button */}
+      <SheetContent
+        side="bottom"
+        className="p-0 rounded-t-2xl overflow-hidden sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2 [&>button.absolute]:hidden"
+        aria-describedby={undefined}
+      >
+        {/* Accessible title (screen-reader only) */}
+        <SheetTitle className="sr-only">{slot ? t(`surface.${slot}`) : ""}</SheetTitle>
+
+        {/* Drag handle */}
+        <div className="w-9 h-1 rounded-full mx-auto mt-2.5" style={{ backgroundColor: "#e0dbd5" }} />
+
+        {/* Header: slot title + close button */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <span className="text-[17px] font-medium" style={{ color: "#1a1a1a" }}>
             {slot ? t(`surface.${slot}`) : ""}
-          </SheetTitle>
-        </SheetHeader>
+          </span>
+          <SheetClose asChild>
+            <button
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "#f5f2ef", color: "#6b7280" }}
+            >
+              <X className="w-3.5 h-3.5" strokeWidth={2} />
+            </button>
+          </SheetClose>
+        </div>
 
-        {selectedId && onClear && slot && (
-          <button
-            onClick={() => { onClear(slot); onClose(); }}
-            className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-            <span className="text-[11px] uppercase tracking-[0.15em] font-medium">{t("surface.remove")}</span>
-          </button>
-        )}
+        {/* "Material type" label */}
+        <p className="text-[11px] font-medium tracking-[0.06em] uppercase px-4 mt-0.5 mb-2" style={{ color: "#9ca3af" }}>
+          {t("surface.materialType")}
+        </p>
 
-        {otherShadesForSelected.length > 0 && slot !== "accents" && (
-          <div className="mb-4">
-            <p className="text-[9px] uppercase tracking-[0.2em] font-medium text-neutral-400 mb-2">
-              {t("surface.alternativeCollections")}
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {otherShadesForSelected.map(shade => (
-                <button
-                  key={shade.code}
-                  onClick={() => { onSelect(slot!, selections[slot!]!, shade.code); onClose(); }}
-                  className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 ring-offset-1 ring-offset-white hover:ring-2"
-                  style={{ "--tw-ring-color": "#647d75" } as React.CSSProperties}
+        {/* Archetype chips — horizontal scroll */}
+        <div
+          className="flex gap-2.5 px-4 pb-1 overflow-x-auto"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+        >
+          {availableWithImages.map(({ archetype, displayImage, resolvedCode, isRecommended }) => {
+            const isActive = !isFirstPick && archetype.id === effectiveActiveId;
+            const hasSelection = selectedId === archetype.id;
+            return (
+              <button
+                key={`chip-${archetype.role}-${archetype.id}`}
+                onClick={() => handleArchetypeClick(archetype.id, resolvedCode)}
+                className="flex flex-col items-center gap-1.5 flex-shrink-0"
+              >
+                <div
+                  className="w-[52px] h-[52px] rounded-xl overflow-hidden relative flex-shrink-0"
+                  style={{
+                    border: isActive ? "2px solid #647d75" : "2px solid transparent",
+                    transition: "border-color 0.15s",
+                  }}
                 >
-                  <img src={shade.image} alt={shade.code} className="w-full h-full object-cover" />
-                  {shade.isRecommended && (
+                  <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
+                  {/* "Goes together" badge */}
+                  {isRecommended && (
                     <div className="absolute bottom-1 inset-x-1 flex justify-center">
                       <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
                         {t("surface.matchingMaterials")}
                       </span>
                     </div>
                   )}
+                  {/* Dot indicator: this archetype contains the placed material */}
+                  {hasSelection && !isRecommended && (
+                    <div
+                      className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: "#647d75" }}
+                    />
+                  )}
+                </div>
+                <span
+                  className="text-[11px] whitespace-nowrap leading-none"
+                  style={{
+                    color: isActive ? "#647d75" : "#9ca3af",
+                    fontWeight: isActive ? 500 : 400,
+                    transition: "color 0.15s",
+                  }}
+                >
+                  {archetype.label[lang]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Variants row — only when changing an existing selection */}
+        {!isFirstPick && activeVariants.length > 0 && (
+          <>
+            {/* Variants header: archetype name + count */}
+            <div className="flex items-center justify-between px-4 mt-3.5 mb-2">
+              <span className="text-[11px] font-medium tracking-[0.06em] uppercase" style={{ color: "#9ca3af" }}>
+                {activeArchetypeLabel}
+              </span>
+              <span
+                className="text-[10px] rounded-full px-2 py-0.5"
+                style={{ backgroundColor: "#f3f4f6", color: "#9ca3af" }}
+              >
+                {activeVariants.length}
+              </span>
+            </div>
+
+            {/* Variants horizontal scroll */}
+            <div
+              className="flex gap-2.5 px-4 pb-1 overflow-x-auto"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+            >
+              {activeVariants.map((v) => (
+                <button
+                  key={v.code}
+                  onClick={() => handleVariantSelect(v.code)}
+                  className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px]"
+                >
+                  <div
+                    className="w-[72px] h-[72px] rounded-[14px] overflow-hidden relative flex-shrink-0"
+                    style={{
+                      border: v.isSelected ? "2px solid #647d75" : "2px solid transparent",
+                      transition: "border-color 0.15s",
+                    }}
+                  >
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                    {/* "Goes together" badge — top, dark pill */}
+                    {v.isRecommended && (
+                      <div className="absolute top-1 inset-x-1 flex justify-center">
+                        <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
+                          {t("surface.matchingMaterials")}
+                        </span>
+                      </div>
+                    )}
+                    {/* Check icon — bottom right when selected */}
+                    {v.isSelected && (
+                      <div
+                        className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: "#647d75" }}
+                      >
+                        <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className="text-[11px] w-full text-center truncate leading-tight"
+                    style={{
+                      color: v.isSelected ? "#1a1a1a" : "#9ca3af",
+                      fontWeight: v.isSelected ? 500 : 400,
+                    }}
+                  >
+                    {v.name}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </>
         )}
 
-        {availableWithImages.length > 0 && (
-          <div className="mb-4">
-            <div className="grid grid-cols-4 gap-2">
-              {availableWithImages.map(({ archetype, displayImage, isRecommended, resolvedCode }) => {
-                const isSelected = selectedId === archetype.id;
-                return (
-                  <button
-                    key={`${archetype.role}-${archetype.id}`}
-                    onClick={() => { onSelect(slot!, archetype.id, resolvedCode); onClose(); }}
-                    className="flex flex-col gap-1"
-                  >
-                    <div
-                      className={`relative aspect-square rounded-[12px] overflow-hidden w-full${
-                        isSelected ? " ring-2 ring-offset-1 ring-offset-white" : ""
-                      }`}
-                      style={isSelected ? { "--tw-ring-color": "#647d75" } as React.CSSProperties : undefined}
-                    >
-                      <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#647d75" }}>
-                            <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-                          </div>
-                        </div>
-                      )}
-                      {isRecommended && (
-                        <div className="absolute bottom-1 inset-x-1 flex justify-center">
-                          <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
-                            {t("surface.matchingMaterials")}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <span className="block text-xs text-neutral-500 text-center truncate px-0.5">
-                      {archetype.label[lang]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* Remove material button */}
+        {selectedId && onClear && slot && (
+          <button
+            onClick={() => { onClear(slot); onClose(); }}
+            className="mx-4 mt-3.5 mb-4 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl w-[calc(100%-32px)] text-[13px]"
+            style={{
+              border: "0.5px solid #e8e4e0",
+              color: "#9ca3af",
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
+            {t("surface.remove")}
+          </button>
         )}
+
+        {/* Bottom safe-area spacer when no remove button */}
+        {!(selectedId && onClear && slot) && <div className="pb-4" />}
       </SheetContent>
     </Sheet>
   );
