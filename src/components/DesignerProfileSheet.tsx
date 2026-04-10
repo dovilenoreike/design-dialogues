@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Mail, Instagram, Globe, Check, MapPin, X } from "lucide-react";
+import { User, Mail, Instagram, Globe, MapPin, X } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -7,9 +7,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { collectionsV2 } from "@/data/collections/collections-v2";
-import type { CollectionV2 } from "@/data/collections/types";
-import { collectionHasShowroom, getCollectionSwatches } from "@/lib/collection-utils";
 import { getDesignerWithFallback } from "@/data/designers";
 import { getDesignerImage } from "@/data/designers/images";
 import DesignerContactModal from "@/components/mobile/DesignerContactModal";
@@ -21,82 +18,20 @@ interface DesignerProfileSheetProps {
   onClose: () => void;
   designerId: string;
   designerTitle: string;
-  currentPaletteId?: string;
-  onSelectPalette?: (paletteId: string) => void;
-  onSelectCollection?: (collectionId: string) => void;
-  activeCollectionId?: string;
-  showroomId?: string | null;
 }
-
-// ─── Collection swatch preview ─────────────────────────────────────────────
-// ─── Component ────────────────────────────────────────────────────────────
 
 const DesignerProfileSheet = ({
   isOpen,
   onClose,
   designerId,
   designerTitle,
-  currentPaletteId,
-  onSelectPalette,
-  onSelectCollection,
-  activeCollectionId,
-  showroomId,
 }: DesignerProfileSheetProps) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const profile = getDesignerWithFallback(designerId, designerTitle);
   const profileImage = getDesignerImage(designerId);
-
-  const designerCollections = collectionsV2.filter((c) =>
-    c.designer === designerId &&
-    (!showroomId || collectionHasShowroom(c.id, showroomId))
-  );
-
-  const collectionsSection = designerCollections.length > 0 && (
-    <div className={isMobile ? "pb-8 px-6" : "pb-8"}>
-      <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">
-        {t("designer.curatedPalettes")}
-      </h4>
-      <div className={`flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 ${isMobile ? "-mx-6 px-6" : ""}`}>
-        {designerCollections.map((col) => {
-          const swatches = getCollectionSwatches(col);
-          const name = col.name[language as keyof typeof col.name] ?? col.name.en;
-          const isActive = col.id === activeCollectionId;
-          return (
-            <button
-              key={col.id}
-              onClick={() => {
-                onSelectCollection?.(col.id);
-                onClose();
-              }}
-              className="flex-shrink-0 w-[72px] snap-start text-left active:scale-[0.97] transition-transform touch-manipulation"
-            >
-              <div className={`relative rounded-xl overflow-hidden mb-1.5 ${isActive ? "ring-2 ring-foreground" : "border border-neutral-200"}`}>
-                <div className="grid grid-cols-2 gap-px bg-neutral-200" style={{ width: 72 }}>
-                  {swatches.map((img, i) => (
-                    <div key={i} className="bg-neutral-100" style={{ height: 34 }}>
-                      {img && <img src={img} className="w-full h-full object-cover" alt="" />}
-                    </div>
-                  ))}
-                </div>
-                {isActive && (
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
-                  </div>
-                )}
-              </div>
-              <p className={`text-[9px] uppercase tracking-[0.12em] text-center truncate ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                {name}
-              </p>
-            </button>
-          );
-        })}
-        <div className="flex-shrink-0 w-6" aria-hidden="true" />
-      </div>
-    </div>
-  );
 
   const bioAndCta = (
     <>
@@ -183,7 +118,6 @@ const DesignerProfileSheet = ({
               )}
             </DrawerHeader>
             {bioAndCta}
-            {collectionsSection}
           </div>
           {contactModal}
         </DrawerContent>

@@ -27,9 +27,8 @@ import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
-import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useShowroom } from "@/contexts/ShowroomContext";
-import { getMaterialByCode, getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
@@ -77,8 +76,6 @@ interface DesignContextValue {
   handleImageUpload: (file: File, uploadType?: UploadType) => void;
   clearUploadedImage: () => void;
   handleSelectCategory: (category: string | null) => void;
-  handleSelectMaterial: (material: string | null) => void;
-  setActivePalette: (paletteId: string | null) => void;
   handleSelectStyle: (style: string | null) => void;
   handleFreestyleChange: (description: string) => void;
 
@@ -121,8 +118,6 @@ interface DesignContextValue {
   skipVibePicker: () => void;
   resetVibeChoice: () => void;
 
-  selectCollection: (id: string) => void;
-
   // Sharing
   shareSession: () => Promise<string | null>;
   isSharing: boolean;
@@ -136,7 +131,6 @@ interface SharedSessionData {
   uploadedImage: string | null;
   generatedImage: string | null;
   selectedCategory: string | null;
-  selectedMaterial: string | null;
   selectedStyle: string | null;
   freestyleDescription: string;
   selectedTier: Tier;
@@ -249,55 +243,31 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } catch {}
   }, []);
 
-  const selectCollection = useCallback((collectionId: string) => {
-    const col = collectionsV2.find((c) => c.id === collectionId);
-    if (!col) return;
-
-    // Map defaults slot keys to palette override keys used in materialOverrides
-    const SLOT_TO_PK: Record<string, string> = {
-      floor: "floor", mainFronts: "bottomCabinets", additionalFronts: "topCabinets",
-      worktops: "worktops", accents: "accents", mainTiles: "tiles", additionalTiles: "additionalTiles",
-    };
-
-    const SLOT_TO_ROLE_LOCAL: Record<string, string> = {
-      floor: "floor", mainFronts: "front", additionalFronts: "front",
-      worktops: "worktop", accents: "accent", mainTiles: "tile", additionalTiles: "tile",
-    };
-
+  const initializeDefaultMaterials = useCallback(() => {
+    const ROLE_TO_PK: Array<{ role: string; pk: string }> = [
+      { role: "floor", pk: "floor" },
+      { role: "front", pk: "bottomCabinets" },
+      { role: "worktop", pk: "worktops" },
+      { role: "accent", pk: "accents" },
+      { role: "tile", pk: "tiles" },
+    ];
     setMaterialOverrides(() => {
       const next: Record<string, string> = {};
-      for (const [slotKey, code] of Object.entries(col.defaults)) {
-        if (!code) continue;
-        const pk = SLOT_TO_PK[slotKey];
-        if (!pk) continue;
-
-        // If active showroom filters this role, prefer a showroom-compatible material
+      for (const { role, pk } of ROLE_TO_PK) {
+        const mats = getMaterialsByRole(role).filter(m => m.imageUrl);
+        if (mats.length === 0) continue;
         if (activeShowroom) {
-          const role = SLOT_TO_ROLE_LOCAL[slotKey];
-          const showroomMat = role
-            ? getMaterialsByRole(role).find((m) => m.showroomIds.includes(activeShowroom.id))
-            : undefined;
-          if (showroomMat) { next[pk] = showroomMat.technicalCode; continue; }
+          const sm = mats.find(m => m.showroomIds.includes(activeShowroom.id));
+          if (sm) { next[pk] = sm.technicalCode; continue; }
         }
-
-        // Prefer top graph-ranked material for this role (collections are not curated)
-        const role = SLOT_TO_ROLE_LOCAL[slotKey];
-        const graphMats = role ? getMaterialsByRole(role).filter(m => m.imageUrl) : [];
-        if (graphMats.length > 0) {
-          const topMat = graphMats.reduce((best, m) =>
-            getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
-          );
-          next[pk] = topMat.technicalCode;
-        } else {
-          next[pk] = code; // graph not loaded yet — fall back to collection default
-        }
+        const top = mats.reduce((best, m) =>
+          getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
+        );
+        next[pk] = top.technicalCode;
       }
       return next;
     });
-
-    // Sync vibe only if a vibe filter was already active (don't impose one when user had none)
-    if (vibeTag !== null && col.vibe !== vibeTag) setVibeTag(col.vibe);
-  }, [setMaterialOverrides, vibeTag, setVibeTag, activeShowroom]);
+  }, [setMaterialOverrides, activeShowroom]);
 
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
@@ -346,7 +316,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           : {},
         uploadTypes: {},
         selectedCategory: initialSharedSession.selectedCategory,
-        selectedMaterial: initialSharedSession.selectedMaterial,
         selectedStyle: initialSharedSession.selectedStyle,
         freestyleDescription: initialSharedSession.freestyleDescription || "",
         lastSelectedRoom: initialSharedSession.selectedCategory,
@@ -422,20 +391,12 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           // Check what was set via URL params
           const urlState = parseUrlState(location.pathname, location.search);
 
-          // Restore state - URL params take precedence over saved state
-          const resolvedMaterial = (() => {
-            if (!data.selected_material) return null;                                    // never set → null
-            if (collectionsV2.some(c => c.id === data.selected_material)) return data.selected_material; // valid new-system ID ✓
-            return collectionsV2[0]?.id ?? null;                                         // stale old-system ID → migrate to first collection
-          })();
-
           setDesign(prev => {
             const savedRoom = data.selected_category && getRoomByName(data.selected_category) ? data.selected_category : null;
             const restoredRoom = urlState.room || savedRoom || prev.selectedCategory;
             return {
               ...prev,
               selectedStyle: prev.selectedStyle || data.selected_style || null,
-              selectedMaterial: resolvedMaterial ?? prev.selectedMaterial ?? null,
               // Only use saved room if URL didn't specify one (prev is "Kitchen" default)
               selectedCategory: restoredRoom,
               freestyleDescription: prev.freestyleDescription || data.freestyle_description || "",
@@ -444,10 +405,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
             };
           });
 
-          // Seed materialOverrides from collection defaults only when nothing is persisted yet.
-          // If localStorage already has overrides, skip — those are the user's exact choices.
-          if (resolvedMaterial && Object.keys(materialOverrides).length === 0) {
-            selectCollection(resolvedMaterial);
+          // Initialize default materials for new users or when no overrides are persisted yet
+          if (Object.keys(materialOverrides).length === 0) {
+            initializeDefaultMaterials();
           }
 
           // Restore tier if not set via URL
@@ -478,6 +438,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           if (data.completed_tasks && data.completed_tasks.length > 0 && completedTasks.size === 0) {
             setCompletedTasks(new Set(data.completed_tasks));
           }
+        } else {
+          // New user — no saved state — seed with graph-ranked defaults
+          if (Object.keys(materialOverrides).length === 0) {
+            initializeDefaultMaterials();
+          }
         }
       } catch (err) {
         console.error('Error loading design state:', err);
@@ -495,7 +460,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     const state = {
       user_id: user.id,
       selected_style: design.selectedStyle,
-      selected_material: design.selectedMaterial,
       selected_category: design.selectedCategory,
       freestyle_description: design.freestyleDescription,
       selected_tier: selectedTier,
@@ -522,7 +486,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     user,
     isSharedSession,
     design.selectedStyle,
-    design.selectedMaterial,
     design.selectedCategory,
     design.freestyleDescription,
     selectedTier,
@@ -546,7 +509,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     user,
     isSharedSession,
     design.selectedStyle,
-    design.selectedMaterial,
     design.selectedCategory,
     design.freestyleDescription,
     selectedTier,
@@ -700,23 +662,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     }));
   }, [generation.generatedImages, design.selectedCategory]);
 
-  // Material selection — collectionId is now stored as selectedMaterial
-  const handleSelectMaterial = useCallback((material: string | null) => {
-    setDesign((prev) => ({
-      ...prev,
-      selectedMaterial: material,
-      freestyleDescription: material ? "" : prev.freestyleDescription, // Clear freestyle if selecting curated
-    }));
-    if (material) {
-      selectCollection(material); // populates materialOverrides from collection defaults
-      trackEvent(AnalyticsEvents.PALETTE_SELECTED, { palette_id: material, tab: "design" });
-    }
-  }, [selectCollection]);
-
-  const setActivePalette = useCallback((paletteId: string | null) => {
-    setDesign((prev) => ({ ...prev, selectedMaterial: paletteId }));
-  }, []);
-
   // Style selection - with two-table approach, switching styles may restore cached generations
   const handleSelectStyle = useCallback((style: string | null) => {
     // With two-table caching, we don't need confirmation dialogs for style switching
@@ -734,7 +679,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setDesign((prev) => ({
       ...prev,
       freestyleDescription: description,
-      selectedMaterial: description ? null : prev.selectedMaterial, // Clear curated if typing freestyle
     }));
   }, []);
 
@@ -800,7 +744,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           uploadedImage: currentUploadedImage,
           generatedImage: currentGeneratedImage,
           selectedCategory: design.selectedCategory,
-          selectedMaterial: design.selectedMaterial,
           selectedStyle: design.selectedStyle,
           freestyleDescription: design.freestyleDescription,
           selectedTier,
@@ -872,8 +815,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     handleImageUpload,
     clearUploadedImage,
     handleSelectCategory,
-    handleSelectMaterial,
-    setActivePalette,
     handleSelectStyle,
     handleFreestyleChange,
     handleGenerate,
@@ -897,7 +838,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     clearVibeTag,
     skipVibePicker,
     resetVibeChoice,
-    selectCollection,
     shareSession,
     isSharing,
     isSharedSession,

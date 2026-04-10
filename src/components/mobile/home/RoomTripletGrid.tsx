@@ -26,7 +26,7 @@ export default function RoomTripletGrid({ onRoomSelect }: RoomTripletGridProps) 
       .map((room) => {
         const generatedImage = generation.generatedImages[room.displayName];
         const visualizationImage = getVisualization(
-          design.selectedMaterial,
+          null,
           room.displayName,
           design.selectedStyle
         );
@@ -35,7 +35,7 @@ export default function RoomTripletGrid({ onRoomSelect }: RoomTripletGridProps) 
           src: generatedImage || visualizationImage,
         };
       });
-  }, [currentRoom, design.selectedMaterial, design.selectedStyle, generation.generatedImages]);
+  }, [currentRoom, design.selectedStyle, generation.generatedImages]);
 
   if (triplets.length === 0) return null;
 

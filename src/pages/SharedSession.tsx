@@ -11,7 +11,6 @@ interface SharedSessionData {
   uploadedImage: string | null;
   generatedImage: string | null;
   selectedCategory: string | null;
-  selectedMaterial: string | null;
   selectedStyle: string | null;
   freestyleDescription: string;
   selectedTier: "Budget" | "Standard" | "Premium";

@@ -99,7 +99,7 @@ export default function DesignView() {
       if (slotKey) newSelections[slotKey] = materialId;
     }
     setSlotSelections(newSelections);
-  }, [design.selectedMaterial, design.selectedCategory, materialOverrides]);
+  }, [design.selectedCategory, materialOverrides]);
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
@@ -141,7 +141,7 @@ export default function DesignView() {
         selections={slotSelections}
         onSelect={handleSlotSelect}
         onClose={() => setOpenSlot(null)}
-        lockedCollectionId={design.selectedMaterial ?? undefined}
+        lockedCollectionId={undefined}
       />
     </div>
   );

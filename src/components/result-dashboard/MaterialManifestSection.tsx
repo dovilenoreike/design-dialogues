@@ -7,14 +7,12 @@ import { Link } from "react-router-dom";
 import { ChevronRight, User, MessageSquare, Sparkles } from "lucide-react";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
-import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { defaultMaterials } from "./constants";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MaterialManifestSectionProps {
   mode: "full" | "calculator";
-  selectedMaterial: string | null;
   selectedCategory: string | null;
   freestyleDescription: string;
   materialOverrides: Record<string, string>;
@@ -24,7 +22,6 @@ interface MaterialManifestSectionProps {
 
 const MaterialManifestSection = ({
   mode,
-  selectedMaterial,
   freestyleDescription,
   materialOverrides,
   onOpenDesignerSheet,
@@ -72,8 +69,7 @@ const MaterialManifestSection = ({
   }
 
   // Curated Mode - Show material cards
-  const collection = selectedMaterial ? collectionsV2.find((c) => c.id === selectedMaterial) ?? null : null;
-  const designerName = collection?.designer || "Dizaino Dialogai";
+  const designerName = "Dizaino Dialogai";
   const designerTitle = "Interior Designer";
 
   // Build deduplicated material list from materialOverrides

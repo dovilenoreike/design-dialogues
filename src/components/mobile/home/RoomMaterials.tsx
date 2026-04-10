@@ -6,12 +6,11 @@ import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 const MAX_SWATCHES = 5;
 
 export default function RoomMaterials() {
-  const { design, materialOverrides, excludedSlots, setActiveTab } = useDesign();
+  const { materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t } = useLanguage();
-  const { selectedMaterial } = design;
 
   const uniqueMaterials = useMemo(() => {
-    if (!selectedMaterial || Object.keys(materialOverrides).length === 0) return [];
+    if (Object.keys(materialOverrides).length === 0) return [];
 
     const seen = new Set<string>();
     const result: { matId: string; slotKey: string; image: string }[] = [];
@@ -29,7 +28,7 @@ export default function RoomMaterials() {
     }
 
     return result;
-  }, [selectedMaterial, materialOverrides, excludedSlots]);
+  }, [materialOverrides, excludedSlots]);
 
   if (uniqueMaterials.length === 0) return null;
 

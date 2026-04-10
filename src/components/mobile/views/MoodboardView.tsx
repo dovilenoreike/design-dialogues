@@ -8,7 +8,6 @@ import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import type { VibeTag } from "@/data/collections/types";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
-import { invalidateCollectionShowroomCache } from "@/lib/collection-utils";
 
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
@@ -88,7 +87,7 @@ const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { materialOverrides, setMaterialOverrides, setActiveTab, handleSelectMaterial, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
+  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
@@ -158,12 +157,6 @@ export default function MoodboardView() {
   useEffect(() => {
     localStorage.setItem("moodboard-slot-selections", JSON.stringify(slotSelections));
   }, [slotSelections]);
-
-  // When the Supabase graph cache loads, rebuild the collection showroom index
-  // so collectionHasShowroom uses Supabase showroomIds instead of the TS fallback.
-  useEffect(() => {
-    if (!graphLoading) invalidateCollectionShowroomCache();
-  }, [graphLoading]);
 
   // On mount (after graph loads): resolve archetype IDs → product codes in materialOverrides.
   // Skips slots that already have a valid technical code; replaces stale archetype IDs.
@@ -276,14 +269,13 @@ export default function MoodboardView() {
 
   const handleClearSlots = useCallback(() => {
     trackEvent(AnalyticsEvents.MOODBOARD_SLOTS_RESET, {});
-    handleSelectMaterial(null);
     setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null });
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       Object.values(SLOT_TO_PALETTE_KEY).forEach((k) => { if (k) delete next[k]; });
       return next;
     });
-  }, [handleSelectMaterial, setMaterialOverrides]);
+  }, [setMaterialOverrides]);
 
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
     trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_CLEARED, {
