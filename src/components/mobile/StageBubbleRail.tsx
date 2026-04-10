@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, RotateCcw, Plus } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
@@ -16,9 +16,7 @@ interface StageBubbleRailProps {
   activeMode: ControlMode;
   onOpenSelector?: (mode: ControlMode) => void;
   setActiveMode: (mode: ControlMode) => void;
-  hasMaterialChanges: boolean;
   t: (key: string) => string;
-  language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
 }
@@ -34,9 +32,7 @@ export default function StageBubbleRail({
   activeMode,
   onOpenSelector,
   setActiveMode,
-  hasMaterialChanges,
   t,
-  language,
   variant,
 }: StageBubbleRailProps) {
 
@@ -132,18 +128,6 @@ export default function StageBubbleRail({
 
   return (
     <div className={`${containerClass} ${bottomClass}`}>
-      {hasMaterialChanges && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setMaterialOverrides({});
-          }}
-          className={`${variant === "browsing" ? "w-full" : ""} py-1.5 flex justify-center active:scale-95 transition-all mb-1`}
-        >
-          <RotateCcw className="w-3 h-3 text-white/60" strokeWidth={2} />
-        </button>
-      )}
-
       <div
         className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
         style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}

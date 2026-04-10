@@ -50,7 +50,7 @@ interface StageProps {
 }
 
 export default function Stage({ onOpenSelector }: StageProps = {}) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const {
     design,
     generation,
@@ -146,11 +146,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
-
-  // True when there are user-applied material overrides (the overrides ARE the design choices)
-  const hasMaterialChanges = useMemo(() => {
-    return Object.keys(materialOverrides).length > 0;
-  }, [materialOverrides]);
 
   // Always blur the stock visualization when there is no user photo — regardless of whether
   // materials are selected — so the design tab looks consistent in both states.
@@ -383,9 +378,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
-          hasMaterialChanges={hasMaterialChanges}
           t={t}
-          language={language}
           variant="browsing"
         />
       )}
@@ -404,9 +397,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
-          hasMaterialChanges={hasMaterialChanges}
           t={t}
-          language={language}
           variant="uploaded"
         />
       )}
