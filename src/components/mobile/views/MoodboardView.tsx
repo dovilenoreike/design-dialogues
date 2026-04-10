@@ -7,7 +7,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import type { VibeTag } from "@/data/collections/types";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
-import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { invalidateCollectionShowroomCache } from "@/lib/collection-utils";
 
 
@@ -184,7 +184,10 @@ export default function MoodboardView() {
         const showroomPool = activeShowroom && activeShowroom.surfaceCategories.includes(role)
           ? graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id))
           : graphMaterials;
-        const resolved = showroomPool.find((m) => m.archetypeId === aId && m.role.includes(role));
+        const candidates = showroomPool.filter((m) => m.archetypeId === aId && m.role.includes(role));
+        const resolved = candidates.length > 0
+          ? candidates.reduce((best, m) => getPairCountByCode(m.technicalCode) >= getPairCountByCode(best.technicalCode) ? m : best)
+          : undefined;
         if (resolved) {
           next[pk] = resolved.technicalCode;
         } else if (!next[pk]) {
