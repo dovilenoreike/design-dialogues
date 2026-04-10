@@ -21,8 +21,6 @@ interface StageBubbleRailProps {
   language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
-  /** Returns graph-ranked material codes compatible with other selections */
-  getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
 }
 
 export default function StageBubbleRail({
@@ -40,7 +38,6 @@ export default function StageBubbleRail({
   t,
   language,
   variant,
-  getRecommendedCodes,
 }: StageBubbleRailProps) {
 
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -48,11 +45,27 @@ export default function StageBubbleRail({
     try { return !localStorage.getItem("bubble-rail-hint-seen"); } catch { return true; }
   });
 
+  // Per-role alternatives cache. All same-role slots share the same list.
+  // Invalidated when materialOverrides receives a code outside the cached list (flatlay/moodboard update).
+  const roleAltsCacheRef = useRef<Record<string, Array<{ materialId: string; image: string }>>>({});
+
   // Snapshotted alternatives for the currently active slot.
-  // Computed once when activeSlot opens — never changes while the rail is open.
   const [slotAlternatives, setSlotAlternatives] = useState<Array<{ materialId: string; image: string }>>([]);
   const materialOverridesRef = useRef(materialOverrides);
   materialOverridesRef.current = materialOverrides;
+
+  // Invalidate role cache when a new code arrives that wasn't in the cached alternatives
+  // (indicates a flatlay/moodboard update rather than a rail selection).
+  useEffect(() => {
+    for (const [slot, code] of Object.entries(materialOverrides)) {
+      const role = SLOT_TO_ROLE[slot];
+      if (!role) continue;
+      const cached = roleAltsCacheRef.current[role];
+      if (cached && !cached.some(alt => alt.materialId === code)) {
+        delete roleAltsCacheRef.current[role];
+      }
+    }
+  }, [materialOverrides]);
 
   useEffect(() => {
     setShowAddMenu(false);
@@ -61,38 +74,34 @@ export default function StageBubbleRail({
     const bubble = bubbles.find(b => b.slotKey === activeSlot);
     if (!bubble) { setSlotAlternatives([]); return; }
 
-    const overrides = materialOverridesRef.current;
-    const currentCode = overrides[activeSlot] || bubble.materialId;
     const role = SLOT_TO_ROLE[activeSlot];
 
-    // Cross-role other codes only — pair_compatibility is cross-role,
-    // so same-role slots (e.g. topCabinets when bottomCabinets is open) are excluded.
-    // This also makes all front slots produce identical alternatives.
-    const otherCodes = Object.entries(overrides)
-      .filter(([k, v]) => k !== activeSlot && !!v && SLOT_TO_ROLE[k] !== role)
-      .map(([, v]) => v);
+    // Serve from cache — all same-role slots share the same list until a flatlay update invalidates it
+    if (role && roleAltsCacheRef.current[role]) {
+      setSlotAlternatives(roleAltsCacheRef.current[role]);
+      return;
+    }
 
-    // Slot 0: always the flatlay-chosen material
-    const flatlayCurrent = currentCode;
+    const overrides = materialOverridesRef.current;
 
-    // Slots 1–2: graph-ranked alternatives compatible with cross-role context
-    const graphAlts = getRecommendedCodes && otherCodes.length > 0
-      ? getRecommendedCodes(null, otherCodes, role ?? undefined)
-          .filter(code => code !== flatlayCurrent)
-          .slice(0, 2)
-      : [];
+    // "Flatlay" codes = all unique materialOverrides values for same-role slots
+    const flatlayCodes = [...new Set(
+      Object.entries(overrides)
+        .filter(([k, v]) => SLOT_TO_ROLE[k] === role && !!v)
+        .map(([, v]) => v)
+    )];
 
-    // Fallback: if graph returned fewer than 2, fill with most-paired materials for this role
-    const neededFallback = 2 - graphAlts.length;
-    const fallbackAlts = neededFallback > 0 && role
+    // Fill to 4 total with highest pair-count materials not already in the flatlay
+    const neededExtras = Math.max(0, 4 - flatlayCodes.length);
+    const extraCodes = role
       ? getMaterialsByRole(role)
-          .filter(m => m.technicalCode !== flatlayCurrent && !graphAlts.includes(m.technicalCode) && !!m.imageUrl)
+          .filter(m => !flatlayCodes.includes(m.technicalCode) && !!m.imageUrl)
           .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))
-          .slice(0, neededFallback)
+          .slice(0, neededExtras)
           .map(m => m.technicalCode)
       : [];
 
-    const candidates = [flatlayCurrent, ...graphAlts, ...fallbackAlts];
+    const candidates = [...flatlayCodes, ...extraCodes];
     const alternatives = candidates
       .map(code => {
         const img = getMaterialByCode(code)?.imageUrl ?? getArchetypeById(code)?.image;
@@ -100,6 +109,8 @@ export default function StageBubbleRail({
       })
       .filter((x): x is { materialId: string; image: string } => x !== null);
 
+    // Cache by role so all same-role slots reuse this list
+    if (role) roleAltsCacheRef.current[role] = alternatives;
     setSlotAlternatives(alternatives);
   }, [activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 

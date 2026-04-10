@@ -19,7 +19,6 @@ import { getArchetypeById } from "@/data/archetypes";
 import { type MaterialBubble } from "@/lib/collection-utils";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
-import { useGraphMaterials } from "@/hooks/useGraphMaterials";
 
 const BUBBLE_RAIL_SLOT_ORDER = [
   "floor", "bottomCabinets", "topCabinets", "tallCabinets", "shelves", "worktops", "accents", "tiles", "additionalTiles",
@@ -74,7 +73,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   } = useDesign();
   const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
   const { user } = useAuth();
-  const { getRecommendedCodes } = useGraphMaterials();
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
@@ -389,7 +387,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           t={t}
           language={language}
           variant="browsing"
-          getRecommendedCodes={getRecommendedCodes}
         />
       )}
 
@@ -411,7 +408,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           t={t}
           language={language}
           variant="uploaded"
-          getRecommendedCodes={getRecommendedCodes}
         />
       )}
 
