@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@4.0.0";
 import { captureException } from "../_shared/sentry.ts";
 
 const corsHeaders = {
@@ -30,8 +29,6 @@ serve(async (req) => {
     if (!RECIPIENT_EMAIL) {
       throw new Error("RECIPIENT_EMAIL is not configured");
     }
-
-    const resend = new Resend(RESEND_API_KEY);
 
     let subject: string;
     let html: string;
@@ -144,23 +141,25 @@ serve(async (req) => {
 
     console.log(`Sending ${type} email to: ${toEmail}`);
 
-    let resendError;
-    try {
-      const result = await resend.emails.send({
-        from: "Design Dialogues <onboarding@resend.dev>",
+    const resendRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Design Dialogues <noreply@updates.dizainodialogai.lt>",
         to: [toEmail],
         subject,
         html,
         reply_to: typeof data.email === "string" ? data.email : undefined,
-      });
-      resendError = result.error;
-    } catch (err) {
-      throw new Error(`Resend API unreachable: ${err instanceof Error ? err.message : String(err)}`);
-    }
+      }),
+    });
 
-    if (resendError) {
+    if (!resendRes.ok) {
+      const resendError = await resendRes.json().catch(() => ({}));
       console.error("Resend error:", resendError);
-      throw new Error(resendError.message || JSON.stringify(resendError));
+      throw new Error(resendError.message || resendError.name || JSON.stringify(resendError));
     }
 
     console.log("Email sent successfully");

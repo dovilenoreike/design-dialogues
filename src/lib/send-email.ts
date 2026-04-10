@@ -4,27 +4,28 @@ import { captureError } from "@/lib/sentry";
 type EmailType = "partner" | "feedback" | "designer-inquiry" | "material-request" | "provider-inquiry";
 
 export async function sendEmail(type: EmailType, data: Record<string, unknown>) {
-  try {
-    const { data: result, error } = await supabase.functions.invoke("send-email", {
-      body: { type, data },
-    });
+  const { data: result, error } = await supabase.functions.invoke("send-email", {
+    body: { type, data },
+  });
 
-    if (error) {
-      captureError(error, {
-        action: "sendEmail",
-        edgeFunction: "send-email",
-        emailType: type,
-      });
-      throw new Error(error.message);
+  if (error) {
+    // Extract the actual error message from the edge function response body
+    let message = error.message;
+    try {
+      // FunctionsHttpError exposes the raw response on .context
+      const body = await (error as unknown as { context: Response }).context?.json?.();
+      if (body?.error) message = body.error;
+    } catch {
+      // ignore — fall back to generic message
     }
 
-    return result;
-  } catch (err) {
-    captureError(err, {
+    captureError(new Error(message), {
       action: "sendEmail",
       edgeFunction: "send-email",
       emailType: type,
     });
-    throw err;
+    throw new Error(message);
   }
+
+  return result;
 }
