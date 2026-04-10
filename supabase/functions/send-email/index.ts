@@ -79,6 +79,7 @@ serve(async (req) => {
           <h2>New Service Inquiry</h2>
           <p><strong>Provider:</strong> ${data.providerName}</p>
           ${data.providerPhone ? `<p><strong>Provider Phone:</strong> ${data.providerPhone}</p>` : ""}
+          ${data.providerEmail ? `<p><strong>Provider Email:</strong> ${data.providerEmail}</p>` : ""}
           <p><strong>From:</strong> ${data.name} (${data.email})</p>
           <p><strong>Message:</strong></p>
           <p>${data.message}</p>

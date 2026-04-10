@@ -1,6 +1,17 @@
 import type { ProviderBrand } from "./types";
 
 export const providerBrands: ProviderBrand[] = [
+  {
+    id: "forma-x",
+    name: "Forma X",
+    specialty: "Cabinetry",
+    description: "Nestandartinių baldų projektavimo ir gamybos studija.",
+    phone: "+370 603 22 132",
+    email: "marius@formax.lt",
+    website: "https://formax.lt/",
+    isPartner: true,
+    cities: ["vilnius"],
+  },
   // Cabinetry
   // {
   //   id: "baldu-meistrai",

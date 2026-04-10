@@ -34,8 +34,10 @@ export function getShowroomsForMaterial(
       name: b.name,
       address: b.locations[city]!.address,
       phone: b.locations[city]!.phone,
+      email: b.locations[city]!.email,
       url: b.url,
       isPartner: b.isPartner,
+      isDelivery: b.isDelivery,
     }));
 
   // If none available in current city, find which cities have them

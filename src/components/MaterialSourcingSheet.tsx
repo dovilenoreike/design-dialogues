@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { MapPin, Clock, ChevronRight, X, Phone, Globe } from "lucide-react";
-import type { ProviderBrand } from "@/data/sourcing/types";
+import { MapPin, Clock, X, Phone, Globe, Mail } from "lucide-react";
+import type { ProviderBrand, ShowroomResult } from "@/data/sourcing/types";
 import {
   Drawer,
   DrawerContent,
@@ -57,6 +57,7 @@ const MaterialSourcingSheet = ({
   const isMobile = useIsMobile();
   const { activeProvider } = useProvider();
   const [contactProvider, setContactProvider] = useState<ProviderBrand | null>(null);
+  const [contactShowroom, setContactShowroom] = useState<ShowroomResult | null>(null);
   const [msgName, setMsgName] = useState("");
   const [msgEmail, setMsgEmail] = useState("");
   const [msgText, setMsgText] = useState("");
@@ -73,6 +74,7 @@ const MaterialSourcingSheet = ({
         message: msgText,
         providerName: contactProvider.name,
         providerPhone: contactProvider.phone,
+        providerEmail: contactProvider.email,
       });
       toast.success(t("provider.successTitle"), {
         description: t("provider.successDescription").replace("{name}", contactProvider.name),
@@ -82,6 +84,33 @@ const MaterialSourcingSheet = ({
       setMsgEmail("");
       setMsgText("");
       setContactProvider(null);
+    } catch {
+      toast.error(t("error.sendEmailFailed"));
+    } finally {
+      setIsSendingMsg(false);
+    }
+  };
+
+  const handleShowroomMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactShowroom) return;
+    setIsSendingMsg(true);
+    try {
+      await sendEmail("provider-inquiry", {
+        name: msgName,
+        email: msgEmail,
+        message: msgText,
+        providerName: contactShowroom.name,
+        providerEmail: contactShowroom.email,
+      });
+      toast.success(t("provider.successTitle"), {
+        description: t("provider.successDescription").replace("{name}", contactShowroom.name),
+        position: "top-center",
+      });
+      setMsgName("");
+      setMsgEmail("");
+      setMsgText("");
+      setContactShowroom(null);
     } catch {
       toast.error(t("error.sendEmailFailed"));
     } finally {
@@ -168,21 +197,48 @@ const MaterialSourcingSheet = ({
         {hasShowrooms ? (
           <div className="space-y-2">
             {showroomResult.available.map((showroom) => (
-              <a
+              <div
                 key={showroom.id}
-                href={showroom.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground">{showroom.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {showroom.address}
+                    {showroom.isDelivery ? t("sourcing.bringsMaterials") : showroom.address}
                   </p>
                 </div>
-                <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-              </a>
+                <div className="flex items-center gap-2">
+                  {showroom.url && (
+                    <a
+                      href={showroom.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                      aria-label="Website"
+                    >
+                      <Globe size={14} className="text-foreground" />
+                    </a>
+                  )}
+                  {showroom.phone && (
+                    <a
+                      href={`tel:${showroom.phone}`}
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                      aria-label="Call"
+                    >
+                      <Phone size={14} className="text-foreground" />
+                    </a>
+                  )}
+                  {showroom.email && (
+                    <button
+                      onClick={() => setContactShowroom(showroom)}
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                      aria-label="Email"
+                    >
+                      <Mail size={14} className="text-foreground" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         ) : hasOtherCities ? (
@@ -209,10 +265,9 @@ const MaterialSourcingSheet = ({
         {hasProviders ? (
           <div className="space-y-2">
             {providers.map((provider) => (
-              <button
+              <div
                 key={provider.id}
-                onClick={() => setContactProvider(provider)}
-                className="w-full flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors text-left"
+                className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl"
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground">{provider.name}</p>
@@ -222,8 +277,36 @@ const MaterialSourcingSheet = ({
                     </p>
                   )}
                 </div>
-                <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-              </button>
+                <div className="flex items-center gap-2">
+                  {provider.phone && (
+                    <a
+                      href={`tel:${provider.phone}`}
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                      aria-label="Call"
+                    >
+                      <Phone size={14} className="text-foreground" />
+                    </a>
+                  )}
+                  {provider.website && (
+                    <a
+                      href={provider.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                      aria-label="Website"
+                    >
+                      <Globe size={14} className="text-foreground" />
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setContactProvider(provider)}
+                    className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                    aria-label="Email"
+                  >
+                    <Mail size={14} className="text-foreground" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -302,21 +385,48 @@ const MaterialSourcingSheet = ({
               {hasShowrooms ? (
                 <div className="space-y-2">
                   {showroomResult.available.map((showroom) => (
-                    <a
+                    <div
                       key={showroom.id}
-                      href={showroom.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground">{showroom.name}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {showroom.address}
+                          {showroom.isDelivery ? t("sourcing.bringsMaterials") : showroom.address}
                         </p>
                       </div>
-                      <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-                    </a>
+                      <div className="flex items-center gap-2">
+                        {showroom.url && (
+                          <a
+                            href={showroom.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                            aria-label="Website"
+                          >
+                            <Globe size={14} className="text-foreground" />
+                          </a>
+                        )}
+                        {showroom.phone && (
+                          <a
+                            href={`tel:${showroom.phone}`}
+                            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                            aria-label="Call"
+                          >
+                            <Phone size={14} className="text-foreground" />
+                          </a>
+                        )}
+                        {showroom.email && (
+                          <button
+                            onClick={() => setContactShowroom(showroom)}
+                            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                            aria-label="Email"
+                          >
+                            <Mail size={14} className="text-foreground" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : hasOtherCities ? (
@@ -343,10 +453,9 @@ const MaterialSourcingSheet = ({
               {hasProviders ? (
                 <div className="space-y-2">
                   {providers.map((provider) => (
-                    <button
+                    <div
                       key={provider.id}
-                      onClick={() => setContactProvider(provider)}
-                      className="w-full flex items-center gap-3 p-4 bg-background border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors text-left"
+                      className="flex items-center gap-3 p-4 bg-background border border-border rounded-xl"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground">{provider.name}</p>
@@ -356,8 +465,36 @@ const MaterialSourcingSheet = ({
                           </p>
                         )}
                       </div>
-                      <ChevronRight size={20} className="text-muted-foreground flex-shrink-0" />
-                    </button>
+                      <div className="flex items-center gap-2">
+                        {provider.phone && (
+                          <a
+                            href={`tel:${provider.phone}`}
+                            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                            aria-label="Call"
+                          >
+                            <Phone size={14} className="text-foreground" />
+                          </a>
+                        )}
+                        {provider.website && (
+                          <a
+                            href={provider.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                            aria-label="Website"
+                          >
+                            <Globe size={14} className="text-foreground" />
+                          </a>
+                        )}
+                        <button
+                          onClick={() => setContactProvider(provider)}
+                          className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors"
+                          aria-label="Email"
+                        >
+                          <Mail size={14} className="text-foreground" />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -446,6 +583,66 @@ const MaterialSourcingSheet = ({
           </DialogContent>
         </Dialog>
       )}
+      {contactShowroom && (
+        <Dialog open={!!contactShowroom} onOpenChange={(open) => !open && setContactShowroom(null)}>
+          <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+            <DialogTitle className="font-serif text-xl">{contactShowroom.name}</DialogTitle>
+            <div className="space-y-3 mt-1">
+              {contactShowroom.phone && (
+                <a
+                  href={`tel:${contactShowroom.phone}`}
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{contactShowroom.phone}</span>
+                </a>
+              )}
+            </div>
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
+                {t("provider.sendMessage")}
+              </p>
+              <form onSubmit={handleShowroomMessage} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-name">{t("designer.formName")}</Label>
+                  <Input
+                    id="sr-name"
+                    value={msgName}
+                    onChange={(e) => setMsgName(e.target.value)}
+                    placeholder={t("designer.formName")}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-email">{t("designer.formEmail")}</Label>
+                  <Input
+                    id="sr-email"
+                    type="email"
+                    value={msgEmail}
+                    onChange={(e) => setMsgEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-msg">{t("provider.formMessage")}</Label>
+                  <Textarea
+                    id="sr-msg"
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    placeholder={t("provider.formMessagePlaceholder")}
+                    className="resize-none h-24"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSendingMsg}>
+                  {isSendingMsg ? t("designer.sending") : t("provider.sendMessageButton")}
+                </Button>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       </>
     );
   }
@@ -519,6 +716,66 @@ const MaterialSourcingSheet = ({
                   <Label htmlFor="prov-msg">{t("provider.formMessage")}</Label>
                   <Textarea
                     id="prov-msg"
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    placeholder={t("provider.formMessagePlaceholder")}
+                    className="resize-none h-24"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSendingMsg}>
+                  {isSendingMsg ? t("designer.sending") : t("provider.sendMessageButton")}
+                </Button>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {contactShowroom && (
+        <Dialog open={!!contactShowroom} onOpenChange={(open) => !open && setContactShowroom(null)}>
+          <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+            <DialogTitle className="font-serif text-xl">{contactShowroom.name}</DialogTitle>
+            <div className="space-y-3 mt-1">
+              {contactShowroom.phone && (
+                <a
+                  href={`tel:${contactShowroom.phone}`}
+                  className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors"
+                >
+                  <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm font-medium">{contactShowroom.phone}</span>
+                </a>
+              )}
+            </div>
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
+                {t("provider.sendMessage")}
+              </p>
+              <form onSubmit={handleShowroomMessage} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-name2">{t("designer.formName")}</Label>
+                  <Input
+                    id="sr-name2"
+                    value={msgName}
+                    onChange={(e) => setMsgName(e.target.value)}
+                    placeholder={t("designer.formName")}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-email2">{t("designer.formEmail")}</Label>
+                  <Input
+                    id="sr-email2"
+                    type="email"
+                    value={msgEmail}
+                    onChange={(e) => setMsgEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sr-msg2">{t("provider.formMessage")}</Label>
+                  <Textarea
+                    id="sr-msg2"
                     value={msgText}
                     onChange={(e) => setMsgText(e.target.value)}
                     placeholder={t("provider.formMessagePlaceholder")}

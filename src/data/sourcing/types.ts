@@ -2,8 +2,9 @@ import type { City } from "@/contexts/CityContext";
 import type { MaterialRole } from "@/types/material-types";
 
 export interface ShowroomLocation {
-  address: string;
+  address?: string;
   phone?: string;
+  email?: string;
 }
 
 export interface ShowroomBrand {
@@ -12,6 +13,7 @@ export interface ShowroomBrand {
   url?: string;
   surfaceCategories: MaterialRole[];
   isPartner?: boolean;
+  isDelivery?: boolean;
   locations: Partial<Record<City, ShowroomLocation>>;
 }
 
@@ -19,10 +21,12 @@ export interface ShowroomBrand {
 export interface ShowroomResult {
   id: string;
   name: string;
-  address: string;
+  address?: string;
   phone?: string;
+  email?: string;
   url?: string;
   isPartner?: boolean;
+  isDelivery?: boolean;
 }
 
 // Result with availability info
@@ -37,6 +41,7 @@ export interface ProviderBrand {
   specialty: string;
   description?: string;
   phone?: string;
+  email?: string;
   website?: string;
   isPartner?: boolean;
   cities: City[];

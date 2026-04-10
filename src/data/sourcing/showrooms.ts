@@ -37,18 +37,15 @@ export const showroomBrands: ShowroomBrand[] = [
     },
     url: "https://solido.lt/",
   },
-  {
-    id: "jusu-salonas",
-    name: "Jūsų Salonas",
+    {
+    id: "magnus-grindys",
+    name: "Magnus Grindys",
     surfaceCategories: ["floor"],
-    isPartner: false,
-    locations: {},
-    // locations: {
-    //   vilnius: { address: " P. Lukšio g. 32, Vilnius (DOMUS Galerija)" },
-    //   kaunas: { address: "Juozapavičiaus pr. 31-7, Kaunas" },
-    //   klaipeda: { address: "Liepų g. 83, Klaipėda" },
-    // },
-    url: "https://solido.lt/",
+    isDelivery: true,
+    locations: {
+      vilnius: { phone: "+370 628 34074", email: "info@magnusgrindys.lt" },
+    },
+    url: "https://magnusgrindys.lt/",
   },
   {
     id: "linea",
