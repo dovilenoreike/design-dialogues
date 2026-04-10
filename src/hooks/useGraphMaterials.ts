@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarLightness, countCompatible } from '@/lib/graph-compatibility';
+import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarLightness, countCompatible, weightedScore } from '@/lib/graph-compatibility';
 import { deriveArchetypeId } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -17,6 +17,7 @@ export interface SupabaseMaterial extends GraphMaterial {
 interface GraphCache {
   graphMaterials: SupabaseMaterial[];
   pairs: Set<string>;
+  pairWeights: Map<string, number>;
   codeToId: Map<string, string>;
   idToCode: Map<string, string>;
   byCode: Map<string, SupabaseMaterial>;
@@ -32,7 +33,7 @@ async function loadGraphData(): Promise<GraphCache> {
     supabase.from('materials' as any).select(
       'id, technical_code, role, texture, lightness, warmth, pattern, chroma, name, description, image_url, material_type, tier, showroom_ids, texture_prompt'
     ),
-    supabase.from('pair_compatibility' as any).select('material_a, material_b'),
+    supabase.from('pair_compatibility' as any).select('material_a, material_b, weight'),
   ]);
   const graphMaterials: SupabaseMaterial[] = (mats ?? []).map((r: any) => ({
     id: r.id,
@@ -62,11 +63,14 @@ async function loadGraphData(): Promise<GraphCache> {
   const codeToId = new Map(graphMaterials.map((m) => [m.technicalCode, m.id]));
   const idToCode = new Map(graphMaterials.map((m) => [m.id, m.technicalCode]));
   const byCode   = new Map(graphMaterials.map((m) => [m.technicalCode, m]));
-  const pairs = new Set<string>(
-    (pc ?? []).map((r: any) => pairKey(r.material_a, r.material_b))
-  );
+  const pairs = new Set<string>();
+  const pairWeights = new Map<string, number>();
   const pairCountByUuid = new Map<string, number>();
-  for (const key of pairs) {
+  for (const r of (pc ?? [])) {
+    const key = pairKey(r.material_a, r.material_b);
+    const w: number = r.weight ?? 1.0;
+    pairs.add(key);
+    pairWeights.set(key, w);
     const sep = key.indexOf('::');
     const a = key.slice(0, sep);
     const b = key.slice(sep + 2);
@@ -74,7 +78,7 @@ async function loadGraphData(): Promise<GraphCache> {
     pairCountByUuid.set(b, (pairCountByUuid.get(b) ?? 0) + 1);
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
-  return { graphMaterials, pairs, codeToId, idToCode, byCode, pairCountByUuid };
+  return { graphMaterials, pairs, pairWeights, codeToId, idToCode, byCode, pairCountByUuid };
 }
 
 // ─── Module-level synchronous lookups (readable once cache is warm) ───────────
@@ -91,15 +95,15 @@ export function getPairCountByCode(code: string): number {
   return _cached?.pairCountByUuid.get(id) ?? 0;
 }
 
-/** Returns how many of the given otherCodes this material is compatible with. */
+/** Returns the weighted compatibility score of this material against the given otherCodes. */
 export function getCompatibilityScore(code: string, otherCodes: string[]): number {
   if (!_cached || otherCodes.length === 0) return 0;
-  const { codeToId, pairs } = _cached;
+  const { codeToId, pairWeights } = _cached;
   const id = codeToId.get(code);
   if (!id) return 0;
   const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
   if (otherUuids.length === 0) return 0;
-  return countCompatible(id, otherUuids, pairs);
+  return weightedScore(id, otherUuids, pairWeights);
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -126,7 +130,7 @@ export function useGraphMaterials() {
     targetRole?: string,
   ): string | null {
     if (!_cached) return null;
-    const { codeToId, idToCode, pairs, graphMaterials: mats } = _cached;
+    const { codeToId, idToCode, pairs, pairWeights, graphMaterials: mats } = _cached;
     const slotUuid = codeToId.get(slotCode);
     const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
     if (!slotUuid || otherUuids.length === 0) return null;
@@ -144,10 +148,10 @@ export function useGraphMaterials() {
         (!slotMat.archetypeId || m.archetypeId === slotMat.archetypeId)
       );
       if (narrowed.length === 0) return null;
-      const best = rankByCompatibility(narrowed, otherUuids, pairs)[0];
+      const best = rankByCompatibility(narrowed, otherUuids, pairs, pairWeights)[0];
       return best ? (idToCode.get(best.id) ?? null) : null;
     }
-    const best = rankByCompatibility(candidates, otherUuids, pairs)[0];
+    const best = rankByCompatibility(candidates, otherUuids, pairs, pairWeights)[0];
     return best ? (idToCode.get(best.id) ?? null) : null;
   }
 
@@ -160,7 +164,7 @@ export function useGraphMaterials() {
     targetRole?: string,
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
-    const { codeToId, idToCode, pairs, graphMaterials: mats } = _cached;
+    const { codeToId, idToCode, pairs, pairWeights, graphMaterials: mats } = _cached;
     const otherUuids = otherCodes.map((c) => codeToId.get(c)).filter((id): id is string => !!id);
     if (otherUuids.length === 0) return [];
     const threshold = Math.min(2, otherUuids.length);
@@ -179,7 +183,7 @@ export function useGraphMaterials() {
       );
       if (narrowed.length > 0) pool = narrowed;
     }
-    return rankByCompatibility(pool, otherUuids, pairs)
+    return rankByCompatibility(pool, otherUuids, pairs, pairWeights)
       .map((m) => idToCode.get(m.id)!)
       .filter(Boolean);
   }

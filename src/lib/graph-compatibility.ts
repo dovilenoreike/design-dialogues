@@ -48,14 +48,30 @@ export function countCompatible(
   return selectedUuids.filter((sel) => pairs.has(pairKey(candidateUuid, sel))).length;
 }
 
+export function weightedScore(
+  candidateUuid: string,
+  selectedUuids: string[],
+  pairWeights: Map<string, number>,
+): number {
+  return selectedUuids.reduce((sum, sel) => {
+    const key = pairKey(candidateUuid, sel);
+    return sum + (pairWeights.get(key) ?? 0);
+  }, 0);
+}
+
 export function rankByCompatibility(
   candidates: GraphMaterial[],
   selectedUuids: string[],
   pairs: Set<string>,
+  pairWeights?: Map<string, number>,
 ): GraphMaterial[] {
   return [...candidates].sort((a, b) => {
-    const scoreA = selectedUuids.filter((s) => pairs.has(pairKey(a.id, s))).length;
-    const scoreB = selectedUuids.filter((s) => pairs.has(pairKey(b.id, s))).length;
+    const scoreA = pairWeights
+      ? weightedScore(a.id, selectedUuids, pairWeights)
+      : selectedUuids.filter((s) => pairs.has(pairKey(a.id, s))).length;
+    const scoreB = pairWeights
+      ? weightedScore(b.id, selectedUuids, pairWeights)
+      : selectedUuids.filter((s) => pairs.has(pairKey(b.id, s))).length;
     return scoreB - scoreA;
   });
 }
