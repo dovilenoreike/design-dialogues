@@ -6,7 +6,6 @@ import { deriveArchetypeId } from '@/lib/archetype-rules';
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
 export interface SupabaseMaterial extends GraphMaterial {
   name: { en: string; lt: string } | null;
-  description: { en: string; lt: string } | null;
   imageUrl: string | null;
   materialType: string | null;
   tier: 'budget' | 'optimal' | 'premium' | null;
@@ -31,7 +30,7 @@ async function loadGraphData(): Promise<GraphCache> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: mats }, { data: pc }] = await Promise.all([
     supabase.from('materials' as any).select(
-      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, name, description, image_url, material_type, tier, showroom_ids, texture_prompt'
+      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, name, image_url, material_type, tier, showroom_ids, texture_prompt'
     ),
     supabase.from('pair_compatibility' as any).select('material_a, material_b, weight'),
   ]);
@@ -47,7 +46,6 @@ async function loadGraphData(): Promise<GraphCache> {
     archetypeId: null,
     // extended display fields
     name: r.name ?? null,
-    description: r.description ?? null,
     imageUrl: r.image_url ?? null,
     materialType: r.material_type ?? null,
     tier: r.tier ?? null,
