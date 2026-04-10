@@ -1,13 +1,14 @@
 import { useState, useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, useGraphMaterials } from "@/hooks/useGraphMaterials";
 
 const MAX_SWATCHES = 5;
 
 export function MaterialsSummary() {
   const { materialOverrides, excludedSlots, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
+  const { graphMaterials } = useGraphMaterials();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   const uniqueMaterials = useMemo(() => {
@@ -32,7 +33,7 @@ export function MaterialsSummary() {
     }
 
     return result;
-  }, [materialOverrides, excludedSlots, language]);
+  }, [materialOverrides, excludedSlots, language, graphMaterials]);
 
   const handleSwatchClick = (index: number) => {
     setExpandedIndex(expandedIndex === index ? null : index);

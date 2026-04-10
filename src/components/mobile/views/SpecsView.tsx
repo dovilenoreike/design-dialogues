@@ -4,7 +4,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { designers, getDesignerWithFallback } from "@/data/designers";
 import { collectionsV2 } from "@/data/collections/collections-v2";
-import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, useGraphMaterials } from "@/hooks/useGraphMaterials";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
@@ -20,6 +20,7 @@ export default function SpecsView() {
   const { design, materialOverrides, excludedSlots, handleSelectMaterial, selectedTier, setActiveTab, selectCollection } = useDesign();
   const { activeShowroom } = useShowroom();
   const { t, language } = useLanguage();
+  const { graphMaterials, loading: materialsLoading } = useGraphMaterials();
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [isPaletteSelectorOpen, setIsPaletteSelectorOpen] = useState(false);
@@ -56,7 +57,7 @@ export default function SpecsView() {
       slotKeys: matSlots.get(matId)!,
       mat: getMaterialByCode(matId),
     })).filter((entry) => entry.mat != null);
-  }, [materialOverrides, excludedSlots]);
+  }, [materialOverrides, excludedSlots, graphMaterials]);
 
   return (
     <div className="flex-1 overflow-y-auto relative">
@@ -145,7 +146,7 @@ export default function SpecsView() {
             </div>
           )}
 
-          {groupedMaterials.length === 0 ? (
+          {groupedMaterials.length === 0 && !materialsLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
                 <Sparkles className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
