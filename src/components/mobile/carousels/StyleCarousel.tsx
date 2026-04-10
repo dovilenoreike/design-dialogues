@@ -7,7 +7,7 @@ import { getVisualization } from "@/data/visualisations";
 export default function StyleCarousel() {
   const { design, handleSelectStyle } = useDesign();
   const { t } = useLanguage();
-  const { selectedStyle, selectedCategory, selectedMaterial } = design;
+  const { selectedStyle, selectedCategory } = design;
 
   return (
     <div
@@ -19,7 +19,7 @@ export default function StyleCarousel() {
         {styles.map((style) => {
           const isSelected = selectedStyle === style.id;
           // Use style ID for visualization lookup (folder structure is by style)
-          const dynamicImageUrl = getVisualization(selectedMaterial, selectedCategory, style.id);
+          const dynamicImageUrl = getVisualization(null, selectedCategory, style.id);
           const fallbackImageUrl = getStyleImage(style.id);
 
           return (

@@ -13,6 +13,7 @@ export function useThreadSections(): ThreadSectionState {
   const {
     generation,
     design,
+    materialOverrides,
     formData,
     layoutAuditResponses,
     userMoveInDate,
@@ -20,14 +21,13 @@ export function useThreadSections(): ThreadSectionState {
   } = useDesign();
 
   return useMemo(() => {
-    // CONCEPT: has generated images, uploaded images, OR has selected palette+style (pregenerated)
+    // CONCEPT: has generated images or uploaded images
     const hasUploadedImages = Object.values(design.uploadedImages).some(img => img !== null);
     const hasGeneratedImages = Object.values(generation.generatedImages).some(img => img !== null);
-    const hasPregenerated = design.selectedMaterial !== null && design.selectedStyle !== null;
-    const concept = !!(hasGeneratedImages || hasUploadedImages || hasPregenerated);
+    const concept = !!(hasGeneratedImages || hasUploadedImages);
 
-    // MATERIALS: has selected material (palette)
-    const materials = design.selectedMaterial !== null;
+    // MATERIALS: has any material overrides applied
+    const materials = Object.keys(materialOverrides ?? {}).length > 0;
 
     // BUDGET: has form data
     const budget = formData !== null;
@@ -45,5 +45,5 @@ export function useThreadSections(): ThreadSectionState {
       planAudit,
       roadmap,
     };
-  }, [generation.generatedImages, design.uploadedImages, design.selectedMaterial, design.selectedStyle, formData, layoutAuditResponses, userMoveInDate, completedTasks]);
+  }, [generation.generatedImages, design.uploadedImages, materialOverrides, formData, layoutAuditResponses, userMoveInDate, completedTasks]);
 }

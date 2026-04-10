@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
-import { collectionsV2 } from "@/data/collections/collections-v2";
-import { buildDetailedMaterialPromptWithOverrides, loadMaterialImagesWithOverrides, type MaterialImageWithMeta } from "@/lib/material-generation-utils";
+import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta } from "@/lib/material-generation-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -120,9 +119,9 @@ export function useGenerationState({
 
     const room = design.selectedCategory || "Kitchen";
     const style = design.selectedStyle;
-    const material = design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial;
+    const material = design.freestyleDescription?.trim() ? "freestyle" : "custom";
 
-    if (!style || !material) return;
+    if (!style) return;
 
     const loadGeneration = async () => {
       try {
@@ -162,7 +161,7 @@ export function useGenerationState({
     };
 
     loadGeneration();
-  }, [user, isSharedSession, design.selectedCategory, design.selectedStyle, design.selectedMaterial, design.freestyleDescription]);
+  }, [user, isSharedSession, design.selectedCategory, design.selectedStyle, design.freestyleDescription]);
 
   // Save/download generated image - mobile compatible
   const handleSaveImage = useCallback(async () => {
@@ -415,8 +414,6 @@ export function useGenerationState({
     const startTime = Date.now();
 
     try {
-      const collection = design.selectedMaterial ? collectionsV2.find((c) => c.id === design.selectedMaterial) ?? null : null;
-
       const uploadType = design.uploadTypes[room] || "photo";
 
       const imageResponse = await fetch(uploadedImage);
@@ -424,7 +421,7 @@ export function useGenerationState({
       const imageBase64 = await resizeBlobToBase64(imageBlob, 512);
 
       const hasOverrides = Object.keys(materialOverrides).length > 0;
-      const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && (!!design.selectedMaterial || hasOverrides);
+      const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && hasOverrides;
       const geminiModel = uploadType === "photo"
         ? API_CONFIG.imageGeneration.modelAccurate
         : API_CONFIG.imageGeneration.modelCreative;
@@ -524,26 +521,11 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
-        let materialPrompt = "";
-        if (collection) {
-          materialPrompt = buildDetailedMaterialPromptWithOverrides(materialOverrides, collection.promptBase, excludedSlots);
-        }
-
-        {
-          const fd = design.freestyleDescription.trim() || null;
-          let p = `Make a visualisation of a room with professional interior design. You must maintain the room's architecture and layout.`;
-          if (fd) p += ` Use these materials and finishes: ${fd}.`;
-          else if (materialPrompt) p += ` Apply this material palette and finishes: ${materialPrompt}.`;
-          p += ` Style: modern contemporary interior, balanced proportions, quality materials, cohesive design.`;
-          p += " Create a photorealistic interior render with natural lighting and professional photography quality.";
-        }
-
-
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
             roomCategory: design.selectedCategory,
-            materialPrompt: materialPrompt || null,
+            materialPrompt: null,
             freestyleDescription: design.freestyleDescription.trim() || null,
             quality: API_CONFIG.imageGeneration.quality,
             model: API_CONFIG.imageGeneration.modelCreative,
@@ -578,11 +560,11 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
     trackEvent(AnalyticsEvents.VISUALIZATION_STARTED, {
       room: design.selectedCategory || "Kitchen",
       style: design.selectedStyle,
-      palette: design.freestyleDescription?.trim() ? "freestyle" : design.selectedMaterial,
+      palette: design.freestyleDescription?.trim() ? "freestyle" : "custom",
       tab: "design",
     });
     return generateInteriorRender();
-  }, [generateInteriorRender, design.selectedCategory, design.selectedStyle, design.selectedMaterial, design.freestyleDescription]);
+  }, [generateInteriorRender, design.selectedCategory, design.selectedStyle, design.freestyleDescription]);
 
   // Dialog confirmation functions
   const confirmRoomSwitch = useCallback((saveFirst: boolean) => {

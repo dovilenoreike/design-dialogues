@@ -12,7 +12,6 @@ import type { UploadType } from "@/types/design-state";
 import { getVisualization } from "@/data/visualisations";
 import { ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 import { rooms } from "@/data/rooms";
-import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
@@ -64,7 +63,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     activeMode,
     handleSelectCategory,
     handleSelectStyle,
-    handleSelectMaterial,
     materialOverrides,
     setMaterialOverrides,
     excludedSlots,
@@ -74,7 +72,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const { user } = useAuth();
   const { getRecommendedCodes } = useGraphMaterials();
 
-  const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
+  const { uploadedImages, selectedCategory, selectedStyle } = design;
+  const selectedMaterial = null; // collections removed — visualization falls back to generic
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
 
   // Swipe gesture hook
@@ -82,13 +81,11 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     activeMode,
     selectedCategory,
     selectedStyle,
-    selectedMaterial,
     isGenerating,
     showRoomSwitchDialog,
     showStyleSwitchDialog,
     handleSelectCategory,
     handleSelectStyle,
-    handleSelectMaterial,
   });
 
   // Wrapper that generates first, then deducts credit only on success
@@ -167,7 +164,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Close rail when palette or room changes
   useEffect(() => {
     setActiveSlot(null);
-  }, [selectedMaterial, selectedCategory]);
+  }, [selectedCategory]);
 
   // Calculate image URL for any room/style/palette combo
   const getImageForState = useCallback((
@@ -186,19 +183,17 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     switch (activeMode) {
       case 'rooms': {
         const prevRoom = getPrevItem(selectedCategory, rooms, r => r.name);
-        return getImageForState(prevRoom.name, selectedMaterial, selectedStyle);
+        return getImageForState(prevRoom.name, null, selectedStyle);
       }
       case 'styles': {
         const prevStyle = getPrevItem(selectedStyle, [], s => s.id);
-        return getImageForState(selectedCategory, selectedMaterial, prevStyle?.id ?? selectedStyle);
+        return getImageForState(selectedCategory, null, prevStyle?.id ?? selectedStyle);
       }
-      case 'palettes': {
-        const currentCollectionId = selectedMaterial ?? collectionsV2[0].id;
-        const prevCollection = getPrevItem(currentCollectionId, collectionsV2, c => c.id);
-        return getImageForState(selectedCategory, prevCollection.id, selectedStyle);
-      }
+      case 'palettes':
+      default:
+        return getImageForState(selectedCategory, null, selectedStyle);
     }
-  }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getImageForState]);
+  }, [activeMode, selectedCategory, selectedStyle, getImageForState]);
 
   const currentImage = displayImage;
 
@@ -206,19 +201,17 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     switch (activeMode) {
       case 'rooms': {
         const nextRoom = getNextItem(selectedCategory, rooms, 'left', r => r.name);
-        return getImageForState(nextRoom.name, selectedMaterial, selectedStyle);
+        return getImageForState(nextRoom.name, null, selectedStyle);
       }
       case 'styles': {
         const nextStyle = getNextItem(selectedStyle, [], 'left', s => s.id);
-        return getImageForState(selectedCategory, selectedMaterial, nextStyle?.id ?? selectedStyle);
+        return getImageForState(selectedCategory, null, nextStyle?.id ?? selectedStyle);
       }
-      case 'palettes': {
-        const currentCollectionId = selectedMaterial ?? collectionsV2[0].id;
-        const nextCollection = getNextItem(currentCollectionId, collectionsV2, 'left', c => c.id);
-        return getImageForState(selectedCategory, nextCollection.id, selectedStyle);
-      }
+      case 'palettes':
+      default:
+        return getImageForState(selectedCategory, null, selectedStyle);
     }
-  }, [activeMode, selectedCategory, selectedMaterial, selectedStyle, getImageForState]);
+  }, [activeMode, selectedCategory, selectedStyle, getImageForState]);
 
   // Preload adjacent images
   useEffect(() => {

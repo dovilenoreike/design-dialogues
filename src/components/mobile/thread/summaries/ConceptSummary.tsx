@@ -29,7 +29,7 @@ export function ConceptSummary() {
       const uploadedImage = design.uploadedImages[room.displayName];
       const generatedImage = generation.generatedImages[room.displayName];
 
-      // Priority: generated > uploaded > pregenerated
+      // Priority: generated > uploaded
       if (generatedImage) {
         result.push({
           src: generatedImage,
@@ -44,19 +44,11 @@ export function ConceptSummary() {
           translationKey: room.translationKey,
           slug: room.slug,
         });
-      } else if (design.selectedMaterial && design.selectedStyle) {
-        // Fall back to pregenerated
-        result.push({
-          src: `/visualisations/${design.selectedMaterial}/${design.selectedStyle}/${room.slug}.webp`,
-          roomDisplayName: room.displayName,
-          translationKey: room.translationKey,
-          slug: room.slug,
-        });
       }
     });
 
     return result;
-  }, [design.uploadedImages, design.selectedMaterial, design.selectedStyle, generation.generatedImages]);
+  }, [design.uploadedImages, design.selectedStyle, generation.generatedImages]);
 
   // Determine Hero room - last selected, or first room with content
   const heroRoom = useMemo(() => {

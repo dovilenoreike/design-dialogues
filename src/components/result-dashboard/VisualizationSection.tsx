@@ -3,14 +3,12 @@
  */
 
 import { RefreshCw, Palette, RotateCcw, Sparkles } from "lucide-react";
-import { collectionsV2 } from "@/data/collections/collections-v2";
 import { getStyleById } from "@/data/styles";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VisualizationSectionProps {
   uploadedImage: string | null;
   generatedImage: string | null;
-  selectedMaterial: string | null;
   selectedStyle: string | null;
   freestyleDescription: string;
   onRegenerateVisualization?: () => void;
@@ -21,7 +19,6 @@ interface VisualizationSectionProps {
 const VisualizationSection = ({
   uploadedImage,
   generatedImage,
-  selectedMaterial,
   selectedStyle,
   freestyleDescription,
   onRegenerateVisualization,
@@ -63,10 +60,6 @@ const VisualizationSection = ({
           <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium flex items-center gap-1">
             <Sparkles size={10} />
             Custom Vision
-          </span>
-        ) : selectedMaterial ? (
-          <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-secondary rounded-full text-[10px] md:text-xs font-medium">
-            {(() => { const c = collectionsV2.find(col => col.id === selectedMaterial); return c ? (typeof c.name === "object" ? c.name.en : c.name) : selectedMaterial; })()}
           </span>
         ) : null}
         {selectedStyle && (

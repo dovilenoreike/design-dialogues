@@ -11,7 +11,6 @@ export interface DesignSelection {
   uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name
   uploadTypes: Record<string, UploadType>;  // Per-room upload type, keyed by room name
   selectedCategory: string | null;
-  selectedMaterial: string | null;
   selectedStyle: string | null;  // Combined style ID (architecture + atmosphere)
   freestyleDescription: string;
   lastSelectedRoom: string | null;  // Last room user selected/interacted with (for Hero display)
@@ -35,7 +34,6 @@ export const initialDesignSelection: DesignSelection = {
   uploadedImages: {},  // Empty - no uploads initially
   uploadTypes: {},  // Empty - no upload types initially
   selectedCategory: DEFAULT_ROOM,
-  selectedMaterial: null,
   selectedStyle: DEFAULT_STYLE,
   freestyleDescription: "",
   lastSelectedRoom: null,  // No room selected initially
