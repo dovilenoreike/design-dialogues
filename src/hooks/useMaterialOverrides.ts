@@ -20,9 +20,9 @@ export function useMaterialOverrides() {
   const [excludedSlots, setExcludedSlots] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem(EXCLUDED_SLOTS_KEY);
-      return saved ? new Set(JSON.parse(saved)) : new Set(["shelves"]);
+      return saved ? new Set(JSON.parse(saved)) : new Set(["shelves", "tallCabinets"]);
     } catch {
-      return new Set(["shelves"]);
+      return new Set(["shelves", "tallCabinets"]);
     }
   });
 
@@ -36,7 +36,7 @@ export function useMaterialOverrides() {
 
   const resetOverrides = useCallback(() => {
     setMaterialOverrides({});
-    setExcludedSlots(new Set(["shelves"]));
+    setExcludedSlots(new Set(["shelves", "tallCabinets"]));
   }, []);
 
   return {

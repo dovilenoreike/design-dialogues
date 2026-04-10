@@ -22,17 +22,19 @@ import StageBubbleRail from "./StageBubbleRail";
 import { useGraphMaterials } from "@/hooks/useGraphMaterials";
 
 const BUBBLE_RAIL_SLOT_ORDER = [
-  "floor", "bottomCabinets", "topCabinets", "shelves", "worktops", "accents", "tiles", "additionalTiles",
+  "floor", "bottomCabinets", "topCabinets", "tallCabinets", "shelves", "worktops", "accents", "tiles", "additionalTiles",
 ];
 
 function buildBubblesFromOverrides(
   overrides: Record<string, string>,
   t: (key: string) => string,
 ): MaterialBubble[] {
-  // shelves inherits cabinet material until the user explicitly overrides it
-  const effective = overrides.shelves || !overrides.bottomCabinets
-    ? overrides
-    : { ...overrides, shelves: overrides.bottomCabinets };
+  // shelves and tallCabinets inherit the cabinet material until the user explicitly overrides them
+  let effective = overrides;
+  if (overrides.bottomCabinets) {
+    if (!overrides.shelves)      effective = { ...effective, shelves:      overrides.bottomCabinets };
+    if (!overrides.tallCabinets) effective = { ...effective, tallCabinets: overrides.bottomCabinets };
+  }
   return BUBBLE_RAIL_SLOT_ORDER
     .filter((k) => effective[k])
     .map((slotKey) => {

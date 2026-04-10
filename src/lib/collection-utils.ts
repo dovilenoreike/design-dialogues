@@ -35,6 +35,7 @@ export const SLOT_TO_ROLE: Record<string, MaterialRole> = {
   wardrobes: "front",
   vanityUnit: "front",
   shelves: "front",
+  tallCabinets: "front",
   worktops: "worktop",
   backsplashes: "worktop",
   accents: "accent",
