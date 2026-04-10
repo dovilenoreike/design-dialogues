@@ -16,7 +16,7 @@ import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
-import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
+import { type MaterialBubble } from "@/lib/collection-utils";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
 import { useGraphMaterials } from "@/hooks/useGraphMaterials";
@@ -72,7 +72,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   } = useDesign();
   const { credits, useCredit, refetchCredits, buyCredits } = useCredits();
   const { user } = useAuth();
-  useGraphMaterials();
+  const { getRecommendedCodes } = useGraphMaterials();
 
   const { uploadedImages, selectedCategory, selectedMaterial, selectedStyle } = design;
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
@@ -231,26 +231,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Bubble data for the rail — built directly from materialOverrides
   const bubbles = buildBubblesFromOverrides(materialOverrides, t);
 
-  // Stable snapshot of role → unique material codes from the flatlay.
-  // Captured once when the collection changes; individual slot swaps do NOT update it,
-  // so the swap-rail always offers the original flatlay choices.
-  const materialOverridesRef = useRef(materialOverrides);
-  materialOverridesRef.current = materialOverrides;
-  const [flatlayRoleMaterials, setFlatlayRoleMaterials] = useState<Record<string, string[]>>({});
-  useEffect(() => {
-    const overrides = materialOverridesRef.current;
-    const map: Record<string, string[]> = {};
-    for (const slotKey of BUBBLE_RAIL_SLOT_ORDER) {
-      const matId = overrides[slotKey];
-      if (!matId) continue;
-      const role = SLOT_TO_ROLE[slotKey];
-      if (!role) continue;
-      if (!map[role]) map[role] = [];
-      if (!map[role].includes(matId)) map[role].push(matId);
-    }
-    setFlatlayRoleMaterials(map);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMaterial]); // intentionally only when collection changes
 
   return (
     <div className="relative w-full h-full bg-surface-muted">
@@ -407,7 +387,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           t={t}
           language={language}
           variant="browsing"
-          flatlayRoleMaterials={flatlayRoleMaterials}
+          getRecommendedCodes={getRecommendedCodes}
         />
       )}
 
@@ -429,7 +409,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           t={t}
           language={language}
           variant="uploaded"
-          flatlayRoleMaterials={flatlayRoleMaterials}
+          getRecommendedCodes={getRecommendedCodes}
         />
       )}
 

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, RotateCcw, Plus } from "lucide-react";
-import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
 import type { ControlMode } from "@/contexts/DesignContext";
@@ -21,8 +21,8 @@ interface StageBubbleRailProps {
   language: string;
   /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
   variant: "browsing" | "uploaded";
-  /** role → unique material codes chosen on the flatlay; stable snapshot used for swap options */
-  flatlayRoleMaterials?: Record<string, string[]>;
+  /** Returns graph-ranked material codes compatible with other selections */
+  getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
 }
 
 export default function StageBubbleRail({
@@ -40,7 +40,7 @@ export default function StageBubbleRail({
   t,
   language,
   variant,
-  flatlayRoleMaterials = {},
+  getRecommendedCodes,
 }: StageBubbleRailProps) {
 
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -48,13 +48,66 @@ export default function StageBubbleRail({
     try { return !localStorage.getItem("bubble-rail-hint-seen"); } catch { return true; }
   });
 
+  // Snapshotted alternatives for the currently active slot.
+  // Computed once when activeSlot opens — never changes while the rail is open.
+  const [slotAlternatives, setSlotAlternatives] = useState<Array<{ materialId: string; image: string }>>([]);
+  const materialOverridesRef = useRef(materialOverrides);
+  materialOverridesRef.current = materialOverrides;
+
+  useEffect(() => {
+    setShowAddMenu(false);
+    if (!activeSlot) { setSlotAlternatives([]); return; }
+
+    const bubble = bubbles.find(b => b.slotKey === activeSlot);
+    if (!bubble) { setSlotAlternatives([]); return; }
+
+    const overrides = materialOverridesRef.current;
+    const currentCode = overrides[activeSlot] || bubble.materialId;
+    const role = SLOT_TO_ROLE[activeSlot];
+
+    // Cross-role other codes only — pair_compatibility is cross-role,
+    // so same-role slots (e.g. topCabinets when bottomCabinets is open) are excluded.
+    // This also makes all front slots produce identical alternatives.
+    const otherCodes = Object.entries(overrides)
+      .filter(([k, v]) => k !== activeSlot && !!v && SLOT_TO_ROLE[k] !== role)
+      .map(([, v]) => v);
+
+    // Slot 0: always the flatlay-chosen material
+    const flatlayCurrent = currentCode;
+
+    // Slots 1–2: graph-ranked alternatives compatible with cross-role context
+    const graphAlts = getRecommendedCodes && otherCodes.length > 0
+      ? getRecommendedCodes(null, otherCodes, role ?? undefined)
+          .filter(code => code !== flatlayCurrent)
+          .slice(0, 2)
+      : [];
+
+    // Fallback: if graph returned fewer than 2, fill with most-paired materials for this role
+    const neededFallback = 2 - graphAlts.length;
+    const fallbackAlts = neededFallback > 0 && role
+      ? getMaterialsByRole(role)
+          .filter(m => m.technicalCode !== flatlayCurrent && !graphAlts.includes(m.technicalCode) && !!m.imageUrl)
+          .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))
+          .slice(0, neededFallback)
+          .map(m => m.technicalCode)
+      : [];
+
+    const candidates = [flatlayCurrent, ...graphAlts, ...fallbackAlts];
+    const alternatives = candidates
+      .map(code => {
+        const img = getMaterialByCode(code)?.imageUrl ?? getArchetypeById(code)?.image;
+        return img ? { materialId: code, image: img } : null;
+      })
+      .filter((x): x is { materialId: string; image: string } => x !== null);
+
+    setSlotAlternatives(alternatives);
+  }, [activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const dismissHint = () => {
     if (!showHint) return;
     try { localStorage.setItem("bubble-rail-hint-seen", "1"); } catch {}
     setShowHint(false);
   };
-
-  useEffect(() => { setShowAddMenu(false); }, [activeSlot]);
 
   const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
   const hiddenBubbles  = bubbles.filter(b =>  excludedSlots.has(b.slotKey));
@@ -126,18 +179,8 @@ export default function StageBubbleRail({
 
               {/* Material swap rail */}
               {isActive && (() => {
-                const slotRole = SLOT_TO_ROLE[bubble.slotKey];
                 const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
-                // Alternatives = the other unique materials chosen on the flatlay for this role.
-                // Uses a stable snapshot so swapping doesn't shrink the option list.
-                const roleCodes = flatlayRoleMaterials[slotRole ?? ""] ?? [];
-                const alternatives = roleCodes
-                  .filter(code => code !== currentMaterialId)
-                  .map(code => {
-                    const img = getMaterialByCode(code)?.imageUrl ?? getArchetypeById(code)?.image;
-                    return img ? { materialId: code, image: img } : null;
-                  })
-                  .filter((x): x is { materialId: string; image: string } => x !== null);
+                const alternatives = slotAlternatives;
                 return (
                   <div
                     className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-1.5 z-50"
