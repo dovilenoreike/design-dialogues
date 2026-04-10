@@ -12,11 +12,7 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 export default function SpecsView() {
   const { design, materialOverrides, excludedSlots, selectedTier, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
-<<<<<<< HEAD
-  const { graphMaterials, loading: materialsLoading } = useGraphMaterials();
-  const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
-=======
->>>>>>> 6775e44b694585666c9ec9b6ca30f58bb12f7b62
+  const { graphMaterials } = useGraphMaterials();
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const { selectedCategory, freestyleDescription } = design;
@@ -119,27 +115,7 @@ export default function SpecsView() {
             </div>
           </div>
 
-<<<<<<< HEAD
-          {/* Editorial Headline */}
-          {activeCollection && (
-            <div className="mb-6">
-              <button
-                onClick={() => setIsPaletteSelectorOpen(true)}
-                className="flex items-center gap-1.5 group"
-              >
-                <h2 className="text-2xl font-serif group-hover:text-foreground/80 transition-colors">
-                  {activeCollection.name[language] ?? activeCollection.name.en}
-                </h2>
-                <ChevronDown className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" strokeWidth={1.5} />
-              </button>
-              <p className="text-sm text-muted-foreground mt-1">{t("result.curatedBy")} {getDesignerWithFallback(activeCollection.designer, collectionDesignerTitle).name}</p>
-            </div>
-          )}
-
-          {groupedMaterials.length === 0 && !materialsLoading ? (
-=======
           {groupedMaterials.length === 0 ? (
->>>>>>> 6775e44b694585666c9ec9b6ca30f58bb12f7b62
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
                 <Sparkles className="w-7 h-7 text-muted-foreground" strokeWidth={1.5} />
