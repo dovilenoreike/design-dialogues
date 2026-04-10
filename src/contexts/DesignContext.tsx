@@ -29,7 +29,7 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
 import { collectionsV2 } from "@/data/collections/collections-v2";
 import { useShowroom } from "@/contexts/ShowroomContext";
-import { getMaterialByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
 
 export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
@@ -280,7 +280,17 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           if (showroomMat) { next[pk] = showroomMat.technicalCode; continue; }
         }
 
-        next[pk] = code;
+        // Prefer top graph-ranked material for this role (collections are not curated)
+        const role = SLOT_TO_ROLE_LOCAL[slotKey];
+        const graphMats = role ? getMaterialsByRole(role).filter(m => m.imageUrl) : [];
+        if (graphMats.length > 0) {
+          const topMat = graphMats.reduce((best, m) =>
+            getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
+          );
+          next[pk] = topMat.technicalCode;
+        } else {
+          next[pk] = code; // graph not loaded yet — fall back to collection default
+        }
       }
       return next;
     });

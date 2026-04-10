@@ -64,7 +64,7 @@ export const collectionsV2: CollectionV2[] = [
     vibe: "warm-and-grounded",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     defaults: {
-      floor:            "aspecta-baron",
+      floor:            "coretec-naturals-807-meadow",
       mainFronts:       "alvic-valazquez-04",
       additionalFronts: "velvet-1648",
       worktops:         "fondi-32-vento-marmo",
@@ -92,7 +92,7 @@ export const collectionsV2: CollectionV2[] = [
     vibe: "light-and-airy",
     promptBase: "Modern urban kitchen with warm tones and natural textures",
     defaults: {
-      floor:            "aspecta-baron",
+      floor:            "coretec-naturals-807-meadow",
       mainFronts:       "velvet-4246",
       additionalFronts: "egger-taupe-grey",
       worktops:         "icono-c43-eleganza-bianco",
