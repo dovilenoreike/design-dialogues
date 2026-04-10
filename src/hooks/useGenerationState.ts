@@ -450,7 +450,7 @@ export function useGenerationState({
         } else if (dedupedMaterials.length > 0) {
           const matInstr = dedupedMaterials
             .map((m, i) => {
-              const texture = m.texturePrompt || m.description;
+              const texture = m.texturePrompt;
               return m.surfaces.length === 1
                 ? `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`
                 : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${m.surfaces.join(", ")}.`;
@@ -495,7 +495,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
 
         const matInstr = dedupedMaterials
           .map((m, i) => {
-            const texture = m.texturePrompt || m.description;
+            const texture = m.texturePrompt;
             if (m.surfaces.length === 1) {
               return `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`;
             }
@@ -743,7 +743,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       } else if (clayDedupedMaterials.length > 0) {
         const matInstr = clayDedupedMaterials
           .map((m, i) => {
-            const texture = m.texturePrompt || m.description;
+            const texture = m.texturePrompt;
             return m.surfaces.length === 1
               ? `- Image ${i + 2} (${texture}): apply to ${m.surfaces[0]}.`
               : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${m.surfaces.join(", ")}.`;

@@ -119,8 +119,8 @@ const MaterialManifestSection = ({
             const mat = getMaterialByCode(matId);
             if (!mat) return null;
 
-            const desc = mat.description?.[language as "en" | "lt"] || mat.description?.en || mat.texturePrompt || "";
-            const title = desc?.split('.')[0] || slotKeys[0];
+            const desc = mat.name?.[language as "en" | "lt"] || mat.name?.en || slotKeys[0];
+            const title = desc;
             const category = slotKeys.join(", ");
             const materialType = mat.materialType || "";
 

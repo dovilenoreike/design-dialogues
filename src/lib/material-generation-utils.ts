@@ -45,7 +45,7 @@ export function buildDetailedMaterialPromptWithOverrides(
     if (!mat) continue;
 
     const labels = matGroups.get(matId)!;
-    const desc = mat.description?.en || mat.texturePrompt || matId;
+    const desc = mat.texturePrompt || matId;
     descriptions.push(`- ${labels.join(", ")}: ${desc}`);
   }
 
@@ -84,7 +84,7 @@ export async function loadMaterialImagesWithOverrides(
         reader.readAsDataURL(blob);
       });
 
-      const desc = mat.description?.en || mat.texturePrompt || "";
+      const desc = mat.texturePrompt || "";
 
       return { base64, slotKey, matId, purpose, description: desc, texturePrompt: mat.texturePrompt ?? "" };
     } catch {

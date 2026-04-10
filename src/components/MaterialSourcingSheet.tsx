@@ -4,7 +4,6 @@ import type { ProviderBrand } from "@/data/sourcing/types";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCity, CITIES, CITY_LABELS } from "@/contexts/CityContext";
+import { useCity, CITIES, CITY_LABELS, type City } from "@/contexts/CityContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getShowroomsForMaterial, getProvidersForMaterial, getSpecialtyForMaterial } from "@/data/sourcing";
@@ -108,43 +107,43 @@ const MaterialSourcingSheet = ({
     ? t(specialtyToTranslationKey[specialty])
     : t("sourcing.findCarpenter");
 
-  const content = (
-    <div className="overflow-y-auto pb-safe">
-      {/* Header */}
-      <div className={isMobile ? "pb-4" : "pb-4"}>
-        <div className="flex items-start gap-4">
-          {/* Material Image */}
-          {material.imageUrl && (
-            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-muted">
-              <img
-                src={material.imageUrl}
-                alt={material.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-medium text-foreground text-left">
-              {material.name}
-            </h2>
-            {material.technicalCode && (
-              <div className="mt-1.5 text-left">
-                <span className="inline-block bg-muted rounded-md px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                  {material.technicalCode}
-                </span>
-              </div>
-            )}
-          </div>
-          {!isMobile && (
-            <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
-              <X size={20} />
-            </button>
-          )}
-        </div>
+  // Desktop-only content (hero bleeds edge-to-edge via p-0 on DialogContent)
+  const desktopContent = (
+    <div className="overflow-y-auto">
+      {/* Hero Image */}
+      <div className="relative w-full bg-muted overflow-hidden" style={{ aspectRatio: "16/9" }}>
+        {material.imageUrl ? (
+          <img
+            src={material.imageUrl}
+            alt={material.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-muted" />
+        )}
+        <button
+          onClick={onClose}
+          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/30 flex items-center justify-center text-white"
+          aria-label="Close"
+        >
+          <X size={14} />
+        </button>
       </div>
 
+      {/* Meta */}
+      <div className="px-5 pt-4">
+        <h2 className="text-xl font-medium text-foreground leading-snug">{material.name}</h2>
+        {material.technicalCode && (
+          <span className="inline-block mt-1.5 bg-muted rounded-md px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
+            {material.technicalCode}
+          </span>
+        )}
+      </div>
+
+      <div className="h-px bg-border mx-5 mt-4" />
+
       {/* City Selector */}
-      <div className={isMobile ? "px-6 pb-5" : "pb-5"}>
+      <div className="px-5 pt-4 pb-5">
         <Select value={city} onValueChange={(value) => setCity(value as City)}>
           <SelectTrigger className="w-full gap-2 justify-start">
             <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
@@ -161,7 +160,7 @@ const MaterialSourcingSheet = ({
       </div>
 
       {/* Where to Buy Section */}
-      <div className={isMobile ? "px-6 pb-5" : "pb-5"}>
+      <div className="px-5 pb-5">
         <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium mb-2">
           {t("sourcing.whereToBuy")}
         </p>
@@ -202,7 +201,7 @@ const MaterialSourcingSheet = ({
       </div>
 
       {/* Find Installer Section */}
-      <div className={isMobile ? "px-6 pb-6" : "pb-6"}>
+      <div className="px-5 pb-6">
         <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium mb-2">
           {providerSectionTitle}
         </p>
@@ -242,34 +241,43 @@ const MaterialSourcingSheet = ({
       <>
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="max-h-[85vh]">
-          <DrawerHeader className="pb-4">
-            <div className="flex items-start gap-4">
-              {material.imageUrl && (
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-muted">
-                  <img
-                    src={material.imageUrl}
-                    alt={material.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-base font-medium text-foreground text-left">
-                  {material.name}
-                </DrawerTitle>
-                {material.technicalCode && (
-                  <div className="mt-1.5 text-left">
-                    <span className="inline-block bg-muted rounded-md px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                      {material.technicalCode}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </DrawerHeader>
+          <DrawerTitle className="sr-only">{material.name}</DrawerTitle>
+
+          {/* Hero Image */}
+          <div className="relative w-full mt-3 bg-muted overflow-hidden" style={{ aspectRatio: "16/9" }}>
+            {material.imageUrl ? (
+              <img
+                src={material.imageUrl}
+                alt={material.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-muted" />
+            )}
+            <button
+              onClick={onClose}
+              className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/30 flex items-center justify-center text-white"
+              aria-label="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Meta */}
+          <div className="px-4 pt-3.5">
+            <h2 className="text-xl font-medium text-foreground leading-snug">{material.name}</h2>
+            {material.technicalCode && (
+              <span className="inline-block mt-1.5 bg-muted rounded-md px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
+                {material.technicalCode}
+              </span>
+            )}
+          </div>
+
+          <div className="h-px bg-border mx-4 mt-3.5" />
+
           <div className="overflow-y-auto pb-safe">
             {/* City Selector */}
-            <div className="px-6 pb-5">
+            <div className="px-4 pt-4 pb-5">
               <Select value={city} onValueChange={(value) => setCity(value as City)}>
                 <SelectTrigger className="w-full gap-2 justify-start">
                   <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
@@ -286,7 +294,7 @@ const MaterialSourcingSheet = ({
             </div>
 
             {/* Where to Buy Section */}
-            <div className="px-6 pb-5">
+            <div className="px-4 pb-5">
               <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium mb-2">
                 {t("sourcing.whereToBuy")}
               </p>
@@ -327,7 +335,7 @@ const MaterialSourcingSheet = ({
             </div>
 
             {/* Find Installer Section */}
-            <div className="px-6 pb-6">
+            <div className="px-4 pb-6">
               <p className="text-[10px] uppercase tracking-widest text-text-muted font-medium mb-2">
                 {providerSectionTitle}
               </p>
@@ -445,9 +453,9 @@ const MaterialSourcingSheet = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-md p-6 gap-0" hideCloseButton aria-describedby={undefined}>
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton aria-describedby={undefined}>
           <DialogTitle className="sr-only">{material.name}</DialogTitle>
-          {content}
+          {desktopContent}
         </DialogContent>
       </Dialog>
       {contactProvider && (

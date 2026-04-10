@@ -172,7 +172,7 @@ export default function SpecsView() {
                     .join(", ");
 
                   const lang = language as "en" | "lt";
-                  const displayName = mat!.description?.[lang] || mat!.description?.en || mat!.name?.[lang] || mat!.name?.en || translatedSurfaces;
+                  const displayName = mat!.name?.[lang] || mat!.name?.en || translatedSurfaces;
 
                   const typeKey = `material.type.${mat!.materialType}`;
                   const translatedType = mat!.materialType
@@ -185,8 +185,9 @@ export default function SpecsView() {
                       room: selectedCategory,
                       tab: "specs",
                     });
+                    const modalName = mat!.name?.[lang] || mat!.name?.en || displayName;
                     setSelectedMaterialInfo({
-                      name: displayName,
+                      name: modalName,
                       materialType: mat!.materialType,
                       technicalCode: mat!.technicalCode,
                       imageUrl: mat!.imageUrl || undefined,
