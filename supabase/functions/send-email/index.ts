@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "npm:resend@4.0.0";
 import { captureException } from "../_shared/sentry.ts";
 
 const corsHeaders = {
@@ -144,17 +144,23 @@ serve(async (req) => {
 
     console.log(`Sending ${type} email to: ${toEmail}`);
 
-    const { error } = await resend.emails.send({
-      from: "Design Dialogues <onboarding@resend.dev>",
-      to: [toEmail],
-      subject,
-      html,
-      reply_to: data.email || undefined,
-    });
+    let resendError;
+    try {
+      const result = await resend.emails.send({
+        from: "Design Dialogues <onboarding@resend.dev>",
+        to: [toEmail],
+        subject,
+        html,
+        reply_to: typeof data.email === "string" ? data.email : undefined,
+      });
+      resendError = result.error;
+    } catch (err) {
+      throw new Error(`Resend API unreachable: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
-    if (error) {
-      console.error("Resend error:", error);
-      throw new Error(error.message || JSON.stringify(error));
+    if (resendError) {
+      console.error("Resend error:", resendError);
+      throw new Error(resendError.message || JSON.stringify(resendError));
     }
 
     console.log("Email sent successfully");
