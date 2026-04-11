@@ -141,6 +141,7 @@ interface SharedSessionData {
   layoutAuditVariables?: AuditVariables;
   vibeTag?: string | null;
   moodboardSlots?: Record<string, string | null> | null;
+  materialOverrides?: Record<string, string> | null;
 }
 
 interface DesignProviderProps {
@@ -343,6 +344,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
         } else {
           setLayoutAuditVariables(vars);
         }
+      }
+      if (initialSharedSession.materialOverrides) {
+        setMaterialOverrides(initialSharedSession.materialOverrides);
       }
       setIsInitialized(true);
       return;
@@ -753,6 +757,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           layoutAuditResponses,
           layoutAuditVariables,
           vibeTag,
+          materialOverrides,
           moodboardSlots: (() => {
             try {
               const raw = localStorage.getItem("moodboard-slot-selections");
@@ -784,7 +789,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     } finally {
       setIsSharing(false);
     }
-  }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables]);
+  }, [design, generation.generatedImages, selectedTier, formData, userMoveInDate, completedTasks, layoutAuditResponses, layoutAuditVariables, materialOverrides, vibeTag]);
 
 
   const value: DesignContextValue = {

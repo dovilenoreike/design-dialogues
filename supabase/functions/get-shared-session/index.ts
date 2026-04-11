@@ -64,6 +64,7 @@ serve(async (req) => {
       layoutAuditVariables: data.layout_audit_variables || null,
       vibeTag: data.vibe_tag || null,
       moodboardSlots: data.moodboard_slots || null,
+      materialOverrides: data.material_overrides || null,
     };
 
     return new Response(

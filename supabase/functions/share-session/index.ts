@@ -43,6 +43,7 @@ serve(async (req) => {
       layoutAuditVariables,
       vibeTag,
       moodboardSlots,
+      materialOverrides,
     } = body;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -106,6 +107,7 @@ serve(async (req) => {
         layout_audit_variables: layoutAuditVariables || null,
         vibe_tag: vibeTag || null,
         moodboard_slots: moodboardSlots || null,
+        material_overrides: materialOverrides || null,
       });
 
     if (insertError) {
