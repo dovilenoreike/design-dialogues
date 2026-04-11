@@ -95,6 +95,8 @@ export default function MoodboardView() {
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
 
   const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
+  const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
+  const swapJustAppliedRef = useRef(false);
   const [showHint, setShowHint] = useState(() => {
     try { return !localStorage.getItem("moodboard-hint-seen"); } catch { return true; }
   });
@@ -104,6 +106,13 @@ export default function MoodboardView() {
     try { localStorage.setItem("moodboard-hint-seen", "1"); } catch {}
     setShowHint(false);
   };
+
+  // Clear undo state on any subsequent materialOverrides change (skip the swap itself)
+  useEffect(() => {
+    if (!lastSwap) return;
+    if (swapJustAppliedRef.current) { swapJustAppliedRef.current = false; return; }
+    setLastSwap(null);
+  }, [materialOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [slotSelections, setSlotSelections] = useState<SlotSelections>(() => {
     // Shared session: use the host's selections, skip local storage
@@ -468,7 +477,11 @@ export default function MoodboardView() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (pk && graphBestCode) setMaterialOverrides((prev) => ({ ...prev, [pk]: graphBestCode }));
+                      if (pk && graphBestCode && currentMatId) {
+                        swapJustAppliedRef.current = true;
+                        setLastSwap({ pk, fromCode: currentMatId, toCode: graphBestCode });
+                        setMaterialOverrides((prev) => ({ ...prev, [pk]: graphBestCode }));
+                      }
                     }}
                     className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
                     style={{ zIndex: 1 }}
@@ -476,6 +489,22 @@ export default function MoodboardView() {
                   >
                     <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
                       <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
+                    </span>
+                  </button>
+                )}
+                {pk && lastSwap?.pk === pk && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMaterialOverrides((prev) => ({ ...prev, [lastSwap.pk]: lastSwap.fromCode }));
+                      setLastSwap(null);
+                    }}
+                    className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
+                    style={{ zIndex: 1 }}
+                    aria-label="Undo swap"
+                  >
+                    <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
+                      <RotateCcw className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
                     </span>
                   </button>
                 )}
