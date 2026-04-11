@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ArrowRight, Sparkles } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowRight, Sparkles, Info } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
-import type { VibeTag } from "@/data/collections/types";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
+import MaterialDetailModal from "../controls/MaterialDetailModal";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 
 
@@ -94,12 +94,14 @@ export default function MoodboardView() {
 
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
 
-  const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
+  // Always-active slot — picker is always visible (no open/close)
+  const [activeSlot, setActiveSlot] = useState<SlotKey>("floor");
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
   const [showHint, setShowHint] = useState(() => {
     try { return !localStorage.getItem("moodboard-hint-seen"); } catch { return true; }
   });
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -129,9 +131,6 @@ export default function MoodboardView() {
       const saved = localStorage.getItem("moodboard-slot-selections");
       if (saved) {
         const parsed = JSON.parse(saved) as SlotSelections;
-        // Validate each slot's stored archetypeId against the actual archetypes.
-        // Stale values (e.g. 'metallic' for accents) are replaced with the
-        // materialOverrides technical code, which for accents equals the archetype ID.
         (Object.keys(parsed) as SlotKey[]).forEach((k) => {
           const id = parsed[k];
           if (!id) return;
@@ -168,8 +167,6 @@ export default function MoodboardView() {
   }, [slotSelections]);
 
   // On mount (after graph loads): resolve archetype IDs → product codes in materialOverrides.
-  // Skips slots that already have a valid technical code; replaces stale archetype IDs.
-  // When in showroom mode, prefers showroom materials for the showroom's own categories.
   useEffect(() => {
     if (graphLoading) return;
     const validCodes = new Set(graphMaterials.map((m) => m.technicalCode));
@@ -179,10 +176,8 @@ export default function MoodboardView() {
         const aId = slotSelectionsRef.current[k];
         const pk = SLOT_TO_PALETTE_KEY[k];
         if (!pk || !aId) return;
-        // Skip if already set to a real product code
         if (next[pk] && validCodes.has(next[pk])) return;
         const role = SLOT_KEY_TO_ROLE[k];
-        // In showroom mode, prefer showroom materials for the showroom's own surface categories
         const showroomPool = activeShowroom && activeShowroom.surfaceCategories.includes(role)
           ? graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id))
           : graphMaterials;
@@ -193,8 +188,6 @@ export default function MoodboardView() {
         if (resolved) {
           next[pk] = resolved.technicalCode;
         } else if (!next[pk]) {
-          // No graph material found for this archetype (e.g. accent archetypes like 'gold').
-          // Use the archetype ID directly — same fallback as handleSlotSelect.
           next[pk] = aId;
         }
       });
@@ -204,7 +197,6 @@ export default function MoodboardView() {
   }, [graphLoading]);
 
   // Sync slotSelections when design-tab bubble rail changes a moodboard-relevant surface.
-  // Uses graphMaterials to reverse-look-up archetypeId from a product code.
   useEffect(() => {
     if (graphLoading) return;
     setSlotSelections((prev) => {
@@ -215,7 +207,6 @@ export default function MoodboardView() {
         if (!matId) continue;
         const graphMat = graphMaterials.find((m) => m.technicalCode === matId);
         let archetypeId: string | null = graphMat?.archetypeId ?? null;
-        // Fallback: matId might itself be an archetype ID (no-graph-match path)
         if (!archetypeId && getArchetypeById(matId, SLOT_KEY_TO_ROLE[slotKey])) archetypeId = matId;
         if (archetypeId && next[slotKey] !== archetypeId) {
           next[slotKey] = archetypeId;
@@ -227,25 +218,35 @@ export default function MoodboardView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialOverrides, graphLoading]);
 
-  // When in showroom mode, restrict picker to showroom materials ONLY for the showroom's
-  // own surface categories (matched by MaterialRole). Other categories show all materials.
+  // Restrict picker to showroom materials for the showroom's own surface categories
   const showroomMaterials = useMemo(() => {
-    if (!activeShowroom || !openSlot) return graphMaterials;
-    const slotRole = SLOT_KEY_TO_ROLE[openSlot];
+    if (!activeShowroom) return graphMaterials;
+    const slotRole = SLOT_KEY_TO_ROLE[activeSlot];
     if (!slotRole || !activeShowroom.surfaceCategories.includes(slotRole)) {
-      return graphMaterials; // slot not in this showroom's scope — show everything
+      return graphMaterials;
     }
     return graphMaterials.filter((m) => m.showroomIds.includes(activeShowroom.id));
-  }, [graphMaterials, activeShowroom, openSlot]);
+  }, [graphMaterials, activeShowroom, activeSlot]);
 
-  // Actual displayed material codes for all slots other than the open one
+  // Other material codes (excluding active slot) for compatibility scoring
   const otherMaterialCodesForPicker = useMemo(() => {
-    if (!openSlot) return [];
     return (Object.entries(SLOT_TO_PALETTE_KEY) as [SlotKey, string | null][])
-      .filter(([k]) => k !== openSlot)
+      .filter(([k]) => k !== activeSlot)
       .map(([, pk]) => (pk ? materialOverrides[pk] : null))
       .filter((c): c is string => !!c);
-  }, [openSlot, materialOverrides]);
+  }, [activeSlot, materialOverrides]);
+
+  // Currently selected material code for the active slot
+  const activeSlotMaterialCode = useMemo(() => {
+    const pk = SLOT_TO_PALETTE_KEY[activeSlot];
+    return pk ? (materialOverrides[pk] ?? undefined) : undefined;
+  }, [activeSlot, materialOverrides]);
+
+  // Material for detail modal (active slot's selected product)
+  const detailMaterial = useMemo(() => {
+    if (!activeSlotMaterialCode) return null;
+    return getMaterialByCode(activeSlotMaterialCode) ?? null;
+  }, [activeSlotMaterialCode]);
 
   const handleSlotSelect = useCallback(
     (slotKey: SlotKey, archetypeId: string, resolvedCode?: string) => {
@@ -259,9 +260,6 @@ export default function MoodboardView() {
       });
 
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
-      // Use the exact code the picker resolved (image ↔ selection parity).
-      // Fall back to first graph candidate, then archetypeId itself — always update
-      // materialOverrides so the flatlay image and compatibility icons never lag behind.
       const matCode = resolvedCode
         ?? showroomMaterials.find((m) => m.archetypeId === archetypeId && m.role.includes(SLOT_KEY_TO_ROLE[slotKey]))?.technicalCode
         ?? archetypeId;
@@ -297,331 +295,271 @@ export default function MoodboardView() {
     if (pk) setMaterialOverrides((prev) => { const next = { ...prev }; delete next[pk]; return next; });
   }, [slotSelections, setMaterialOverrides]);
 
-  // Vibe picker hidden for now — skipped unconditionally
-
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-      <div className="px-4 pt-4 pb-6 lg:max-w-7xl lg:mx-auto lg:px-8 lg:py-10">
+    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row">
 
-        {/* ── Vibe pill + reset row ── */}
-        <div className="mb-2 flex items-center justify-between lg:mb-6">
-          {vibeTag ? (
-            <div className="flex items-center gap-1">
-              {/* Tap label → back to picker */}
+      {/* ── LEFT (desktop) / TOP (mobile): Flatlay ──────────────────────────── */}
+      <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+      <div className="px-4 pt-4 pb-4 lg:px-8 lg:py-6 lg:max-w-2xl">
+
+      {/* ── Topbar ──────────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between pb-2 lg:pb-4">
+          <span
+            className="text-[11px] font-medium tracking-[0.04em] uppercase"
+            style={{ color: "rgba(0,0,0,0.45)" }}
+          >
+            {t("moodboard.room")}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {/* Info icon — show detail modal for active slot's material */}
+            {detailMaterial && (
               <button
-                onClick={resetVibeChoice}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
+                onClick={() => setShowDetailModal(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
               >
-                <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-500">
-                  {t(`vibe.${vibeTag}`)}
-                </span>
+                <Info className="w-4 h-4" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
               </button>
-              {/* × → clear filter, stay in moodboard */}
-              <button
-                onClick={clearVibeTag}
-                className="flex items-center justify-center w-5 h-5 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
-                aria-label={t("vibe.clearFilter")}
-              >
-                <X className="w-2.5 h-2.5 text-neutral-400" strokeWidth={2} />
-              </button>
-            </div>
-          ) : (
-            /* No active vibe — show "All" pill with option to pick a vibe */
+            )}
+            {/* Visualize button */}
             <button
-              onClick={resetVibeChoice}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors active:scale-95"
+              onClick={() => setActiveTab("design")}
+              disabled={!allSlotsFilled}
+              className="h-8 px-3 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-30"
+              style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
             >
-              <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-500">
-                {t("vibe.all")}
+              <Sparkles className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
+              <span className="text-[11px] font-medium text-white tracking-[0.03em] whitespace-nowrap">
+                {t("moodboard.visualize")}
               </span>
             </button>
-          )}
-          {/* Right side: room context + optional clear — mobile only */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-400">
-              {t("moodboard.room")}
-            </span>
+            {/* Clear — only when slots are filled */}
             {filledCount > 0 && (
               <button
                 onClick={handleClearSlots}
-                className="flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity active:scale-95"
+                className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
               >
-                <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-neutral-600">
-                  {t("moodboard.clear")}
-                </span>
-                <RotateCcw className="w-3 h-3 text-neutral-600" strokeWidth={1.5} />
+                <RotateCcw className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Two-column grid: stacks on mobile, side-by-side on desktop ── */}
-        <div className="lg:grid lg:grid-cols-2 lg:gap-20 lg:items-center">
+        {/* Canvas — original aspect ratio, no squishing */}
+        <div
+          className="relative w-full overflow-hidden rounded-2xl"
+          style={{ aspectRatio: "4/4.9" }}
+        >
+            {/* Background */}
+            <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
 
-        {/* LEFT column */}
-        <div>
+            {/* Material cut-sample pieces */}
+            {PIECES.map((piece, i) => {
+              if (piece.slot === "accents" && !mainSlotsFilled) return null;
+              const archetypeId = slotSelections[piece.slot];
+              const pk = SLOT_TO_PALETTE_KEY[piece.slot];
+              const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
+              const tileImage = overrideCode
+                ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
+                : null;
+              const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
 
-          {/* Desktop-only: room label left, clear right — directly above canvas */}
-          <div className="hidden lg:flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-neutral-400">
-              {t("moodboard.room")}
-            </span>
-            {filledCount > 0 && (
-              <button
-                onClick={handleClearSlots}
-                className="flex items-center gap-1.5 hover:opacity-70 transition-opacity active:scale-95"
-              >
-                <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-neutral-400">
-                  {t("moodboard.clear")}
-                </span>
-                <RotateCcw className="w-3 h-3 text-neutral-400" strokeWidth={1.5} />
-              </button>
-            )}
-          </div>
+              // Graph-based best swap for this slot
+              const otherCodes = Object.entries(SLOT_TO_PALETTE_KEY)
+                .filter(([k]) => k !== piece.slot)
+                .map(([, v]) => v ? materialOverrides[v] : null)
+                .filter((c): c is string => !!c);
+              const slotRole = SLOT_KEY_TO_ROLE[piece.slot];
+              const rawBestCode = (!graphLoading && currentMatId && otherCodes.length > 0)
+                ? getBestSwapCode(currentMatId, otherCodes, slotRole)
+                : null;
+              const showroomCoversSlot = activeShowroom && activeShowroom.surfaceCategories.includes(slotRole);
+              const graphBestCode = (rawBestCode && showroomCoversSlot)
+                ? (getMaterialByCode(rawBestCode)?.showroomIds.includes(activeShowroom!.id) ? rawBestCode : null)
+                : rawBestCode;
+              const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && otherCodes.length > 0;
+              const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
+              const showVerified = isCompatible === true;
+              const showNudge   = isCompatible === false && !!graphBestCode;
 
-          {/* Canvas */}
-          <div
-            className="relative w-full overflow-hidden rounded-2xl"
-            style={{ aspectRatio: "4/4.9" }}
-          >
-          {/* Background */}
-          <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
-          {/* Material cut-sample pieces */}
-          {PIECES.map((piece, i) => {
-            if (piece.slot === "accents" && !mainSlotsFilled) return null;
-            const archetypeId = slotSelections[piece.slot];
-            const pk = SLOT_TO_PALETTE_KEY[piece.slot];
-            const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
-            const tileImage = overrideCode
-              ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
-              : null;
-            const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
-
-            // Graph-based best swap for this slot
-            const otherCodes = Object.entries(SLOT_TO_PALETTE_KEY)
-              .filter(([k]) => k !== piece.slot)
-              .map(([, v]) => v ? materialOverrides[v] : null)
-              .filter((c): c is string => !!c);
-            const slotRole = SLOT_KEY_TO_ROLE[piece.slot];
-            const rawBestCode = (!graphLoading && currentMatId && otherCodes.length > 0)
-              ? getBestSwapCode(currentMatId, otherCodes, slotRole)
-              : null;
-            // In showroom mode, suppress swap nudge if suggestion belongs to a competitor showroom
-            const showroomCoversSlot = activeShowroom && activeShowroom.surfaceCategories.includes(slotRole);
-            const graphBestCode = (rawBestCode && showroomCoversSlot)
-              ? (getMaterialByCode(rawBestCode)?.showroomIds.includes(activeShowroom!.id) ? rawBestCode : null)
-              : rawBestCode;
-            const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && otherCodes.length > 0;
-            const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
-            const showVerified = isCompatible === true;
-            const showNudge   = isCompatible === false && !!graphBestCode;
-            return (
-              <div
-                key={i}
-                className="absolute active:scale-[0.97] transition-transform"
-                style={{
-                  top: piece.top,
-                  left: piece.left,
-                  width: piece.width,
-                  height: piece.height,
-                  transform: `rotate(${piece.rotate})`,
-                  zIndex: piece.zIndex,
-                }}
-              >
+              return (
                 <div
-                  className="w-full h-full overflow-hidden"
+                  key={i}
+                  className="absolute active:scale-[0.97] transition-transform"
                   style={{
-                    borderRadius: piece.borderRadius ?? "4px",
-                    boxShadow: piece.shadow,
+                    top: piece.top,
+                    left: piece.left,
+                    width: piece.width,
+                    height: piece.height,
+                    transform: `rotate(${piece.rotate})`,
+                    zIndex: piece.zIndex,
                   }}
                 >
-                  <button
-                    onClick={() => { dismissHint(); setOpenSlot(piece.slot); }}
-                    className="w-full h-full"
-                    aria-label={`Pick ${piece.slot}`}
+                  <div
+                    className="w-full h-full overflow-hidden"
+                    style={{
+                      borderRadius: piece.borderRadius ?? "4px",
+                      boxShadow: piece.shadow,
+                    }}
                   >
-                    {tileImage ? (
-                      <img
-                        src={tileImage}
-                        alt={getArchetypeById(archetypeId, SLOT_KEY_TO_ROLE[piece.slot])?.label[lang] ?? piece.slot}
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                        <Plus
-                          className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
-                          strokeWidth={1.5}
+                    <button
+                      onClick={() => { dismissHint(); setActiveSlot(piece.slot); }}
+                      className="w-full h-full"
+                      aria-label={`Pick ${piece.slot}`}
+                    >
+                      {tileImage ? (
+                        <img
+                          src={tileImage}
+                          alt={getArchetypeById(archetypeId, SLOT_KEY_TO_ROLE[piece.slot])?.label[lang] ?? piece.slot}
+                          className="w-full h-full object-cover"
+                          draggable={false}
                         />
-                      </div>
-                    )}
-                  </button>
-                </div>
-                {archetypeId && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleSlotClear(piece.slot); }}
-                    className="absolute top-1 right-1 flex items-center justify-center rounded-full"
-                    style={{ zIndex: 1 }}
-                    aria-label={`Clear ${piece.slot}`}
-                  >
-                    <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
-                  </button>
-                )}
-                {showVerified && (
-                  <div className="absolute top-1 left-1" style={{ zIndex: 1 }}>
-                    <Check className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.5 }} strokeWidth={2} />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                          <Plus
+                            className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
+                            strokeWidth={1.5}
+                          />
+                        </div>
+                      )}
+                    </button>
                   </div>
-                )}
-                {showNudge && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (pk && graphBestCode && currentMatId) {
-                        swapJustAppliedRef.current = true;
-                        setLastSwap({ pk, fromCode: currentMatId, toCode: graphBestCode });
-                        setMaterialOverrides((prev) => ({ ...prev, [pk]: graphBestCode }));
-                      }
-                    }}
-                    className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
-                    style={{ zIndex: 1 }}
-                    aria-label={`Sync ${piece.slot} to suggested material`}
-                  >
-                    <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
-                      <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
-                    </span>
-                  </button>
-                )}
-                {pk && lastSwap?.pk === pk && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMaterialOverrides((prev) => ({ ...prev, [lastSwap.pk]: lastSwap.fromCode }));
-                      setLastSwap(null);
-                    }}
-                    className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
-                    style={{ zIndex: 1 }}
-                    aria-label="Undo swap"
-                  >
-                    <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
-                      <RotateCcw className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
-                    </span>
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {/* First-time hint overlay */}
-          <div
-            className={`absolute inset-x-0 bottom-4 flex justify-center pointer-events-none transition-opacity duration-300 ${showHint && filledCount === 0 ? "opacity-100" : "opacity-0"}`}
-          >
-            <div
-              className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5"
-              style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}
-            >
-              <span className="text-[9px] font-medium text-black/70 whitespace-nowrap">
-                {t("moodboard.tapHint")}
-              </span>
-              <span className="text-black/40 text-[9px]">↑</span>
-            </div>
-          </div>
-
-          {/* ── Annotation overlay (SVG, pointer-events:none) ── */}
-          <svg
-            width="100%"
-            height="100%"
-            style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-            aria-hidden="true"
-          >
-            {ANNOTATION_DEFS.map(({ surfaceKey, labelKey, tx, ty, x1, y1, px, py }, i) => {
-              if (surfaceKey === "accents" && !mainSlotsFilled) return null;
-              const label = t(`surface.${labelKey ?? surfaceKey}`).toUpperCase();
-              return (
-                <g key={i}>
-                  <line
-                    x1={x1} y1={y1}
-                    x2={px} y2={py}
-                    stroke="#d4d4d4"
-                    strokeWidth="0.5"
-                    strokeLinecap="round"
-                  />
-                  <circle cx={px} cy={py} r="1.5" fill="#d4d4d4" />
-                  <text
-                    x={tx} y={ty}
-                    dy="-2"
-                    fontSize="8"
-                    letterSpacing="2.4"
-                    fill="#737373"
-                    fontFamily="system-ui, -apple-system, sans-serif"
-                    textAnchor="start"
-                  >
-                    {label}
-                  </text>
-                </g>
+                  {archetypeId && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleSlotClear(piece.slot); }}
+                      className="absolute top-1 right-1 flex items-center justify-center rounded-full"
+                      style={{ zIndex: 1 }}
+                      aria-label={`Clear ${piece.slot}`}
+                    >
+                      <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                    </button>
+                  )}
+                  {showVerified && (
+                    <div className="absolute top-1 left-1" style={{ zIndex: 1 }}>
+                      <Check className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.5 }} strokeWidth={2} />
+                    </div>
+                  )}
+                  {showNudge && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (pk && graphBestCode && currentMatId) {
+                          swapJustAppliedRef.current = true;
+                          setLastSwap({ pk, fromCode: currentMatId, toCode: graphBestCode });
+                          setMaterialOverrides((prev) => ({ ...prev, [pk]: graphBestCode }));
+                        }
+                      }}
+                      className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
+                      style={{ zIndex: 1 }}
+                      aria-label={`Sync ${piece.slot} to suggested material`}
+                    >
+                      <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
+                        <Sparkles className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
+                      </span>
+                    </button>
+                  )}
+                  {pk && lastSwap?.pk === pk && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMaterialOverrides((prev) => ({ ...prev, [lastSwap.pk]: lastSwap.fromCode }));
+                        setLastSwap(null);
+                      }}
+                      className="absolute top-0 left-0 flex items-center justify-center p-3.5 active:scale-90 transition-transform"
+                      style={{ zIndex: 1 }}
+                      aria-label="Undo swap"
+                    >
+                      <span className="flex items-center justify-center rounded-full bg-white/20 p-0.5">
+                        <RotateCcw className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
+                      </span>
+                    </button>
+                  )}
+                </div>
               );
             })}
-          </svg>
-          </div>{/* end canvas */}
-        </div>{/* end LEFT column */}
 
-        {/* RIGHT: controls */}
-        <div className="mt-4 lg:mt-0">
-        <div className="lg:max-w-[400px] lg:mx-auto">
+            {/* First-time hint overlay */}
+            <div
+              className={`absolute inset-x-0 bottom-4 flex justify-center pointer-events-none transition-opacity duration-300 ${showHint && filledCount === 0 ? "opacity-100" : "opacity-0"}`}
+            >
+              <div
+                className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5"
+                style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}
+              >
+                <span className="text-[9px] font-medium text-black/70 whitespace-nowrap">
+                  {t("moodboard.tapHint")}
+                </span>
+                <span className="text-black/40 text-[9px]">↑</span>
+              </div>
+            </div>
 
-        {/* ── Instruction ── */}
-        {!allSlotsFilled && (
-          <div className="mt-3 lg:mt-0 lg:mb-6">
-            <p className="text-[9px] uppercase tracking-[0.25em] font-medium text-neutral-400 text-center lg:font-serif lg:text-xl lg:normal-case lg:tracking-normal lg:text-neutral-700 lg:text-left">
-              {filledCount === 0 ? t("moodboard.pickFirst") : t("moodboard.pickRemaining")}
-            </p>
-            <div className="hidden lg:block mt-6 border-t border-neutral-100" style={{ borderTopWidth: '0.5px' }} />
-          </div>
-        )}
-
-        {/* ── CTA buttons ── */}
-        <div className="mt-3 flex items-center justify-between gap-2 lg:flex-col lg:items-stretch lg:gap-3 lg:mt-6">
-
-          {/* Visualize — filled black (primary action) */}
-          <button
-            onClick={() => setActiveTab("design")}
-            disabled={!allSlotsFilled}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 transition-colors active:scale-[0.97] disabled:opacity-30 lg:flex-none lg:h-12 lg:px-6">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-medium text-white lg:text-sm lg:normal-case lg:tracking-normal">
-              {t("moodboard.visualize")}
-            </span>
-            <ArrowRight className="w-3 h-3 text-white lg:w-4 lg:h-4" strokeWidth={1} />
-          </button>
-
-          {/* Where to find — ghost */}
-          <button
-            onClick={() => setActiveTab("specs")}
-            disabled={!allSlotsFilled}
-            className="flex-1 h-10 px-4 flex items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-transparent hover:bg-neutral-50 transition-colors active:scale-[0.97] disabled:opacity-30 lg:flex-none lg:h-12 lg:px-6">
-            <span className={`text-[8px] uppercase tracking-[0.2em] font-medium lg:text-sm lg:normal-case lg:tracking-normal ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`}>
-              {t("moodboard.findMaterials")}
-            </span>
-            <ArrowRight className={`w-3 h-3 lg:w-4 lg:h-4 ${allSlotsFilled ? "text-neutral-600" : "text-neutral-400"}`} strokeWidth={1} />
-          </button>
+            {/* Annotation overlay (SVG) */}
+            <svg
+              width="100%"
+              height="100%"
+              style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+              aria-hidden="true"
+            >
+              {ANNOTATION_DEFS.map(({ surfaceKey, labelKey, tx, ty, x1, y1, px, py }, i) => {
+                if (surfaceKey === "accents" && !mainSlotsFilled) return null;
+                const label = t(`surface.${labelKey ?? surfaceKey}`).toUpperCase();
+                return (
+                  <g key={i}>
+                    <line
+                      x1={x1} y1={y1}
+                      x2={px} y2={py}
+                      stroke="#d4d4d4"
+                      strokeWidth="0.5"
+                      strokeLinecap="round"
+                    />
+                    <circle cx={px} cy={py} r="1.5" fill="#d4d4d4" />
+                    <text
+                      x={tx} y={ty}
+                      dy="-2"
+                      fontSize="8"
+                      letterSpacing="2.4"
+                      fill="#737373"
+                      fontFamily="system-ui, -apple-system, sans-serif"
+                      textAnchor="start"
+                    >
+                      {label}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
         </div>
 
-        </div>{/* end max-w-[400px] */}
-        </div>{/* end RIGHT controls */}
-        </div>{/* end two-column grid */}
-
+      </div>
       </div>
 
-      <MaterialSlotPicker
-        slot={openSlot}
-        selections={slotSelections}
-        onSelect={handleSlotSelect}
-        onClose={() => setOpenSlot(null)}
-        onClear={handleSlotClear}
-        otherMaterialCodes={otherMaterialCodesForPicker}
-        selectedMaterialCode={openSlot && SLOT_TO_PALETTE_KEY[openSlot] ? (materialOverrides[SLOT_TO_PALETTE_KEY[openSlot]!] ?? undefined) : undefined}
-        getRecommendedCodes={getRecommendedCodes}
-        graphMaterials={graphLoading ? undefined : showroomMaterials}
-        filterEmptyArchetypes={!graphLoading}
+      {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
+      <div
+        className="h-[272px] lg:h-full lg:flex-1 lg:min-h-0 mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l"
+        style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
+      >
+        <MaterialSlotPicker
+          slot={activeSlot}
+          inline={true}
+          onResetSlot={() => setActiveSlot("floor")}
+          selections={slotSelections}
+          onSelect={handleSlotSelect}
+          onClose={() => {}}
+          onClear={handleSlotClear}
+          otherMaterialCodes={otherMaterialCodesForPicker}
+          selectedMaterialCode={activeSlotMaterialCode}
+          getRecommendedCodes={getRecommendedCodes}
+          graphMaterials={graphLoading ? undefined : showroomMaterials}
+          filterEmptyArchetypes={!graphLoading}
+        />
+      </div>
+
+      {/* Material detail modal */}
+      <MaterialDetailModal
+        material={showDetailModal ? detailMaterial : null}
+        onClose={() => setShowDetailModal(false)}
       />
 
     </div>
