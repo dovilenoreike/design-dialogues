@@ -14,6 +14,18 @@ export function isSimilarLightness(a: number, b: number, threshold = 20): boolea
   return Math.abs(a - b) <= threshold;
 }
 
+export function isSimilarMaterial(
+  a: GraphMaterial, b: GraphMaterial,
+  { lightnessΔ = 20, warmthΔ = 0.4, patternΔ = 25, chromaΔ = 15 } = {}
+): boolean {
+  return (
+    Math.abs(a.lightness - b.lightness) <= lightnessΔ &&
+    Math.abs(a.warmth   - b.warmth)    <= warmthΔ    &&
+    Math.abs(a.pattern  - b.pattern)   <= patternΔ   &&
+    Math.abs(a.chroma   - b.chroma)    <= chromaΔ
+  );
+}
+
 // Canonical pair key — always lower UUID first
 export function pairKey(a: string, b: string): string {
   return a < b ? `${a}::${b}` : `${b}::${a}`;
@@ -33,10 +45,11 @@ export function getCompatibleCandidates(
   pairs: Set<string>,
   targetRole?: string,
 ): GraphMaterial[] {
+  const threshold = Math.min(2, selectedUuids.length);
   return allMaterials.filter((m) => {
     if (selectedUuids.includes(m.id)) return false;
     if (targetRole && !m.role.includes(targetRole)) return false;
-    return isCompatibleWithAll(m.id, selectedUuids, pairs);
+    return countCompatible(m.id, selectedUuids, pairs) >= threshold;
   });
 }
 

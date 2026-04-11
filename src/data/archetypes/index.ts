@@ -35,9 +35,9 @@ import accentBlack from "@/assets/archetypes/accents/black.jpg";
 
 export const archetypes: Archetype[] = [
   // ── Floor (5) ─────────────────────────────────────────────────────────────
-  { id: "light-wood",  role: "floor", label: { en: "Light Wood",   lt: "Šviesi mediena"   }, image: floorLightWood,  value: "#ddd5c4" },
-  { id: "medium-wood", role: "floor", label: { en: "Medium Wood",  lt: "Vidutinė mediena" }, image: floorMediumWood, value: "#b89870" },
-  { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",    lt: "Tamsi mediena"    }, image: floorDarkWood,   value: "#5c3d2a" },
+  { id: "light-wood",  role: "floor", label: { en: "Light Wood",   lt: "Šviesus medis"   }, image: floorLightWood,  value: "#ddd5c4" },
+  { id: "medium-wood", role: "floor", label: { en: "Medium Wood",  lt: "Vidutinis medis" }, image: floorMediumWood, value: "#b89870" },
+  { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",    lt: "Tamsus medis"    }, image: floorDarkWood,   value: "#5c3d2a" },
   { id: "light-stone", role: "floor", label: { en: "Light Stone",  lt: "Šviesus akmuo"    }, image: floorLightStone, value: "#d8d4cc" },
   { id: "dark-stone",  role: "floor", label: { en: "Dark Stone",   lt: "Tamsus akmuo"     }, image: null,            value: "#6a6560" },
 

@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarLightness, countCompatible, weightedScore } from '@/lib/graph-compatibility';
+import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, countCompatible, weightedScore } from '@/lib/graph-compatibility';
 import { deriveArchetypeId } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -142,8 +142,7 @@ export function useGraphMaterials() {
     if (slotMat) {
       const narrowed = candidates.filter((m) =>
         m.texture === slotMat.texture &&
-        isSimilarLightness(m.lightness, slotMat.lightness) &&
-        (!slotMat.archetypeId || m.archetypeId === slotMat.archetypeId)
+        isSimilarMaterial(m, slotMat)
       );
       if (narrowed.length === 0) return null;
       const best = rankByCompatibility(narrowed, otherUuids, pairs, pairWeights)[0];
