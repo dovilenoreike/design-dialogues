@@ -18,11 +18,6 @@ import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 type WarmthGroup = "warm" | "neutral" | "cold";
 const WARMTH_GROUPS: WarmthGroup[] = ["warm", "neutral", "cold"];
 const WARMTH_THRESHOLDS = { warm: 0.35, cold: -0.35 };
-const WARMTH_GROUP_COLORS: Record<WarmthGroup, string> = {
-  warm:    "#d4b870",
-  neutral: "#c8c0b4",
-  cold:    "#b4bcc8",
-};
 
 function getWarmthGroup(warmth: number | null | undefined): WarmthGroup {
   const w = warmth ?? 50;
@@ -164,43 +159,96 @@ export default function MaterialSlotPicker({
     return availableWithImages[0]?.archetype.id ?? null;
   }, [activeArchetypeId, availableWithImages, slot, selections]);
 
-  // ─── Warmth groups for active archetype (inline mode) ────────────────────
-  const warmthGroups = useMemo(() => {
-    if (!inline || !slot || !effectiveActiveId || !graphMaterials) return [];
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const archetypeMats = graphMaterials.filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role));
-    if (archetypeMats.length === 0) return [];
-    const presentGroups = new Set(archetypeMats.map(m => getWarmthGroup(m.warmth)));
-    return WARMTH_GROUPS
-      .filter(g => presentGroups.has(g))
-      .map(g => {
-        const groupMats = archetypeMats.filter(m => getWarmthGroup(m.warmth) === g);
-        const best = groupMats.reduce((b, m) =>
-          getPairCountByCode(m.technicalCode) >= getPairCountByCode(b.technicalCode) ? m : b
-        );
-        return { group: g, imageUrl: best.imageUrl ?? null, color: WARMTH_GROUP_COLORS[g], bestCode: best.technicalCode };
-      });
-  }, [inline, slot, effectiveActiveId, graphMaterials]);
+  // ─── Shared row item types ────────────────────────────────────────────────
+  type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; archetypeId: string };
+  type Row2Item = RowItem & { warmthGroup: WarmthGroup };
 
-  // ─── Variants for active archetype (+ warmth filter in inline mode) ───────
+  // ─── Inline row data ──────────────────────────────────────────────────────
+
+  // Row 1: best-ranked material per archetype
+  const row1Items = useMemo((): RowItem[] => {
+    if (!slot || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const recCodes = new Set(getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []);
+    return availableWithImages.map(({ archetype }) => {
+      const best = graphMaterials
+        .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl)
+        .sort((a, b) =>
+          Number(recCodes.has(b.technicalCode)) - Number(recCodes.has(a.technicalCode)) ||
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+        )[0];
+      if (!best) return null;
+      return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
+               materialName: best.name?.[lang] ?? best.technicalCode,
+               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: recCodes.has(best.technicalCode),
+               archetypeId: archetype.id };
+    }).filter((x): x is RowItem => x !== null)
+      .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
+  }, [slot, graphMaterials, availableWithImages, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+
+  // Row 2: best per warmth group in active archetype, excluding the Row 1 image
+  const row2Items = useMemo((): Row2Item[] => {
+    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const recCodes = new Set(getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []);
+    const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
+    return WARMTH_GROUPS.map(group => {
+      const best = graphMaterials
+        .filter(m =>
+          m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
+          m.technicalCode !== row1Code &&
+          getWarmthGroup(m.warmth) === group
+        )
+        .sort((a, b) =>
+          Number(recCodes.has(b.technicalCode)) - Number(recCodes.has(a.technicalCode)) ||
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+        )[0];
+      if (!best) return null;
+      return { code: best.technicalCode, image: best.imageUrl!, name: best.name?.[lang] ?? best.technicalCode,
+               materialName: best.name?.[lang] ?? best.technicalCode,
+               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: recCodes.has(best.technicalCode),
+               archetypeId: effectiveActiveId, warmthGroup: group };
+    }).filter((x): x is Row2Item => x !== null)
+      .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
+  }, [slot, effectiveActiveId, graphMaterials, row1Items, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+
+  // Row 3: remaining materials in active warmth group, excluding Row 1 and Row 2
+  const row3Items = useMemo((): RowItem[] => {
+    if (!slot || !effectiveActiveId || !activeWarmthGroup || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const recCodes = new Set(getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []);
+    const excludeCodes = new Set([
+      row1Items.find(r => r.archetypeId === effectiveActiveId)?.code,
+      row2Items.find(r => r.warmthGroup === activeWarmthGroup)?.code,
+    ].filter(Boolean) as string[]);
+    return graphMaterials
+      .filter(m =>
+        m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
+        getWarmthGroup(m.warmth) === activeWarmthGroup &&
+        !excludeCodes.has(m.technicalCode)
+      )
+      .sort((a, b) =>
+        Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
+        Number(recCodes.has(b.technicalCode)) - Number(recCodes.has(a.technicalCode)) ||
+        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+      )
+      .map(m => ({ code: m.technicalCode, image: m.imageUrl!, name: m.name?.[lang] ?? m.technicalCode,
+                   materialName: m.name?.[lang] ?? m.technicalCode,
+                   isSelected: m.technicalCode === selectedMaterialCode, isRecommended: recCodes.has(m.technicalCode),
+                   archetypeId: effectiveActiveId }));
+  }, [slot, effectiveActiveId, activeWarmthGroup, graphMaterials, row1Items, row2Items, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+
+  // ─── Variants for modal mode (unchanged) ─────────────────────────────────
   const activeVariants = useMemo(() => {
     if (!slot || !effectiveActiveId || !graphMaterials) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    const mats = graphMaterials;
     const recommendedCodes = new Set(
       getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []
     );
-    return mats
-      .filter(m =>
-        m.archetypeId === effectiveActiveId &&
-        m.role.includes(role) &&
-        m.imageUrl &&
-        // In inline mode, filter by warmth group when one is selected
-        (!inline || activeWarmthGroup === null || getWarmthGroup(m.warmth) === activeWarmthGroup)
-      )
+    return graphMaterials
+      .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl)
       .map(m => ({
-        code: m.technicalCode,
-        image: m.imageUrl!,
+        code: m.technicalCode, image: m.imageUrl!,
         name: m.name?.[lang] ?? m.technicalCode,
         isSelected: m.technicalCode === selectedMaterialCode,
         isRecommended: recommendedCodes.size > 0 && recommendedCodes.has(m.technicalCode),
@@ -210,7 +258,7 @@ export default function MaterialSlotPicker({
         Number(b.isRecommended) - Number(a.isRecommended) ||
         getPairCountByCode(b.code) - getPairCountByCode(a.code)
       );
-  }, [slot, effectiveActiveId, graphMaterials, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang, inline, activeWarmthGroup]);
+  }, [slot, effectiveActiveId, graphMaterials, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
 
   const selectedId = slot ? selections[slot] : null;
   const isFirstPick = !selectedId;
@@ -238,35 +286,29 @@ export default function MaterialSlotPicker({
   };
 
   // ─── Inline-mode handlers ─────────────────────────────────────────────────
-  const handleArchetypeClickInline = (archetypeId: string, resolvedCode?: string) => {
-    setActiveArchetypeId(archetypeId);
+  const handleRow1Click = (item: RowItem) => {
+    setActiveArchetypeId(item.archetypeId);
     setActiveWarmthGroup(null);
     if (!slot) return;
-    if (SLOT_KEY_TO_ROLE[slot] === "accent") {
-      onSelect(slot, archetypeId, archetypeId);
-    } else {
-      onSelect(slot, archetypeId, resolvedCode);
-    }
+    if (SLOT_KEY_TO_ROLE[slot] === "accent") onSelect(slot, item.archetypeId, item.archetypeId);
+    else onSelect(slot, item.archetypeId, item.code);
   };
 
-  const handleWarmthGroupClickInline = (group: WarmthGroup, bestCode?: string) => {
-    setActiveWarmthGroup(group);
-    if (!slot || !effectiveActiveId) return;
-    if (bestCode) {
-      onSelect(slot, effectiveActiveId, bestCode);
-    }
+  const handleRow2Click = (item: Row2Item) => {
+    setActiveArchetypeId(item.archetypeId);
+    setActiveWarmthGroup(item.warmthGroup);
+    if (slot) onSelect(slot, item.archetypeId, item.code);
   };
 
-  const handleVariantSelectInline = (code: string) => {
-    if (!slot || !effectiveActiveId) return;
-    onSelect(slot, effectiveActiveId, code);
+  const handleRow3Click = (item: RowItem) => {
+    if (slot) onSelect(slot, item.archetypeId, item.code);
   };
 
   // ─── Inline render ────────────────────────────────────────────────────────
 
   // Shared swatch size for all 3 rows — uniform grid feel
-  const SWATCH_SIZE = 52;
-  const SWATCH_RADIUS = 13;
+  const SWATCH_SIZE = 64;
+  const SWATCH_RADIUS = 16;
 
   const SwatchRow = ({ children, alignItems = "center" }: { children: React.ReactNode; alignItems?: "center" | "start" }) => (
     <div
@@ -293,19 +335,6 @@ export default function MaterialSlotPicker({
     </button>
   );
 
-  const SwatchDot = ({ position, withBorder }: { position: "top-left" | "bottom-right"; withBorder?: boolean }) => (
-    <div
-      className="absolute"
-      style={{
-        ...(position === "top-left" ? { top: 5, left: 5 } : { bottom: 4, right: 4 }),
-        width: 6, height: 6,
-        borderRadius: "50%",
-        backgroundColor: "#647d75",
-        ...(withBorder ? { border: "1.5px solid white", width: 7, height: 7 } : {}),
-      }}
-    />
-  );
-
   const SwatchDivider = () => (
     <div className="mx-4 flex-shrink-0" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
   );
@@ -323,69 +352,108 @@ export default function MaterialSlotPicker({
           <span className="text-[15px] font-medium" style={{ color: "#1a1a1a" }}>
             {t(`surface.${slot}`)}
           </span>
-          {onResetSlot && (
+          {selectedId && onClear && slot && (
             <button
-              onClick={onResetSlot}
+              onClick={() => onClear(slot)}
               className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#f5f2ef", color: "#6b7280" }}
+              style={{ backgroundColor: "#f5f2ef", color: "#9ca3af" }}
             >
-              <X className="w-3.5 h-3.5" strokeWidth={2} />
+              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
             </button>
           )}
         </div>
 
         {/* Three swatch rows — uniform 52px swatches, each row scrolls independently */}
-        <div className="flex-1 flex flex-col justify-evenly py-1 min-h-0">
+        <div className={`flex-1 flex flex-col min-h-0 ${isFirstPick ? "justify-start pt-5" : "justify-evenly py-1"}`}>
 
-          {/* Row 1 — Archetypes */}
-          <SwatchRow>
-            {availableWithImages.map(({ archetype, displayImage, resolvedCode, isRecommended }) => {
-              const isActive = archetype.id === effectiveActiveId;
-              const hasSelection = selectedId === archetype.id;
-              return (
+          {/* Row 1 — Archetypes: one best-ranked material per archetype */}
+          <SwatchRow alignItems="start">
+            {row1Items.map((mat) => (
+              <div key={`r1-${mat.archetypeId}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton
-                  key={`inline-arch-${archetype.role}-${archetype.id}`}
-                  onClick={() => handleArchetypeClickInline(archetype.id, resolvedCode)}
-                  isActive={isActive}
+                  onClick={() => handleRow1Click(mat)}
+                  isActive={mat.isSelected}
                 >
-                  <img src={displayImage} alt="" className="w-full h-full object-cover" />
-                  {isRecommended && <SwatchDot position="top-left" />}
-                  {hasSelection && <SwatchDot position="bottom-right" withBorder />}
+                  <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                  {mat.isRecommended && (
+                    <div className="absolute top-1 inset-x-1 flex justify-center">
+                      <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}>
+                        {t("surface.matchingMaterials")}
+                      </span>
+                    </div>
+                  )}
+                  {mat.isSelected && (
+                    <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                    </div>
+                  )}
                 </SwatchButton>
-              );
-            })}
-          </SwatchRow>
-
-          <SwatchDivider />
-
-          {/* Row 2 — Warmth sub-categories */}
-          <SwatchRow>
-            {warmthGroups.map(({ group, imageUrl, color, bestCode }) => (
-              <SwatchButton
-                key={`warmth-${group}`}
-                onClick={() => handleWarmthGroupClickInline(group, bestCode)}
-                isActive={activeWarmthGroup === group}
-              >
-                {imageUrl
-                  ? <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                  : <div className="w-full h-full" style={{ backgroundColor: color }} />
-                }
-              </SwatchButton>
+                <span
+                  className="text-[10px] text-center w-full truncate leading-tight"
+                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
+                >
+                  {mat.isSelected ? mat.materialName : mat.name}
+                </span>
+              </div>
             ))}
           </SwatchRow>
 
-          <SwatchDivider />
 
-          {/* Row 3 — Individual variants */}
+          {!isFirstPick && <SwatchDivider />}
+
+          {/* Row 2 — Warmth sub-categories: best material per warmth group, no repeats from Row 1 */}
+          {!isFirstPick && (
           <SwatchRow alignItems="start">
-            {activeVariants.map((v) => (
+            {row2Items.map((mat) => (
+              <div key={`r2-${mat.warmthGroup}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                <SwatchButton
+                  onClick={() => handleRow2Click(mat)}
+                  isActive={mat.isSelected}
+                >
+                  <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                  {mat.isRecommended && (
+                    <div className="absolute top-1 inset-x-1 flex justify-center">
+                      <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}>
+                        {t("surface.matchingMaterials")}
+                      </span>
+                    </div>
+                  )}
+                  {mat.isSelected && (
+                    <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                    </div>
+                  )}
+                </SwatchButton>
+                <span
+                  className="text-[10px] text-center w-full truncate leading-tight"
+                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
+                >
+                  {mat.isSelected ? mat.materialName : t(`surface.warmth${mat.warmthGroup.charAt(0).toUpperCase() + mat.warmthGroup.slice(1)}`)}
+                </span>
+              </div>
+            ))}
+          </SwatchRow>
+          )}
+
+
+          {!isFirstPick && <SwatchDivider />}
+
+          {/* Row 3 — Remaining materials in active warmth group, no repeats from Row 1 or Row 2 */}
+          {!isFirstPick && <SwatchRow alignItems="start">
+            {row3Items.map((v) => (
               <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton
-                  onClick={() => handleVariantSelectInline(v.code)}
+                  onClick={() => handleRow3Click(v)}
                   isActive={v.isSelected}
                 >
                   <img src={v.image} alt="" className="w-full h-full object-cover" />
-                  {v.isRecommended && <SwatchDot position="top-left" />}
+                  {v.isRecommended && (
+                    <div className="absolute top-1 inset-x-1 flex justify-center">
+                      <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}>
+                        {t("surface.matchingMaterials")}
+                      </span>
+                    </div>
+                  )}
                   {v.isSelected && (
                     <div
                       className="absolute flex items-center justify-center"
@@ -396,28 +464,17 @@ export default function MaterialSlotPicker({
                   )}
                 </SwatchButton>
                 <span
-                  className="text-[10px] font-medium text-center w-full truncate leading-tight"
-                  style={{ color: v.isSelected ? "#1a1a1a" : "transparent", transition: "color 0.15s", minHeight: "1.2em" }}
+                  className="text-[10px] text-center w-full truncate leading-tight"
+                  style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}
                 >
                   {v.name}
                 </span>
               </div>
             ))}
-          </SwatchRow>
+          </SwatchRow>}
 
         </div>
 
-        {/* Remove material button (inline) */}
-        {selectedId && onClear && slot && (
-          <button
-            onClick={() => onClear(slot)}
-            className="mx-4 mb-3 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[12px] flex-shrink-0"
-            style={{ border: "0.5px solid #e8e4e0", color: "#9ca3af" }}
-          >
-            <Trash2 className="w-3 h-3 flex-shrink-0" strokeWidth={1.8} />
-            {t("surface.remove")}
-          </button>
-        )}
       </div>
     );
   }
@@ -480,7 +537,7 @@ export default function MaterialSlotPicker({
                 >
                   <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
                   {isRecommended && (
-                    <div className="absolute bottom-1 inset-x-1 flex justify-center">
+                    <div className="absolute top-1 inset-x-1 flex justify-center">
                       <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
                         {t("surface.matchingMaterials")}
                       </span>

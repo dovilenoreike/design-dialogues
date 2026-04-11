@@ -537,7 +537,7 @@ export default function MoodboardView() {
 
       {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
       <div
-        className="h-[272px] lg:h-full lg:flex-1 lg:min-h-0 mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l"
+        className="h-[320px] lg:h-full lg:flex-1 lg:min-h-0 mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l"
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
       >
         <MaterialSlotPicker
