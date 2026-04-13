@@ -96,6 +96,8 @@ export default function MoodboardView() {
 
   // Always-active slot — picker is always visible (no open/close)
   const [activeSlot, setActiveSlot] = useState<SlotKey>("floor");
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const flatlayRef = useRef<HTMLDivElement>(null);
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
   const [showHint, setShowHint] = useState(() => {
@@ -266,6 +268,7 @@ export default function MoodboardView() {
       if (pk) {
         setMaterialOverrides((prev) => ({ ...prev, [pk]: matCode }));
       }
+      flatlayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
     [slotSelections, setMaterialOverrides, showroomMaterials],
   );
@@ -300,7 +303,7 @@ export default function MoodboardView() {
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row">
 
       {/* ── LEFT (desktop) / TOP (mobile): Flatlay ──────────────────────────── */}
-      <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+      <div ref={flatlayRef} className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
       <div className="px-4 pt-4 pb-4 lg:px-8 lg:py-6 lg:max-w-2xl">
 
       {/* ── Topbar ──────────────────────────────────────────────────────────── */}
@@ -405,7 +408,7 @@ export default function MoodboardView() {
                     }}
                   >
                     <button
-                      onClick={() => { dismissHint(); setActiveSlot(piece.slot); }}
+                      onClick={() => { dismissHint(); setActiveSlot(piece.slot); pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                       className="w-full h-full"
                       aria-label={`Pick ${piece.slot}`}
                     >
@@ -537,6 +540,7 @@ export default function MoodboardView() {
 
       {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
       <div
+        ref={pickerRef}
         className="h-[320px] lg:h-full lg:flex-1 lg:min-h-0 mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l"
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
       >
