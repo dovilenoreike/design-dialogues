@@ -468,11 +468,9 @@ export default function MoodboardView() {
                     }}
                   >
                     <button
-                      onClick={(e) => { e.stopPropagation(); dismissHint(); if (activeSlot === piece.slot) { setActiveSlot(null); } else { setActiveSlot(piece.slot); if (pickerRef.current) {
-              const rect = pickerRef.current.getBoundingClientRect();
-              const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-              if (!fullyVisible) pickerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-            }; } }}
+                      onClick={(e) => { e.stopPropagation(); dismissHint(); if (activeSlot === piece.slot) { setActiveSlot(null); } else { setActiveSlot(piece.slot); setTimeout(() => {
+              pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 50);; } }}
                       className="w-full h-full"
                       aria-label={`Pick ${piece.slot}`}
                     >
