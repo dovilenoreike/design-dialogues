@@ -129,6 +129,11 @@ export default function MoodboardView() {
     }
 
     // Restore from localStorage if available, fixing any stale archetype IDs
+    const ACCENT_ID_MIGRATION: Record<string, string> = {
+      "chrome": "silver",
+      "wine-red": "colour",
+      "aged-bronze": "bronze",
+    };
     try {
       const saved = localStorage.getItem("moodboard-slot-selections");
       if (saved) {
@@ -136,6 +141,11 @@ export default function MoodboardView() {
         (Object.keys(parsed) as SlotKey[]).forEach((k) => {
           const id = parsed[k];
           if (!id) return;
+          // Migrate renamed accent archetype IDs
+          if (k === "accents" && ACCENT_ID_MIGRATION[id]) {
+            parsed[k] = ACCENT_ID_MIGRATION[id];
+            return;
+          }
           const role = SLOT_KEY_TO_ROLE[k];
           const valid = getArchetypesByRole(role).some((a) => a.id === id);
           if (!valid) {
@@ -210,6 +220,9 @@ export default function MoodboardView() {
         const graphMat = graphMaterials.find((m) => m.technicalCode === matId);
         let archetypeId: string | null = graphMat?.archetypeId ?? null;
         if (!archetypeId && getArchetypeById(matId, SLOT_KEY_TO_ROLE[slotKey])) archetypeId = matId;
+        // Fallback: if we still can't derive an archetype ID but the slot is currently empty,
+        // use matId so the slot is marked as filled (icons, X, isFirstPick all depend on this)
+        if (!archetypeId && !next[slotKey] && matId) archetypeId = matId;
         if (archetypeId && next[slotKey] !== archetypeId) {
           next[slotKey] = archetypeId;
           changed = true;
@@ -367,6 +380,11 @@ export default function MoodboardView() {
               const tileImage = overrideCode
                 ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
                 : null;
+              // Accents have no material image — fall back to archetype image (e.g. gold handle photo)
+              const accentArchetypeImage = piece.slot === "accents" && archetypeId
+                ? (getArchetypeById(archetypeId, "accent")?.image ?? null)
+                : null;
+              const displayImage = tileImage ?? accentArchetypeImage;
               const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
 
               // Graph-based best swap for this slot
@@ -412,9 +430,9 @@ export default function MoodboardView() {
                       className="w-full h-full"
                       aria-label={`Pick ${piece.slot}`}
                     >
-                      {tileImage ? (
+                      {displayImage ? (
                         <img
-                          src={tileImage}
+                          src={displayImage}
                           alt={getArchetypeById(archetypeId, SLOT_KEY_TO_ROLE[piece.slot])?.label[lang] ?? piece.slot}
                           className="w-full h-full object-cover"
                           draggable={false}

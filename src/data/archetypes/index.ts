@@ -27,10 +27,10 @@ import wtDark from "@/assets/archetypes/worktops-and-backsplashes/07-black.jpg";
 
 // --- Accents images ---
 import accentGold from "@/assets/archetypes/accents/gold.jpg";
-import accentChrome from "@/assets/archetypes/accents/chrome.jpg";
-import accentWineRed from "@/assets/archetypes/accents/wine_red.jpg";
-import accentAgedBronze from "@/assets/archetypes/accents/aged_bronze.jpg";
+import accentSilver from "@/assets/archetypes/accents/chrome.jpg";
+import accentBronze from "@/assets/archetypes/accents/aged_bronze.jpg";
 import accentBlack from "@/assets/archetypes/accents/black.jpg";
+import accentColour from "@/assets/archetypes/accents/wine_red.jpg";
 
 
 export const archetypes: Archetype[] = [
@@ -62,11 +62,11 @@ export const archetypes: Archetype[] = [
   { id: "bold-texture-dark",  role: "worktop", label: { en: "Bold Texture Dark",  lt: "Išraiškingas tamsus"   }, image: wtBoldTextureLight, value: "#8c8070" },
 
   // ── Accent (5) ────────────────────────────────────────────────────────────
-  { id: "gold",        role: "accent", label: { en: "Gold",        lt: "Auksas"          }, image: accentGold,       value: "#c8a84c" },
-  { id: "chrome",      role: "accent", label: { en: "Chrome",      lt: "Chromas"         }, image: accentChrome,     value: "#c0c4cc" },
-  { id: "wine-red",    role: "accent", label: { en: "Wine Red",    lt: "Bordo"    }, image: accentWineRed,    value: "#5c1a1a" },
-  { id: "aged-bronze", role: "accent", label: { en: "Aged Bronze", lt: "Bronza" }, image: accentAgedBronze, value: "#8c7055" },
-  { id: "black",       role: "accent", label: { en: "Black",       lt: "Juoda"           }, image: accentBlack,      value: "#1a1a1a" },
+  { id: "gold",    role: "accent", label: { en: "Gold",    lt: "Auksas"  }, image: accentGold,   value: "#c8a84c" },
+  { id: "silver",  role: "accent", label: { en: "Silver",  lt: "Sidabras" }, image: accentSilver, value: "#c0c4cc" },
+  { id: "bronze",  role: "accent", label: { en: "Bronze",  lt: "Bronza"  }, image: accentBronze, value: "#8c7055" },
+  { id: "black",   role: "accent", label: { en: "Black",   lt: "Juoda"   }, image: accentBlack,  value: "#1a1a1a" },
+  { id: "colour",  role: "accent", label: { en: "Colour",  lt: "Spalvota" }, image: accentColour, value: "#5c1a1a" },
 ];
 
 export function getArchetypeById(id: string, role?: MaterialRole): Archetype | undefined {
