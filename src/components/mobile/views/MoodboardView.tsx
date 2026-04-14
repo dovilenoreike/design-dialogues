@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ArrowRight, Sparkles, Info } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Info } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import MaterialDetailModal from "../controls/MaterialDetailModal";
+import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 
 
@@ -87,7 +88,7 @@ const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots } = useDesign();
+  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
@@ -289,6 +290,42 @@ export default function MoodboardView() {
   const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
   const filledCount = DISPLAYED_SLOTS.filter((k) => Boolean(slotSelections[k])).length;
   const mainSlotsFilled = (["floor", "mainFronts", "additionalFronts", "worktops"] as SlotKey[]).every((k) => Boolean(slotSelections[k]));
+
+  const [showReviewSheet, setShowReviewSheet] = useState(false);
+
+  const hasIncompatibleSlots = useMemo(() => {
+    if (graphLoading || !allSlotsFilled) return false;
+    return DISPLAYED_SLOTS.filter((k) => k !== "accents").some((slotKey) => {
+      const pk = SLOT_TO_PALETTE_KEY[slotKey];
+      const code = pk ? (materialOverrides[pk] ?? null) : null;
+      if (!code) return false;
+      const others = DISPLAYED_SLOTS
+        .filter((k) => k !== slotKey)
+        .map((k) => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
+        .filter((c): c is string => !!c);
+      return others.length > 0 && !isCompatibleWithOthers(code, others);
+    });
+  }, [graphLoading, allSlotsFilled, materialOverrides, isCompatibleWithOthers]);
+
+  const reviewMaterials: ReviewMaterial[] = useMemo(() => {
+    if (!allSlotsFilled) return [];
+    return DISPLAYED_SLOTS.filter((k) => k !== "accents").map((slotKey) => {
+      const pk = SLOT_TO_PALETTE_KEY[slotKey];
+      const code = pk ? (materialOverrides[pk] ?? "") : "";
+      const mat = code ? getMaterialByCode(code) : undefined;
+      const others = DISPLAYED_SLOTS
+        .filter((k) => k !== slotKey)
+        .map((k) => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
+        .filter((c): c is string => !!c);
+      const compatible = !code || others.length === 0 ? true : isCompatibleWithOthers(code, others);
+      return {
+        slot: slotKey,
+        name: mat?.name?.en ?? code,
+        code,
+        compatible,
+      };
+    });
+  }, [allSlotsFilled, materialOverrides, isCompatibleWithOthers]);
 
   const handleClearSlots = useCallback(() => {
     trackEvent(AnalyticsEvents.MOODBOARD_SLOTS_RESET, {});
@@ -564,24 +601,71 @@ export default function MoodboardView() {
       {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
       <div
         ref={pickerRef}
-        className="h-[320px] lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50"
+        className={`${activeSlot ? 'h-[320px]' : 'h-auto'} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50 transition-[height] duration-200`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
       >
-        <MaterialSlotPicker
-          slot={activeSlot}
-          inline={true}
-
-          selections={slotSelections}
-          onSelect={handleSlotSelect}
-          onClose={() => {}}
-          onClear={handleSlotClear}
-          otherMaterialCodes={otherMaterialCodesForPicker}
-          selectedMaterialCode={activeSlotMaterialCode}
-          getRecommendedCodes={getRecommendedCodes}
-          graphMaterials={graphLoading ? undefined : showroomMaterials}
-          filterEmptyArchetypes={!graphLoading}
-        />
+        {activeSlot ? (
+          <MaterialSlotPicker
+            slot={activeSlot}
+            inline={true}
+            selections={slotSelections}
+            onSelect={handleSlotSelect}
+            onClose={() => {}}
+            onClear={handleSlotClear}
+            otherMaterialCodes={otherMaterialCodesForPicker}
+            selectedMaterialCode={activeSlotMaterialCode}
+            getRecommendedCodes={getRecommendedCodes}
+            graphMaterials={graphLoading ? undefined : showroomMaterials}
+            filterEmptyArchetypes={!graphLoading}
+          />
+        ) : allSlotsFilled ? (
+          <div className="flex lg:h-full items-center justify-center flex-col gap-3 select-none py-5 lg:py-0 px-6">
+            {hasIncompatibleSlots ? (
+              <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-center" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                {t("moodboard.someNotPairing")}
+              </p>
+            ) : (
+              <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-center" style={{ color: '#647d75' }}>
+                {t("moodboard.ready")}
+              </p>
+            )}
+            <div className="flex items-center gap-2">
+              {hasIncompatibleSlots && (
+                <button
+                  onClick={() => setShowReviewSheet(true)}
+                  className="h-8 px-3 rounded-full text-[11px] font-medium tracking-[0.03em] active:scale-95 transition-transform"
+                  style={{ backgroundColor: "rgba(0,0,0,0.07)", color: "rgba(0,0,0,0.65)" }}
+                >
+                  {t("moodboard.requestReview")}
+                </button>
+              )}
+              <button
+                onClick={() => setActiveTab("design")}
+                className="h-8 px-3 rounded-full flex items-center gap-1.5 text-[11px] font-medium tracking-[0.03em] text-white active:scale-95 transition-transform"
+                style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+              >
+                <Sparkles className="w-3 h-3" strokeWidth={1.5} />
+                {t("moodboard.visualize")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
+            <ArrowLeft className="hidden lg:block w-4 h-4" style={{ color: '#647d75', opacity: 0.5 }} strokeWidth={1.5} />
+            <span className="text-[11px] font-medium tracking-[0.04em] uppercase" style={{ color: 'rgba(0,0,0,0.35)' }}>
+              {t("moodboard.selectPiece")}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Palette review sheet */}
+      <PaletteReviewSheet
+        isOpen={showReviewSheet}
+        onClose={() => setShowReviewSheet(false)}
+        materials={reviewMaterials}
+        onShare={shareSession}
+      />
 
       {/* Material detail modal */}
       <MaterialDetailModal

@@ -119,6 +119,27 @@ serve(async (req) => {
         `;
         break;
 
+      case "palette-review": {
+        const mats = (data.materials as Array<{ slot: string; name: string; code: string; compatible: boolean }>) ?? [];
+        const incompatible = mats.filter((m) => !m.compatible);
+        const subjectCodes = mats.map((m) => m.code).join(" / ");
+        subject = `Palette Review – ${subjectCodes}`;
+        html = `
+          <h2>Palette Review Request</h2>
+          ${data.shareUrl ? `<p><strong>🔗 Open session:</strong> <a href="${data.shareUrl}">${data.shareUrl}</a></p>` : ""}
+          <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+            <thead><tr><th>Slot</th><th>Material</th><th>Code</th><th>Compatible?</th></tr></thead>
+            <tbody>
+              ${mats.map((m) => `<tr><td>${m.slot}</td><td>${m.name}</td><td><code>${m.code}</code></td><td>${m.compatible ? "✓" : "✗"}</td></tr>`).join("")}
+            </tbody>
+          </table>
+          ${incompatible.length > 0 ? `<p><strong>Incompatible slots:</strong> ${incompatible.map((m) => m.slot).join(", ")}</p>` : "<p>All slots compatible ✓</p>"}
+          ${data.message ? `<p><strong>User note:</strong> ${data.message}</p>` : ""}
+          ${data.email ? `<p><strong>Reply to:</strong> ${data.email}</p>` : ""}
+        `;
+        break;
+      }
+
       case "credit-request":
         subject = `Credit Request from ${data.email}`;
         html = `
