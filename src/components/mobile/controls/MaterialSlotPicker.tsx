@@ -391,7 +391,7 @@ export default function MaterialSlotPicker({
     if (!slot) return null;
 
     return (
-      <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "var(--color-background-primary, #fff)" }}>
+      <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
         {/* Header: slot title + optional reset button */}
         <div
           className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
