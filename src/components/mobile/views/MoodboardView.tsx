@@ -468,9 +468,18 @@ export default function MoodboardView() {
                     }}
                   >
                     <button
-                      onClick={(e) => { e.stopPropagation(); dismissHint(); if (activeSlot === piece.slot) { setActiveSlot(null); } else { setActiveSlot(piece.slot); setTimeout(() => {
-              pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 50);; } }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dismissHint();
+                        if (activeSlot === piece.slot) {
+                          setActiveSlot(null);
+                        } else {
+                          setActiveSlot(piece.slot);
+                          requestAnimationFrame(() => {
+                            pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          });
+                        }
+                      }}
                       className="w-full h-full"
                       aria-label={`Pick ${piece.slot}`}
                     >
@@ -603,7 +612,7 @@ export default function MoodboardView() {
       {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
       <div
         ref={pickerRef}
-        className={`${activeSlot ? 'h-[320px]' : 'h-auto'} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50 transition-[height] duration-200`}
+        className={`${activeSlot ? 'h-[320px]' : 'h-auto'} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
       >
         {activeSlot ? (
