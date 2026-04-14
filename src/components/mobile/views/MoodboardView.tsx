@@ -565,7 +565,7 @@ export default function MoodboardView() {
         <MaterialSlotPicker
           slot={activeSlot}
           inline={true}
-          onResetSlot={() => setActiveSlot("floor")}
+
           selections={slotSelections}
           onSelect={handleSlotSelect}
           onClose={() => {}}

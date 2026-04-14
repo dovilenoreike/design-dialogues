@@ -172,7 +172,8 @@
     "accentAreas": "Accent Areas",
     "vanityUnit": "Vanity Unit",
     "cabinetFurniture": "Cabinet Furniture",
-    "wardrobes": "Wardrobes"
+    "wardrobes": "Wardrobes",
+    "allVariants": "All options"
   },
   "specs": {
     "fullSpecification": "Full Specification",

@@ -55,8 +55,6 @@ interface MaterialSlotPickerProps {
   filterEmptyArchetypes?: boolean;
   /** Render as an always-visible inline panel instead of a bottom-sheet modal */
   inline?: boolean;
-  /** Called when user taps the X in inline mode (e.g. reset to default slot) */
-  onResetSlot?: () => void;
 }
 
 export default function MaterialSlotPicker({
@@ -71,7 +69,6 @@ export default function MaterialSlotPicker({
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
-  onResetSlot,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -80,14 +77,11 @@ export default function MaterialSlotPicker({
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Warmth sub-category selection (inline mode only)
   const [activeWarmthGroup, setActiveWarmthGroup] = useState<WarmthGroup | null>(null);
-  // True only when user has explicitly clicked into the "Other" grid (not via a recommended pick)
-  const [isExploringOther, setIsExploringOther] = useState(false);
 
   // Reset internal state when slot changes
   useEffect(() => {
     setActiveArchetypeId(null);
     setActiveWarmthGroup(null);
-    setIsExploringOther(false);
   }, [slot]);
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
@@ -273,13 +267,10 @@ export default function MaterialSlotPicker({
                    archetypeId: effectiveActiveId }));
   }, [slot, effectiveActiveId, activeWarmthGroup, graphMaterials, row1Items, row2Items, recommendedCodes, selectedMaterialCode, lang]);
 
-  // ─── Variants for modal mode (unchanged) ─────────────────────────────────
+  // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
     if (!slot || !effectiveActiveId || !graphMaterials) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    const recommendedCodes = new Set(
-      getRecommendedCodes ? getRecommendedCodes(null, otherMaterialCodes ?? [], role) : []
-    );
     return graphMaterials
       .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl)
       .map(m => ({
@@ -293,7 +284,45 @@ export default function MaterialSlotPicker({
         Number(b.isRecommended) - Number(a.isRecommended) ||
         getPairCountByCode(b.code) - getPairCountByCode(a.code)
       );
-  }, [slot, effectiveActiveId, graphMaterials, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, graphMaterials, recommendedCodes, selectedMaterialCode, lang]);
+
+  // All materials in the active archetype, excluding row 1's representative
+  const archetypeFlatItems = useMemo((): RowItem[] => {
+    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
+    return graphMaterials
+      .filter(m =>
+        m.archetypeId === effectiveActiveId &&
+        m.role.includes(role) &&
+        m.imageUrl &&
+        m.technicalCode !== row1Code &&
+        !recommendedCodes.has(m.technicalCode)
+      )
+      .sort((a, b) =>
+        Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
+        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+      )
+      .map(m => ({
+        code: m.technicalCode,
+        image: m.imageUrl!,
+        name: m.name?.[lang] ?? m.technicalCode,
+        materialName: m.name?.[lang] ?? m.technicalCode,
+        isSelected: m.technicalCode === selectedMaterialCode,
+        isRecommended: recommendedCodes.has(m.technicalCode),
+        archetypeId: effectiveActiveId,
+      }));
+  }, [slot, effectiveActiveId, graphMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
+
+  // True when the active archetype has enough variants to warrant warmth branching
+  const activeArchetypeIsBranched = useMemo(() => {
+    if (!slot || !effectiveActiveId || !graphMaterials) return false;
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const count = graphMaterials.filter(
+      m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl
+    ).length;
+    return count > 8;
+  }, [slot, effectiveActiveId, graphMaterials]);
 
   const selectedId = slot ? selections[slot] : null;
   const isFirstPick = !selectedId;
@@ -326,7 +355,6 @@ export default function MaterialSlotPicker({
     setActiveArchetypeId(item.archetypeId);
     const mat = graphMaterials?.find(m => m.technicalCode === item.code);
     setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
-    setIsExploringOther(false);
     if (SLOT_KEY_TO_ROLE[slot] === "accent") onSelect(slot, item.archetypeId, item.archetypeId);
     else onSelect(slot, item.archetypeId, item.code);
   };
@@ -334,7 +362,6 @@ export default function MaterialSlotPicker({
   const handleRow1Click = (item: RowItem) => {
     setActiveArchetypeId(item.archetypeId);
     setActiveWarmthGroup(null);
-    setIsExploringOther(true);
     if (!slot) return;
     if (SLOT_KEY_TO_ROLE[slot] === "accent") onSelect(slot, item.archetypeId, item.archetypeId);
     else onSelect(slot, item.archetypeId, item.code);
@@ -367,13 +394,13 @@ export default function MaterialSlotPicker({
     </div>
   );
 
-  const SwatchButton = ({ children, onClick, isActive }: { children: React.ReactNode; onClick: () => void; isActive: boolean }) => (
+  const SwatchButton = ({ children, onClick, isActive, size = SWATCH_SIZE, radius = SWATCH_RADIUS }: { children: React.ReactNode; onClick: () => void; isActive: boolean; size?: number; radius?: number }) => (
     <button
       onClick={onClick}
       className="relative flex-shrink-0 active:scale-95"
       style={{
-        width: SWATCH_SIZE, height: SWATCH_SIZE,
-        borderRadius: SWATCH_RADIUS,
+        width: size, height: size,
+        borderRadius: radius,
         overflow: "hidden",
         border: isActive ? "2px solid #647d75" : "2px solid transparent",
         transition: "border-color 0.15s, transform 0.1s",
@@ -411,60 +438,54 @@ export default function MaterialSlotPicker({
           )}
         </div>
 
-        {/* Three swatch rows — uniform 52px swatches, each row scrolls independently */}
+        {/* Swatch rows — each row scrolls independently */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto justify-start pt-3">
 
           {/* Recommended swatches — only when best matches exist */}
           {recommendedItems.length > 0 && (
-            <div className="flex gap-2.5 px-4 pt-3 pb-3 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
-              {recommendedItems.map((mat) => (
-                <div key={`rec-${mat.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: REC_SWATCH_SIZE }}>
-                  <button
-                    onClick={() => handleRecommendedClick(mat)}
-                    className="relative flex-shrink-0 active:scale-95"
-                    style={{
-                      width: REC_SWATCH_SIZE, height: REC_SWATCH_SIZE,
-                      borderRadius: REC_SWATCH_RADIUS,
-                      overflow: "hidden",
-                      border: mat.isSelected ? "2px solid #647d75" : "2px solid transparent",
-                      transition: "border-color 0.15s, transform 0.1s",
-                    }}
-                  >
-                    <img src={mat.image} alt="" className="w-full h-full object-cover" />
-                    {mat.isSelected && (
-                      <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                        <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                      </div>
-                    )}
-                  </button>
-                  <span
-                    className="text-[10px] text-center w-full truncate leading-tight"
-                    style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
-                  >
-                    {mat.materialName}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <>
+              <SwatchRow className="pt-3 pb-3">
+                {recommendedItems.map((mat) => (
+                  <div key={`rec-${mat.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: REC_SWATCH_SIZE }}>
+                    <SwatchButton
+                      onClick={() => handleRecommendedClick(mat)}
+                      isActive={mat.isSelected}
+                      size={REC_SWATCH_SIZE}
+                      radius={REC_SWATCH_RADIUS}
+                    >
+                      <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                      {mat.isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </SwatchButton>
+                    <span
+                      className="text-[10px] text-center w-full truncate leading-tight"
+                      style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
+                    >
+                      {mat.materialName}
+                    </span>
+                  </div>
+                ))}
+              </SwatchRow>
+
+              {/* Quiet text divider between recommended and all variants */}
+              <div className="flex items-center gap-3 px-4 my-3 flex-shrink-0">
+                <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+                <span className="text-[10px] tracking-[0.08em]" style={{ color: "#c4bfba" }}>
+                  {t("surface.allVariants")}
+                </span>
+                <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+              </div>
+            </>
           )}
 
-          {/* Quiet text divider — always present as threshold between recommended and grid */}
-          <div className="flex items-center gap-3 px-4 my-3 flex-shrink-0">
-            <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
-            <span className="text-[10px] tracking-[0.08em]" style={{ color: "#c4bfba" }}>
-              Visi variantai
-            </span>
-            <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
-          </div>
-
-          {/* Row 1 — Archetypes: one best-ranked material per archetype */}
+          {/* Row 1 — Archetypes: always visible */}
           <SwatchRow alignItems="start" className="pb-3">
             {row1Items.map((mat) => (
               <div key={`r1-${mat.archetypeId}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                <SwatchButton
-                  onClick={() => handleRow1Click(mat)}
-                  isActive={mat.isSelected}
-                >
+                <SwatchButton onClick={() => handleRow1Click(mat)} isActive={mat.isSelected}>
                   <img src={mat.image} alt="" className="w-full h-full object-cover" />
                   {mat.isSelected && (
                     <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
@@ -472,76 +493,90 @@ export default function MaterialSlotPicker({
                     </div>
                   )}
                 </SwatchButton>
-                <span
-                  className="text-[10px] text-center w-full truncate leading-tight"
-                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
-                >
+                <span className="text-[10px] text-center w-full truncate leading-tight"
+                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}>
                   {mat.isSelected ? mat.materialName : mat.name}
                 </span>
               </div>
             ))}
           </SwatchRow>
 
+          {/* Revealed after an archetype is picked */}
+          {!isFirstPick && (
+            <>
+              <SwatchDivider />
 
-          {isExploringOther && <SwatchDivider />}
-
-          {/* Row 2 — Warmth sub-categories: best material per warmth group, no repeats from Row 1 */}
-          {isExploringOther && (
-          <SwatchRow alignItems="start" className="pb-3">
-            {row2Items.map((mat) => (
-              <div key={`r2-${mat.warmthGroup}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                <SwatchButton
-                  onClick={() => handleRow2Click(mat)}
-                  isActive={mat.isSelected}
-                >
-                  <img src={mat.image} alt="" className="w-full h-full object-cover" />
-                  {mat.isSelected && (
-                    <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+              {!activeArchetypeIsBranched ? (
+                /* ≤ 8 materials in archetype — flat list, no warmth rows */
+                <SwatchRow alignItems="start" className="pt-3 pb-3">
+                  {archetypeFlatItems.map((v) => (
+                    <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                      <SwatchButton onClick={() => handleRow3Click(v)} isActive={v.isSelected}>
+                        <img src={v.image} alt="" className="w-full h-full object-cover" />
+                        {v.isSelected && (
+                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                      </SwatchButton>
+                      <span className="text-[10px] text-center w-full truncate leading-tight"
+                        style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}>
+                        {v.materialName}
+                      </span>
                     </div>
+                  ))}
+                </SwatchRow>
+              ) : (
+                /* > 8 materials — warmth row + detail row */
+                <>
+                  {/* Row 2 — Warmth sub-categories */}
+                  <SwatchRow alignItems="start" className="pt-3 pb-3">
+                    {row2Items.map((mat) => (
+                      <div key={`r2-${mat.warmthGroup}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                        <SwatchButton onClick={() => handleRow2Click(mat)} isActive={mat.isSelected}>
+                          <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                          {mat.isSelected && (
+                            <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                              <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                            </div>
+                          )}
+                        </SwatchButton>
+                        <span className="text-[10px] text-center w-full truncate leading-tight"
+                          style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}>
+                          {mat.isSelected ? mat.materialName : t(`surface.warmth${mat.warmthGroup.charAt(0).toUpperCase() + mat.warmthGroup.slice(1)}`)}
+                        </span>
+                      </div>
+                    ))}
+                  </SwatchRow>
+
+                  {/* Row 3 — Remaining materials in active warmth group */}
+                  {activeWarmthGroup && row3Items.length > 0 && (
+                    <>
+                      <SwatchDivider />
+                      <SwatchRow alignItems="start" className="pt-3 pb-3">
+                        {row3Items.map((v) => (
+                          <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                            <SwatchButton onClick={() => handleRow3Click(v)} isActive={v.isSelected}>
+                              <img src={v.image} alt="" className="w-full h-full object-cover" />
+                              {v.isSelected && (
+                                <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                                  <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                                </div>
+                              )}
+                            </SwatchButton>
+                            <span className="text-[10px] text-center w-full truncate leading-tight"
+                              style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}>
+                              {v.name}
+                            </span>
+                          </div>
+                        ))}
+                      </SwatchRow>
+                    </>
                   )}
-                </SwatchButton>
-                <span
-                  className="text-[10px] text-center w-full truncate leading-tight"
-                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
-                >
-                  {mat.isSelected ? mat.materialName : t(`surface.warmth${mat.warmthGroup.charAt(0).toUpperCase() + mat.warmthGroup.slice(1)}`)}
-                </span>
-              </div>
-            ))}
-          </SwatchRow>
+                </>
+              )}
+            </>
           )}
-
-
-          {isExploringOther && <SwatchDivider />}
-
-          {/* Row 3 — Remaining materials in active warmth group, no repeats from Row 1 or Row 2 */}
-          {isExploringOther && <SwatchRow alignItems="start" className="pb-3">
-            {row3Items.map((v) => (
-              <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                <SwatchButton
-                  onClick={() => handleRow3Click(v)}
-                  isActive={v.isSelected}
-                >
-                  <img src={v.image} alt="" className="w-full h-full object-cover" />
-                  {v.isSelected && (
-                    <div
-                      className="absolute flex items-center justify-center"
-                      style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}
-                    >
-                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                    </div>
-                  )}
-                </SwatchButton>
-                <span
-                  className="text-[10px] text-center w-full truncate leading-tight"
-                  style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}
-                >
-                  {v.name}
-                </span>
-              </div>
-            ))}
-          </SwatchRow>}
 
         </div>
 
