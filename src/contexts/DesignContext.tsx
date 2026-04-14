@@ -410,7 +410,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           });
 
           // Initialize default materials for new users or when no overrides are persisted yet
-          if (Object.keys(materialOverrides).length === 0) {
+          // Skip if ?material= param is present — QR code flow will populate slots instead
+          const hasMaterialParam = new URLSearchParams(location.search).has("material");
+          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam) {
             initializeDefaultMaterials();
           }
 
@@ -444,7 +446,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           }
         } else {
           // New user — no saved state — seed with graph-ranked defaults
-          if (Object.keys(materialOverrides).length === 0) {
+          // Skip if ?material= param is present — QR code flow will populate slots instead
+          const hasMaterialParam = new URLSearchParams(location.search).has("material");
+          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam) {
             initializeDefaultMaterials();
           }
         }

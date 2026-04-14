@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Info } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
@@ -20,6 +21,15 @@ const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
   accents: "accents",
   mainTiles: "tiles",
   additionalTiles: "additionalTiles",
+};
+
+// Role → flatlay slot, for applying ?material= URL param
+const ROLE_TO_SLOT_ENTRY: Record<string, { slot: SlotKey; paletteKey: string }> = {
+  floor:   { slot: "floor",      paletteKey: "floor" },
+  front:   { slot: "mainFronts", paletteKey: "bottomCabinets" },
+  worktop: { slot: "worktops",   paletteKey: "worktops" },
+  accent:  { slot: "accents",    paletteKey: "accents" },
+  tile:    { slot: "mainTiles",  paletteKey: "tiles" },
 };
 
 // Reverse mapping for restoring state from materialOverrides on mount
@@ -94,6 +104,30 @@ export default function MoodboardView() {
   const { activeShowroom } = useShowroom();
 
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Apply ?material=CODE url param once graph is loaded (for showroom QR codes)
+  useEffect(() => {
+    if (graphLoading) return;
+    const param = searchParams.get("material");
+    if (!param) return;
+    const newOverrides: Record<string, string> = {};
+    const newSelections: Partial<SlotSelections> = {};
+    for (const code of param.split(",").map((c) => c.trim()).filter(Boolean)) {
+      const mat = getMaterialByCode(code);
+      if (!mat) continue;
+      const entry = ROLE_TO_SLOT_ENTRY[mat.role[0]];
+      if (!entry) continue;
+      newOverrides[entry.paletteKey] = code;
+      if (mat.archetypeId) newSelections[entry.slot] = mat.archetypeId;
+    }
+    if (Object.keys(newOverrides).length > 0) {
+      setMaterialOverrides((prev) => ({ ...prev, ...newOverrides }));
+      setSlotSelections((prev) => ({ ...prev, ...newSelections }));
+      setActiveTab("moodboard");
+      setSearchParams((prev) => { prev.delete("material"); return prev; }, { replace: true });
+    }
+  }, [graphLoading]);
 
   // Always-active slot — picker is always visible (no open/close)
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
