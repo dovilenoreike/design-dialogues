@@ -454,6 +454,11 @@ export default function MaterialSlotPicker({
                       radius={REC_SWATCH_RADIUS}
                     >
                       <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute top-1 inset-x-1 flex justify-center">
+                        <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.72)" }}>
+                          {t("surface.matchingMaterials")}
+                        </span>
+                      </div>
                       {mat.isSelected && (
                         <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                           <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -643,7 +648,7 @@ export default function MaterialSlotPicker({
                   <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
                   {isRecommended && (
                     <div className="absolute top-1 inset-x-1 flex justify-center">
-                      <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
+                      <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.72)" }}>
                         {t("surface.matchingMaterials")}
                       </span>
                     </div>
@@ -705,7 +710,7 @@ export default function MaterialSlotPicker({
                     <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
                     {v.isRecommended && (
                       <div className="absolute top-1 inset-x-1 flex justify-center">
-                        <span className="text-[8px] font-medium text-white bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none truncate">
+                        <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate">
                           {t("surface.matchingMaterials")}
                         </span>
                       </div>

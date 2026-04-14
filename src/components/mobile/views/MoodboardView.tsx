@@ -56,13 +56,13 @@ interface Piece {
   borderRadius?: string;
 }
 
-// Layering order (back → front): floor → additionalTiles → mainTiles → mainFronts → additionalFronts → worktops → accents
+// Layering order (back → front): floor → additionalTiles → mainTiles → additionalFronts → mainFronts → worktops → accents
 const PIECES: Piece[] = [
   { slot: "floor",            top: "13%", left: "10%", width: "84%", height: "66%",
     rotate: "0deg", zIndex: 1, shadow: "0 1px 2px rgba(0,0,0,0.06)" },
-  { slot: "additionalFronts", top: "30%", left: "56%", width: "42%", height: "41%",
+  { slot: "mainFronts",       top: "30%", left: "56%", width: "42%", height: "41%",
     rotate: "0deg", zIndex: 4, shadow: "0 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.06)" },
-  { slot: "mainFronts",       top: "53%", left: "15%", width: "38%", height: "32%",
+  { slot: "additionalFronts", top: "53%", left: "15%", width: "38%", height: "32%",
     rotate: "0deg", zIndex: 5, shadow: "0 6px 18px rgba(0,0,0,0.20), 0 2px 5px rgba(0,0,0,0.08)" },
   { slot: "worktops",         top: "48%", left: "34%", width: "29%", height: "25%",
     rotate: "0deg", zIndex: 6, shadow: "0 8px 22px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.09)" },
