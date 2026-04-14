@@ -95,7 +95,7 @@ export default function MoodboardView() {
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
 
   // Always-active slot — picker is always visible (no open/close)
-  const [activeSlot, setActiveSlot] = useState<SlotKey>("floor");
+  const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const flatlayRef = useRef<HTMLDivElement>(null);
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
@@ -236,7 +236,7 @@ export default function MoodboardView() {
   // Restrict picker to showroom materials for the showroom's own surface categories
   const showroomMaterials = useMemo(() => {
     if (!activeShowroom) return graphMaterials;
-    const slotRole = SLOT_KEY_TO_ROLE[activeSlot];
+    const slotRole = activeSlot ? SLOT_KEY_TO_ROLE[activeSlot] : null;
     if (!slotRole || !activeShowroom.surfaceCategories.includes(slotRole)) {
       return graphMaterials;
     }
@@ -253,7 +253,7 @@ export default function MoodboardView() {
 
   // Currently selected material code for the active slot
   const activeSlotMaterialCode = useMemo(() => {
-    const pk = SLOT_TO_PALETTE_KEY[activeSlot];
+    const pk = activeSlot ? SLOT_TO_PALETTE_KEY[activeSlot] : null;
     return pk ? (materialOverrides[pk] ?? undefined) : undefined;
   }, [activeSlot, materialOverrides]);
 
@@ -313,10 +313,10 @@ export default function MoodboardView() {
 
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row">
+    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row" onClick={() => setActiveSlot(null)}>
 
       {/* ── LEFT (desktop) / TOP (mobile): Flatlay ──────────────────────────── */}
-      <div ref={flatlayRef} className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+      <div ref={flatlayRef} className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto">
       <div className="px-4 pt-4 pb-4 lg:px-8 lg:py-6 lg:max-w-2xl">
 
       {/* ── Topbar ──────────────────────────────────────────────────────────── */}
@@ -367,6 +367,7 @@ export default function MoodboardView() {
         <div
           className="relative w-full overflow-hidden rounded-2xl"
           style={{ aspectRatio: "4/4.9" }}
+          onClick={(e) => { e.stopPropagation(); setActiveSlot(null); }}
         >
             {/* Background */}
             <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
@@ -404,6 +405,7 @@ export default function MoodboardView() {
               const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
               const showVerified = isCompatible === true;
               const showNudge   = isCompatible === false && !!graphBestCode;
+              const isActive    = piece.slot === activeSlot;
 
               return (
                 <div
@@ -414,7 +416,7 @@ export default function MoodboardView() {
                     left: piece.left,
                     width: piece.width,
                     height: piece.height,
-                    transform: `rotate(${piece.rotate})`,
+                    transform: `rotate(${piece.rotate})${isActive ? " scale(1.025)" : ""}`,
                     zIndex: piece.zIndex,
                   }}
                 >
@@ -422,11 +424,14 @@ export default function MoodboardView() {
                     className="w-full h-full overflow-hidden"
                     style={{
                       borderRadius: piece.borderRadius ?? "4px",
-                      boxShadow: piece.shadow,
+                      boxShadow: isActive
+                        ? `${piece.shadow}, 0 0 0 2px rgba(255,255,255,0.72)`
+                        : piece.shadow,
+                      transition: "box-shadow 200ms ease",
                     }}
                   >
                     <button
-                      onClick={() => { dismissHint(); setActiveSlot(piece.slot); pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                      onClick={(e) => { e.stopPropagation(); dismissHint(); if (activeSlot === piece.slot) { setActiveSlot(null); } else { setActiveSlot(piece.slot); pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); } }}
                       className="w-full h-full"
                       aria-label={`Pick ${piece.slot}`}
                     >
@@ -559,7 +564,7 @@ export default function MoodboardView() {
       {/* ── RIGHT (desktop) / BOTTOM (mobile): Inline picker ───────────────── */}
       <div
         ref={pickerRef}
-        className="h-[320px] lg:h-full lg:flex-1 lg:min-h-0 mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50"
+        className="h-[320px] lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50"
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
       >
         <MaterialSlotPicker
