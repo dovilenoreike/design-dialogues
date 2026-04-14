@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, countCompatible, weightedScore } from '@/lib/graph-compatibility';
+import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore } from '@/lib/graph-compatibility';
 import { deriveArchetypeId } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -145,7 +145,9 @@ export function useGraphMaterials() {
         isSimilarMaterial(m, slotMat)
       );
       if (narrowed.length === 0) return null;
-      const best = rankByCompatibility(narrowed, otherUuids, pairs, pairWeights)[0];
+      // Rank by visual similarity to the current material (most similar first),
+      // so the swap preserves the user's aesthetic intent.
+      const best = [...narrowed].sort((a, b) => visualDistance(a, slotMat) - visualDistance(b, slotMat))[0];
       return best ? (idToCode.get(best.id) ?? null) : null;
     }
     const best = rankByCompatibility(candidates, otherUuids, pairs, pairWeights)[0];

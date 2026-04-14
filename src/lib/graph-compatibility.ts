@@ -26,6 +26,20 @@ export function isSimilarMaterial(
   );
 }
 
+// Normalized distance across visual dimensions — lower means more similar.
+// Each axis is divided by its threshold so all axes contribute equally (1.0 = at boundary).
+export function visualDistance(
+  a: GraphMaterial, b: GraphMaterial,
+  { lightnessΔ = 20, warmthΔ = 0.4, patternΔ = 25, chromaΔ = 15 } = {}
+): number {
+  return (
+    Math.abs(a.lightness - b.lightness) / lightnessΔ +
+    Math.abs(a.warmth   - b.warmth)    / warmthΔ    +
+    Math.abs(a.pattern  - b.pattern)   / patternΔ   +
+    Math.abs(a.chroma   - b.chroma)    / chromaΔ
+  );
+}
+
 // Canonical pair key — always lower UUID first
 export function pairKey(a: string, b: string): string {
   return a < b ? `${a}::${b}` : `${b}::${a}`;
