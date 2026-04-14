@@ -358,9 +358,9 @@ export default function MaterialSlotPicker({
   const SWATCH_SIZE = 64;
   const SWATCH_RADIUS = 16;
 
-  const SwatchRow = ({ children, alignItems = "center" }: { children: React.ReactNode; alignItems?: "center" | "start" }) => (
+  const SwatchRow = ({ children, alignItems = "center", className: extraClass = "" }: { children: React.ReactNode; alignItems?: "center" | "start"; className?: string }) => (
     <div
-      className="flex gap-2.5 px-4 overflow-x-auto flex-shrink-0"
+      className={`flex gap-2.5 px-4 overflow-x-auto flex-shrink-0 ${extraClass}`}
       style={{ scrollbarWidth: "none", alignItems } as React.CSSProperties}
     >
       {children}
@@ -412,11 +412,11 @@ export default function MaterialSlotPicker({
         </div>
 
         {/* Three swatch rows — uniform 52px swatches, each row scrolls independently */}
-        <div className={`flex-1 flex flex-col min-h-0 ${isFirstPick ? "justify-start pt-5" : recommendedItems.length > 0 ? "justify-evenly py-1" : "justify-start pt-2"}`}>
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto justify-start pt-3">
 
           {/* Recommended swatches — only when best matches exist */}
           {recommendedItems.length > 0 && (
-            <div className="flex gap-2.5 px-4 pt-4 pb-1 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+            <div className="flex gap-2.5 px-4 pt-3 pb-3 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
               {recommendedItems.map((mat) => (
                 <div key={`rec-${mat.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: REC_SWATCH_SIZE }}>
                   <button
@@ -449,7 +449,7 @@ export default function MaterialSlotPicker({
           )}
 
           {/* Quiet text divider — always present as threshold between recommended and grid */}
-          <div className="flex items-center gap-3 px-4 my-2 flex-shrink-0">
+          <div className="flex items-center gap-3 px-4 my-3 flex-shrink-0">
             <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
             <span className="text-[10px] tracking-[0.08em]" style={{ color: "#c4bfba" }}>
               Visi variantai
@@ -458,7 +458,7 @@ export default function MaterialSlotPicker({
           </div>
 
           {/* Row 1 — Archetypes: one best-ranked material per archetype */}
-          <SwatchRow alignItems="start">
+          <SwatchRow alignItems="start" className="pb-3">
             {row1Items.map((mat) => (
               <div key={`r1-${mat.archetypeId}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton
@@ -487,7 +487,7 @@ export default function MaterialSlotPicker({
 
           {/* Row 2 — Warmth sub-categories: best material per warmth group, no repeats from Row 1 */}
           {isExploringOther && (
-          <SwatchRow alignItems="start">
+          <SwatchRow alignItems="start" className="pb-3">
             {row2Items.map((mat) => (
               <div key={`r2-${mat.warmthGroup}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton
@@ -516,7 +516,7 @@ export default function MaterialSlotPicker({
           {isExploringOther && <SwatchDivider />}
 
           {/* Row 3 — Remaining materials in active warmth group, no repeats from Row 1 or Row 2 */}
-          {isExploringOther && <SwatchRow alignItems="start">
+          {isExploringOther && <SwatchRow alignItems="start" className="pb-3">
             {row3Items.map((v) => (
               <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton
