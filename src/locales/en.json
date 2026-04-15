@@ -173,7 +173,9 @@
     "vanityUnit": "Vanity Unit",
     "cabinetFurniture": "Cabinet Furniture",
     "wardrobes": "Wardrobes",
-    "allVariants": "All options"
+    "allVariants": "All options",
+    "searchByCode": "Search by code…",
+    "searchNoResults": "No materials found for this code."
   },
   "specs": {
     "fullSpecification": "Full Specification",

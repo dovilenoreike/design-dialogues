@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, Trash2, X } from "lucide-react";
+import { Check, Trash2, X, Search } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -77,11 +77,16 @@ export default function MaterialSlotPicker({
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Warmth sub-category selection (inline mode only)
   const [activeWarmthGroup, setActiveWarmthGroup] = useState<WarmthGroup | null>(null);
+  // Code search
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Reset internal state when slot changes
   useEffect(() => {
     setActiveArchetypeId(null);
     setActiveWarmthGroup(null);
+    setSearchOpen(false);
+    setSearchQuery("");
   }, [slot]);
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
@@ -324,6 +329,16 @@ export default function MaterialSlotPicker({
     return count > 8;
   }, [slot, effectiveActiveId, graphMaterials]);
 
+  // Search results — code substring match within the current slot's role
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!searchOpen || !q || !slot || !graphMaterials) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    return graphMaterials.filter(
+      (m) => m.role.includes(role) && m.imageUrl && m.technicalCode.toLowerCase().includes(q)
+    );
+  }, [searchOpen, searchQuery, slot, graphMaterials]);
+
   const selectedId = slot ? selections[slot] : null;
   const isFirstPick = !selectedId;
   const activeArchetypeLabel = availableWithImages.find(i => i.archetype.id === effectiveActiveId)?.archetype.label[lang] ?? "";
@@ -419,27 +434,96 @@ export default function MaterialSlotPicker({
 
     return (
       <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
-        {/* Header: slot title + optional reset button */}
+        {/* Header: slot title + search icon + optional reset button */}
         <div
-          className="flex items-center justify-between px-4 py-2.5 flex-shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0"
           style={{ borderBottom: "0.5px solid #e8e4e0" }}
         >
-          <span className="text-[15px] font-medium" style={{ color: "#1a1a1a" }}>
-            {t(`surface.${slot}`)}
-          </span>
-          {selectedId && onClear && slot && (
-            <button
-              onClick={() => onClear(slot)}
-              className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#f5f2ef", color: "#9ca3af" }}
-            >
-              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
-            </button>
+          {searchOpen ? (
+            /* Search input — expands to fill header */
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#647d75" }} strokeWidth={1.6} />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder={t("surface.searchByCode")}
+                className="flex-1 bg-transparent text-[13px] outline-none"
+                style={{ color: "#1a1a1a" }}
+              />
+            </div>
+          ) : (
+            <span className="text-[15px] font-medium flex-1" style={{ color: "#1a1a1a" }}>
+              {t(`surface.${slot}`)}
+            </span>
           )}
+          <div className="flex items-center gap-1.5">
+            {/* Search toggle */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setSearchOpen(!searchOpen); setSearchQuery(""); }}
+              className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+              style={{ backgroundColor: searchOpen ? "#647d75" : "#f5f2ef" }}
+            >
+              {searchOpen ? (
+                <X className="w-3 h-3 text-white" strokeWidth={2.5} />
+              ) : (
+                <Search className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+              )}
+            </button>
+            {/* Clear selection — hidden while search is open */}
+            {!searchOpen && selectedId && onClear && slot && (
+              <button
+                onClick={() => onClear(slot)}
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#f5f2ef", color: "#9ca3af" }}
+              >
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Swatch rows — each row scrolls independently */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto justify-start pt-3">
+
+        {searchOpen ? (
+          /* ── Search results ── */
+          searchResults.length > 0 && searchQuery.trim() ? (
+            <SwatchRow alignItems="start" className="pt-3 pb-3 flex-wrap">
+              {searchResults.map((mat) => {
+                const isSelected = mat.technicalCode === selectedMaterialCode;
+                return (
+                  <div key={mat.technicalCode} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                    <SwatchButton
+                      onClick={() => {
+                        if (slot) onSelect(slot, mat.archetypeId ?? mat.technicalCode, mat.technicalCode);
+                      }}
+                      isActive={isSelected}
+                    >
+                      <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                      {isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </SwatchButton>
+                    <span className="text-[9px] text-center w-full truncate leading-tight font-mono"
+                      style={{ color: isSelected ? "#647d75" : "#9ca3af" }}>
+                      {mat.technicalCode}
+                    </span>
+                  </div>
+                );
+              })}
+            </SwatchRow>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>{t("surface.searchNoResults")}</p>
+            </div>
+          )
+        ) : (
+          <>
 
           {/* Recommended swatches — only when best matches exist */}
           {recommendedItems.length > 0 && (
@@ -582,6 +666,9 @@ export default function MaterialSlotPicker({
               )}
             </>
           )}
+
+          </>
+        )}
 
         </div>
 

@@ -174,7 +174,9 @@
     "vanityUnit": "Praustuvo spintelė",
     "cabinetFurniture": "Korpusiniai baldai",
     "wardrobes": "Spinta",
-    "allVariants": "Visi variantai"
+    "allVariants": "Visi variantai",
+    "searchByCode": "Ieškoti pagal kodą…",
+    "searchNoResults": "Medžiagų šiuo kodu nerasta."
   },
   "specs": {
     "fullSpecification": "Pilna specifikacija",
