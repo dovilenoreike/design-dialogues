@@ -1257,7 +1257,21 @@
     "reviewSent": "Sent! We'll be in touch.",
     "ready": "Combination ready",
     "clear": "Clear",
-    "room": "Kitchen"
+    "room": "Kitchen",
+    "infoButtonLabel": "How it works",
+    "infoTitle": "How the moodboard works",
+    "infoStep1Title": "Tap a surface",
+    "infoStep1Desc": "Tap any material square to pick a finish for that surface.",
+    "infoCheckTitle": "Pairs well",
+    "infoCheckDesc": "This material is compatible with your other selections.",
+    "infoSparklesTitle": "Suggested swap",
+    "infoSparklesDesc": "Tap the sparkle to auto-replace this material with a better-matching option.",
+    "infoUndoTitle": "Undo swap",
+    "infoUndoDesc": "Tap to revert the last auto-swap.",
+    "infoGoesTitle": "Goes together",
+    "infoGoesDesc": "Materials shown with this badge are recommended based on your other picks — they're known to pair well together.",
+    "infoSearchTitle": "Search by code",
+    "infoSearchDesc": "Tap the search icon in the picker to find a specific material by its technical code."
   },
   "materialRequest": {
     "link": "Can't find it? Request a material →",

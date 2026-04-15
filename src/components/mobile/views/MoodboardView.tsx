@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -10,6 +10,19 @@ import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE
 
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 
 
@@ -97,12 +110,46 @@ const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
   accents: "accents",
 };
 
+// ─── Info modal content ────────────────────────────────────────────────────
+function InfoRows({ t }: { t: (key: string) => string }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <InfoRow icon={<Plus className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoStep1Title")} desc={t("moodboard.infoStep1Desc")} />
+      <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
+      <InfoRow icon={<Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} />} title={t("moodboard.infoSparklesTitle")} desc={t("moodboard.infoSparklesDesc")} />
+      <InfoRow icon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoUndoTitle")} desc={t("moodboard.infoUndoDesc")} />
+      <div style={{ height: "0.5px", backgroundColor: "rgba(0,0,0,0.08)" }} />
+      <InfoRow icon={<Layers className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoGoesTitle")} desc={t("moodboard.infoGoesDesc")} />
+      <InfoRow icon={<Search className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoSearchTitle")} desc={t("moodboard.infoSearchDesc")} />
+    </div>
+  );
+}
+
+// ─── Info sheet row helper ─────────────────────────────────────────────────
+function InfoRow({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
+        style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
+      >
+        {icon}
+      </span>
+      <div>
+        <p className="text-[12px] font-medium text-black/70">{title}</p>
+        <p className="text-[11px] text-black/45 mt-0.5">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
   const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
+  const isMobile = useIsMobile();
 
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -141,6 +188,7 @@ export default function MoodboardView() {
   });
 
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
+  const [showInfoSheet, setShowInfoSheet] = useState(false);
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -404,6 +452,15 @@ export default function MoodboardView() {
               aria-label={t("inspiration.buttonLabel")}
             >
               <Camera className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+            </button>
+            {/* Info button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowInfoSheet(true); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+              style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+              aria-label={t("moodboard.infoButtonLabel")}
+            >
+              <Info className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
             </button>
             {/* Visualize button */}
             <button
@@ -714,6 +771,31 @@ export default function MoodboardView() {
         isOpen={showInspirationDialog}
         onClose={() => setShowInspirationDialog(false)}
       />
+
+      {/* Moodboard info — bottom sheet on mobile, centered dialog on desktop */}
+      {isMobile ? (
+        <Sheet open={showInfoSheet} onOpenChange={setShowInfoSheet}>
+          <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 pt-5">
+            <SheetHeader className="mb-4">
+              <SheetTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {t("moodboard.infoTitle")}
+              </SheetTitle>
+            </SheetHeader>
+            <InfoRows t={t} />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={showInfoSheet} onOpenChange={setShowInfoSheet}>
+          <DialogContent className="max-w-sm rounded-2xl px-6 pb-7 pt-5">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {t("moodboard.infoTitle")}
+              </DialogTitle>
+            </DialogHeader>
+            <InfoRows t={t} />
+          </DialogContent>
+        </Dialog>
+      )}
 
     </div>
   );

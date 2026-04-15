@@ -1259,7 +1259,21 @@
     "reviewSent": "Išsiųsta! Susisieksime.",
     "ready": "Konceptas paruoštas",
     "clear": "Išvalyti",
-    "room": "Virtuvė"
+    "room": "Virtuvė",
+    "infoButtonLabel": "Kaip tai veikia",
+    "infoTitle": "Kaip veikia konceptų lenta",
+    "infoStep1Title": "Palieskite paviršių",
+    "infoStep1Desc": "Palieskite bet kurį kvadratą, kad pasirinktumėte paviršiaus apdailą.",
+    "infoCheckTitle": "Dera su kitais",
+    "infoCheckDesc": "Ši medžiaga gyvai peržiūrėta ir dera kitais jūsų pasirinkimais.",
+    "infoSparklesTitle": "Siūlomas keitimas",
+    "infoSparklesDesc": "Palieskite, kad automatiškai pakeistumėte šią medžiagą galbūt geriau derančia alternatyva.",
+    "infoUndoTitle": "Atšaukti keitimą",
+    "infoUndoDesc": "Palieskite, kad anuliuotumėte paskutinį automatinį keitimą.",
+    "infoGoesTitle": "Dera kartu",
+    "infoGoesDesc": "Šis ženklelis rodo, kad medžiaga rekomenduojama pagal jūsų kitus pasirinkimus — šios medžiagos peržiūrėtos gyvai ir dera su kitais paviršiais.",
+    "infoSearchTitle": "Paieška pagal kodą",
+    "infoSearchDesc": "Palieskite paieškos piktogramą medžiagų parinkiklyje, kad rastumėte konkrečią medžiagą pagal techninį kodą."
   },
   "materialRequest": {
     "link": "Nerandote ko ieškojote? Tekstūros užklausa →",
