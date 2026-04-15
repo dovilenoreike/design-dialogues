@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { sendEmail } from "@/lib/send-email";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 
 export interface ReviewMaterial {
   slot: string;
@@ -28,6 +29,7 @@ interface PaletteReviewSheetProps {
 
 export default function PaletteReviewSheet({ isOpen, onClose, materials, onShare }: PaletteReviewSheetProps) {
   const { t } = useLanguage();
+  const { activeShowroom } = useShowroom();
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +47,8 @@ export default function PaletteReviewSheet({ isOpen, onClose, materials, onShare
         message: message || null,
         email: email || null,
         shareUrl,
+        showroomId: activeShowroom?.id ?? null,
+        showroomName: activeShowroom?.name ?? null,
       });
       toast({ title: t("moodboard.reviewSent") });
       setMessage("");

@@ -136,6 +136,7 @@ serve(async (req) => {
           ${incompatible.length > 0 ? `<p><strong>Incompatible slots:</strong> ${incompatible.map((m) => m.slot).join(", ")}</p>` : "<p>All slots compatible ✓</p>"}
           ${data.message ? `<p><strong>User note:</strong> ${data.message}</p>` : ""}
           ${data.email ? `<p><strong>Reply to:</strong> ${data.email}</p>` : ""}
+          ${data.showroomId ? `<p style="background:#fff8e6;border-left:3px solid #f59e0b;padding:6px 10px;border-radius:0 4px 4px 0;"><strong>⚠️ Partner session:</strong> ${data.showroomName} (${data.showroomId})</p>` : ""}
         `;
         break;
       }
@@ -166,6 +167,7 @@ serve(async (req) => {
                </a>`
             : "<p><em>No reference image provided.</em></p>"}
           ${data.email ? `<p><strong>Reply to:</strong> <a href="mailto:${data.email}">${data.email}</a></p>` : ""}
+          ${data.showroomId ? `<p style="background:#fff8e6;border-left:3px solid #f59e0b;padding:6px 10px;border-radius:0 4px 4px 0;"><strong>⚠️ Partner session:</strong> ${data.showroomName} (${data.showroomId})</p>` : ""}
           <hr style="margin:20px 0;border:none;border-top:1px solid #e8e4e0;" />
           <p style="color:#9a9a9a;font-size:12px;">Submitted via Design Dialogues material picker</p>
         `;
@@ -183,6 +185,7 @@ serve(async (req) => {
           <p><strong>Budget tier:</strong> ${data.tier || "Not specified"}</p>
           ${data.message ? `<p><strong>Note:</strong> ${data.message}</p>` : ""}
           ${data.email ? `<p><strong>Reply to:</strong> <a href="mailto:${data.email}">${data.email}</a></p>` : "<p><em>No email provided.</em></p>"}
+          ${data.showroomId ? `<p style="background:#fff8e6;border-left:3px solid #f59e0b;padding:6px 10px;border-radius:0 4px 4px 0;"><strong>⚠️ Partner session:</strong> ${data.showroomName} (${data.showroomId})</p>` : ""}
           <hr style="margin:24px 0;border:none;border-top:1px solid #e8e4e0;" />
           <p style="color:#9a9a9a;font-size:12px;">Submitted via Design Dialogues moodboard</p>
         `;

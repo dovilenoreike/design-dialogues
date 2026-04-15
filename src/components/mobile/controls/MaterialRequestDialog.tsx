@@ -10,6 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import { toast } from "sonner";
 import { sendEmail } from "@/lib/send-email";
 import { compressImage } from "@/lib/image-utils";
@@ -27,6 +28,7 @@ interface MaterialRequestDialogProps {
 
 const MaterialRequestDialog = ({ isOpen, onClose, slotLabel }: MaterialRequestDialogProps) => {
   const { t } = useLanguage();
+  const { activeShowroom } = useShowroom();
   const [mode, setMode] = useState<Mode>("upload");
   // Upload mode
   const [file, setFile] = useState<File | null>(null);
@@ -125,6 +127,8 @@ const MaterialRequestDialog = ({ isOpen, onClose, slotLabel }: MaterialRequestDi
         imageUrl: finalImageUrl,
         email: email.trim(),
         tier,
+        showroomId: activeShowroom?.id ?? null,
+        showroomName: activeShowroom?.name ?? null,
       });
 
       toast.success(t("materialRequest.success"));
