@@ -152,6 +152,25 @@ serve(async (req) => {
         `;
         break;
 
+      case "material-slot-request":
+        subject = `Material Request – ${data.slot} – ${data.email || "Anonymous"}`;
+        html = `
+          <h2>Material Request</h2>
+          <p><strong>Surface:</strong> ${data.slot}</p>
+          <p><strong>Budget tier:</strong> ${data.tier || "Not specified"}</p>
+          ${data.description ? `<p><strong>Description:</strong> ${data.description}</p>` : ""}
+          ${data.imageUrl
+            ? `<p><a href="${data.imageUrl}" target="_blank" style="color:#647d75;font-weight:600;">Reference image →</a></p>
+               <a href="${data.imageUrl}" target="_blank">
+                 <img src="${data.imageUrl}" width="480" style="max-width:100%;border-radius:8px;display:block;margin-bottom:12px;" />
+               </a>`
+            : "<p><em>No reference image provided.</em></p>"}
+          ${data.email ? `<p><strong>Reply to:</strong> <a href="mailto:${data.email}">${data.email}</a></p>` : ""}
+          <hr style="margin:20px 0;border:none;border-top:1px solid #e8e4e0;" />
+          <p style="color:#9a9a9a;font-size:12px;">Submitted via Design Dialogues material picker</p>
+        `;
+        break;
+
       case "inspiration-upload":
         subject = `Inspiration Image – ${data.email || "Anonymous"}`;
         html = `

@@ -1259,6 +1259,20 @@
     "clear": "Clear",
     "room": "Kitchen"
   },
+  "materialRequest": {
+    "link": "Can't find it? Request a material →",
+    "title": "Request a material",
+    "description": "Describe what you're looking for and we'll try to source it.",
+    "surface": "Surface",
+    "descriptionPlaceholder": "Describe the material — colour, texture, finish, brand… (optional if you upload an image)",
+    "emailPlaceholder": "Your email for follow-up",
+    "tierLabel": "Budget tier",
+    "optional": "optional",
+    "submit": "Send request",
+    "success": "Sent! We'll look into it.",
+    "errorEmpty": "Please add a description or an image.",
+    "errorNoEmail": "Please enter your email so we can follow up."
+  },
   "inspiration": {
     "buttonLabel": "Share inspiration",
     "title": "Share an inspiration image",
@@ -1270,7 +1284,11 @@
     "emailPlaceholder": "Your email for follow-up",
     "submit": "Send",
     "success": "Sent! Thank you — we'll review and add materials.",
-    "errorNoImage": "Please choose an image first.",
+    "modeUpload": "Upload",
+    "modeUrl": "Paste URL",
+    "urlPlaceholder": "Pinterest or other image URL…",
+    "urlPreviewFailed": "Can't preview this URL — it will still be sent.",
+    "errorNoImage": "Please choose an image or paste a URL first.",
     "errorNoEmail": "Please enter your email so we can follow up."
   },
   "vibe": {

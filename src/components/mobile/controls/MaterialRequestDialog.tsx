@@ -19,12 +19,13 @@ import TierSelector from "@/components/TierSelector";
 type Tier = "Budget" | "Standard" | "Premium";
 type Mode = "upload" | "url";
 
-interface InspirationUploadDialogProps {
+interface MaterialRequestDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  slotLabel: string;
 }
 
-const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogProps) => {
+const MaterialRequestDialog = ({ isOpen, onClose, slotLabel }: MaterialRequestDialogProps) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>("upload");
   // Upload mode
@@ -34,20 +35,18 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
   const [imageUrl, setImageUrl] = useState("");
   const [urlPreviewError, setUrlPreviewError] = useState(false);
   // Shared
-  const [message, setMessage] = useState("");
+  const [description, setDescription] = useState("");
   const [email, setEmail] = useState("");
   const [tier, setTier] = useState<Tier>("Standard");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Revoke object URL on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
-  // Reset URL preview error when URL changes
   useEffect(() => {
     setUrlPreviewError(false);
   }, [imageUrl]);
@@ -62,7 +61,6 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
 
   const switchMode = (next: Mode) => {
     setMode(next);
-    // Clear the other mode's state
     if (next === "url") {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(null);
@@ -80,7 +78,7 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
     setPreviewUrl(null);
     setImageUrl("");
     setUrlPreviewError(false);
-    setMessage("");
+    setDescription("");
     setEmail("");
     setTier("Standard");
   };
@@ -91,21 +89,22 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
   };
 
   const hasImage = mode === "upload" ? !!file : !!imageUrl.trim();
+  const hasContent = description.trim().length > 0 || hasImage;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasImage) {
-      toast.error(t("inspiration.errorNoImage"));
+    if (!hasContent) {
+      toast.error(t("materialRequest.errorEmpty"));
       return;
     }
     if (!email.trim()) {
-      toast.error(t("inspiration.errorNoEmail"));
+      toast.error(t("materialRequest.errorNoEmail"));
       return;
     }
 
     setIsSubmitting(true);
     try {
-      let finalImageUrl: string;
+      let finalImageUrl: string | null = null;
 
       if (mode === "upload" && file) {
         const compressed = await compressImage(file, 1280);
@@ -116,18 +115,19 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("inspirations").getPublicUrl(path);
         finalImageUrl = urlData.publicUrl;
-      } else {
+      } else if (mode === "url" && imageUrl.trim()) {
         finalImageUrl = imageUrl.trim();
       }
 
-      await sendEmail("inspiration-upload", {
+      await sendEmail("material-slot-request", {
+        slot: slotLabel,
+        description: description.trim() || null,
         imageUrl: finalImageUrl,
-        message: message.trim() || null,
         email: email.trim(),
         tier,
       });
 
-      toast.success(t("inspiration.success"));
+      toast.success(t("materialRequest.success"));
       handleClose();
     } catch {
       toast.error("Failed to send. Please try again.");
@@ -141,18 +141,31 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="font-serif text-xl">
-            {t("inspiration.title")}
+            {t("materialRequest.title")}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            {t("inspiration.description")}
+            {t("materialRequest.description")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-3 mt-1">
-          {/* Mode toggle */}
+        {/* Slot context */}
+        <p className="text-[11px]" style={{ color: "rgba(0,0,0,0.45)" }}>
+          {t("materialRequest.surface")}: <span className="font-medium" style={{ color: "#1a1a1a" }}>{slotLabel}</span>
+        </p>
+
+        <div className="flex flex-col gap-3">
+          {/* Description */}
+          <Textarea
+            placeholder={t("materialRequest.descriptionPlaceholder")}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="resize-none h-20 text-xs"
+          />
+
+          {/* Image — optional, mode toggle */}
           <div className="flex rounded-full p-0.5 gap-0.5" style={{ backgroundColor: "#f0ede9" }}>
             {(["upload", "url"] as Mode[]).map((m) => (
               <button
@@ -174,30 +187,23 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
             ))}
           </div>
 
-          {/* Image zone */}
           {mode === "upload" ? (
             <>
-              <label className="cursor-pointer block">
+              <label className="cursor-pointer block" onClick={(e) => e.stopPropagation()}>
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-44 object-cover rounded-xl" />
+                  <img src={previewUrl} alt="Preview" className="w-full h-36 object-cover rounded-xl" />
                 ) : (
                   <div
-                    className="w-full h-44 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2"
+                    className="w-full h-36 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2"
                     style={{ borderColor: "rgba(0,0,0,0.12)" }}
                   >
-                    <Camera size={28} style={{ color: "#647d75", opacity: 0.5 }} strokeWidth={1.5} />
-                    <p className="text-xs" style={{ color: "rgba(0,0,0,0.45)" }}>
-                      {t("inspiration.uploadHint")}
+                    <Camera size={24} style={{ color: "#647d75", opacity: 0.4 }} strokeWidth={1.5} />
+                    <p className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>
+                      {t("inspiration.uploadHint")} ({t("materialRequest.optional")})
                     </p>
                   </div>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>
               {previewUrl && (
                 <label className="text-[11px] text-center block cursor-pointer -mt-1" style={{ color: "#647d75" }}>
@@ -219,7 +225,7 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
                 <img
                   src={urlTrimmed}
                   alt="Preview"
-                  className="w-full h-44 object-cover rounded-xl"
+                  className="w-full h-36 object-cover rounded-xl"
                   onError={() => setUrlPreviewError(true)}
                 />
               )}
@@ -232,34 +238,28 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            {/* Price tier */}
+            {/* Tier */}
             <div className="flex flex-col gap-1.5">
               <p className="text-[11px]" style={{ color: "rgba(0,0,0,0.45)" }}>
-                {t("inspiration.tierLabel")}
+                {t("materialRequest.tierLabel")}
               </p>
               <TierSelector selectedTier={tier} onSelectTier={setTier} />
             </div>
 
-            <Textarea
-              placeholder={t("inspiration.messagePlaceholder")}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="resize-none h-20 text-xs"
-            />
             <Input
               type="email"
-              placeholder={t("inspiration.emailPlaceholder")}
+              placeholder={t("materialRequest.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="text-xs"
             />
             <button
               type="submit"
-              disabled={isSubmitting || !hasImage}
+              disabled={isSubmitting || !hasContent}
               className="w-full h-9 rounded-full text-[11px] font-medium tracking-[0.03em] text-white transition-opacity disabled:opacity-40"
               style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
             >
-              {isSubmitting ? "…" : t("inspiration.submit")}
+              {isSubmitting ? "…" : t("materialRequest.submit")}
             </button>
           </form>
         </div>
@@ -268,4 +268,4 @@ const InspirationUploadDialog = ({ isOpen, onClose }: InspirationUploadDialogPro
   );
 };
 
-export default InspirationUploadDialog;
+export default MaterialRequestDialog;

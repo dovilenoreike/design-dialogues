@@ -12,6 +12,7 @@ import { getMaterialByCode, getPairCountByCode, getCompatibilityScore } from "@/
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
+import MaterialRequestDialog from "./MaterialRequestDialog";
 
 // ─── Warmth sub-category logic ────────────────────────────────────────────────
 
@@ -80,6 +81,8 @@ export default function MaterialSlotPicker({
   // Code search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  // Material request
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function MaterialSlotPicker({
     setActiveWarmthGroup(null);
     setSearchOpen(false);
     setSearchQuery("");
+    setShowRequestDialog(false);
   }, [slot]);
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
@@ -433,6 +437,7 @@ export default function MaterialSlotPicker({
     if (!slot) return null;
 
     return (
+      <>
       <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
         {/* Header: slot title + search icon + optional reset button */}
         <div
@@ -667,12 +672,30 @@ export default function MaterialSlotPicker({
             </>
           )}
 
+          {/* Request link — below all rows */}
+          <div className="flex justify-center px-4 pt-2 pb-4 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowRequestDialog(true); }}
+              className="text-[11px] underline underline-offset-2"
+              style={{ color: "rgba(0,0,0,0.35)" }}
+            >
+              {t("materialRequest.link")}
+            </button>
+          </div>
+
           </>
         )}
 
         </div>
 
       </div>
+
+      <MaterialRequestDialog
+        isOpen={showRequestDialog}
+        onClose={() => setShowRequestDialog(false)}
+        slotLabel={slot ? t(`surface.${slot}`) : ""}
+      />
+      </>
     );
   }
 

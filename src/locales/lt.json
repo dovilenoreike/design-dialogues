@@ -1261,6 +1261,20 @@
     "clear": "Išvalyti",
     "room": "Virtuvė"
   },
+  "materialRequest": {
+    "link": "Nerandote ko ieškojote? Tekstūros užklausa →",
+    "title": "Tekstūros užklausa",
+    "description": "Aprašykite, ko ieškote — pasistengsime surasti.",
+    "surface": "Paviršius",
+    "descriptionPlaceholder": "Aprašykite medžiagą — spalva, tekstūra, paviršius, gamintojas… (nebūtina, jei pateikiate nuotrauką)",
+    "emailPlaceholder": "El. paštas atsakymui",
+    "tierLabel": "Biudžeto lygis",
+    "optional": "nebūtina",
+    "submit": "Siųsti užklausą",
+    "success": "Išsiųsta! Patikrinsime ir susisieksime.",
+    "errorEmpty": "Prašome pridėti aprašymą arba nuotrauką.",
+    "errorNoEmail": "Prašome įvesti el. paštą, kad galėtume susisiekti."
+  },
   "inspiration": {
     "buttonLabel": "Įkelkite patikusią nuotrauką",
     "title": "Įkelkite nuotrauką",
@@ -1272,7 +1286,11 @@
     "emailPlaceholder": "El. paštas atsakymui",
     "submit": "Siųsti",
     "success": "Išsiųsta! Ačiū — Su Jumis susisieksime per 1-5 darb. d.",
-    "errorNoImage": "Prašome pasirinkti nuotrauką.",
+    "modeUpload": "Įkelti",
+    "modeUrl": "Dalintis nuoroda",
+    "urlPlaceholder": "Pinterest ar kita nuotraukos nuoroda…",
+    "urlPreviewFailed": "Peržiūra nepavyko — nuoroda bus išsiųsta.",
+    "errorNoImage": "Prašome pasirinkti nuotrauką arba pasidalinti nuoroda.",
     "errorNoEmail": "Prašome įvesti el. paštą, kad galėtume susisiekti."
   },
   "vibe": {
