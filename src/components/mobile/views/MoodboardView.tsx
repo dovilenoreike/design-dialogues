@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Info } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Info, Camera } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -9,6 +9,7 @@ import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import MaterialDetailModal from "../controls/MaterialDetailModal";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
+import InspirationUploadDialog from "../controls/InspirationUploadDialog";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 
 
@@ -139,6 +140,7 @@ export default function MoodboardView() {
     try { return !localStorage.getItem("moodboard-hint-seen"); } catch { return true; }
   });
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showInspirationDialog, setShowInspirationDialog] = useState(false);
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -399,6 +401,15 @@ export default function MoodboardView() {
             {t("moodboard.room")}
           </span>
           <div className="flex items-center gap-1.5">
+            {/* Inspiration upload button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowInspirationDialog(true); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+              style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+              aria-label={t("inspiration.buttonLabel")}
+            >
+              <Camera className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+            </button>
             {/* Info icon — show detail modal for active slot's material */}
             {detailMaterial && (
               <button
@@ -716,6 +727,12 @@ export default function MoodboardView() {
       <MaterialDetailModal
         material={showDetailModal ? detailMaterial : null}
         onClose={() => setShowDetailModal(false)}
+      />
+
+      {/* Inspiration upload dialog */}
+      <InspirationUploadDialog
+        isOpen={showInspirationDialog}
+        onClose={() => setShowInspirationDialog(false)}
       />
 
     </div>

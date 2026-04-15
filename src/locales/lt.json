@@ -1259,6 +1259,20 @@
     "clear": "Išvalyti",
     "room": "Virtuvė"
   },
+  "inspiration": {
+    "buttonLabel": "Įkelkite patikusią nuotrauką",
+    "title": "Įkelkite nuotrauką",
+    "description": "Mes parinkime medžiagas pagal jūsų nuotrauką.",
+    "uploadHint": "Palieskite, kad pasirinktumėte nuotrauką",
+    "replace": "Pakeisti nuotrauką",
+    "tierLabel": "Biudžeto lygis",
+    "messagePlaceholder": "Jūsų komentaras (nebūtina)",
+    "emailPlaceholder": "El. paštas atsakymui",
+    "submit": "Siųsti",
+    "success": "Išsiųsta! Ačiū — Su Jumis susisieksime per 1-5 darb. d.",
+    "errorNoImage": "Prašome pasirinkti nuotrauką.",
+    "errorNoEmail": "Prašome įvesti el. paštą, kad galėtume susisiekti."
+  },
   "vibe": {
     "prompt": "Pasirinkite atmosferą",
     "change": "Keisti atmosferą",

@@ -157,9 +157,9 @@
     "personaliseHint": "Tap to personalise",
     "fronts": "Fronts",
     "floor": "Floor",
-    "mainFronts": "Main Fronts",
+    "mainFronts": "Bottom Cabinets",
     "worktops": "Worktops",
-    "additionalFronts": "Addl. Fronts",
+    "additionalFronts": "Top Cabinets",
     "accents": "Accessories",
     "tiles": "Tiles",
     "mainTiles": "Main Tiles",
@@ -1256,6 +1256,20 @@
     "ready": "Combination ready",
     "clear": "Clear",
     "room": "Kitchen"
+  },
+  "inspiration": {
+    "buttonLabel": "Share inspiration",
+    "title": "Share an inspiration image",
+    "description": "Upload a photo you love — we'll use it to grow the material library.",
+    "uploadHint": "Tap to choose a photo",
+    "replace": "Replace image",
+    "tierLabel": "Budget tier",
+    "messagePlaceholder": "What do you love about this image? (optional)",
+    "emailPlaceholder": "Your email for follow-up",
+    "submit": "Send",
+    "success": "Sent! Thank you — we'll review and add materials.",
+    "errorNoImage": "Please choose an image first.",
+    "errorNoEmail": "Please enter your email so we can follow up."
   },
   "vibe": {
     "prompt": "Choose your mood",

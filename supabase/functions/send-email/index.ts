@@ -152,6 +152,23 @@ serve(async (req) => {
         `;
         break;
 
+      case "inspiration-upload":
+        subject = `Inspiration Image – ${data.email || "Anonymous"}`;
+        html = `
+          <h2>New Inspiration Image</h2>
+          <p>A user submitted an inspiration image for material curation.</p>
+          <a href="${data.imageUrl}" target="_blank">
+            <img src="${data.imageUrl}" width="560" style="max-width:100%;border-radius:8px;display:block;margin-bottom:16px;" alt="Inspiration image" />
+          </a>
+          <p><a href="${data.imageUrl}" target="_blank" style="color:#647d75;font-weight:600;">Open full image →</a></p>
+          <p><strong>Budget tier:</strong> ${data.tier || "Not specified"}</p>
+          ${data.message ? `<p><strong>Note:</strong> ${data.message}</p>` : ""}
+          ${data.email ? `<p><strong>Reply to:</strong> <a href="mailto:${data.email}">${data.email}</a></p>` : "<p><em>No email provided.</em></p>"}
+          <hr style="margin:24px 0;border:none;border-top:1px solid #e8e4e0;" />
+          <p style="color:#9a9a9a;font-size:12px;">Submitted via Design Dialogues moodboard</p>
+        `;
+        break;
+
       default:
         throw new Error("Unknown email type");
     }

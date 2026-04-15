@@ -1,4 +1,5 @@
 import { useHaptic } from "@/hooks/use-haptic";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TierSelectorProps {
   selectedTier: "Budget" | "Standard" | "Premium";
@@ -9,6 +10,13 @@ const tiers: Array<"Budget" | "Standard" | "Premium"> = ["Budget", "Standard", "
 
 const TierSelector = ({ selectedTier, onSelectTier }: TierSelectorProps) => {
   const haptic = useHaptic();
+  const { t } = useLanguage();
+
+  const tierLabel: Record<"Budget" | "Standard" | "Premium", string> = {
+    Budget: t("tier.budget"),
+    Standard: t("tier.standard"),
+    Premium: t("tier.premium"),
+  };
 
   const handleSelect = (tier: "Budget" | "Standard" | "Premium") => {
     haptic.light();
@@ -25,7 +33,7 @@ const TierSelector = ({ selectedTier, onSelectTier }: TierSelectorProps) => {
             selectedTier === tier ? "segmented-item-active" : ""
           }`}
         >
-          {tier}
+          {tierLabel[tier]}
         </button>
       ))}
     </div>
