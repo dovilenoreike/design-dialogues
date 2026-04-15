@@ -1,13 +1,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Info, Camera } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById, getArchetypesByRole } from "@/data/archetypes";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
-import MaterialDetailModal from "../controls/MaterialDetailModal";
+
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
@@ -139,7 +139,7 @@ export default function MoodboardView() {
   const [showHint, setShowHint] = useState(() => {
     try { return !localStorage.getItem("moodboard-hint-seen"); } catch { return true; }
   });
-  const [showDetailModal, setShowDetailModal] = useState(false);
+
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
 
   const dismissHint = () => {
@@ -294,11 +294,6 @@ export default function MoodboardView() {
     return pk ? (materialOverrides[pk] ?? undefined) : undefined;
   }, [activeSlot, materialOverrides]);
 
-  // Material for detail modal (active slot's selected product)
-  const detailMaterial = useMemo(() => {
-    if (!activeSlotMaterialCode) return null;
-    return getMaterialByCode(activeSlotMaterialCode) ?? null;
-  }, [activeSlotMaterialCode]);
 
   const handleSlotSelect = useCallback(
     (slotKey: SlotKey, archetypeId: string, resolvedCode?: string) => {
@@ -410,16 +405,6 @@ export default function MoodboardView() {
             >
               <Camera className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
             </button>
-            {/* Info icon — show detail modal for active slot's material */}
-            {detailMaterial && (
-              <button
-                onClick={() => setShowDetailModal(true)}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
-              >
-                <Info className="w-4 h-4" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
-              </button>
-            )}
             {/* Visualize button */}
             <button
               onClick={() => setActiveTab("design")}
@@ -723,11 +708,6 @@ export default function MoodboardView() {
         onShare={shareSession}
       />
 
-      {/* Material detail modal */}
-      <MaterialDetailModal
-        material={showDetailModal ? detailMaterial : null}
-        onClose={() => setShowDetailModal(false)}
-      />
 
       {/* Inspiration upload dialog */}
       <InspirationUploadDialog
