@@ -58,7 +58,7 @@ serve(async (req) => {
             currency: "eur",
             product_data: {
               name: "Dizaino Dialogai Kreditai",
-              description: "20 koncepto generavimo kreditų",
+              description: "7 image generation credits",
             },
             unit_amount: 200, // 2.00 EUR in cents
           },
@@ -70,7 +70,7 @@ serve(async (req) => {
       cancel_url: cancel_url || "https://example.com/cancel",
       metadata: {
         user_id: user.id,
-        credits_to_add: "20",
+        credits_to_add: "7",
       },
     });
 

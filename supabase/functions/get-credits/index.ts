@@ -52,11 +52,11 @@ serve(async (req) => {
       .eq("user_id", user_id)
       .single();
 
-    // If no record exists, create one with 3 free credits
+    // If no record exists, create one with 1 free credit
     if (error && error.code === "PGRST116") {
       const { data: newData, error: insertError } = await supabase
         .from("user_credits")
-        .insert({ user_id, credits: 3 })
+        .insert({ user_id, credits: 1 })
         .select("credits")
         .single();
 
