@@ -393,6 +393,9 @@
     "successTitle": "Užklausa Išsiųsta!",
     "successDescription": "{name} netrukus su jumis susisieks."
   },
+  "design": {
+    "changeMaterials": "Keisti konceptą"
+  },
   "earlyAccess": {
     "bannerText": "Jūs esate ankstyvi naudotojai — jūsų atsiliepimas tiesiogiai lemia, kas kuriama toliau.",
     "bannerDismiss": "Uždaryti",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDesign } from "@/contexts/DesignContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
 import Stage from "../Stage";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
@@ -44,6 +45,7 @@ function paletteKeyToSlot(paletteKey: string, room: string): SlotKey | null {
 }
 
 export default function DesignView() {
+  const { t } = useLanguage();
   const {
     design,
     generation,
@@ -51,6 +53,7 @@ export default function DesignView() {
     cancelImageUpload,
     setMaterialOverrides,
     materialOverrides,
+    setActiveTab,
   } = useDesign();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -121,6 +124,12 @@ export default function DesignView() {
           <div className="mt-4 lg:mt-0">
             <div className="lg:max-w-[400px] lg:mx-auto">
               <MaterialsSummary />
+              <button
+                onClick={() => setActiveTab("moodboard")}
+                className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+              >
+                {t("design.changeMaterials")}
+              </button>
             </div>
           </div>
 

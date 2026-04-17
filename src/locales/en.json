@@ -391,6 +391,9 @@
     "successTitle": "Inquiry Sent!",
     "successDescription": "{name} will get back to you soon."
   },
+  "design": {
+    "changeMaterials": "Edit concept"
+  },
   "earlyAccess": {
     "bannerText": "You're shaping this early — your feedback goes straight to what gets built next.",
     "bannerDismiss": "Dismiss",
