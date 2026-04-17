@@ -18,13 +18,17 @@ export function deriveArchetypeId(
     return 'dark-wood';
   }
 
-  // Stone floor
-  if (texture === 'stone' && role === 'floor') {
+  // Stone-like: stone + concrete (same archetype behaviour)
+  const isStoneLike = texture === 'stone' || texture === 'concrete';
+
+  // Stone-like floor
+  if (isStoneLike && role === 'floor') {
     return lightness >= 55 ? 'light-stone' : 'dark-stone';
   }
 
-  // Cabinet front plain — chroma distinguishes achromatic from chromatic
-  if (role === 'front' && texture === 'plain') {
+  // Cabinet front — any non-wood/stone-like/metal texture (plain, textile, …)
+  const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metal';
+  if (role === 'front' && isPlainLike) {
     if (chroma < 15) {
       // Achromatic: whites, greys, beiges, taupes
       if (lightness >= 80) return 'white';
@@ -39,11 +43,11 @@ export function deriveArchetypeId(
   // Worktop
   if (role === 'worktop') {
     if (texture === 'wood') return 'wood';
-    if (texture === 'stone' ) {
+    if (isStoneLike) {
       if (lightness >= 50) return pattern <= 40 ? 'soft-texture-light' : 'bold-texture-light';
       return pattern <= 40 ? 'soft-texture-dark' : 'bold-texture-dark';
     }
-    if (texture === 'plain') {
+    if (isPlainLike) {
       if (lightness >= 88) return 'white';
       if (lightness < 15) return 'dark'; }
   }

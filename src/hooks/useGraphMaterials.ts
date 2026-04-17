@@ -30,7 +30,7 @@ async function loadGraphData(): Promise<GraphCache> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: mats }, { data: pc }] = await Promise.all([
     supabase.from('materials' as any).select(
-      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, name, image_url, material_type, tier, showroom_ids, texture_prompt'
+      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, name, image_url, material_type, tier, showroom_ids, texture_prompt'
     ),
     supabase.from('pair_compatibility' as any).select('material_a, material_b, weight'),
   ]);
@@ -43,6 +43,7 @@ async function loadGraphData(): Promise<GraphCache> {
     warmth: r.warmth,
     pattern: r.pattern ?? 0,
     chroma: r.chroma ?? 0,
+    hue_angle: r.hue_angle ?? null,
     archetypeId: null,
     // extended display fields
     name: r.name ?? null,
@@ -177,10 +178,11 @@ export function useGraphMaterials() {
     const currentUuid = currentCode ? codeToId.get(currentCode) : undefined;
     const slotMat = currentUuid ? mats.find((m) => m.id === currentUuid) : undefined;
     if (slotMat) {
-      const narrowed = pool.filter((m) =>
-        m.texture === slotMat.texture && isSimilarLightness(m.lightness, slotMat.lightness)
-      );
-      if (narrowed.length > 0) pool = narrowed;
+      // Texture always matches — never suggest textile as a swap for plain or vice versa.
+      // Lightness similarity is a secondary preference, relaxed if no close matches exist.
+      const sameTexture = pool.filter((m) => m.texture === slotMat.texture);
+      const narrowed = sameTexture.filter((m) => isSimilarLightness(m.lightness, slotMat.lightness));
+      pool = narrowed.length > 0 ? narrowed : sameTexture;
     }
     return rankByCompatibility(pool, otherUuids, pairs, pairWeights)
       .map((m) => idToCode.get(m.id)!)

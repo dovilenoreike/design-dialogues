@@ -90,7 +90,7 @@ export default function PaletteReviewSheet({ isOpen, onClose, materials, onShare
               </div>
               <span
                 className="text-[10px] font-mono shrink-0 ml-2"
-                style={{ color: m.compatible ? '#647d75' : '#9a3412' }}
+                style={{ color: m.compatible ? '#647d75' : '#ca8a04' }}
               >
                 {m.compatible ? "✓" : "✗"} {m.code}
               </span>
@@ -99,7 +99,7 @@ export default function PaletteReviewSheet({ isOpen, onClose, materials, onShare
         </div>
 
         {incompatible.length > 0 && (
-          <p className="text-[11px]" style={{ color: '#9a3412' }}>
+          <p className="text-[11px]" style={{ color: '#ca8a04' }}>
             {incompatible.map((m) => t(`surface.${m.slot}`)).join(", ")} — {t("moodboard.someNotPairing").toLowerCase()}
           </p>
         )}

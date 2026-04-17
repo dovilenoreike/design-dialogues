@@ -7,6 +7,7 @@ export interface GraphMaterial {
   warmth: number;
   pattern: number;
   chroma: number;
+  hue_angle: number | null;  // 0–360°, null for achromatic materials
   archetypeId: string | null;
 }
 
@@ -38,6 +39,13 @@ export function visualDistance(
     Math.abs(a.pattern  - b.pattern)   / patternΔ   +
     Math.abs(a.chroma   - b.chroma)    / chromaΔ
   );
+}
+
+// Circular hue distance on 0–360° wheel. Returns null if either material is achromatic.
+export function hueDistance(a: GraphMaterial, b: GraphMaterial): number | null {
+  if (a.hue_angle == null || b.hue_angle == null) return null;
+  const d = Math.abs(a.hue_angle - b.hue_angle);
+  return Math.min(d, 360 - d);
 }
 
 // Canonical pair key — always lower UUID first
