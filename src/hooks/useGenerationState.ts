@@ -150,10 +150,12 @@ export function useGenerationState({
             generatedImages: { ...prev.generatedImages, [room]: urlData.publicUrl },
           }));
         } else {
-          setGeneration(prev => ({
-            ...prev,
-            generatedImages: { ...prev.generatedImages, [room]: null },
-          }));
+          // Only clear if there is no image already in memory — keeps in-session
+          // images alive when navigating between rooms or tabs.
+          setGeneration(prev => {
+            if (prev.generatedImages[room]) return prev;
+            return { ...prev, generatedImages: { ...prev.generatedImages, [room]: null } };
+          });
         }
       } catch (err) {
         console.error('Error loading generation:', err);
@@ -537,7 +539,8 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         if (!generatedImageData) throw new Error("No image returned from generation service");
       }
 
-      return await storeGeneratedImage(generatedImageData, room, null, null, startTime);
+      const mat = design.freestyleDescription?.trim() ? "freestyle" : "custom";
+      return await storeGeneratedImage(generatedImageData, room, design.selectedStyle, mat, startTime);
     } catch (err: unknown) {
       captureError(err, {
         action: "generateInteriorRender",
