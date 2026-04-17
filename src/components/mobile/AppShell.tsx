@@ -11,7 +11,6 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [showFloating, setShowFloating] = useState(() => !!localStorage.getItem(EARLY_ACCESS_BANNER_KEY));
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-background">
@@ -20,16 +19,14 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* Zones B + C: Main content area */}
       <main className="flex-1 flex flex-col min-h-0">
-        <EarlyAccessBanner onDismiss={() => setShowFloating(true)} />
+        <EarlyAccessBanner />
         {children}
       </main>
 
       {/* Zone C Layer 3: Bottom Tab Bar */}
       <BottomTabBar />
 
-      {showFloating && (
-        <FloatingFeedbackButton onClick={() => setFeedbackOpen(true)} />
-      )}
+      <FloatingFeedbackButton onClick={() => setFeedbackOpen(true)} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );

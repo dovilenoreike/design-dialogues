@@ -6,7 +6,7 @@ import { useDesign } from "@/contexts/DesignContext";
 export const EARLY_ACCESS_BANNER_KEY = "earlyAccessBannerSeen";
 
 interface EarlyAccessBannerProps {
-  onDismiss: () => void;
+  onDismiss?: () => void;
 }
 
 export default function EarlyAccessBanner({ onDismiss }: EarlyAccessBannerProps) {
@@ -24,7 +24,7 @@ export default function EarlyAccessBanner({ onDismiss }: EarlyAccessBannerProps)
   const dismiss = () => {
     setHiding(true);
     localStorage.setItem(EARLY_ACCESS_BANNER_KEY, "1");
-    onDismiss();
+    onDismiss?.();
     setTimeout(() => setShow(false), 300);
   };
 
