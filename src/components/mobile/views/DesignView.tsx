@@ -4,6 +4,7 @@ import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../contro
 import Stage from "../Stage";
 import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
 import { UploadDialog } from "../dialogs/UploadDialog";
+import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 
 // Maps each slot picker key to the palette slot keys it controls, per room
 const SLOT_TO_PALETTE_KEYS: Record<SlotKey, (room: string) => string[]> = {
@@ -113,6 +114,7 @@ export default function DesignView() {
             <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: "1/1" }}>
               <Stage />
             </div>
+            <PostVizFeedbackPrompt />
           </div>
 
           {/* RIGHT: MaterialsSummary */}

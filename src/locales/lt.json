@@ -393,16 +393,28 @@
     "successTitle": "Užklausa Išsiųsta!",
     "successDescription": "{name} netrukus su jumis susisieks."
   },
+  "earlyAccess": {
+    "bannerText": "Jūs esate ankstyvi naudotojai — jūsų atsiliepimas tiesiogiai lemia, kas kuriama toliau.",
+    "bannerDismiss": "Uždaryti",
+    "postVizQuestion": "Ar tai atitinka jūsų lūkesčius?",
+    "postVizShare": "Pasidalinti"
+  },
   "feedback": {
     "button": "Atsiliepimas",
     "mobileButton": "Siųsti Atsiliepimą",
-    "title": "Padėkite mums tobulėti",
-    "description": "Nuolat tobuliname savo kainų ir dizaino sistemą. Radote klaidą ar turite idėją?",
+    "title": "Jūs esate vieni pirmųjų",
+    "description": "Tai ankstyvoji versija. Kiekviena idėja ar klaida kurią pastebite, kiekvienas 'čia nesupratau' — tai formuoja, kas bus tobulinama toliau.",
     "placeholder": "Jūsų atsiliepimas...",
+    "placeholderBroke": "Kas nutiko? Ką bandėte padaryti?",
+    "placeholderMissing": "Ko ieškojote?",
+    "placeholderIdea": "Ko norėtumėte?",
+    "chipBroke": "Kažkas neveikia",
+    "chipMissing": "Trūksta funkcijos",
+    "chipIdea": "Tiesiog idėja",
     "emailPlaceholder": "El. paštas (neprivaloma)",
     "submit": "Siųsti Žinutę",
     "sending": "Siunčiama...",
-    "success": "Ačiū už jūsų atsiliepimą!",
+    "success": "Ačiū — tai tikrai padeda!",
     "errorEmpty": "Prašome įvesti atsiliepimą"
   },
   "timeline": {

@@ -391,16 +391,28 @@
     "successTitle": "Inquiry Sent!",
     "successDescription": "{name} will get back to you soon."
   },
+  "earlyAccess": {
+    "bannerText": "You're shaping this early — your feedback goes straight to what gets built next.",
+    "bannerDismiss": "Dismiss",
+    "postVizQuestion": "Does this match what you had in mind?",
+    "postVizShare": "Share thoughts"
+  },
   "feedback": {
     "button": "Feedback",
     "mobileButton": "Send Feedback",
-    "title": "Help us improve",
-    "description": "We are constantly tuning our pricing and design engine. Did you find a mistake, or do you have an idea?",
+    "title": "You're one of the first to try this",
+    "description": "This is an early version. Every glitch you spot, every \"this confused me\" — it shapes what gets built next.",
     "placeholder": "Your feedback...",
+    "placeholderBroke": "What happened? What were you trying to do?",
+    "placeholderMissing": "What were you looking for?",
+    "placeholderIdea": "What would you love to see?",
+    "chipBroke": "Something broke",
+    "chipMissing": "Missing something",
+    "chipIdea": "Just an idea",
     "emailPlaceholder": "Email (optional)",
     "submit": "Send Message",
     "sending": "Sending...",
-    "success": "Thank you for your feedback!",
+    "success": "Thank you — this really helps!",
     "errorEmpty": "Please enter your feedback"
   },
   "timeline": {
