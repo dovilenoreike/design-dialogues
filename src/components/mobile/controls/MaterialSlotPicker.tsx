@@ -315,9 +315,7 @@ export default function MaterialSlotPicker({
   const activeArchetypeIsBranched = useMemo(() => {
     if (!slot || !effectiveActiveId || !graphMaterials) return false;
     const role = SLOT_KEY_TO_ROLE[slot];
-    const count = graphMaterials.filter(
-      m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl
-    ).length;
+    const count = graphMaterials.filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl).length;
     return count > 8;
   }, [slot, effectiveActiveId, graphMaterials]);
 
