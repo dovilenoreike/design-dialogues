@@ -361,7 +361,12 @@ export default function MoodboardView() {
       if (pk) {
         setMaterialOverrides((prev) => ({ ...prev, [pk]: matCode }));
       }
-      flatlayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Only scroll to flatlay on first pick — refinement clicks (row2/row3) should
+      // keep the picker in view so the user can continue drilling down.
+      const isFirstPick = slotSelections[slotKey] === null;
+      if (isFirstPick) {
+        flatlayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     },
     [slotSelections, setMaterialOverrides, showroomMaterials],
   );
