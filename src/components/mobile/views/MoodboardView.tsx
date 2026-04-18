@@ -388,7 +388,7 @@ export default function MoodboardView() {
 
   const reviewMaterials: ReviewMaterial[] = useMemo(() => {
     if (!allSlotsFilled) return [];
-    return DISPLAYED_SLOTS.filter((k) => k !== "accents").map((slotKey) => {
+    return DISPLAYED_SLOTS.map((slotKey) => {
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       const code = pk ? (materialOverrides[pk] ?? "") : "";
       const mat = code ? getMaterialByCode(code) : undefined;
@@ -505,11 +505,7 @@ export default function MoodboardView() {
               const tileImage = overrideCode
                 ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
                 : null;
-              // Accents have no material image — fall back to archetype image (e.g. gold handle photo)
-              const accentArchetypeImage = piece.slot === "accents" && archetypeId
-                ? (getArchetypeById(archetypeId, "accent")?.image ?? null)
-                : null;
-              const displayImage = tileImage ?? accentArchetypeImage;
+              const displayImage = tileImage;
               const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
 
               // Graph-based best swap for this slot

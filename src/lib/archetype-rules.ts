@@ -4,11 +4,22 @@ export function deriveArchetypeId(
   role: string,
   texture: string,
   lightness: number,
-  _warmth: number,
+  warmth: number,
   pattern: number,
   chroma: number = 0,
 ): string | null {
-  // Metal: any role
+  // Accent role: map to moodboard archetype IDs (gold / silver / bronze / black / colour)
+  if (role === 'accent') {
+    if (texture === 'metal') {
+      if (chroma >= 18) return 'gold';       // high chroma warm → gold
+      if (warmth >= 0.1) return 'bronze';    // warm but lower chroma → aged bronze
+      return 'silver';                        // neutral/cool → chrome/silver
+    }
+    // plain accent (e.g. black matte, wine red)
+    if (lightness < 20) return 'black';
+    return 'colour';
+  }
+  // Metal: any other role
   if (texture === 'metal') return 'metallic';
 
   // Wood: any role except worktop
@@ -48,8 +59,13 @@ export function deriveArchetypeId(
       return pattern <= 40 ? 'soft-texture-dark' : 'bold-texture-dark';
     }
     if (isPlainLike) {
-      if (lightness >= 88) return 'white';
-      if (lightness < 15) return 'dark'; }
+      if (chroma < 15) {
+        if (lightness >= 80) return 'white';
+        if (lightness >= 45) return 'neutral';
+        return 'dark';
+      }
+      return lightness >= 55 ? 'pastel' : 'bold';
+    }
   }
 
   return null;

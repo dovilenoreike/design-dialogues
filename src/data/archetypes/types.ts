@@ -4,6 +4,5 @@ export interface Archetype {
   id: string;
   role: MaterialRole;
   label: LocalizedString;
-  image: string | null;
   value: string; // CSS color fallback
 }

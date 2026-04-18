@@ -117,7 +117,7 @@ export default function MaterialSlotPicker({
         let isRecommended: boolean;
 
         if (selectedMaterialCode && a.id === selections[slot]) {
-          displayImage = getMaterialByCode(selectedMaterialCode)?.imageUrl ?? a.image;
+          displayImage = getMaterialByCode(selectedMaterialCode)?.imageUrl;
           resolvedCode = selectedMaterialCode;
           isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(selectedMaterialCode);
         } else {
@@ -135,7 +135,7 @@ export default function MaterialSlotPicker({
           if (!resolvedCode) {
             resolvedCode = a.id;
           }
-          displayImage = (resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null) ?? a.image;
+          displayImage = resolvedCode ? getMaterialByCode(resolvedCode)?.imageUrl : null;
           isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
         }
 
@@ -203,19 +203,7 @@ export default function MaterialSlotPicker({
   const row1Items = useMemo((): RowItem[] => {
     if (!slot || !graphMaterials) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    return availableWithImages.map(({ archetype, displayImage }) => {
-      if (role === "accent") {
-        if (!displayImage) return null;
-        return {
-          code: archetype.id,
-          image: displayImage,
-          name: archetype.label[lang],
-          materialName: archetype.label[lang],
-          isSelected: selectedMaterialCode === archetype.id,
-          isRecommended: false,
-          archetypeId: archetype.id,
-        };
-      }
+    return availableWithImages.map(({ archetype }) => {
       const best = graphMaterials
         .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode))
         .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))[0];
@@ -374,16 +362,14 @@ export default function MaterialSlotPicker({
     setActiveArchetypeId(item.archetypeId);
     const mat = graphMaterials?.find(m => m.technicalCode === item.code);
     setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
-    if (SLOT_KEY_TO_ROLE[slot] === "accent") onSelect(slot, item.archetypeId, item.archetypeId);
-    else onSelect(slot, item.archetypeId, item.code);
+    onSelect(slot, item.archetypeId, item.code);
   };
 
   const handleRow1Click = (item: RowItem) => {
     setActiveArchetypeId(item.archetypeId);
     setActiveWarmthGroup(null);
     if (!slot) return;
-    if (SLOT_KEY_TO_ROLE[slot] === "accent") onSelect(slot, item.archetypeId, item.archetypeId);
-    else onSelect(slot, item.archetypeId, item.code);
+    onSelect(slot, item.archetypeId, item.code);
   };
 
   const handleRow2Click = (item: Row2Item) => {

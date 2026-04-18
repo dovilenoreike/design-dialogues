@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+
 import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
-import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta } from "@/lib/material-generation-utils";
+import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta, GEN_DEBUG } from "@/lib/material-generation-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -424,17 +425,27 @@ export function useGenerationState({
 
       const hasOverrides = Object.keys(materialOverrides).length > 0;
       const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && hasOverrides;
-      const geminiModel = uploadType === "photo"
+      const geminiModel = uploadType === "photo" || uploadType === "sketch"
         ? API_CONFIG.imageGeneration.modelAccurate
         : API_CONFIG.imageGeneration.modelCreative;
 
       let generatedImageData: string;
 
+      // Apply display inheritance: tallCabinets and shelves inherit bottomCabinets
+      // when they are enabled (not excluded) but have no explicit material assigned.
+      const effectiveOverrides = { ...materialOverrides };
+      if (materialOverrides.bottomCabinets) {
+        if (!materialOverrides.tallCabinets && !excludedSlots.has('tallCabinets'))
+          effectiveOverrides.tallCabinets = materialOverrides.bottomCabinets;
+        if (!materialOverrides.shelves && !excludedSlots.has('shelves'))
+          effectiveOverrides.shelves = materialOverrides.bottomCabinets;
+      }
+
       if (uploadType === "floorplan") {
         const fd = design.freestyleDescription?.trim() || null;
 
         // Load texture images — same dedup logic as sketch/photo path
-        const materialImagesWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
+        const materialImagesWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots);
         type FpDedupEntry = MaterialImageWithMeta & { surfaces: string[] };
         const fpDedupMap: Record<string, FpDedupEntry> = {};
         for (const m of materialImagesWithMeta) {
@@ -458,13 +469,14 @@ export function useGenerationState({
           materialSection = `\nImages 2..${dedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
         }
 
-        const designPrompt = `Image 1 is a 2D kitchen floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+        const designPrompt = `Image 1 is a 2D room floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
 
 Preserve: the layout, number of windows, door positions.
 Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
+        if (GEN_DEBUG) { console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -478,7 +490,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from render service");
       } else if (isGeminiPath) {
-        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
+        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots);
 
         // Deduplicate by material ID, tracking all surfaces each material covers
         type DedupEntry = MaterialImageWithMeta & { surfaces: string[] };
@@ -509,6 +521,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         }
 
 
+        if (GEN_DEBUG) { console.log("[gen] model:", geminiModel); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -523,6 +536,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
+        if (GEN_DEBUG) console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative, "(generate-interior)");
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
@@ -737,7 +751,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         clayMaterialSection = `\nImages 2..${clayDedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
       }
 
-      const designPrompt = `Image 1 is a 2D kitchen floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
+      const designPrompt = `Image 1 is a 2D room floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
 
 Preserve: the layout, number of windows, door positions.
 Assume: standard 2.4m ceiling height, neutral white walls.
