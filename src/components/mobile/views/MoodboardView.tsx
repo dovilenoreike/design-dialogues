@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
+import { toast } from "sonner";
 import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -100,6 +101,14 @@ const ANNOTATION_DEFS: AnnotationDef[] = [
 ];
 
 const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
+
+const SLOT_PLACEHOLDER: Partial<Record<SlotKey, string>> = {
+  floor:            "/placeholders/floor.webp",
+  mainFronts:       "/placeholders/mainFronts.webp",
+  additionalFronts: "/placeholders/additionalFronts.webp",
+  worktops:         "/placeholders/worktops.webp",
+  accents:          "/placeholders/accents.webp",
+};
 
 // Palette keys (materialOverrides) → moodboard slot keys, for the surfaces shown in the flatlay
 const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
@@ -469,9 +478,20 @@ export default function MoodboardView() {
             </button>
             {/* Visualize button */}
             <button
-              onClick={() => setActiveTab("design")}
-              disabled={!allSlotsFilled}
-              className="h-8 px-3 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-30"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (allSlotsFilled) {
+                  setActiveTab("design");
+                } else {
+                  const firstEmpty = DISPLAYED_SLOTS.find((k) => !slotSelections[k]) ?? DISPLAYED_SLOTS[0];
+                  setActiveSlot(firstEmpty);
+                  requestAnimationFrame(() => {
+                    pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  });
+                  toast(t("mobile.stage.selectMaterialsFirst"));
+                }
+              }}
+              className="h-8 px-3 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
               style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
             >
               <Sparkles className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
@@ -579,11 +599,30 @@ export default function MoodboardView() {
                           draggable={false}
                         />
                       ) : (
-                        <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                          <Plus
-                            className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
-                            strokeWidth={1.5}
-                          />
+                        <div className="w-full h-full relative">
+                          {SLOT_PLACEHOLDER[piece.slot] ? (
+                            <>
+                              <img
+                                src={SLOT_PLACEHOLDER[piece.slot]}
+                                alt={piece.slot}
+                                className="w-full h-full object-cover"
+                                draggable={false}
+                              />
+                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <Plus
+                                  className={`w-4 h-4 text-white/80 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
+                                  strokeWidth={1.5}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                              <Plus
+                                className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
+                                strokeWidth={1.5}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </button>

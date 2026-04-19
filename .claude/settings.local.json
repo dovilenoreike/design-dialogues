@@ -14,7 +14,11 @@
       "Bash(npx supabase:*)",
       "Bash(npx vite build)",
       "Bash(md5 \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues/src/assets/materials/pure-scandi/\"* \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues/src/assets/materials/spicy-nord/\"*)",
-      "Bash(cd \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues\" && sed -i '' 's/\"egger_premium_white_worktop\"/\"egger-premium-white-worktop\"/g' src/data/materials/index.ts && grep -n '\"[a-z][a-z0-9]*_[a-z0-9_]*\"' src/data/archetypes/index.ts src/data/collections/collections-v2.ts src/data/materials/index.ts src/components/mobile/views/MoodboardView.tsx 2>/dev/null | grep -v \"code:\\\\|//\\\\|label:\\\\|displayName:\\\\|description:\\\\|category:\\\\|promptBase:\\\\|name:\\\\|value:\\\\|alt:\\\\|alternatives:\" | head -20)"
+      "Bash(cd \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues\" && sed -i '' 's/\"egger_premium_white_worktop\"/\"egger-premium-white-worktop\"/g' src/data/materials/index.ts && grep -n '\"[a-z][a-z0-9]*_[a-z0-9_]*\"' src/data/archetypes/index.ts src/data/collections/collections-v2.ts src/data/materials/index.ts src/components/mobile/views/MoodboardView.tsx 2>/dev/null | grep -v \"code:\\\\|//\\\\|label:\\\\|displayName:\\\\|description:\\\\|category:\\\\|promptBase:\\\\|name:\\\\|value:\\\\|alt:\\\\|alternatives:\" | head -20)",
+      "Bash(cwebp public/placeholders/floor.jpg -o public/placeholders/floor.webp)",
+      "Bash(cwebp public/placeholders/mainFronts.jpg -o public/placeholders/mainFronts.webp)",
+      "Bash(cwebp public/placeholders/additionalFronts.jpg -o public/placeholders/additionalFronts.webp)",
+      "Bash(cwebp public/placeholders/worktop.jpg -o public/placeholders/worktops.webp)"
     ]
   }
 }
