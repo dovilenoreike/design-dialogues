@@ -11,6 +11,7 @@ interface StageCarouselProps {
   onClickContainer: () => void;
   isVisualizationMismatched: boolean;
   roomName: string;
+  hasUserImage: boolean;
 }
 
 export default function StageCarousel({
@@ -23,6 +24,7 @@ export default function StageCarousel({
   onClickContainer,
   isVisualizationMismatched,
   roomName,
+  hasUserImage,
 }: StageCarouselProps) {
   const fallbackImage = getVisualization(DEFAULT_PALETTE, roomName, DEFAULT_STYLE);
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -59,7 +61,7 @@ export default function StageCarousel({
           <img
             src={currentImage}
             alt={`${roomName} visualization`}
-            className={`w-full h-full object-cover transition-[filter] duration-300 ${isVisualizationMismatched ? 'blur-sm' : ''}`}
+            className={`w-full h-full transition-[filter] duration-300 ${hasUserImage ? 'object-contain' : 'object-cover'} ${isVisualizationMismatched ? 'blur-sm' : ''}`}
             onError={handleImgError}
           />
         </div>

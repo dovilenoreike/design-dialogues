@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useEffect, useState, useRef } from "react";
-import { Upload, Sparkles, Loader2, Camera, X, Download, Coins } from "lucide-react";
+import { Sparkles, Loader2, Camera, X, Download, Coins } from "lucide-react";
 import { toast } from "sonner";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { requestMoreCredits } from "@/lib/request-credits";
 import type { UploadType } from "@/types/design-state";
 
-import { getVisualization } from "@/data/visualisations";
 import { ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 import { rooms } from "@/data/rooms";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
@@ -73,7 +72,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const { user } = useAuth();
 
   const { uploadedImages, selectedCategory, selectedStyle } = design;
-  const selectedMaterial = null; // collections removed — visualization falls back to generic
   const { generatedImages, isGenerating, showRoomSwitchDialog, showStyleSwitchDialog } = generation;
 
   // Swipe gesture hook
@@ -137,16 +135,10 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     fileInputRef.current?.click();
   };
 
-  const styleId = design.selectedStyle || null;
-  const visualizationImage = getVisualization(selectedMaterial, selectedCategory, styleId);
-  const displayImage = generatedImage || uploadedImage || visualizationImage;
+  const displayImage = generatedImage || uploadedImage || "/placeholders/clay-render.webp";
   const roomNameRaw = selectedCategory || "Kitchen";
   const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
-
-  // Always blur the stock visualization when there is no user photo — regardless of whether
-  // materials are selected — so the design tab looks consistent in both states.
-  const isVisualizationMismatched = !hasUserImage;
 
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
@@ -164,13 +156,11 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Calculate image URL for any room/style/palette combo
   const getImageForState = useCallback((
     category: string | null,
-    material: string | null,
-    style: string | null
   ): string => {
     const roomName = category || "Kitchen";
     const uploaded = uploadedImages[roomName];
     const generated = generatedImages[roomName];
-    return generated || uploaded || getVisualization(material, category, style);
+    return generated || uploaded || "/placeholders/clay-render.webp";
   }, [uploadedImages, generatedImages]);
 
   // Prev/current/next images for carousel
@@ -178,17 +168,14 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     switch (activeMode) {
       case 'rooms': {
         const prevRoom = getPrevItem(selectedCategory, rooms, r => r.name);
-        return getImageForState(prevRoom.name, null, selectedStyle);
+        return getImageForState(prevRoom.name);
       }
-      case 'styles': {
-        const prevStyle = getPrevItem(selectedStyle, [], s => s.id);
-        return getImageForState(selectedCategory, null, prevStyle?.id ?? selectedStyle);
-      }
+      case 'styles':
       case 'palettes':
       default:
-        return getImageForState(selectedCategory, null, selectedStyle);
+        return getImageForState(selectedCategory);
     }
-  }, [activeMode, selectedCategory, selectedStyle, getImageForState]);
+  }, [activeMode, selectedCategory, getImageForState]);
 
   const currentImage = displayImage;
 
@@ -196,17 +183,14 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     switch (activeMode) {
       case 'rooms': {
         const nextRoom = getNextItem(selectedCategory, rooms, 'left', r => r.name);
-        return getImageForState(nextRoom.name, null, selectedStyle);
+        return getImageForState(nextRoom.name);
       }
-      case 'styles': {
-        const nextStyle = getNextItem(selectedStyle, [], 'left', s => s.id);
-        return getImageForState(selectedCategory, null, nextStyle?.id ?? selectedStyle);
-      }
+      case 'styles':
       case 'palettes':
       default:
-        return getImageForState(selectedCategory, null, selectedStyle);
+        return getImageForState(selectedCategory);
     }
-  }, [activeMode, selectedCategory, selectedStyle, getImageForState]);
+  }, [activeMode, selectedCategory, getImageForState]);
 
   // Preload adjacent images
   useEffect(() => {
@@ -240,45 +224,43 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         dragOffset={dragOffset}
         containerRef={ref}
         onClickContainer={() => { if (activeSlot) setActiveSlot(null); }}
-        isVisualizationMismatched={isVisualizationMismatched}
+        isVisualizationMismatched={false}
         roomName={roomName}
+        hasUserImage={!!uploadedImage && !generatedImage}
       />
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
 
-      {/* Upload button - centered when browsing */}
+      {/* Two-button CTA - centered when no user image */}
       {!hasUserImage && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex flex-col items-center gap-3">
-            <button
-              onClick={() => setUploadMenuOpen(true)}
-              className="pointer-events-auto flex flex-col items-center gap-3 active:scale-95 transition-transform"
-            >
-              <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur-xl flex items-center justify-center shadow-lg"
-                style={{ border: '1.5px solid rgba(255,255,255,0.4)' }}
-              >
-                <Upload className="w-6 h-6 text-white/80" strokeWidth={1.5} />
-              </div>
-              {isVisualizationMismatched && (
-                <span className="text-sm text-white/60 text-center max-w-[200px] leading-relaxed tracking-wide [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none">
-                  {t("mobile.stage.uploadPrompt")}
-                </span>
-              )}
-            </button>
-            {!moodboardFilled && (
+        <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-6">
+          <div className="flex flex-col items-center gap-2 w-full px-5">
+            {/* Visualize */}
+            {isGenerating ? (
+              <button disabled className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground/70 text-background font-medium text-sm shadow-lg min-h-[44px]">
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                {t("mobile.stage.generating")}
+              </button>
+            ) : (
               <button
-                onClick={() => setActiveTab("moodboard")}
-                className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-md rounded-full active:scale-95 transition-transform"
-                style={{ border: '0.5px solid rgba(255,255,255,0.25)' }}
+                onClick={handleGenerateWithCredits}
+                className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground text-background font-medium text-sm shadow-lg min-h-[44px] active:scale-[0.98] transition-transform"
               >
-                <span className="text-[11px] font-medium text-white/70 whitespace-nowrap">
-                  {t("mobile.stage.chooseMaterials")}
-                </span>
-                <span className="text-white/50 text-[10px]">→</span>
+                <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+                {t("mobile.stage.visualize")}
               </button>
             )}
+            {/* Upload */}
+            <button
+              onClick={() => setUploadMenuOpen(true)}
+              className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3 rounded-full bg-white/20 backdrop-blur-xl text-white/80 font-medium text-sm shadow-lg min-h-[44px] active:scale-[0.98] transition-transform"
+              style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
+            >
+              <Camera className="w-4 h-4" strokeWidth={1.5} />
+              {t("mobile.stage.uploadYourSpace")}
+            </button>
           </div>
         </div>
       )}

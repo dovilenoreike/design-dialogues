@@ -263,7 +263,7 @@
     "materialManifest": "Medžiagų Sąrašas",
     "curatedBy": "Sukurė",
     "requestCurated": "Užsakyti Medžiagų Sąrašą",
-    "visualizationDisclaimer": "AI vizualizacija · AI kartais daro klaidas",
+    "visualizationDisclaimer": "AI vizualizacija",
     "seeDetails": "Žiūrėti detales",
     "budgetDetails": "Biudžeto Detalės",
     "total": "Viso",
@@ -524,7 +524,8 @@
       "replace": "Pakeisti",
       "share": "Dalintis",
       "uploadLabel": "ĮKELKITE PLANĄ • ESKIZĄ • NUOTRAUKĄ",
-      "chooseMaterials": "Pasirinkite medžiagas"
+      "chooseMaterials": "Pasirinkite medžiagas",
+      "uploadYourSpace": "Įkelkite savo erdvę"
     },
     "switchDialog": {
       "saveTitle": "Išsaugoti vizualizaciją?",
@@ -558,7 +559,8 @@
       "sketch": "ESKIZAS ARBA PIEŠINYS",
       "sketchTip": "AI patikslins Jūsų ranka pieštą piešinį į foto-realistinę vizualizaciją.",
       "photo": "3D NUOTRAUKA",
-      "photoTip": "3d modelio arba esamos erdvės nuotrauka. Apdailos medžiagų perpiešimas."
+      "photoTip": "3d modelio arba esamos erdvės nuotrauka. Apdailos medžiagų perpiešimas.",
+      "accuracy": "tikslumas"
     },
     "uploadDialog": {
       "title": "Įkelti naują nuotrauką",

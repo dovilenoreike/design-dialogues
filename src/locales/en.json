@@ -522,7 +522,8 @@
       "replace": "Replace",
       "share": "Share",
       "uploadLabel": "UPLOAD PLAN • SKETCH • PHOTO",
-      "chooseMaterials": "Choose materials first"
+      "chooseMaterials": "Choose materials first",
+      "uploadYourSpace": "Upload your space"
     },
     "switchDialog": {
       "saveTitle": "Save your visualization?",
@@ -556,7 +557,8 @@
       "sketch": "SKETCH OR DRAWING",
       "sketchTip": "AI will refine your drawing into a detailed image.",
       "photo": "PHOTO",
-      "photoTip": "Finish materials redrawn. Note: AI may slightly change space proportions."
+      "photoTip": "Finish materials redrawn. Note: AI may slightly change space proportions.",
+      "accuracy": "accuracy"
     },
     "uploadDialog": {
       "title": "Upload New Image",

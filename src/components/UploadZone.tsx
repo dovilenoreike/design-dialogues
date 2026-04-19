@@ -57,7 +57,7 @@ const UploadZone = ({ onImageUpload, uploadedImage }: UploadZoneProps) => {
           <img
             src={uploadedImage}
             alt="Uploaded space"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
           {/* Mobile: always show button, Desktop: show on hover */}
           <div className="absolute inset-0 bg-foreground/0 md:group-hover:bg-foreground/20 transition-all duration-300 flex items-end md:items-center justify-center p-4 md:p-0">

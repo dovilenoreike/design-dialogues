@@ -114,7 +114,7 @@ export default function DesignView() {
 
           {/* LEFT: canvas */}
           <div>
-            <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: "1/1" }}>
+            <div className="relative w-full overflow-hidden rounded-2xl aspect-square">
               <Stage />
             </div>
             <PostVizFeedbackPrompt />

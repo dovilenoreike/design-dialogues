@@ -20,18 +20,22 @@ export default function UploadMenuSheet({
 }: UploadMenuSheetProps) {
   const { t } = useLanguage();
 
-  const options: { icon: typeof LayoutGrid; label: string; tip: string; type: UploadType; comingSoon?: boolean }[] = [
+  const options: { icon: typeof LayoutGrid; label: string; tip: string; type: UploadType; comingSoon?: boolean; accuracy: string; colors: string[] }[] = [
     {
       icon: Camera,
       label: t("mobile.uploadMenu.photo"),
       tip: t("mobile.uploadMenu.photoTip"),
       type: "photo",
+      accuracy: "80–95%",
+      colors: ["#647d75"],
     },
     {
       icon: PenLine,
       label: t("mobile.uploadMenu.sketch"),
       tip: t("mobile.uploadMenu.sketchTip"),
       type: "sketch",
+      accuracy: "60–95%",
+      colors: ["#ca8a04", "#647d75"],
     },
     {
       icon: LayoutGrid,
@@ -39,6 +43,8 @@ export default function UploadMenuSheet({
       tip: t("mobile.uploadMenu.2dPlanTip"),
       type: "floorplan",
       comingSoon: false,
+      accuracy: "50–80%",
+      colors: ["#ca8a04"],
     },
   ];
 
@@ -80,6 +86,14 @@ export default function UploadMenuSheet({
                         Coming Soon
                       </span>
                     )}
+                    <span className="flex items-center gap-1">
+                      {opt.colors.map((c, i) => (
+                        <span key={i} className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: c }} />
+                      ))}
+                      <span className="text-[10px] tracking-wide" style={{ color: opt.colors[opt.colors.length - 1] }}>
+                        {opt.accuracy} {t("mobile.uploadMenu.accuracy")}
+                      </span>
+                    </span>
                   </div>
                   <span className="text-[12px] text-neutral-500 leading-relaxed">
                     {opt.tip}

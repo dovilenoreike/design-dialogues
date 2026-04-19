@@ -410,10 +410,10 @@ export function useGenerationState({
 
   // Generate interior render
   const generateInteriorRender = useCallback(async (): Promise<boolean> => {
-    const uploadedImage = design.uploadedImages[design.selectedCategory || "Kitchen"] || null;
-    if (!uploadedImage || !design.selectedCategory || !user) return false;
+    if (!design.selectedCategory || !user) return false;
 
     const room = design.selectedCategory;
+    const uploadedImage = design.uploadedImages[room] || "/placeholders/clay-render.webp";
     const startTime = Date.now();
 
     try {
