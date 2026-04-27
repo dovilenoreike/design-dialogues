@@ -14,6 +14,11 @@ import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 
+// ─── Layout pattern filter (floor only) ──────────────────────────────────────
+
+type LayoutPattern = "plank" | "chevron" | "herringbone" | "tile" | "even";
+const PATTERN_ORDER: LayoutPattern[] = ["plank", "chevron", "herringbone", "tile", "even"];
+
 // ─── Warmth sub-category logic ────────────────────────────────────────────────
 
 type WarmthGroup = "warm" | "neutral" | "cold";
@@ -78,11 +83,15 @@ export default function MaterialSlotPicker({
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Warmth sub-category selection (inline mode only)
   const [activeWarmthGroup, setActiveWarmthGroup] = useState<WarmthGroup | null>(null);
+  // Layout pattern filter — only applied for floor slots
+  const [activeLayoutPattern, setActiveLayoutPattern] = useState<LayoutPattern>("plank");
   // Code search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   // Material request
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+
+  const role = slot ? SLOT_KEY_TO_ROLE[slot] : null;
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -165,6 +174,31 @@ export default function MaterialSlotPicker({
     return availableWithImages[0]?.archetype.id ?? null;
   }, [activeArchetypeId, availableWithImages, slot, selections]);
 
+  // Patterns actually present in the active archetype's materials — drives chip visibility
+  const availablePatterns = useMemo((): LayoutPattern[] => {
+    if (!effectiveActiveId || !graphMaterials || !slot) return [];
+    const slotRole = SLOT_KEY_TO_ROLE[slot];
+    const found = new Set(
+      graphMaterials
+        .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(slotRole) && m.layoutPattern)
+        .map(m => m.layoutPattern as LayoutPattern)
+    );
+    return PATTERN_ORDER.filter(p => found.has(p));
+  }, [effectiveActiveId, graphMaterials, slot]);
+
+  // Reset activeLayoutPattern to first available when archetype changes
+  useEffect(() => {
+    if (availablePatterns.length > 0) setActiveLayoutPattern(availablePatterns[0]);
+  }, [effectiveActiveId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Filter sub-rows by layout_pattern only when the active archetype has multiple patterns
+  const filteredMaterials = useMemo(() => {
+    if (!graphMaterials || !role) return graphMaterials ?? [];
+    if (role !== "floor") return graphMaterials;
+    if (availablePatterns.length <= 1) return graphMaterials;
+    return graphMaterials.filter((m) => m.layoutPattern === activeLayoutPattern);
+  }, [graphMaterials, role, activeLayoutPattern, availablePatterns]);
+
   // ─── Shared row item types ────────────────────────────────────────────────
   type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; archetypeId: string };
   type Row2Item = RowItem & { warmthGroup: WarmthGroup };
@@ -174,7 +208,7 @@ export default function MaterialSlotPicker({
   // Recommended section: all materials ranked by compatibility score
   // Not applicable to accents — they use archetypeId as code and pair with everything
   const recommendedItems = useMemo((): RowItem[] => {
-    if (!slot || !graphMaterials) return [];
+    if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     if (role === "accent") return [];
     const recCodes = getRecommendedCodes
@@ -201,7 +235,7 @@ export default function MaterialSlotPicker({
   // Row 1: best-ranked material per archetype (excluding recommended — those appear above)
   // For accent slots: use archetype image directly since accents select by archetypeId, not material code
   const row1Items = useMemo((): RowItem[] => {
-    if (!slot || !graphMaterials) return [];
+    if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     return availableWithImages.map(({ archetype }) => {
       const best = graphMaterials
@@ -218,11 +252,11 @@ export default function MaterialSlotPicker({
 
   // Row 2: best per warmth group in active archetype, excluding Row 1 and recommended
   const row2Items = useMemo((): Row2Item[] => {
-    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
     return WARMTH_GROUPS.map(group => {
-      const best = graphMaterials
+      const best = filteredMaterials
         .filter(m =>
           m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
           m.technicalCode !== row1Code &&
@@ -237,17 +271,17 @@ export default function MaterialSlotPicker({
                archetypeId: effectiveActiveId, warmthGroup: group };
     }).filter((x): x is Row2Item => x !== null)
       .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
-  }, [slot, effectiveActiveId, graphMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
 
   // Row 3: remaining materials in active warmth group, excluding Row 1, Row 2, and recommended
   const row3Items = useMemo((): RowItem[] => {
-    if (!slot || !effectiveActiveId || !activeWarmthGroup || !graphMaterials) return [];
+    if (!slot || !effectiveActiveId || !activeWarmthGroup || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     const excludeCodes = new Set([
       row1Items.find(r => r.archetypeId === effectiveActiveId)?.code,
       row2Items.find(r => r.warmthGroup === activeWarmthGroup)?.code,
     ].filter(Boolean) as string[]);
-    return graphMaterials
+    return filteredMaterials
       .filter(m =>
         m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
         getWarmthGroup(m.warmth) === activeWarmthGroup &&
@@ -262,13 +296,13 @@ export default function MaterialSlotPicker({
                    materialName: m.name?.[lang] ?? m.technicalCode,
                    isSelected: m.technicalCode === selectedMaterialCode, isRecommended: false,
                    archetypeId: effectiveActiveId }));
-  }, [slot, effectiveActiveId, activeWarmthGroup, graphMaterials, row1Items, row2Items, recommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, activeWarmthGroup, filteredMaterials, row1Items, row2Items, recommendedCodes, selectedMaterialCode, lang]);
 
   // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
-    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    return graphMaterials
+    return filteredMaterials
       .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl)
       .map(m => ({
         code: m.technicalCode, image: m.imageUrl!,
@@ -281,14 +315,14 @@ export default function MaterialSlotPicker({
         Number(b.isRecommended) - Number(a.isRecommended) ||
         getPairCountByCode(b.code) - getPairCountByCode(a.code)
       );
-  }, [slot, effectiveActiveId, graphMaterials, recommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, filteredMaterials, recommendedCodes, selectedMaterialCode, lang]);
 
   // All materials in the active archetype, excluding row 1's representative
   const archetypeFlatItems = useMemo((): RowItem[] => {
-    if (!slot || !effectiveActiveId || !graphMaterials) return [];
+    if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
-    return graphMaterials
+    return filteredMaterials
       .filter(m =>
         m.archetypeId === effectiveActiveId &&
         m.role.includes(role) &&
@@ -309,25 +343,25 @@ export default function MaterialSlotPicker({
         isRecommended: recommendedCodes.has(m.technicalCode),
         archetypeId: effectiveActiveId,
       }));
-  }, [slot, effectiveActiveId, graphMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
 
   // True when the active archetype has enough variants to warrant warmth branching
   const activeArchetypeIsBranched = useMemo(() => {
-    if (!slot || !effectiveActiveId || !graphMaterials) return false;
+    if (!slot || !effectiveActiveId || !filteredMaterials.length) return false;
     const role = SLOT_KEY_TO_ROLE[slot];
-    const count = graphMaterials.filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl).length;
+    const count = filteredMaterials.filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl).length;
     return count > 8;
-  }, [slot, effectiveActiveId, graphMaterials]);
+  }, [slot, effectiveActiveId, filteredMaterials]);
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!searchOpen || !q || !slot || !graphMaterials) return [];
+    if (!searchOpen || !q || !slot || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    return graphMaterials.filter(
+    return filteredMaterials.filter(
       (m) => m.role.includes(role) && m.imageUrl && m.technicalCode.toLowerCase().includes(q)
     );
-  }, [searchOpen, searchQuery, slot, graphMaterials]);
+  }, [searchOpen, searchQuery, slot, filteredMaterials]);
 
   const selectedId = slot ? selections[slot] : null;
   const isFirstPick = !selectedId;
@@ -358,7 +392,7 @@ export default function MaterialSlotPicker({
   const handleRecommendedClick = (item: RowItem) => {
     if (!slot) return;
     setActiveArchetypeId(item.archetypeId);
-    const mat = graphMaterials?.find(m => m.technicalCode === item.code);
+    const mat = filteredMaterials.find(m => m.technicalCode === item.code);
     setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
     onSelect(slot, item.archetypeId, item.code);
   };
@@ -583,6 +617,25 @@ export default function MaterialSlotPicker({
           {!isFirstPick && (
             <>
               <SwatchDivider />
+
+              {/* Layout pattern chips — only when the active archetype has multiple patterns */}
+              {availablePatterns.length > 1 && (
+                <div className="flex gap-2 px-4 pt-2.5 pb-1 flex-shrink-0">
+                  {availablePatterns.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setActiveLayoutPattern(p)}
+                      className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
+                      style={{
+                        backgroundColor: activeLayoutPattern === p ? "#647d75" : "#f0ede9",
+                        color: activeLayoutPattern === p ? "#ffffff" : "#6b7280",
+                      }}
+                    >
+                      {t(`surface.pattern${p.charAt(0).toUpperCase() + p.slice(1)}`)}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {!activeArchetypeIsBranched ? (
                 /* ≤ 8 materials in archetype — flat list, no warmth rows */

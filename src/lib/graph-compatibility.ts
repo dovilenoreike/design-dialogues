@@ -48,65 +48,65 @@ export function hueDistance(a: GraphMaterial, b: GraphMaterial): number | null {
   return Math.min(d, 360 - d);
 }
 
-// Canonical pair key — always lower UUID first
+// Canonical pair key — always lower code first
 export function pairKey(a: string, b: string): string {
   return a < b ? `${a}::${b}` : `${b}::${a}`;
 }
 
 export function isCompatibleWithAll(
-  candidateUuid: string,
-  selectedUuids: string[],
+  candidateCode: string,
+  selectedCodes: string[],
   pairs: Set<string>,
 ): boolean {
-  return selectedUuids.every((sel) => pairs.has(pairKey(candidateUuid, sel)));
+  return selectedCodes.every((sel) => pairs.has(pairKey(candidateCode, sel)));
 }
 
 export function getCompatibleCandidates(
-  selectedUuids: string[],
+  selectedCodes: string[],
   allMaterials: GraphMaterial[],
   pairs: Set<string>,
   targetRole?: string,
 ): GraphMaterial[] {
-  const threshold = Math.min(2, selectedUuids.length);
+  const threshold = Math.min(2, selectedCodes.length);
   return allMaterials.filter((m) => {
-    if (selectedUuids.includes(m.id)) return false;
+    if (selectedCodes.includes(m.technicalCode)) return false;
     if (targetRole && !m.role.includes(targetRole)) return false;
-    return countCompatible(m.id, selectedUuids, pairs) >= threshold;
+    return countCompatible(m.technicalCode, selectedCodes, pairs) >= threshold;
   });
 }
 
 export function countCompatible(
-  candidateUuid: string,
-  selectedUuids: string[],
+  candidateCode: string,
+  selectedCodes: string[],
   pairs: Set<string>,
 ): number {
-  return selectedUuids.filter((sel) => pairs.has(pairKey(candidateUuid, sel))).length;
+  return selectedCodes.filter((sel) => pairs.has(pairKey(candidateCode, sel))).length;
 }
 
 export function weightedScore(
-  candidateUuid: string,
-  selectedUuids: string[],
+  candidateCode: string,
+  selectedCodes: string[],
   pairWeights: Map<string, number>,
 ): number {
-  return selectedUuids.reduce((sum, sel) => {
-    const key = pairKey(candidateUuid, sel);
+  return selectedCodes.reduce((sum, sel) => {
+    const key = pairKey(candidateCode, sel);
     return sum + (pairWeights.get(key) ?? 0);
   }, 0);
 }
 
 export function rankByCompatibility(
   candidates: GraphMaterial[],
-  selectedUuids: string[],
+  selectedCodes: string[],
   pairs: Set<string>,
   pairWeights?: Map<string, number>,
 ): GraphMaterial[] {
   return [...candidates].sort((a, b) => {
     const scoreA = pairWeights
-      ? weightedScore(a.id, selectedUuids, pairWeights)
-      : selectedUuids.filter((s) => pairs.has(pairKey(a.id, s))).length;
+      ? weightedScore(a.technicalCode, selectedCodes, pairWeights)
+      : selectedCodes.filter((s) => pairs.has(pairKey(a.technicalCode, s))).length;
     const scoreB = pairWeights
-      ? weightedScore(b.id, selectedUuids, pairWeights)
-      : selectedUuids.filter((s) => pairs.has(pairKey(b.id, s))).length;
+      ? weightedScore(b.technicalCode, selectedCodes, pairWeights)
+      : selectedCodes.filter((s) => pairs.has(pairKey(b.technicalCode, s))).length;
     return scoreB - scoreA;
   });
 }
