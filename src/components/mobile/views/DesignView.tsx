@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDesign } from "@/contexts/DesignContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import MaterialSlotPicker, { type SlotKey, type SlotSelections } from "../controls/MaterialSlotPicker";
 import Stage from "../Stage";
-import { MaterialsSummary } from "../thread/summaries/MaterialsSummary";
 import { UploadDialog } from "../dialogs/UploadDialog";
 import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 
@@ -45,7 +43,6 @@ function paletteKeyToSlot(paletteKey: string, room: string): SlotKey | null {
 }
 
 export default function DesignView() {
-  const { t } = useLanguage();
   const {
     design,
     generation,
@@ -53,7 +50,6 @@ export default function DesignView() {
     cancelImageUpload,
     setMaterialOverrides,
     materialOverrides,
-    setActiveTab,
   } = useDesign();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -108,31 +104,12 @@ export default function DesignView() {
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
 
-      <div className="px-4 pt-4 pb-6 lg:max-w-7xl lg:mx-auto lg:px-8 lg:py-10">
-
-        <div className="lg:grid lg:grid-cols-2 lg:gap-20 lg:items-center">
-
-          {/* LEFT: canvas */}
-          <div>
-            <div className="relative w-full overflow-hidden rounded-2xl aspect-square">
-              <Stage />
-            </div>
-            <PostVizFeedbackPrompt />
-          </div>
-
-          {/* RIGHT: MaterialsSummary */}
-          <div className="mt-4 lg:mt-0">
-            <div className="lg:max-w-[400px] lg:mx-auto">
-              <MaterialsSummary />
-              <button
-                onClick={() => setActiveTab("moodboard")}
-                className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-              >
-                {t("design.changeMaterials")}
-              </button>
-            </div>
-          </div>
-
+      <div className="px-4 pt-4 pb-6 lg:max-w-3xl lg:mx-auto lg:px-8 lg:py-10">
+        <div className="relative w-full aspect-square">
+          <Stage />
+        </div>
+        <div className="mt-14">
+          <PostVizFeedbackPrompt />
         </div>
       </div>
 

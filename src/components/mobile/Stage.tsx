@@ -17,9 +17,11 @@ import { getArchetypeById } from "@/data/archetypes";
 import { type MaterialBubble } from "@/lib/collection-utils";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
+import CollectionPresetCarousel from "./CollectionPresetCarousel";
 
+// Fronts first, then floor, then worktops — matches the swatch rail mockup order.
 const BUBBLE_RAIL_SLOT_ORDER = [
-  "floor", "bottomCabinets", "topCabinets", "tallCabinets", "shelves", "worktops", "accents", "tiles", "additionalTiles",
+  "bottomCabinets", "topCabinets", "tallCabinets", "shelves", "floor", "worktops", "accents", "tiles", "additionalTiles",
 ];
 
 function buildBubblesFromOverrides(
@@ -135,11 +137,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     fileInputRef.current?.click();
   };
 
-  const displayImage = generatedImage || uploadedImage || "/placeholders/clay-render.webp";
-  const roomNameRaw = selectedCategory || "Kitchen";
-  const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
-  const hasUserImage = !!uploadedImage || !!generatedImage;
-
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
   const [creditRequestState, setCreditRequestState] = useState<'idle' | 'form' | 'submitting' | 'success' | 'error'>('idle');
@@ -148,9 +145,37 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Material swap rail — which slot's rail is open
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
 
-  // Close rail when palette or room changes
+  // Slots provided by the active collection preset — swatch rail shows only these
+  const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
+
+  // Pregenerated image from the active collection preset
+  const [presetImageUrl, setPresetImageUrl] = useState<string | null>(null);
+  // Snapshot of preset materials — used to detect when user has changed something
+  const presetMaterialsRef = useRef<Record<string, string> | null>(null);
+
+  // If materialOverrides have drifted from the preset, clear the preset image
+  useEffect(() => {
+    if (!presetMaterialsRef.current || !presetImageUrl) return;
+    const preset = presetMaterialsRef.current;
+    const modified = Object.keys(preset).some(k => materialOverrides[k] !== preset[k]);
+    if (modified) {
+      setPresetImageUrl(null);
+      presetMaterialsRef.current = null;
+    }
+  }, [materialOverrides, presetImageUrl]);
+
+  // presetImageUrl being non-null means user is viewing an unmodified collection preset
+  const presetIsActive = !!presetImageUrl;
+
+  const displayImage = generatedImage || uploadedImage || presetImageUrl || "/placeholders/clay-render.webp";
+  const roomNameRaw = selectedCategory || "Kitchen";
+  const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
+  const hasUserImage = !!uploadedImage || !!generatedImage;
+
+  // Close rail when palette or room changes; clear preset image on room change
   useEffect(() => {
     setActiveSlot(null);
+    setPresetImageUrl(null);
   }, [selectedCategory]);
 
   // Calculate image URL for any room/style/palette combo
@@ -215,6 +240,25 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         className="hidden"
       />
 
+      {/* Inner clip layer — keeps image + overlays within the rounded frame.
+          StageBubbleRail lives outside this so it can peek below the image edge. */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+
+      {/* Collection preset carousel — shown when no user image is uploaded */}
+      {!hasUserImage && (
+        <CollectionPresetCarousel
+          roomCategory={selectedCategory}
+          onApplyPreset={(materials, imageUrl) => {
+            setMaterialOverrides(materials);
+            setCollectionSlots(new Set(Object.keys(materials)));
+            setPresetImageUrl(imageUrl);
+            presetMaterialsRef.current = materials;
+          }}
+          hasExistingMaterials={Object.keys(materialOverrides).length > 0}
+          isModified={!presetIsActive && Object.keys(materialOverrides).length > 0}
+        />
+      )}
+
       {/* Carousel */}
       <StageCarousel
         prevImage={prevImage}
@@ -233,24 +277,26 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
 
-      {/* Two-button CTA - centered when no user image */}
+      {/* Two-button CTA - sits above the swatch rail */}
       {!hasUserImage && (
-        <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-6">
+        <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-[88px]">
           <div className="flex flex-col items-center gap-2 w-full px-5">
-            {/* Visualize */}
-            {isGenerating ? (
-              <button disabled className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground/70 text-background font-medium text-sm shadow-lg min-h-[44px]">
-                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                {t("mobile.stage.generating")}
-              </button>
-            ) : (
-              <button
-                onClick={handleGenerateWithCredits}
-                className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground text-background font-medium text-sm shadow-lg min-h-[44px] active:scale-[0.98] transition-transform"
-              >
-                <Sparkles className="w-4 h-4" strokeWidth={1.5} />
-                {t("mobile.stage.visualize")}
-              </button>
+            {/* Visualize — hidden while a preset image is showing */}
+            {!presetIsActive && (
+              isGenerating ? (
+                <button disabled className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground/70 text-background font-medium text-sm shadow-lg min-h-[44px]">
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                  {t("mobile.stage.generating")}
+                </button>
+              ) : (
+                <button
+                  onClick={handleGenerateWithCredits}
+                  className="pointer-events-auto w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-foreground text-background font-medium text-sm shadow-lg min-h-[44px] active:scale-[0.98] transition-transform"
+                >
+                  <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+                  {t("mobile.stage.visualize")}
+                </button>
+              )
             )}
             {/* Upload */}
             <button
@@ -291,7 +337,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
       {/* FAB generate button */}
       {hasUserImage && (
-        <div className="absolute bottom-4 right-4">
+        <div className="absolute bottom-16 right-4">
           {!moodboardFilled ? (
             <button
               onClick={() => setActiveTab("moodboard")}
@@ -327,7 +373,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
 
       {/* Bottom-left replace button after upload */}
       {hasUserImage && !isGenerating && (
-        <div className="absolute bottom-4 left-3 flex items-center gap-1.5">
+        <div className="absolute bottom-16 left-3 flex items-center gap-1.5">
           <button
             onClick={() => setUploadMenuOpen(true)}
             className="flex items-center gap-2 px-3 py-2.5 bg-white/20 backdrop-blur-xl text-white/80 rounded-full text-[10px] tracking-wide uppercase font-medium shadow-lg active:scale-[0.98] transition-transform min-h-[44px]"
@@ -339,6 +385,8 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         </div>
       )}
 
+
+      </div>{/* end inner clip layer */}
 
       {/* Bubble rail - browsing mode */}
       {!hasUserImage && bubbles.length > 0 && (
@@ -353,6 +401,12 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
+          collectionSlots={collectionSlots.size > 0 ? collectionSlots : undefined}
+          onAddSlot={(slotKey) => setCollectionSlots(prev => {
+            // If no preset was active, seed collectionSlots from all currently visible bubbles
+            const base = prev.size > 0 ? prev : new Set(bubbles.map(b => b.slotKey));
+            return new Set([...base, slotKey]);
+          })}
           t={t}
           variant="browsing"
         />
@@ -372,6 +426,12 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
+          collectionSlots={collectionSlots.size > 0 ? collectionSlots : undefined}
+          onAddSlot={(slotKey) => setCollectionSlots(prev => {
+            // If no preset was active, seed collectionSlots from all currently visible bubbles
+            const base = prev.size > 0 ? prev : new Set(bubbles.map(b => b.slotKey));
+            return new Set([...base, slotKey]);
+          })}
           t={t}
           variant="uploaded"
         />

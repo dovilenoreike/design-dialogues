@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Plus } from "lucide-react";
-import { getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
+import { surfaces } from "@/data/rooms/surfaces";
 import type { ControlMode } from "@/contexts/DesignContext";
 
 interface StageBubbleRailProps {
@@ -17,8 +18,12 @@ interface StageBubbleRailProps {
   onOpenSelector?: (mode: ControlMode) => void;
   setActiveMode: (mode: ControlMode) => void;
   t: (key: string) => string;
-  /** "browsing" = !hasUserImage (bottom-12), "uploaded" = hasUserImage (bottom-20) */
+  /** "browsing" = no user image (sits above CTAs), "uploaded" = user has image */
   variant: "browsing" | "uploaded";
+  /** If provided, only show swatches for these slots; all others collapse into a "+" tile */
+  collectionSlots?: Set<string>;
+  /** Called when user adds a new slot via "+", so the parent can expand collectionSlots */
+  onAddSlot?: (slotKey: string) => void;
 }
 
 export default function StageBubbleRail({
@@ -34,24 +39,19 @@ export default function StageBubbleRail({
   setActiveMode,
   t,
   variant,
+  collectionSlots,
+  onAddSlot,
 }: StageBubbleRailProps) {
+  // Subscribe to graph load — ensures addableSlots and handleAddSlot re-run once data is ready
+  useGraphMaterials();
 
-  const [showAddMenu, setShowAddMenu] = useState(false);
-  const [showHint, setShowHint] = useState(() => {
-    try { return !localStorage.getItem("bubble-rail-hint-seen"); } catch { return true; }
-  });
-
-  // Per-role alternatives cache. All same-role slots share the same list.
-  // Invalidated when materialOverrides receives a code outside the cached list (flatlay/moodboard update).
   const roleAltsCacheRef = useRef<Record<string, Array<{ materialId: string; image: string }>>>({});
-
-  // Snapshotted alternatives for the currently active slot.
   const [slotAlternatives, setSlotAlternatives] = useState<Array<{ materialId: string; image: string }>>([]);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const materialOverridesRef = useRef(materialOverrides);
   materialOverridesRef.current = materialOverrides;
 
-  // Invalidate role cache when a new code arrives that wasn't in the cached alternatives
-  // (indicates a flatlay/moodboard update rather than a rail selection).
+  // Invalidate role cache when materialOverrides gets a code from outside the rail
   useEffect(() => {
     for (const [slot, code] of Object.entries(materialOverrides)) {
       const role = SLOT_TO_ROLE[slot];
@@ -64,15 +64,12 @@ export default function StageBubbleRail({
   }, [materialOverrides]);
 
   useEffect(() => {
-    setShowAddMenu(false);
+    // Close the add menu only when an alternatives panel opens (not when closing one)
+    if (activeSlot) setShowAddMenu(false);
     if (!activeSlot) { setSlotAlternatives([]); return; }
-
-    const bubble = bubbles.find(b => b.slotKey === activeSlot);
-    if (!bubble) { setSlotAlternatives([]); return; }
 
     const role = SLOT_TO_ROLE[activeSlot];
 
-    // Serve from cache — all same-role slots share the same list until a flatlay update invalidates it
     if (role && roleAltsCacheRef.current[role]) {
       setSlotAlternatives(roleAltsCacheRef.current[role]);
       return;
@@ -80,14 +77,12 @@ export default function StageBubbleRail({
 
     const overrides = materialOverridesRef.current;
 
-    // "Flatlay" codes = all unique materialOverrides values for same-role slots
     const flatlayCodes = [...new Set(
       Object.entries(overrides)
         .filter(([k, v]) => SLOT_TO_ROLE[k] === role && !!v)
         .map(([, v]) => v)
     )];
 
-    // Fill to 4 total with highest pair-count materials not already in the flatlay
     const neededExtras = Math.max(0, 4 - flatlayCodes.length);
     const extraCodes = role
       ? getMaterialsByRole(role)
@@ -105,157 +100,170 @@ export default function StageBubbleRail({
       })
       .filter((x): x is { materialId: string; image: string } => x !== null);
 
-    // Cache by role so all same-role slots reuse this list
     if (role) roleAltsCacheRef.current[role] = alternatives;
     setSlotAlternatives(alternatives);
   }, [activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dismissHint = () => {
-    if (!showHint) return;
-    try { localStorage.setItem("bubble-rail-hint-seen", "1"); } catch {}
-    setShowHint(false);
-  };
-
-  const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
-  const hiddenBubbles  = bubbles.filter(b =>  excludedSlots.has(b.slotKey));
-
   if (bubbles.length === 0) return null;
 
-  const bottomClass = variant === "browsing" ? "bottom-12" : "bottom-20";
-  const containerClass = variant === "browsing"
-    ? "absolute right-1.5 flex flex-col items-center w-10 opacity-90"
-    : "absolute right-1.5 flex flex-col items-center max-w-[44px] opacity-100";
+  const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
+  const swatchBubbles = collectionSlots
+    ? visibleBubbles.filter(b => collectionSlots.has(b.slotKey))
+    : visibleBubbles;
+
+  // Group swatchBubbles by effective material code so duplicate-material slots collapse into one swatch
+  const groupedSwatches = (() => {
+    const seen = new Map<string, { slotKeys: string[]; bubble: MaterialBubble }>();
+    for (const bubble of swatchBubbles) {
+      const code = materialOverrides[bubble.slotKey] || bubble.materialId;
+      if (seen.has(code)) {
+        seen.get(code)!.slotKeys.push(bubble.slotKey);
+      } else {
+        seen.set(code, { slotKeys: [bubble.slotKey], bubble });
+      }
+    }
+    return [...seen.values()];
+  })();
+
+  // Derive the active group (for alternatives panel — updating all grouped slots together)
+  const activeGroup = groupedSwatches.find(g => g.slotKeys.includes(activeSlot ?? ""));
+
+  // Surface slots available to add: not already shown AND have at least one material with an image
+  const shownKeys = new Set(groupedSwatches.flatMap(g => g.slotKeys));
+  const addableSlots = Object.keys(surfaces).filter(k => {
+    if (shownKeys.has(k)) return false;
+    const role = SLOT_TO_ROLE[k];
+    return role ? getMaterialsByRole(role).some(m => !!m.imageUrl) : false;
+  });
+
+  const bottomClass = "-bottom-[32px]";
+
+  const handleAddSlot = (slotKey: string) => {
+    const role = SLOT_TO_ROLE[slotKey];
+    const best = role
+      ? getMaterialsByRole(role)
+          .filter(m => !!m.imageUrl)
+          .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))[0]
+      : null;
+    if (!best) return; // no materials for this role — leave menu open, don't add
+    setMaterialOverrides(prev => ({ ...prev, [slotKey]: best.technicalCode }));
+    onAddSlot?.(slotKey);
+    setShowAddMenu(false);
+  };
 
   return (
-    <div className={`${containerClass} ${bottomClass}`}>
-      <div
-        className="relative flex flex-col gap-1.5 p-1.5 rounded-full bg-white/10 backdrop-blur-xl shadow-lg"
-        style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-      >
-        {/* Hint label — fades out on first tap */}
-        <div
-          className={`absolute right-full top-0 flex items-center mr-2 pointer-events-none transition-opacity duration-300 ${showHint && !activeSlot ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md rounded-full px-2.5 py-1" style={{ border: '0.5px solid rgba(0,0,0,0.08)' }}>
-            <span className="text-[9px] font-medium text-black/70 whitespace-nowrap">
-              {t("surface.personaliseHint")}
-            </span>
-            <span className="text-black/40 text-[9px]">→</span>
-          </div>
-        </div>
-
-        {visibleBubbles.map((bubble) => {
-          const overrideId = materialOverrides[bubble.slotKey];
-          const overriddenImage = overrideId
-            ? (getMaterialByCode(overrideId)?.imageUrl ?? getArchetypeById(overrideId)?.image ?? bubble.image)
-            : bubble.image;
-          const isActive = activeSlot === bubble.slotKey;
-
-          return (
-            <div key={bubble.slotKey} className="relative h-7">
+    <div
+      className={`absolute inset-x-0 ${bottomClass} flex flex-col items-center gap-2`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Alternatives panel — shown above the rail when a swatch is active */}
+      {activeSlot && slotAlternatives.length > 0 && (() => {
+        const currentCode = materialOverrides[activeSlot] || bubbles.find(b => b.slotKey === activeSlot)?.materialId;
+        return (
+          <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-2xl bg-black/50 backdrop-blur-xl"
+               style={{ border: "0.5px solid rgba(255,255,255,0.25)" }}>
+            <button
+              onClick={() => setActiveSlot(null)}
+              className="w-6 h-6 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            >
+              <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
+            </button>
+            {slotAlternatives.map(alt => (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  dismissHint();
-                  if (activeMode !== "palettes") {
-                    onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
-                  }
-                  setActiveSlot(isActive ? null : bubble.slotKey);
+                key={alt.materialId}
+                onClick={() => {
+                  setMaterialOverrides(prev => {
+                    const next = { ...prev };
+                    for (const k of (activeGroup?.slotKeys ?? [activeSlot!])) next[k] = alt.materialId;
+                    return next;
+                  });
+                  setActiveSlot(null);
                 }}
-                className="block active:scale-95 transition-transform relative"
+                className="shrink-0 active:scale-90 transition-transform"
               >
                 <img
-                  src={overriddenImage}
-                  alt={bubble.slotLabel}
-                  title={bubble.slotLabel}
-                  className={`w-7 h-7 rounded-full object-cover ${variant === "browsing" && activeMode !== "palettes" ? "shadow-sm" : ""} ${isActive ? "ring-[1.5px] ring-white" : ""}`}
+                  src={alt.image}
+                  alt={alt.materialId}
+                  className={`w-12 h-9 rounded-xl object-cover ${alt.materialId === currentCode ? "ring-2 ring-white" : ""}`}
                 />
               </button>
+            ))}
+          </div>
+        );
+      })()}
 
-              {/* Material swap rail */}
-              {isActive && (() => {
-                const currentMaterialId = materialOverrides[bubble.slotKey] || bubble.materialId;
-                const alternatives = slotAlternatives;
-                return (
-                  <div
-                    className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center gap-1.5 z-50"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExcludedSlots(prev => new Set(prev).add(bubble.slotKey));
-                        setActiveSlot(null);
-                      }}
-                      className="w-6 h-6 shrink-0 flex items-center justify-center active:scale-90 transition-transform"
-                    >
-                      <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
-                    </button>
-                    <div
-                      className="relative flex items-center gap-1.5 backdrop-blur-xl bg-white/20 rounded-full px-1.5 py-1"
-                      style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-                    >
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[7px] tracking-[0.2em] uppercase text-white/50 font-medium select-none whitespace-nowrap [text-shadow:0_1px_2px_rgba(0,0,0,0.4)]">
-                        {t(`surface.${bubble.slotKey}`) || bubble.slotLabel}
-                      </span>
-                      {alternatives.map((alt) => (
-                        <button
-                          key={alt.materialId}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMaterialOverrides(prev => ({ ...prev, [bubble.slotKey]: alt.materialId }));
-                            setActiveSlot(null);
-                          }}
-                          className="w-7 h-7 shrink-0 active:scale-90 transition-transform"
-                        >
-                          <img
-                            src={alt.image}
-                            alt={alt.materialId}
-                            className={`w-7 h-7 rounded-full object-cover ${alt.materialId === currentMaterialId ? "ring-[1.5px] ring-white" : ""}`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
+      {/* Add-surface menu — shown above the rail when "+" is tapped */}
+      {showAddMenu && addableSlots.length > 0 && (
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-2 rounded-2xl bg-black/50 backdrop-blur-xl"
+          style={{ border: "0.5px solid rgba(255,255,255,0.25)" }}
+        >
+          <button
+            onClick={() => setShowAddMenu(false)}
+            className="w-6 h-6 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+          >
+            <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
+          </button>
+          {addableSlots.map(slotKey => (
+            <button
+              key={slotKey}
+              onClick={() => handleAddSlot(slotKey)}
+              className="text-[9px] tracking-wide uppercase text-white/80 font-medium px-2.5 py-1.5 rounded-full bg-white/15 active:scale-95 transition-transform whitespace-nowrap"
+            >
+              {t(`surface.${slotKey}`) || surfaces[slotKey].label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main swatch row */}
+      <div className="flex items-end gap-3 px-4">
+        {groupedSwatches.map(({ slotKeys, bubble }) => {
+          const representativeSlot = slotKeys[0];
+          const overrideCode = materialOverrides[representativeSlot];
+          const displayImage = overrideCode
+            ? (getMaterialByCode(overrideCode)?.imageUrl ?? getArchetypeById(overrideCode)?.image ?? bubble.image)
+            : bubble.image;
+          const isActive = slotKeys.includes(activeSlot ?? "");
+
+          return (
+            <button
+              key={representativeSlot}
+              onClick={() => {
+                if (activeMode !== "palettes") {
+                  onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
+                }
+                setActiveSlot(isActive ? null : representativeSlot);
+              }}
+              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            >
+              <img
+                src={displayImage}
+                alt={bubble.slotLabel}
+                className={`w-14 h-16 rounded-xl object-cover ${isActive ? "ring-2 ring-white" : ""}`}
+              />
+              <span className="w-14 text-center text-[8px] font-medium tracking-[0.15em] uppercase text-foreground/60 select-none truncate">
+                {t(`surface.${representativeSlot}`) || bubble.slotLabel}
+              </span>
+            </button>
           );
         })}
 
-        {hiddenBubbles.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowAddMenu(v => !v); }}
-              className="w-7 h-7 rounded-full flex items-center justify-center bg-white/20 active:scale-90 transition-transform"
-              style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-            >
-              <Plus className="w-3.5 h-3.5 text-white/70" strokeWidth={2} />
-            </button>
-
-            {showAddMenu && (
-              <div
-                className="absolute right-full top-1/2 -translate-y-1/2 mr-2 z-50 flex items-center gap-1.5 backdrop-blur-xl bg-white/20 rounded-full px-2.5 py-1.5"
-                style={{ border: '0.5px solid rgba(255,255,255,0.3)' }}
-                onClick={e => e.stopPropagation()}
-              >
-                {hiddenBubbles.map(b => (
-                  <button
-                    key={b.slotKey}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExcludedSlots(prev => { const next = new Set(prev); next.delete(b.slotKey); return next; });
-                      if (hiddenBubbles.length === 1) setShowAddMenu(false);
-                    }}
-                    className="text-[9px] tracking-wide uppercase text-white/80 font-medium px-2 py-1 rounded-full bg-white/10 active:scale-95 transition-transform whitespace-nowrap"
-                  >
-                    {t(`surface.${b.slotKey}`) || b.slotLabel}
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* "+" tile */}
+        <button
+          onClick={() => { setActiveSlot(null); setShowAddMenu(v => !v); }}
+          className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+        >
+          <div
+            className="w-14 h-16 rounded-xl flex items-center justify-center bg-white/30 backdrop-blur-md"
+            style={{ border: "1.5px dashed rgba(0,0,0,0.2)" }}
+          >
+            <Plus className="w-5 h-5 text-foreground/40" strokeWidth={1.5} />
           </div>
-        )}
+          <span className="w-14 text-center text-[8px] font-medium tracking-[0.15em] uppercase text-foreground/60 select-none truncate">
+            &nbsp;
+          </span>
+        </button>
       </div>
     </div>
   );
