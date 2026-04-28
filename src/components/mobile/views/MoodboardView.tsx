@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search } from "lucide-react";
+import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search, Settings } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -32,6 +32,7 @@ const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
   floor: "floor",
   mainFronts: "bottomCabinets",
   additionalFronts: "topCabinets",
+  tertiaryFronts: "tallCabinets",
   worktops: "worktops",
   accents: "accents",
   mainTiles: "tiles",
@@ -52,6 +53,7 @@ const PALETTE_KEY_TO_SLOT: Record<string, SlotKey> = {
   floor: "floor",
   bottomCabinets: "mainFronts",
   topCabinets: "additionalFronts",
+  tallCabinets: "tertiaryFronts",
   worktops: "worktops",
   accents: "accents",
   tiles: "mainTiles",
@@ -71,10 +73,12 @@ interface Piece {
   borderRadius?: string;
 }
 
-// Layering order (back → front): floor → additionalTiles → mainTiles → additionalFronts → mainFronts → worktops → accents
+// Layering order (back → front): floor → additionalTiles → mainTiles → tertiaryFronts → additionalFronts → mainFronts → worktops → accents
 const PIECES: Piece[] = [
   { slot: "floor",            top: "13%", left: "10%", width: "84%", height: "66%",
     rotate: "0deg", zIndex: 1, shadow: "0 1px 2px rgba(0,0,0,0.06)" },
+  { slot: "tertiaryFronts",       top: "35%", left: "23%", width: "52%", height: "47%",
+    rotate: "0deg", zIndex: 2, shadow: "0 3px 10px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06)" },
   { slot: "mainFronts",       top: "30%", left: "56%", width: "42%", height: "41%",
     rotate: "0deg", zIndex: 4, shadow: "0 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.06)" },
   { slot: "additionalFronts", top: "53%", left: "15%", width: "38%", height: "32%",
@@ -102,10 +106,14 @@ const ANNOTATION_DEFS: AnnotationDef[] = [
 
 const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
 
+// Optional slots — hidden by default, toggled via the config sheet
+const OPTIONAL_SLOTS: SlotKey[] = ["tertiaryFronts"];
+
 const SLOT_PLACEHOLDER: Partial<Record<SlotKey, string>> = {
   floor:            "/placeholders/floor.webp",
   mainFronts:       "/placeholders/mainFronts.webp",
   additionalFronts: "/placeholders/additionalFronts.webp",
+  tertiaryFronts:       "/placeholders/tertiaryFronts.webp",
   worktops:         "/placeholders/worktops.webp",
   accents:          "/placeholders/accents.webp",
 };
@@ -115,6 +123,7 @@ const MOODBOARD_PK_TO_SLOT: Record<string, SlotKey> = {
   floor: "floor",
   bottomCabinets: "mainFronts",
   topCabinets: "additionalFronts",
+  tallCabinets: "tertiaryFronts",
   worktops: "worktops",
   accents: "accents",
 };
@@ -148,6 +157,54 @@ function InfoRow({ icon, title, desc }: { icon: ReactNode; title: string; desc: 
         <p className="text-[12px] font-medium text-black/70">{title}</p>
         <p className="text-[11px] text-black/45 mt-0.5">{desc}</p>
       </div>
+    </div>
+  );
+}
+
+// ─── Surface config list ──────────────────────────────────────────────────
+function SurfaceConfigList({
+  optionalSlots, enabledOptionalSlots, setEnabledOptionalSlots, handleSlotClear, t, language,
+}: {
+  optionalSlots: SlotKey[];
+  enabledOptionalSlots: Set<SlotKey>;
+  setEnabledOptionalSlots: React.Dispatch<React.SetStateAction<Set<SlotKey>>>;
+  handleSlotClear: (slot: SlotKey) => void;
+  t: (key: string) => string;
+  language: string;
+}) {
+  return (
+    <div className="flex flex-col divide-y" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
+      {optionalSlots.map(slotKey => {
+        const enabled = enabledOptionalSlots.has(slotKey);
+        const label = t(`surface.${slotKey}`) || slotKey;
+        return (
+          <div key={slotKey} className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-[13px] text-black/70">{label}</p>
+              <p className="text-[11px] text-black/35 mt-0.5">
+                {language === "lt" ? "Papildomas paviršius" : "Optional surface"}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (enabled) {
+                  setEnabledOptionalSlots(prev => { const s = new Set(prev); s.delete(slotKey); return s; });
+                  handleSlotClear(slotKey);
+                } else {
+                  setEnabledOptionalSlots(prev => new Set([...prev, slotKey]));
+                }
+              }}
+              className="w-10 h-6 rounded-full flex items-center px-0.5 transition-colors"
+              style={{ backgroundColor: enabled ? "#647d75" : "rgba(0,0,0,0.12)" }}
+            >
+              <div
+                className="w-5 h-5 rounded-full bg-white shadow-sm transition-transform"
+                style={{ transform: enabled ? "translateX(16px)" : "translateX(0)" }}
+              />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -198,6 +255,8 @@ export default function MoodboardView() {
 
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
+  const [showConfigSheet, setShowConfigSheet] = useState(false);
+  const [enabledOptionalSlots, setEnabledOptionalSlots] = useState<Set<SlotKey>>(new Set());
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -217,7 +276,7 @@ export default function MoodboardView() {
     if (isSharedSession && sharedMoodboardSlots) {
       return {
         floor: null, mainFronts: null, worktops: null,
-        additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null,
+        additionalFronts: null, tertiaryFronts: null, accents: null, mainTiles: null, additionalTiles: null,
         ...sharedMoodboardSlots,
       } as SlotSelections;
     }
@@ -254,7 +313,7 @@ export default function MoodboardView() {
     // Fallback: derive from current DesignContext state
     const initial: SlotSelections = {
       floor: null, mainFronts: null, worktops: null,
-      additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null,
+      additionalFronts: null, tertiaryFronts: null, accents: null, mainTiles: null, additionalTiles: null,
     };
     for (const [paletteKey, matId] of Object.entries(materialOverrides)) {
       const slotKey = PALETTE_KEY_TO_SLOT[paletteKey];
@@ -422,7 +481,7 @@ export default function MoodboardView() {
 
   const handleClearSlots = useCallback(() => {
     trackEvent(AnalyticsEvents.MOODBOARD_SLOTS_RESET, {});
-    setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, accents: null, mainTiles: null, additionalTiles: null });
+    setSlotSelections({ floor: null, mainFronts: null, worktops: null, additionalFronts: null, tertiaryFronts: null, accents: null, mainTiles: null, additionalTiles: null });
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       Object.values(SLOT_TO_PALETTE_KEY).forEach((k) => { if (k) delete next[k]; });
@@ -476,6 +535,15 @@ export default function MoodboardView() {
             >
               <Info className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
             </button>
+            {/* Configure surfaces button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowConfigSheet(true); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+              style={{ backgroundColor: enabledOptionalSlots.size > 0 ? "rgba(100,125,117,0.15)" : "rgba(255,255,255,0.72)", border: enabledOptionalSlots.size > 0 ? "0.5px solid rgba(100,125,117,0.4)" : "0.5px solid rgba(0,0,0,0.08)" }}
+              aria-label="Configure surfaces"
+            >
+              <Settings className="w-3.5 h-3.5" style={{ color: enabledOptionalSlots.size > 0 ? "#647d75" : "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+            </button>
             {/* Visualize button */}
             <button
               onClick={(e) => {
@@ -524,6 +592,7 @@ export default function MoodboardView() {
             {/* Material cut-sample pieces */}
             {PIECES.map((piece, i) => {
               if (piece.slot === "accents" && !mainSlotsFilled) return null;
+              if (OPTIONAL_SLOTS.includes(piece.slot) && !enabledOptionalSlots.has(piece.slot)) return null;
               const archetypeId = slotSelections[piece.slot];
               const pk = SLOT_TO_PALETTE_KEY[piece.slot];
               const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
@@ -806,6 +875,45 @@ export default function MoodboardView() {
         onShare={shareSession}
       />
 
+
+      {/* Surfaces config sheet */}
+      {isMobile ? (
+        <Sheet open={showConfigSheet} onOpenChange={setShowConfigSheet}>
+          <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 pt-5">
+            <SheetHeader className="mb-4">
+              <SheetTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {language === "lt" ? "Paviršiai" : "Surfaces"}
+              </SheetTitle>
+            </SheetHeader>
+            <SurfaceConfigList
+              optionalSlots={OPTIONAL_SLOTS}
+              enabledOptionalSlots={enabledOptionalSlots}
+              setEnabledOptionalSlots={setEnabledOptionalSlots}
+              handleSlotClear={handleSlotClear}
+              t={t}
+              language={language}
+            />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={showConfigSheet} onOpenChange={setShowConfigSheet}>
+          <DialogContent className="max-w-sm rounded-2xl px-6 pb-7 pt-5">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {language === "lt" ? "Paviršiai" : "Surfaces"}
+              </DialogTitle>
+            </DialogHeader>
+            <SurfaceConfigList
+              optionalSlots={OPTIONAL_SLOTS}
+              enabledOptionalSlots={enabledOptionalSlots}
+              setEnabledOptionalSlots={setEnabledOptionalSlots}
+              handleSlotClear={handleSlotClear}
+              t={t}
+              language={language}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Inspiration upload dialog */}
       <InspirationUploadDialog

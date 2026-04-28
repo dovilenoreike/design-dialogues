@@ -34,13 +34,14 @@ function getWarmthGroup(warmth: number | null | undefined): WarmthGroup {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "accents" | "mainTiles" | "additionalTiles";
+export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "tertiaryFronts" | "accents" | "mainTiles" | "additionalTiles";
 export type SlotSelections = Record<SlotKey, string | null>;
 
 export const SLOT_KEY_TO_ROLE: Record<SlotKey, MaterialRole> = {
   floor: "floor",
   mainFronts: "front",
   additionalFronts: "front",
+  tertiaryFronts: "front",
   worktops: "worktop",
   accents: "accent",
   mainTiles: "tile",
