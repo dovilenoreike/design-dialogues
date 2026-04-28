@@ -31,7 +31,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
 
-export type BottomTab = "moodboard" | "design" | "specs" | "budget" | "plan";
+export type BottomTab = "design" | "specs" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
 export type Tier = "Budget" | "Standard" | "Premium";
 
@@ -171,7 +171,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const { materialOverrides, setMaterialOverrides, excludedSlots, setExcludedSlots } = useMaterialOverrides();
 
   // Navigation state
-  const [activeTab, setActiveTabState] = useState<BottomTab>("moodboard");
+  const [activeTab, setActiveTabState] = useState<BottomTab>("design");
   const [activeMode, setActiveMode] = useState<ControlMode>("rooms");
   const [selectedTier, setSelectedTierState] = useState<Tier>("Standard");
 

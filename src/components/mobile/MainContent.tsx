@@ -3,15 +3,11 @@ import DesignView from "./views/DesignView";
 import SpecsView from "./views/SpecsView";
 import BudgetView from "./views/BudgetView";
 import PlanView from "./views/PlanView";
-import MoodboardView from "./views/MoodboardView";
-
 export default function MainContent() {
   const { activeTab } = useDesign();
 
   const content = (() => {
     switch (activeTab) {
-      case "moodboard":
-        return <MoodboardView />;
       case "design":
         return <DesignView />;
       case "specs":
@@ -21,7 +17,7 @@ export default function MainContent() {
       case "plan":
         return <PlanView />;
       default:
-        return <MoodboardView />;
+        return <DesignView />;
     }
   })();
 

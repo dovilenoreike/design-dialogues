@@ -17,7 +17,6 @@ import { getArchetypeById } from "@/data/archetypes";
 import { type MaterialBubble } from "@/lib/collection-utils";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
-import CollectionPresetCarousel from "./CollectionPresetCarousel";
 
 // Fronts first, then floor, then worktops — matches the swatch rail mockup order.
 const BUBBLE_RAIL_SLOT_ORDER = [
@@ -47,16 +46,20 @@ function buildBubblesFromOverrides(
 
 interface StageProps {
   onOpenSelector?: (mode: ControlMode) => void;
+  onSwatchTap?: (paletteKey: string) => void;
+  onGoToMaterials?: () => void;
+  presetImageUrl?: string | null;
+  collectionSlots?: Set<string>;
+  onAddSlot?: (slotKey: string) => void;
 }
 
-export default function Stage({ onOpenSelector }: StageProps = {}) {
+export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, presetImageUrl, collectionSlots, onAddSlot }: StageProps = {}) {
   const { t } = useLanguage();
   const {
     design,
     generation,
     canGenerate,
     moodboardFilled,
-    setActiveTab,
     handleImageUpload,
     clearUploadedImage,
     handleGenerate,
@@ -91,7 +94,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
     if (!moodboardFilled && !design.freestyleDescription.trim()) {
-      setActiveTab("moodboard");
+      onGoToMaterials?.();
       toast(t("mobile.stage.selectMaterialsFirst"));
       return;
     }
@@ -114,7 +117,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
     } catch (err) {
       console.error("Generation failed:", err);
     }
-  }, [credits, handleGenerate, useCredit, refetchCredits, moodboardFilled, design.freestyleDescription, setActiveTab, t]);
+  }, [credits, handleGenerate, useCredit, refetchCredits, moodboardFilled, design.freestyleDescription, onGoToMaterials, t]);
 
   // Current room's images
   const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
@@ -145,26 +148,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   // Material swap rail — which slot's rail is open
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
 
-  // Slots provided by the active collection preset — swatch rail shows only these
-  const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
-
-  // Pregenerated image from the active collection preset
-  const [presetImageUrl, setPresetImageUrl] = useState<string | null>(null);
-  // Snapshot of preset materials — used to detect when user has changed something
-  const presetMaterialsRef = useRef<Record<string, string> | null>(null);
-
-  // If materialOverrides have drifted from the preset, clear the preset image
-  useEffect(() => {
-    if (!presetMaterialsRef.current || !presetImageUrl) return;
-    const preset = presetMaterialsRef.current;
-    const modified = Object.keys(preset).some(k => materialOverrides[k] !== preset[k]);
-    if (modified) {
-      setPresetImageUrl(null);
-      presetMaterialsRef.current = null;
-    }
-  }, [materialOverrides, presetImageUrl]);
-
-  // presetImageUrl being non-null means user is viewing an unmodified collection preset
+  // presetImageUrl prop being non-null means user is viewing an unmodified collection preset
   const presetIsActive = !!presetImageUrl;
 
   const displayImage = generatedImage || uploadedImage || presetImageUrl || "/placeholders/clay-render.webp";
@@ -172,10 +156,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
   const roomName = t(ROOM_DISPLAY_TO_TRANSLATION_KEY[roomNameRaw] || roomNameRaw);
   const hasUserImage = !!uploadedImage || !!generatedImage;
 
-  // Close rail when palette or room changes; clear preset image on room change
+  // Close rail when room changes
   useEffect(() => {
     setActiveSlot(null);
-    setPresetImageUrl(null);
   }, [selectedCategory]);
 
   // Calculate image URL for any room/style/palette combo
@@ -243,21 +226,6 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
       {/* Inner clip layer — keeps image + overlays within the rounded frame.
           StageBubbleRail lives outside this so it can peek below the image edge. */}
       <div className="absolute inset-0 overflow-hidden rounded-2xl">
-
-      {/* Collection preset carousel — shown when no user image is uploaded */}
-      {!hasUserImage && (
-        <CollectionPresetCarousel
-          roomCategory={selectedCategory}
-          onApplyPreset={(materials, imageUrl) => {
-            setMaterialOverrides(materials);
-            setCollectionSlots(new Set(Object.keys(materials)));
-            setPresetImageUrl(imageUrl);
-            presetMaterialsRef.current = materials;
-          }}
-          hasExistingMaterials={Object.keys(materialOverrides).length > 0}
-          isModified={!presetIsActive && Object.keys(materialOverrides).length > 0}
-        />
-      )}
 
       {/* Carousel */}
       <StageCarousel
@@ -340,7 +308,7 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
         <div className="absolute bottom-16 right-4">
           {!moodboardFilled ? (
             <button
-              onClick={() => setActiveTab("moodboard")}
+              onClick={() => onGoToMaterials?.()}
               className="flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] bg-foreground text-background active:scale-[0.98] transition-all"
             >
               <Sparkles className="w-4 h-4" strokeWidth={1.5} />
@@ -401,12 +369,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
-          collectionSlots={collectionSlots.size > 0 ? collectionSlots : undefined}
-          onAddSlot={(slotKey) => setCollectionSlots(prev => {
-            // If no preset was active, seed collectionSlots from all currently visible bubbles
-            const base = prev.size > 0 ? prev : new Set(bubbles.map(b => b.slotKey));
-            return new Set([...base, slotKey]);
-          })}
+          collectionSlots={collectionSlots && collectionSlots.size > 0 ? collectionSlots : undefined}
+          onAddSlot={onAddSlot}
+          onSwatchTap={onSwatchTap}
           t={t}
           variant="browsing"
         />
@@ -426,12 +391,9 @@ export default function Stage({ onOpenSelector }: StageProps = {}) {
           activeMode={activeMode}
           onOpenSelector={onOpenSelector}
           setActiveMode={setActiveMode}
-          collectionSlots={collectionSlots.size > 0 ? collectionSlots : undefined}
-          onAddSlot={(slotKey) => setCollectionSlots(prev => {
-            // If no preset was active, seed collectionSlots from all currently visible bubbles
-            const base = prev.size > 0 ? prev : new Set(bubbles.map(b => b.slotKey));
-            return new Set([...base, slotKey]);
-          })}
+          collectionSlots={collectionSlots && collectionSlots.size > 0 ? collectionSlots : undefined}
+          onAddSlot={onAddSlot}
+          onSwatchTap={onSwatchTap}
           t={t}
           variant="uploaded"
         />

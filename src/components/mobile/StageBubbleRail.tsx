@@ -24,6 +24,8 @@ interface StageBubbleRailProps {
   collectionSlots?: Set<string>;
   /** Called when user adds a new slot via "+", so the parent can expand collectionSlots */
   onAddSlot?: (slotKey: string) => void;
+  /** When provided, swatch tap opens the full picker instead of the alternatives panel */
+  onSwatchTap?: (paletteKey: string) => void;
 }
 
 export default function StageBubbleRail({
@@ -41,6 +43,7 @@ export default function StageBubbleRail({
   variant,
   collectionSlots,
   onAddSlot,
+  onSwatchTap,
 }: StageBubbleRailProps) {
   // Subscribe to graph load — ensures addableSlots and handleAddSlot re-run once data is ready
   useGraphMaterials();
@@ -156,8 +159,8 @@ export default function StageBubbleRail({
       className={`absolute inset-x-0 ${bottomClass} flex flex-col items-center gap-2`}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Alternatives panel — shown above the rail when a swatch is active */}
-      {activeSlot && slotAlternatives.length > 0 && (() => {
+      {/* Alternatives panel — shown above the rail when a swatch is active (not when onSwatchTap is provided) */}
+      {!onSwatchTap && activeSlot && slotAlternatives.length > 0 && (() => {
         const currentCode = materialOverrides[activeSlot] || bubbles.find(b => b.slotKey === activeSlot)?.materialId;
         return (
           <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-2xl bg-black/50 backdrop-blur-xl"
@@ -230,6 +233,10 @@ export default function StageBubbleRail({
             <button
               key={representativeSlot}
               onClick={() => {
+                if (onSwatchTap) {
+                  onSwatchTap(representativeSlot);
+                  return;
+                }
                 if (activeMode !== "palettes") {
                   onOpenSelector ? onOpenSelector("palettes") : setActiveMode("palettes");
                 }

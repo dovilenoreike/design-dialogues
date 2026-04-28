@@ -28,7 +28,7 @@ export function useCollectionPresets(roomCategory?: string | null) {
         .order("id");
 
       if (roomCategory) {
-        query = query.eq("room_category", roomCategory);
+        query = query.ilike("room_category", roomCategory);
       }
 
       const { data, error } = await query;

@@ -12,6 +12,11 @@ interface CollectionPresetCarouselProps {
   hasExistingMaterials: boolean;
   /** When true the user has changed materials — show "Your collection" instead of preset name */
   isModified?: boolean;
+  /**
+   * "overlay" (default) — absolute-positioned, floats over the Stage image with white text.
+   * "header" — normal block element with dark text, sits in document flow above sub-tabs.
+   */
+  variant?: "overlay" | "header";
 }
 
 export default function CollectionPresetCarousel({
@@ -19,6 +24,7 @@ export default function CollectionPresetCarousel({
   onApplyPreset,
   hasExistingMaterials,
   isModified = false,
+  variant = "overlay",
 }: CollectionPresetCarouselProps) {
   const { language } = useLanguage();
 
@@ -61,6 +67,32 @@ export default function CollectionPresetCarousel({
     setIndex(next);
     onApplyPreset(presets[next].materials, presets[next].image_url ?? null);
   };
+
+  if (variant === "header") {
+    return (
+      <div className="flex items-center justify-center gap-3 py-1">
+        <button
+          onClick={goPrev}
+          className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+          style={{ backgroundColor: "rgba(0,0,0,0.07)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+          aria-label="Previous collection"
+        >
+          <ChevronLeft className="w-4 h-4 text-foreground/60" strokeWidth={1.5} />
+        </button>
+        <span className="w-40 text-center text-[12px] font-medium tracking-[0.04em] text-foreground/70 select-none uppercase truncate">
+          {name}
+        </span>
+        <button
+          onClick={goNext}
+          className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full active:scale-90 transition-transform"
+          style={{ backgroundColor: "rgba(0,0,0,0.07)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+          aria-label="Next collection"
+        >
+          <ChevronRight className="w-4 h-4 text-foreground/60" strokeWidth={1.5} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute top-0 inset-x-0 z-10 flex items-center justify-center pt-3 pointer-events-none">

@@ -115,7 +115,7 @@ const Header = () => {
     }
   };
 
-  const DESKTOP_TABS: BottomTab[] = ["moodboard", "design", "specs", "budget", "plan"];
+  const DESKTOP_TABS: BottomTab[] = ["design", "specs", "budget", "plan"];
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
@@ -214,7 +214,7 @@ const Header = () => {
             ) : (
               <Link
                 to="/"
-                onClick={() => { setActiveTab?.("moodboard"); }}
+                onClick={() => { setActiveTab?.("design"); }}
                 className="flex-1 text-center text-xl font-serif font-medium tracking-tight text-foreground truncate px-2"
               >
                 Interjero planuotė
@@ -279,7 +279,7 @@ const Header = () => {
               ) : (
                 <Link
                   to="/"
-                  onClick={() => setActiveTab?.("moodboard")}
+                  onClick={() => setActiveTab?.("design")}
                   className="text-2xl font-serif font-medium tracking-tight text-foreground"
                 >
                   Interjero planuotė

@@ -71,7 +71,7 @@ export default function SpecsView() {
               {t("specs.emptyDescription")}
             </p>
             <button
-              onClick={() => setActiveTab("moodboard")}
+              onClick={() => setActiveTab("design")}
               className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
             >
               {t("specs.goToMoodboard")}
@@ -125,7 +125,7 @@ export default function SpecsView() {
                 {t("specs.emptyDescription")}
               </p>
               <button
-                onClick={() => setActiveTab("moodboard")}
+                onClick={() => setActiveTab("design")}
                 className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
               >
                 {t("specs.goToMoodboard")}

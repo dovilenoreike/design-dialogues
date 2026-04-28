@@ -55,6 +55,10 @@
     "budget": "Biudžetas",
     "plan": "Planas"
   },
+  "tab": {
+    "vizualas": "Vizualas",
+    "konceptas": "Konceptas"
+  },
   "home": {
     "materials": "Medžiagos",
     "otherRooms": "Kiti kambariai",

@@ -55,6 +55,10 @@
     "budget": "Budget",
     "plan": "Plan"
   },
+  "tab": {
+    "vizualas": "Visualisation",
+    "konceptas": "Concept"
+  },
   "home": {
     "materials": "Materials",
     "otherRooms": "Other Rooms",
@@ -162,9 +166,10 @@
     "personaliseHint": "Tap to personalise",
     "fronts": "Fronts",
     "floor": "Floor",
-    "mainFronts": "Bottom Cabinets",
+    "mainFronts": "Fronts I",
     "worktops": "Worktops",
-    "additionalFronts": "Top Cabinets",
+    "additionalFronts": "Fronts II",
+    "tertiaryFronts": "Fronts III",
     "accents": "Accessories",
     "tiles": "Tiles",
     "mainTiles": "Main Tiles",
