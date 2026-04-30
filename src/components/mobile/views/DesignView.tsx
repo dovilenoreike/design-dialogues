@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { ArrowLeft, Plus, Sparkles, X as XIcon } from "lucide-react";
+import { ArrowLeft, Camera, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -10,7 +10,11 @@ import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE
 import { UploadDialog } from "../dialogs/UploadDialog";
 import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 import Stage from "../Stage";
-import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS } from "./KonceptasView";
+import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows } from "./KonceptasView";
+import InspirationUploadDialog from "../controls/InspirationUploadDialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
@@ -43,9 +47,12 @@ export default function DesignView() {
   const { activeShowroom } = useShowroom();
   const { loading: graphLoading, graphMaterials, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isMobile = useIsMobile();
 
   const [subTab, setSubTab] = useState<"vizualas" | "konceptas">("konceptas");
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
+  const [showInspirationDialog, setShowInspirationDialog] = useState(false);
+  const [showInfoSheet, setShowInfoSheet] = useState(false);
   const [enabledOptionalSlots, setEnabledOptionalSlots] = useState<Set<SlotKey>>(() => {
     try {
       const saved = localStorage.getItem("enabled-optional-slots");
@@ -550,8 +557,45 @@ export default function DesignView() {
             variant="header"
           />
 
+          {/* Shared topbar */}
+          <div className="flex items-center justify-between pt-3 pb-2">
+            <span
+              className="text-[11px] font-medium tracking-[0.04em] uppercase"
+              style={{ color: "rgba(0,0,0,0.45)" }}
+            >
+              {t("moodboard.room")}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowInspirationDialog(true); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                aria-label={t("inspiration.buttonLabel")}
+              >
+                <Camera className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowInfoSheet(true); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                aria-label={t("moodboard.infoButtonLabel")}
+              >
+                <Info className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+              </button>
+              {activeSlots.some((k) => slotSelections[k]) && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleClearAll(); }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                  style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Sub-tab switcher */}
-          <div className="flex gap-5 pt-3 pb-3">
+          <div className="flex gap-5 pb-3">
             {(["konceptas", "vizualas"] as const).map((tab) => (
               <button
                 key={tab}
@@ -696,34 +740,6 @@ export default function DesignView() {
               filterEmptyArchetypes={!graphLoading}
             />
           </>
-        ) : allSlotsFilled ? (
-          <div className="flex lg:h-full items-center justify-center flex-col gap-3 select-none py-5 lg:py-0 px-6">
-            {hasIncompatibleSlots && (
-              <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-center"
-                 style={{ color: 'rgba(0,0,0,0.45)' }}>
-                {t("moodboard.someNotPairing")}
-              </p>
-            )}
-            <div className="flex items-center gap-2">
-              {hasIncompatibleSlots && (
-                <button
-                  onClick={() => setShowReviewSheet(true)}
-                  className="h-8 px-3 rounded-full text-[11px] font-medium tracking-[0.03em] active:scale-95 transition-transform"
-                  style={{ backgroundColor: "rgba(0,0,0,0.07)", color: "rgba(0,0,0,0.65)" }}
-                >
-                  {t("moodboard.requestReview")}
-                </button>
-              )}
-              <button
-                onClick={() => setSubTab("vizualas")}
-                className="h-8 px-3 rounded-full flex items-center gap-1.5 text-[11px] font-medium tracking-[0.03em] text-white active:scale-95 transition-transform"
-                style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
-              >
-                <Sparkles className="w-3 h-3" strokeWidth={1.5} />
-                {t("moodboard.visualize")}
-              </button>
-            </div>
-          </div>
         ) : (
           <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
             <ArrowLeft className="hidden lg:block w-4 h-4" style={{ color: '#647d75', opacity: 0.5 }} strokeWidth={1.5} />
@@ -748,6 +764,37 @@ export default function DesignView() {
         materials={reviewMaterials}
         onShare={shareSession}
       />
+
+      {/* Inspiration upload dialog */}
+      <InspirationUploadDialog
+        isOpen={showInspirationDialog}
+        onClose={() => setShowInspirationDialog(false)}
+      />
+
+      {/* Moodboard info sheet */}
+      {isMobile ? (
+        <Sheet open={showInfoSheet} onOpenChange={setShowInfoSheet}>
+          <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 pt-5">
+            <SheetHeader className="mb-4">
+              <SheetTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {t("moodboard.infoTitle")}
+              </SheetTitle>
+            </SheetHeader>
+            <InfoRows t={t} />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={showInfoSheet} onOpenChange={setShowInfoSheet}>
+          <DialogContent className="max-w-sm rounded-2xl px-6 pb-7 pt-5">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-[13px] font-semibold tracking-[0.02em]">
+                {t("moodboard.infoTitle")}
+              </DialogTitle>
+            </DialogHeader>
+            <InfoRows t={t} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -544,29 +544,6 @@ export default function MoodboardView() {
             >
               <Settings className="w-3.5 h-3.5" style={{ color: enabledOptionalSlots.size > 0 ? "#647d75" : "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
             </button>
-            {/* Visualize button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (allSlotsFilled) {
-                  setActiveTab("design");
-                } else {
-                  const firstEmpty = DISPLAYED_SLOTS.find((k) => !slotSelections[k]) ?? DISPLAYED_SLOTS[0];
-                  setActiveSlot(firstEmpty);
-                  requestAnimationFrame(() => {
-                    pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  });
-                  toast(t("mobile.stage.selectMaterialsFirst"));
-                }
-              }}
-              className="h-8 px-3 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-              style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
-              <span className="text-[11px] font-medium text-white tracking-[0.03em] whitespace-nowrap">
-                {t("moodboard.visualize")}
-              </span>
-            </button>
             {/* Clear — only when slots are filled */}
             {filledCount > 0 && (
               <button
@@ -800,6 +777,32 @@ export default function MoodboardView() {
                 );
               })}
             </svg>
+        </div>
+
+        {/* Visualize button — below flatlay */}
+        <div className="flex items-center justify-center pt-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (allSlotsFilled) {
+                setActiveTab("design");
+              } else {
+                const firstEmpty = DISPLAYED_SLOTS.find((k) => !slotSelections[k]) ?? DISPLAYED_SLOTS[0];
+                setActiveSlot(firstEmpty);
+                requestAnimationFrame(() => {
+                  pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+                toast(t("mobile.stage.selectMaterialsFirst"));
+              }
+            }}
+            className="h-8 px-3 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform"
+            style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+          >
+            <Sparkles className="w-3 h-3 text-white" strokeWidth={1.5} />
+            <span className="text-[11px] font-medium text-white tracking-[0.03em] whitespace-nowrap">
+              {t("moodboard.visualize")}
+            </span>
+          </button>
         </div>
 
       </div>
