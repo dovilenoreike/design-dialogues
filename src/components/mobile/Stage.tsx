@@ -15,45 +15,56 @@ import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { type MaterialBubble } from "@/lib/collection-utils";
+import { DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS } from "./views/KonceptasView";
+import { type SlotKey } from "./controls/MaterialSlotPicker";
 import StageCarousel from "./StageCarousel";
 import StageBubbleRail from "./StageBubbleRail";
 
-// Fronts first, then floor, then worktops — matches the swatch rail mockup order.
-const BUBBLE_RAIL_SLOT_ORDER = [
-  "bottomCabinets", "topCabinets", "tallCabinets", "shelves", "floor", "worktops", "accents", "tiles", "additionalTiles",
+// Slot order for the swatch rail — 1 bubble per active slot
+const BUBBLE_SLOT_ORDER: SlotKey[] = [
+  "mainFronts", "additionalFronts", "tertiaryFronts", "floor", "worktops", "accents", "mainTiles", "additionalTiles",
 ];
 
-function buildBubblesFromOverrides(
+function buildBubblesFromSlots(
   overrides: Record<string, string>,
+  slotSurfaces: Record<string, string[]>,
   t: (key: string) => string,
+  enabledSlots?: Set<SlotKey>,
 ): MaterialBubble[] {
-  // shelves and tallCabinets inherit the cabinet material until the user explicitly overrides them
-  let effective = overrides;
-  if (overrides.bottomCabinets) {
-    if (!overrides.shelves)      effective = { ...effective, shelves:      overrides.bottomCabinets };
-    if (!overrides.tallCabinets) effective = { ...effective, tallCabinets: overrides.bottomCabinets };
-  }
-  return BUBBLE_RAIL_SLOT_ORDER
-    .filter((k) => effective[k])
-    .map((slotKey) => {
-      const matId = effective[slotKey];
+  return BUBBLE_SLOT_ORDER
+    .map((slotKey): MaterialBubble | null => {
+      // Skip optional slots not currently enabled on the flatlay
+      if (OPTIONAL_SLOTS.includes(slotKey) && enabledSlots && !enabledSlots.has(slotKey)) return null;
+      const pk = (slotSurfaces[slotKey] ?? [])[0];
+      if (!pk) return null;
+      const matId = overrides[pk];
+      if (!matId) return null;
       const image = getMaterialByCode(matId)?.imageUrl ?? getArchetypeById(matId)?.image;
       if (!image) return null;
-      return { slotKey, materialId: matId, image, slotLabel: t(`surface.${slotKey}`) || slotKey };
+      // Use the primary palette key's translation (matches photo screen swatch labels)
+      return { slotKey, materialId: matId, image, slotLabel: t(`surface.${pk}`) || t(`surface.${slotKey}`) || slotKey };
     })
     .filter((b): b is MaterialBubble => b !== null);
 }
 
 interface StageProps {
   onOpenSelector?: (mode: ControlMode) => void;
-  onSwatchTap?: (paletteKey: string) => void;
+  onSwatchTap?: (slotKey: string) => void;
   onGoToMaterials?: () => void;
   presetImageUrl?: string | null;
   collectionSlots?: Set<string>;
   onAddSlot?: (slotKey: string) => void;
+  /** User-configurable slot→palette-key mapping. Falls back to defaults when not provided. */
+  slotSurfaces?: Record<string, string[]>;
+  /** Which optional slots are currently enabled (flatlay squares visible). */
+  enabledOptionalSlots?: Set<SlotKey>;
+  /** Categories available to add (same list as flatlay "+") — e.g. "front", "worktop", "accent" */
+  addableCategories?: string[];
+  /** Called when user picks a category to add — same callback as flatlay "+" */
+  onAddCategory?: (category: string) => void;
 }
 
-export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, presetImageUrl, collectionSlots, onAddSlot }: StageProps = {}) {
+export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, presetImageUrl, collectionSlots, onAddSlot, slotSurfaces, enabledOptionalSlots, addableCategories, onAddCategory }: StageProps = {}) {
   const { t } = useLanguage();
   const {
     design,
@@ -208,8 +219,9 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
     });
   }, [prevImage, nextImage]);
 
-  // Bubble data for the rail — built directly from materialOverrides
-  const bubbles = buildBubblesFromOverrides(materialOverrides, t);
+  // Bubble data for the rail — only enabled slots are shown (mirrors flatlay squares)
+  const effectiveSlotSurfaces = slotSurfaces ?? DEFAULT_SLOT_SURFACES;
+  const bubbles = buildBubblesFromSlots(materialOverrides, effectiveSlotSurfaces, t, enabledOptionalSlots);
 
 
   return (
@@ -357,7 +369,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
       </div>{/* end inner clip layer */}
 
       {/* Bubble rail - browsing mode */}
-      {!hasUserImage && bubbles.length > 0 && (
+      {!hasUserImage && (
         <StageBubbleRail
           bubbles={bubbles}
           materialOverrides={materialOverrides}
@@ -371,6 +383,9 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
           setActiveMode={setActiveMode}
           collectionSlots={collectionSlots && collectionSlots.size > 0 ? collectionSlots : undefined}
           onAddSlot={onAddSlot}
+          enabledOptionalSlots={enabledOptionalSlots}
+          addableCategories={addableCategories}
+          onAddCategory={onAddCategory}
           onSwatchTap={onSwatchTap}
           t={t}
           variant="browsing"
@@ -379,7 +394,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
 
 
       {/* Bubble rail - uploaded mode */}
-      {hasUserImage && bubbles.length > 0 && (
+      {hasUserImage && (
         <StageBubbleRail
           bubbles={bubbles}
           materialOverrides={materialOverrides}
@@ -393,6 +408,9 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
           setActiveMode={setActiveMode}
           collectionSlots={collectionSlots && collectionSlots.size > 0 ? collectionSlots : undefined}
           onAddSlot={onAddSlot}
+          enabledOptionalSlots={enabledOptionalSlots}
+          addableCategories={addableCategories}
+          onAddCategory={onAddCategory}
           onSwatchTap={onSwatchTap}
           t={t}
           variant="uploaded"

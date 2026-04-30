@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, X, Sparkles, Camera, Info, Layers, Search, Settings } from "lucide-react";
+import { RotateCcw, Plus, Check, X, Sparkles, Camera, Info, Layers, Search } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
@@ -33,6 +33,18 @@ export const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
   additionalTiles: "additionalTiles",
 };
 
+// Default surface assignment — strictly 1:1. User can add secondary keys via the picker pills.
+export const DEFAULT_SLOT_SURFACES: Record<SlotKey, string[]> = {
+  floor:            ["floor"],
+  mainFronts:       ["bottomCabinets"],
+  additionalFronts: ["topCabinets"],
+  tertiaryFronts:   ["tallCabinets"],
+  worktops:         ["worktops"],
+  accents:          ["accents"],
+  mainTiles:        ["tiles"],
+  additionalTiles:  ["additionalTiles"],
+};
+
 // ─── Piece geometry ────────────────────────────────────────────────────────
 interface Piece {
   slot: SlotKey;
@@ -62,25 +74,9 @@ const PIECES: Piece[] = [
     rotate: "0deg", zIndex: 7, shadow: "0 10px 28px rgba(0,0,0,0.28), 0 3px 8px rgba(0,0,0,0.12)", borderRadius: "50%" },
 ];
 
-// ─── SVG annotation definitions ───────────────────────────────────────────
-interface AnnotationDef {
-  surfaceKey: SlotKey;
-  labelKey?: string;
-  tx: string; ty: string;
-  x1: string; y1: string;
-  px: string; py: string;
-}
 
-const ANNOTATION_DEFS: AnnotationDef[] = [
-  { surfaceKey: "floor",            tx: "56%", ty: "7%",  x1: "62%", y1: "8.5%",  px: "68%", py: "14%" },
-  { surfaceKey: "additionalFronts", labelKey: "fronts", tx: "10%", ty: "93%", x1: "18%", y1: "90.5%", px: "28%", py: "81%" },
-  { surfaceKey: "accents",          tx: "58%", ty: "93%", x1: "64%", y1: "90.5%", px: "70%", py: "78%" },
-];
-
-const DISPLAYED_SLOTS: SlotKey[] = ["floor", "mainFronts", "additionalFronts", "worktops", "accents"];
-
-// Optional slots — hidden by default, toggled via the config sheet
-const OPTIONAL_SLOTS: SlotKey[] = ["tertiaryFronts"];
+// All non-floor slots are optional — enabled by default, but user can remove them
+export const OPTIONAL_SLOTS: SlotKey[] = ["mainFronts", "additionalFronts", "tertiaryFronts", "worktops", "accents"];
 
 const SLOT_PLACEHOLDER: Partial<Record<SlotKey, string>> = {
   floor:            "/placeholders/floor.webp",
@@ -123,61 +119,32 @@ function InfoRow({ icon, title, desc }: { icon: ReactNode; title: string; desc: 
   );
 }
 
-// ─── Surface config list ──────────────────────────────────────────────────
-function SurfaceConfigList({
-  optionalSlots, enabledOptionalSlots, setEnabledOptionalSlots, handleSlotClear, t, language,
-}: {
-  optionalSlots: SlotKey[];
-  enabledOptionalSlots: Set<SlotKey>;
-  setEnabledOptionalSlots: React.Dispatch<React.SetStateAction<Set<SlotKey>>>;
-  handleSlotClear: (slot: SlotKey) => void;
-  t: (key: string) => string;
-  language: string;
-}) {
-  return (
-    <div className="flex flex-col divide-y" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-      {optionalSlots.map(slotKey => {
-        const enabled = enabledOptionalSlots.has(slotKey);
-        const label = t(`surface.${slotKey}`) || slotKey;
-        return (
-          <div key={slotKey} className="flex items-center justify-between py-3">
-            <div>
-              <p className="text-[13px] text-black/70">{label}</p>
-              <p className="text-[11px] text-black/35 mt-0.5">
-                {language === "lt" ? "Papildomas paviršius" : "Optional surface"}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (enabled) {
-                  setEnabledOptionalSlots(prev => { const s = new Set(prev); s.delete(slotKey); return s; });
-                  handleSlotClear(slotKey);
-                } else {
-                  setEnabledOptionalSlots(prev => new Set([...prev, slotKey]));
-                }
-              }}
-              className="w-10 h-6 rounded-full flex items-center px-0.5 transition-colors"
-              style={{ backgroundColor: enabled ? "#647d75" : "rgba(0,0,0,0.12)" }}
-            >
-              <div
-                className="w-5 h-5 rounded-full bg-white shadow-sm transition-transform"
-                style={{ transform: enabled ? "translateX(16px)" : "translateX(0)" }}
-              />
-            </button>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+// ─── Category labels ──────────────────────────────────────────────────────
+const CATEGORY_LABEL: Record<string, string> = {
+  front: "Fronts",
+  worktop: "Worktops",
+  accent: "Accents",
+};
+
+// Maps slot key → addable category (for on-canvas placeholder squares)
+const SLOT_TO_CATEGORY: Partial<Record<SlotKey, string>> = {
+  mainFronts: "front",
+  additionalFronts: "front",
+  tertiaryFronts: "front",
+  worktops: "worktop",
+  accents: "accent",
+};
 
 // ─── Props ─────────────────────────────────────────────────────────────────
 interface KonceptasViewProps {
   slotSelections: SlotSelections;
+  slotSurfaces: Record<SlotKey, string[]>;
   activeSlot: SlotKey | null;
   setActiveSlot: (slot: SlotKey | null) => void;
   enabledOptionalSlots: Set<SlotKey>;
-  setEnabledOptionalSlots: React.Dispatch<React.SetStateAction<Set<SlotKey>>>;
+  pendingOptionalSlot: SlotKey | null;
+  addableCategories: string[];
+  onAddCategory: (category: string) => void;
   handleSlotClear: (slot: SlotKey) => void;
   onVisualize: () => void;
   onClearAll: () => void;
@@ -189,10 +156,13 @@ interface KonceptasViewProps {
 // ─── Component ────────────────────────────────────────────────────────────
 export default function KonceptasView({
   slotSelections,
+  slotSurfaces,
   activeSlot,
   setActiveSlot,
   enabledOptionalSlots,
-  setEnabledOptionalSlots,
+  pendingOptionalSlot,
+  addableCategories,
+  onAddCategory,
   handleSlotClear,
   onVisualize,
   onClearAll,
@@ -214,7 +184,6 @@ export default function KonceptasView({
   });
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
-  const [showConfigSheet, setShowConfigSheet] = useState(false);
 
   const dismissHint = () => {
     if (!showHint) return;
@@ -229,9 +198,12 @@ export default function KonceptasView({
     setLastSwap(null);
   }, [materialOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const allSlotsFilled = DISPLAYED_SLOTS.every((k) => Boolean(slotSelections[k]));
-  const filledCount = DISPLAYED_SLOTS.filter((k) => Boolean(slotSelections[k])).length;
-  const mainSlotsFilled = (["floor", "mainFronts", "additionalFronts", "worktops"] as SlotKey[]).every((k) => Boolean(slotSelections[k]));
+  const activeSlots: SlotKey[] = ["floor", ...OPTIONAL_SLOTS.filter(k => enabledOptionalSlots.has(k))];
+  const allSlotsFilled = activeSlots.every((k) => Boolean(slotSelections[k]));
+  const filledCount = activeSlots.filter((k) => Boolean(slotSelections[k])).length;
+  const mainSlotsFilled = (["floor", "mainFronts", "additionalFronts", "worktops"] as SlotKey[])
+    .filter(k => k === "floor" || enabledOptionalSlots.has(k))
+    .every((k) => Boolean(slotSelections[k]));
 
   return (
     <div onClick={() => setActiveSlot(null)}>
@@ -262,15 +234,6 @@ export default function KonceptasView({
           >
             <Info className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
           </button>
-          {/* Configure surfaces button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowConfigSheet(true); }}
-            className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
-            style={{ backgroundColor: enabledOptionalSlots.size > 0 ? "rgba(100,125,117,0.15)" : "rgba(255,255,255,0.72)", border: enabledOptionalSlots.size > 0 ? "0.5px solid rgba(100,125,117,0.4)" : "0.5px solid rgba(0,0,0,0.08)" }}
-            aria-label="Configure surfaces"
-          >
-            <Settings className="w-3.5 h-3.5" style={{ color: enabledOptionalSlots.size > 0 ? "#647d75" : "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
-          </button>
           {/* Visualize button */}
           <button
             onClick={(e) => {
@@ -278,7 +241,7 @@ export default function KonceptasView({
               if (allSlotsFilled) {
                 onVisualize();
               } else {
-                const firstEmpty = DISPLAYED_SLOTS.find((k) => !slotSelections[k]) ?? DISPLAYED_SLOTS[0];
+                const firstEmpty = activeSlots.find((k) => !slotSelections[k]) ?? activeSlots[0];
                 setActiveSlot(firstEmpty);
                 onScrollToPicker();
                 toast(t("mobile.stage.selectMaterialsFirst"));
@@ -319,7 +282,9 @@ export default function KonceptasView({
           if (piece.slot === "accents" && !mainSlotsFilled) return null;
           if (OPTIONAL_SLOTS.includes(piece.slot) && !enabledOptionalSlots.has(piece.slot)) return null;
           const archetypeId = slotSelections[piece.slot];
-          const pk = SLOT_TO_PALETTE_KEY[piece.slot];
+          // Use the dynamic primary key (set by handleAddSurfaceKey) so the flatlay
+          // always mirrors what was actually written to materialOverrides
+          const pk = slotSurfaces[piece.slot]?.[0] ?? SLOT_TO_PALETTE_KEY[piece.slot];
           const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
           const tileImage = overrideCode
             ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
@@ -327,9 +292,9 @@ export default function KonceptasView({
           const displayImage = tileImage;
           const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
 
-          const otherCodes = Object.entries(SLOT_TO_PALETTE_KEY)
-            .filter(([k]) => k !== piece.slot)
-            .map(([, v]) => v ? materialOverrides[v] : null)
+          const otherCodes = (Object.keys(slotSurfaces) as SlotKey[])
+            .filter(k => k !== piece.slot)
+            .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
             .filter((c): c is string => !!c);
           const slotRole = SLOT_KEY_TO_ROLE[piece.slot];
           const rawBestCode = (!graphLoading && currentMatId && otherCodes.length > 0)
@@ -399,26 +364,32 @@ export default function KonceptasView({
                             className="w-full h-full object-cover"
                             draggable={false}
                           />
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center gap-0.5">
                             <Plus
                               className={`w-4 h-4 text-white/80 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
                               strokeWidth={1.5}
                             />
+                            <span className="text-[7px] font-semibold tracking-[0.14em] uppercase text-white/65 select-none">
+                              {t(`surface.${piece.slot}`) || piece.slot}
+                            </span>
                           </div>
                         </>
                       ) : (
-                        <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                        <div className="w-full h-full bg-neutral-100 flex flex-col items-center justify-center gap-0.5">
                           <Plus
                             className={`w-4 h-4 text-neutral-300 ${filledCount === 0 ? "animate-slot-breathe" : ""}`}
                             strokeWidth={1.5}
                           />
+                          <span className="text-[7px] font-semibold tracking-[0.14em] uppercase text-neutral-300 select-none">
+                            {t(`surface.${piece.slot}`) || piece.slot}
+                          </span>
                         </div>
                       )}
                     </div>
                   )}
                 </button>
               </div>
-              {archetypeId && (
+              {(archetypeId || OPTIONAL_SLOTS.includes(piece.slot)) && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleSlotClear(piece.slot); }}
                   className="absolute top-1 right-1 flex items-center justify-center rounded-full"
@@ -472,6 +443,44 @@ export default function KonceptasView({
           );
         })}
 
+        {/* Addable-category placeholders — dashed squares at natural positions inside the canvas */}
+        {PIECES.map(piece => {
+          if (enabledOptionalSlots.has(piece.slot)) return null;
+          const category = SLOT_TO_CATEGORY[piece.slot];
+          if (!category || !addableCategories.includes(category)) return null;
+          // For fronts only show the next available slot (not all three at once)
+          if (["mainFronts", "additionalFronts", "tertiaryFronts"].includes(piece.slot)) {
+            const nextFront = (["mainFronts", "additionalFronts", "tertiaryFronts"] as SlotKey[])
+              .find(s => !enabledOptionalSlots.has(s));
+            if (piece.slot !== nextFront) return null;
+          }
+          return (
+            <div
+              key={`add-${piece.slot}`}
+              className="absolute"
+              style={{ top: piece.top, left: piece.left, width: piece.width, height: piece.height, zIndex: piece.zIndex }}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); dismissHint(); onAddCategory(category); }}
+                className="w-full h-full flex flex-col items-center justify-center gap-1 active:scale-[0.97] transition-transform"
+                style={{
+                  borderRadius: piece.borderRadius ?? "4px",
+                  border: "1.5px dashed rgba(0,0,0,0.18)",
+                  backgroundColor: "rgba(255,255,255,0.55)",
+                }}
+              >
+                <Plus className="w-4 h-4" style={{ color: "rgba(0,0,0,0.3)" }} strokeWidth={1.5} />
+                <span
+                  className="text-[7px] font-semibold tracking-[0.14em] uppercase select-none"
+                  style={{ color: "rgba(0,0,0,0.35)" }}
+                >
+                  {t(`category.${category}`) || CATEGORY_LABEL[category] || category}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+
         {/* First-time hint overlay */}
         <div
           className={`absolute inset-x-0 bottom-4 flex justify-center pointer-events-none transition-opacity duration-300 ${showHint && filledCount === 0 ? "opacity-100" : "opacity-0"}`}
@@ -487,81 +496,7 @@ export default function KonceptasView({
           </div>
         </div>
 
-        {/* Annotation overlay (SVG) */}
-        <svg
-          width="100%"
-          height="100%"
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-          aria-hidden="true"
-        >
-          {ANNOTATION_DEFS.map(({ surfaceKey, labelKey, tx, ty, x1, y1, px, py }, i) => {
-            if (surfaceKey === "accents" && !mainSlotsFilled) return null;
-            const label = t(`surface.${labelKey ?? surfaceKey}`).toUpperCase();
-            return (
-              <g key={i}>
-                <line
-                  x1={x1} y1={y1}
-                  x2={px} y2={py}
-                  stroke="#d4d4d4"
-                  strokeWidth="0.5"
-                  strokeLinecap="round"
-                />
-                <circle cx={px} cy={py} r="1.5" fill="#d4d4d4" />
-                <text
-                  x={tx} y={ty}
-                  dy="-2"
-                  fontSize="8"
-                  letterSpacing="2.4"
-                  fill="#737373"
-                  fontFamily="system-ui, -apple-system, sans-serif"
-                  textAnchor="start"
-                >
-                  {label}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
       </div>
-
-      {/* Surfaces config sheet */}
-      {isMobile ? (
-        <Sheet open={showConfigSheet} onOpenChange={setShowConfigSheet}>
-          <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 pt-5">
-            <SheetHeader className="mb-4">
-              <SheetTitle className="text-[13px] font-semibold tracking-[0.02em]">
-                {language === "lt" ? "Paviršiai" : "Surfaces"}
-              </SheetTitle>
-            </SheetHeader>
-            <SurfaceConfigList
-              optionalSlots={OPTIONAL_SLOTS}
-              enabledOptionalSlots={enabledOptionalSlots}
-              setEnabledOptionalSlots={setEnabledOptionalSlots}
-              handleSlotClear={handleSlotClear}
-              t={t}
-              language={language}
-            />
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Dialog open={showConfigSheet} onOpenChange={setShowConfigSheet}>
-          <DialogContent className="max-w-sm rounded-2xl px-6 pb-7 pt-5">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-[13px] font-semibold tracking-[0.02em]">
-                {language === "lt" ? "Paviršiai" : "Surfaces"}
-              </DialogTitle>
-            </DialogHeader>
-            <SurfaceConfigList
-              optionalSlots={OPTIONAL_SLOTS}
-              enabledOptionalSlots={enabledOptionalSlots}
-              setEnabledOptionalSlots={setEnabledOptionalSlots}
-              handleSlotClear={handleSlotClear}
-              t={t}
-              language={language}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Inspiration upload dialog */}
       <InspirationUploadDialog

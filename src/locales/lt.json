@@ -147,7 +147,13 @@
     "bauhaus": "Bauhaus",
     "bauhaus.desc": "Ryški geometrija ir pirminės spalvos"
   },
+  "category": {
+    "front": "Fasadai",
+    "worktop": "Stalviršiai",
+    "accent": "Aksesuarai"
+  },
   "surface": {
+    "add": "Pridėti paviršių",
     "clearAll": "Išvalyti",
     "remove": "Pašalinti medžiagą",
     "otherStyles": "Kitos idėjos",

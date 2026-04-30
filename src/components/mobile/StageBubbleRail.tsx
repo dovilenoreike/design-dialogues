@@ -3,7 +3,9 @@ import { X, Plus } from "lucide-react";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
+import { SLOT_KEY_TO_ROLE, type SlotKey } from "./controls/MaterialSlotPicker";
 import { surfaces } from "@/data/rooms/surfaces";
+import { OPTIONAL_SLOTS } from "./views/KonceptasView";
 import type { ControlMode } from "@/contexts/DesignContext";
 
 interface StageBubbleRailProps {
@@ -26,7 +28,19 @@ interface StageBubbleRailProps {
   onAddSlot?: (slotKey: string) => void;
   /** When provided, swatch tap opens the full picker instead of the alternatives panel */
   onSwatchTap?: (paletteKey: string) => void;
+  /** Which optional slots are currently enabled — used to filter the swatch rail */
+  enabledOptionalSlots?: Set<SlotKey>;
+  /** Categories available to add (same list as flatlay "+") — e.g. "front", "worktop", "accent" */
+  addableCategories?: string[];
+  /** Called when user picks a category to add — same callback as flatlay "+" */
+  onAddCategory?: (category: string) => void;
 }
+
+const CATEGORY_LABEL: Record<string, string> = {
+  front: "Fronts",
+  worktop: "Worktops",
+  accent: "Accents",
+};
 
 export default function StageBubbleRail({
   bubbles,
@@ -44,6 +58,9 @@ export default function StageBubbleRail({
   collectionSlots,
   onAddSlot,
   onSwatchTap,
+  enabledOptionalSlots,
+  addableCategories,
+  onAddCategory,
 }: StageBubbleRailProps) {
   // Subscribe to graph load — ensures addableSlots and handleAddSlot re-run once data is ready
   useGraphMaterials();
@@ -71,7 +88,7 @@ export default function StageBubbleRail({
     if (activeSlot) setShowAddMenu(false);
     if (!activeSlot) { setSlotAlternatives([]); return; }
 
-    const role = SLOT_TO_ROLE[activeSlot];
+    const role = SLOT_TO_ROLE[activeSlot] ?? SLOT_KEY_TO_ROLE[activeSlot as SlotKey];
 
     if (role && roleAltsCacheRef.current[role]) {
       setSlotAlternatives(roleAltsCacheRef.current[role]);
@@ -107,8 +124,6 @@ export default function StageBubbleRail({
     setSlotAlternatives(alternatives);
   }, [activeSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (bubbles.length === 0) return null;
-
   const visibleBubbles = bubbles.filter(b => !excludedSlots.has(b.slotKey));
   const swatchBubbles = collectionSlots
     ? visibleBubbles.filter(b => collectionSlots.has(b.slotKey))
@@ -131,26 +146,16 @@ export default function StageBubbleRail({
   // Derive the active group (for alternatives panel — updating all grouped slots together)
   const activeGroup = groupedSwatches.find(g => g.slotKeys.includes(activeSlot ?? ""));
 
-  // Surface slots available to add: not already shown AND have at least one material with an image
-  const shownKeys = new Set(groupedSwatches.flatMap(g => g.slotKeys));
-  const addableSlots = Object.keys(surfaces).filter(k => {
-    if (shownKeys.has(k)) return false;
-    const role = SLOT_TO_ROLE[k];
-    return role ? getMaterialsByRole(role).some(m => !!m.imageUrl) : false;
-  });
+  // Use externally-computed addable categories (same source as flatlay "+")
+  const effectiveAddableCategories = addableCategories ?? [];
+
+  // Nothing to show at all — no swatches and nothing to add
+  if (groupedSwatches.length === 0 && effectiveAddableCategories.length === 0) return null;
 
   const bottomClass = "-bottom-[32px]";
 
-  const handleAddSlot = (slotKey: string) => {
-    const role = SLOT_TO_ROLE[slotKey];
-    const best = role
-      ? getMaterialsByRole(role)
-          .filter(m => !!m.imageUrl)
-          .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))[0]
-      : null;
-    if (!best) return; // no materials for this role — leave menu open, don't add
-    setMaterialOverrides(prev => ({ ...prev, [slotKey]: best.technicalCode }));
-    onAddSlot?.(slotKey);
+  const handleAddSlot = (category: string) => {
+    onAddCategory?.(category);
     setShowAddMenu(false);
   };
 
@@ -196,7 +201,7 @@ export default function StageBubbleRail({
       })()}
 
       {/* Add-surface menu — shown above the rail when "+" is tapped */}
-      {showAddMenu && addableSlots.length > 0 && (
+      {showAddMenu && effectiveAddableCategories.length > 0 && (
         <div
           className="flex items-center gap-1.5 px-2.5 py-2 rounded-2xl bg-black/50 backdrop-blur-xl"
           style={{ border: "0.5px solid rgba(255,255,255,0.25)" }}
@@ -207,13 +212,13 @@ export default function StageBubbleRail({
           >
             <X className="w-3.5 h-3.5 text-white/50" strokeWidth={1.5} />
           </button>
-          {addableSlots.map(slotKey => (
+          {effectiveAddableCategories.map(cat => (
             <button
-              key={slotKey}
-              onClick={() => handleAddSlot(slotKey)}
+              key={cat}
+              onClick={() => handleAddSlot(cat)}
               className="text-[9px] tracking-wide uppercase text-white/80 font-medium px-2.5 py-1.5 rounded-full bg-white/15 active:scale-95 transition-transform whitespace-nowrap"
             >
-              {t(`surface.${slotKey}`) || surfaces[slotKey].label}
+              {t(`category.${cat}`) || CATEGORY_LABEL[cat] || cat}
             </button>
           ))}
         </div>
@@ -256,21 +261,23 @@ export default function StageBubbleRail({
           );
         })}
 
-        {/* "+" tile */}
-        <button
-          onClick={() => { setActiveSlot(null); setShowAddMenu(v => !v); }}
-          className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-        >
-          <div
-            className="w-14 h-16 rounded-xl flex items-center justify-center bg-white/30 backdrop-blur-md"
-            style={{ border: "1.5px dashed rgba(0,0,0,0.2)" }}
+        {/* "+" tile — only when there are categories left to add */}
+        {effectiveAddableCategories.length > 0 && (
+          <button
+            onClick={() => { setActiveSlot(null); setShowAddMenu(v => !v); }}
+            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
           >
-            <Plus className="w-5 h-5 text-foreground/40" strokeWidth={1.5} />
-          </div>
-          <span className="w-14 text-center text-[8px] font-medium tracking-[0.15em] uppercase text-foreground/60 select-none truncate">
-            &nbsp;
-          </span>
-        </button>
+            <div
+              className="w-14 h-16 rounded-xl flex items-center justify-center bg-white/30 backdrop-blur-md"
+              style={{ border: "1.5px dashed rgba(0,0,0,0.2)" }}
+            >
+              <Plus className="w-5 h-5 text-foreground/40" strokeWidth={1.5} />
+            </div>
+            <span className="w-14 text-center text-[8px] font-medium tracking-[0.15em] uppercase text-foreground/60 select-none truncate">
+              &nbsp;
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

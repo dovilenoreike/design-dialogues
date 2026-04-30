@@ -147,7 +147,13 @@
     "bauhaus": "Bauhaus",
     "bauhaus.desc": "Bold geometry and primary colors"
   },
+  "category": {
+    "front": "Fronts",
+    "worktop": "Worktops",
+    "accent": "Accents"
+  },
   "surface": {
+    "add": "Add surface",
     "clearAll": "Clear",
     "remove": "Remove material",
     "otherStyles": "Other ideas",
@@ -176,6 +182,7 @@
     "additionalTiles": "Addl. Tiles",
     "bottomCabinets": "Bottom Cabinets",
     "topCabinets": "Top Cabinets",
+    "tallCabinets": "Tall Cabinets",
     "shelves": "Shelves",
     "backsplashes": "Backsplashes",
     "wall": "Wall",
