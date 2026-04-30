@@ -16,9 +16,6 @@ import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteRevi
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 
-// Default-enabled optional slots (all except tertiaryFronts which starts hidden)
-const DEFAULT_ENABLED_OPTIONAL: SlotKey[] = ["mainFronts", "additionalFronts", "worktops", "accents"];
-
 // Static role → primary palette key, used only for the ?material= URL param (runs once on mount)
 const ROLE_TO_PRIMARY_PK: Record<string, { slot: SlotKey; paletteKey: string }> = {
   floor:   { slot: "floor",      paletteKey: "floor" },
@@ -54,7 +51,9 @@ export default function DesignView() {
       const saved = localStorage.getItem("enabled-optional-slots");
       if (saved !== null) return new Set(JSON.parse(saved) as SlotKey[]);
     } catch {}
-    return new Set(DEFAULT_ENABLED_OPTIONAL);
+    // New users: start empty — collection preset auto-applies and sets slots.
+    // Dashed placeholder squares show instead of confusing placeholder images.
+    return new Set<SlotKey>();
   });
   const [pendingOptionalSlot, setPendingOptionalSlot] = useState<SlotKey | null>(null);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
