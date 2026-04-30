@@ -601,7 +601,6 @@ export default function DesignView() {
               activeSlot={activeSlot}
               setActiveSlot={setActiveSlot}
               enabledOptionalSlots={enabledOptionalSlots}
-              pendingOptionalSlot={pendingOptionalSlot}
               addableCategories={addableCategories}
               onAddCategory={handleAddCategory}
               handleSlotClear={handleSlotClear}

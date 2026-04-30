@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
 import { RotateCcw, Plus, Check, X, Sparkles, Camera, Info, Layers, Search } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
@@ -142,7 +142,6 @@ interface KonceptasViewProps {
   activeSlot: SlotKey | null;
   setActiveSlot: (slot: SlotKey | null) => void;
   enabledOptionalSlots: Set<SlotKey>;
-  pendingOptionalSlot: SlotKey | null;
   addableCategories: string[];
   onAddCategory: (category: string) => void;
   handleSlotClear: (slot: SlotKey) => void;
@@ -160,7 +159,6 @@ export default function KonceptasView({
   activeSlot,
   setActiveSlot,
   enabledOptionalSlots,
-  pendingOptionalSlot,
   addableCategories,
   onAddCategory,
   handleSlotClear,
@@ -175,7 +173,7 @@ export default function KonceptasView({
   const isMobile = useIsMobile();
   const lang = language as "en" | "lt";
 
-  const { loading: graphLoading, graphMaterials, getBestSwapCode, isCompatibleWithOthers } = useGraphMaterials();
+  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers } = useGraphMaterials();
 
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
