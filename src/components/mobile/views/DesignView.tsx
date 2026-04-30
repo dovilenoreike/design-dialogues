@@ -88,10 +88,29 @@ export default function DesignView() {
   );
 
   // ── Collection preset state (lifted from Stage) ──────────────────────────
-  const [presetImageUrl, setPresetImageUrl] = useState<string | null>(null);
+  const [presetImageUrl, setPresetImageUrl] = useState<string | null>(() => {
+    try { return localStorage.getItem("preset-image-url"); } catch { return null; }
+  });
   const presetMaterialsRef = useRef<Record<string, string> | null>(null);
+  // Populate ref from localStorage on first render (useRef doesn't support lazy init)
+  const _presetSnapshotLoaded = useRef(false);
+  if (!_presetSnapshotLoaded.current) {
+    _presetSnapshotLoaded.current = true;
+    try {
+      const s = localStorage.getItem("preset-materials-snapshot");
+      if (s) presetMaterialsRef.current = JSON.parse(s);
+    } catch {}
+  }
   const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
   const presetIsActive = !!presetImageUrl;
+
+  // Persist preset image URL whenever it changes
+  useEffect(() => {
+    try {
+      if (presetImageUrl) localStorage.setItem("preset-image-url", presetImageUrl);
+      else localStorage.removeItem("preset-image-url");
+    } catch {}
+  }, [presetImageUrl]);
 
   // Clear preset image when materialOverrides drift from the preset snapshot
   useEffect(() => {
@@ -101,13 +120,20 @@ export default function DesignView() {
     if (modified) {
       setPresetImageUrl(null);
       presetMaterialsRef.current = null;
+      try { localStorage.removeItem("preset-materials-snapshot"); } catch {}
     }
   }, [materialOverrides, presetImageUrl]);
 
-  // Clear preset image on room change
+  // Clear preset image on room change (skip mount — only fire on actual category change)
+  const _categoryMountRef = useRef(true);
   useEffect(() => {
+    if (_categoryMountRef.current) { _categoryMountRef.current = false; return; }
     setPresetImageUrl(null);
     presetMaterialsRef.current = null;
+    try {
+      localStorage.removeItem("preset-image-url");
+      localStorage.removeItem("preset-materials-snapshot");
+    } catch {}
   }, [design.selectedCategory]);
 
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -503,6 +529,11 @@ export default function DesignView() {
               setCollectionSlots(coveredSlots);
               setPresetImageUrl(imageUrl);
               presetMaterialsRef.current = materials;
+              try {
+                if (imageUrl) localStorage.setItem("preset-image-url", imageUrl);
+                else localStorage.removeItem("preset-image-url");
+                localStorage.setItem("preset-materials-snapshot", JSON.stringify(materials));
+              } catch {}
             }}
             hasExistingMaterials={Object.keys(materialOverrides).length > 0}
             isModified={!presetIsActive && Object.keys(materialOverrides).length > 0}

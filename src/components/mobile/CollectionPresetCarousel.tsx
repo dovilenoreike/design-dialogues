@@ -34,19 +34,33 @@ export default function CollectionPresetCarousel({
     : "kitchen";
 
   const { presets, loading } = useCollectionPresets(category);
-  const [index, setIndex] = useState(0);
+  const indexKey = `preset-index-${category}`;
+  const [index, setIndex] = useState(() => {
+    try { return parseInt(localStorage.getItem(indexKey) ?? "0") || 0; } catch { return 0; }
+  });
+
+  const applyAt = (next: number) => {
+    setIndex(next);
+    try { localStorage.setItem(indexKey, String(next)); } catch {}
+    onApplyPreset(presets[next].materials, presets[next].image_url ?? null);
+  };
 
   // Auto-apply the first preset when presets load and user has no materials yet
   useEffect(() => {
     if (!loading && presets.length > 0 && !hasExistingMaterials) {
-      onApplyPreset(presets[0].materials, presets[0].image_url ?? null);
+      applyAt(0);
     }
   }, [loading, presets]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset index when category changes
   useEffect(() => {
-    setIndex(0);
-  }, [category]);
+    try {
+      const saved = parseInt(localStorage.getItem(indexKey) ?? "0") || 0;
+      setIndex(saved);
+    } catch {
+      setIndex(0);
+    }
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading || presets.length === 0) return null;
 
@@ -56,17 +70,8 @@ export default function CollectionPresetCarousel({
     ? (language === "lt" ? "Tavo derinys" : "Your collection")
     : presetName;
 
-  const goPrev = () => {
-    const next = (index - 1 + presets.length) % presets.length;
-    setIndex(next);
-    onApplyPreset(presets[next].materials, presets[next].image_url ?? null);
-  };
-
-  const goNext = () => {
-    const next = (index + 1) % presets.length;
-    setIndex(next);
-    onApplyPreset(presets[next].materials, presets[next].image_url ?? null);
-  };
+  const goPrev = () => applyAt((index - 1 + presets.length) % presets.length);
+  const goNext = () => applyAt((index + 1) % presets.length);
 
   if (variant === "header") {
     return (
