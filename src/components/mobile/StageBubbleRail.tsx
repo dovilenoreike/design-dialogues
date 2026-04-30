@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Plus } from "lucide-react";
-import { useGraphMaterials, getMaterialByCode, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getPairCountByCode, getMaterialsByRole } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { SLOT_TO_ROLE, type MaterialBubble } from "@/lib/collection-utils";
 import { SLOT_KEY_TO_ROLE, type SlotKey } from "./controls/MaterialSlotPicker";
@@ -115,7 +115,7 @@ export default function StageBubbleRail({
     const candidates = [...flatlayCodes, ...extraCodes];
     const alternatives = candidates
       .map(code => {
-        const img = getMaterialByCode(code)?.imageUrl ?? getArchetypeById(code)?.image;
+        const img = getMaterialByCode(code)?.imageUrl ?? getCachedImageUrl(code) ?? getArchetypeById(code)?.image;
         return img ? { materialId: code, image: img } : null;
       })
       .filter((x): x is { materialId: string; image: string } => x !== null);
@@ -230,7 +230,7 @@ export default function StageBubbleRail({
           const representativeSlot = slotKeys[0];
           const overrideCode = materialOverrides[representativeSlot];
           const displayImage = overrideCode
-            ? (getMaterialByCode(overrideCode)?.imageUrl ?? getArchetypeById(overrideCode)?.image ?? bubble.image)
+            ? (getMaterialByCode(overrideCode)?.imageUrl ?? getCachedImageUrl(overrideCode) ?? getArchetypeById(overrideCode)?.image ?? bubble.image)
             : bubble.image;
           const isActive = slotKeys.includes(activeSlot ?? "");
 

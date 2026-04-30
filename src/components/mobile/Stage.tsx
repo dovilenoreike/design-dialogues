@@ -12,7 +12,7 @@ import type { UploadType } from "@/types/design-state";
 import { ROOM_DISPLAY_TO_TRANSLATION_KEY } from "@/lib/design-constants";
 import { rooms } from "@/data/rooms";
 import { useStageSwipe, getNextItem, getPrevItem } from "@/hooks/useStageSwipe";
-import { getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getCachedImageUrl } from "@/hooks/useGraphMaterials";
 import { getArchetypeById } from "@/data/archetypes";
 import { type MaterialBubble } from "@/lib/collection-utils";
 import { DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS } from "./views/KonceptasView";
@@ -39,7 +39,7 @@ function buildBubblesFromSlots(
       if (!pk) return null;
       const matId = overrides[pk];
       if (!matId) return null;
-      const image = getMaterialByCode(matId)?.imageUrl ?? getArchetypeById(matId)?.image;
+      const image = getMaterialByCode(matId)?.imageUrl ?? getCachedImageUrl(matId) ?? getArchetypeById(matId)?.image;
       if (!image) return null;
       // Use the primary palette key's translation (matches photo screen swatch labels)
       return { slotKey, materialId: matId, image, slotLabel: t(`surface.${pk}`) || t(`surface.${slotKey}`) || slotKey };

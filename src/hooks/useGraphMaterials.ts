@@ -25,6 +25,22 @@ interface GraphCache {
 let _cached: GraphCache | null = null;
 let _fetchPromise: Promise<GraphCache> | null = null;
 
+// ─── Image URL cache — survives page reload so first render shows real images ──
+const IMAGE_CACHE_KEY = "material-image-cache";
+let _imageUrlCache: Map<string, string> = new Map();
+try {
+  const raw = localStorage.getItem(IMAGE_CACHE_KEY);
+  if (raw) _imageUrlCache = new Map(Object.entries(JSON.parse(raw)));
+} catch {}
+
+function _updateImageCache(byCode: Map<string, SupabaseMaterial>) {
+  const obj: Record<string, string> = {};
+  for (const [code, mat] of byCode) {
+    if (mat.imageUrl) { obj[code] = mat.imageUrl; _imageUrlCache.set(code, mat.imageUrl); }
+  }
+  try { localStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(obj)); } catch {}
+}
+
 async function loadGraphData(): Promise<GraphCache> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: mats }, { data: pc }] = await Promise.all([
@@ -72,6 +88,7 @@ async function loadGraphData(): Promise<GraphCache> {
     pairCountByCode.set(r.code_b, (pairCountByCode.get(r.code_b) ?? 0) + 1);
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
+  _updateImageCache(byCode);
   return { graphMaterials, pairs, pairWeights, byCode, pairCountByCode };
 }
 
@@ -80,6 +97,11 @@ async function loadGraphData(): Promise<GraphCache> {
 /** Returns the full SupabaseMaterial for a technical_code, or undefined if not cached. */
 export function getMaterialByCode(code: string): SupabaseMaterial | undefined {
   return _cached?.byCode.get(code);
+}
+
+/** Returns the image URL for a material code, using localStorage cache as fallback before graph loads. */
+export function getCachedImageUrl(code: string): string | null {
+  return _cached?.byCode.get(code)?.imageUrl ?? _imageUrlCache.get(code) ?? null;
 }
 
 /** Returns the total number of pair_compatibility entries for a given technical_code. */

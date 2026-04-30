@@ -91,16 +91,14 @@ export default function DesignView() {
   const [presetImageUrl, setPresetImageUrl] = useState<string | null>(() => {
     try { return localStorage.getItem("preset-image-url"); } catch { return null; }
   });
-  const presetMaterialsRef = useRef<Record<string, string> | null>(null);
-  // Populate ref from localStorage on first render (useRef doesn't support lazy init)
-  const _presetSnapshotLoaded = useRef(false);
-  if (!_presetSnapshotLoaded.current) {
-    _presetSnapshotLoaded.current = true;
-    try {
-      const s = localStorage.getItem("preset-materials-snapshot");
-      if (s) presetMaterialsRef.current = JSON.parse(s);
-    } catch {}
-  }
+  const presetMaterialsRef = useRef<Record<string, string> | null>(
+    (() => {
+      try {
+        const s = localStorage.getItem("preset-materials-snapshot");
+        return s ? JSON.parse(s) : null;
+      } catch { return null; }
+    })()
+  );
   const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
   const presetIsActive = !!presetImageUrl;
 
@@ -124,10 +122,11 @@ export default function DesignView() {
     }
   }, [materialOverrides, presetImageUrl]);
 
-  // Clear preset image on room change (skip mount — only fire on actual category change)
-  const _categoryMountRef = useRef(true);
+  // Clear preset image on room change (compare to previous value — skips mount naturally)
+  const prevCategoryRef = useRef(design.selectedCategory);
   useEffect(() => {
-    if (_categoryMountRef.current) { _categoryMountRef.current = false; return; }
+    if (prevCategoryRef.current === design.selectedCategory) return;
+    prevCategoryRef.current = design.selectedCategory;
     setPresetImageUrl(null);
     presetMaterialsRef.current = null;
     try {
@@ -199,7 +198,9 @@ export default function DesignView() {
     localStorage.setItem("moodboard-slot-selections", JSON.stringify(slotSelections));
   }, [slotSelections]);
 
-  // On mount (after graph loads): resolve archetype IDs → product codes in materialOverrides
+  // Resolve archetype IDs → product codes once graph data is available.
+  // Intentionally [graphLoading] only — runs once when graph transitions from loading to loaded.
+  // Uses slotSelectionsRef to read current selections without adding a dependency that would re-trigger.
   useEffect(() => {
     if (graphLoading) return;
     const validCodes = new Set(graphMaterials.map((m) => m.technicalCode));
@@ -229,7 +230,8 @@ export default function DesignView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphLoading]);
 
-  // Sync slotSelections when materialOverrides changes (e.g. bubble rail, collection presets)
+  // Sync slotSelections when materialOverrides changes (e.g. bubble rail, collection presets).
+  // Intentionally omits paletteKeyToSlot — re-syncs only on material or graph-loading changes.
   useEffect(() => {
     if (graphLoading) return;
     setSlotSelections((prev) => {
@@ -359,6 +361,9 @@ export default function DesignView() {
   }, [setMaterialOverrides, slotSurfaces]);
 
   const handleAddSurface = useCallback((slotKey: SlotKey, paletteKey: string) => {
+    // Read primary palette key before state update (closure value is still correct here)
+    const primaryPk = slotSurfaces[slotKey]?.[0] ?? SLOT_TO_PALETTE_KEY[slotKey];
+
     setSlotSurfaces((prev) => {
       const next = { ...prev };
       // Each surface type can only belong to one slot — remove it from any other slot first
@@ -370,10 +375,15 @@ export default function DesignView() {
       next[slotKey] = [...(next[slotKey] ?? []), paletteKey];
       return next;
     });
-    const primaryPk = slotSurfaces[slotKey]?.[0] ?? SLOT_TO_PALETTE_KEY[slotKey];
-    const currentCode = primaryPk ? materialOverrides[primaryPk] : undefined;
-    if (currentCode) setMaterialOverrides((prev) => ({ ...prev, [paletteKey]: currentCode }));
-  }, [materialOverrides, setMaterialOverrides, slotSurfaces]);
+
+    // Use functional updater so we read latest materialOverrides, not stale closure
+    if (primaryPk) {
+      setMaterialOverrides((prev) => {
+        const currentCode = prev[primaryPk];
+        return currentCode ? { ...prev, [paletteKey]: currentCode } : prev;
+      });
+    }
+  }, [setMaterialOverrides, slotSurfaces]);
 
   const handleRemoveSurface = useCallback((slotKey: SlotKey, paletteKey: string) => {
     setSlotSurfaces((prev) => ({
@@ -444,7 +454,8 @@ export default function DesignView() {
     });
   }, [enabledOptionalSlots, slotSurfaces]);
 
-  // Auto-dismiss: if user navigates away from a freshly added slot without picking a material, remove it
+  // Auto-dismiss: if user navigates away from a freshly added slot without picking a material, remove it.
+  // Intentionally [activeSlot] only — fires when user taps a different slot or closes the picker.
   useEffect(() => {
     if (!pendingOptionalSlot) return;
     if (activeSlot === pendingOptionalSlot) return;

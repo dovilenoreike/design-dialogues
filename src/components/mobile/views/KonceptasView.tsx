@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getCachedImageUrl } from "@/hooks/useGraphMaterials";
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
 export const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
@@ -287,7 +287,7 @@ export default function KonceptasView({
           const pk = slotSurfaces[piece.slot]?.[0] ?? SLOT_TO_PALETTE_KEY[piece.slot];
           const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
           const tileImage = overrideCode
-            ? (getMaterialByCode(overrideCode)?.imageUrl ?? null)
+            ? (getMaterialByCode(overrideCode)?.imageUrl ?? getCachedImageUrl(overrideCode))
             : null;
           const displayImage = tileImage;
           const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
