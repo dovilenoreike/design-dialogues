@@ -201,7 +201,7 @@ export default function KonceptasView({
     .every((k) => Boolean(slotSelections[k]));
 
   return (
-    <div onClick={() => setActiveSlot(null)}>
+    <div className="-mt-3" onClick={() => setActiveSlot(null)}>
       {/* Canvas */}
       <div
         className="relative w-full overflow-hidden rounded-2xl"
@@ -209,7 +209,10 @@ export default function KonceptasView({
         onClick={(e) => { e.stopPropagation(); setActiveSlot(null); }}
       >
         {/* Background */}
-        <div className="absolute inset-2 rounded-2xl bg-neutral-50" />
+        <div className="absolute rounded-2xl bg-neutral-50" style={{ top: "8px", left: "8px", right: "8px", bottom: "10%" }} />
+
+        {/* Pieces wrapper — shifted up relative to the background */}
+        <div className="absolute inset-0" style={{ transform: "translateY(-5%)" }}>
 
         {/* Material cut-sample pieces */}
         {PIECES.map((piece, i) => {
@@ -415,8 +418,10 @@ export default function KonceptasView({
           );
         })}
 
-        {/* Visualize button — overlaid at bottom of canvas */}
-        <div className="absolute inset-x-0 bottom-4 flex justify-center">
+        </div>{/* end pieces wrapper */}
+
+        {/* Visualize button — sits just below the piece arrangement */}
+        <div className="absolute inset-x-0 flex justify-center" style={{ bottom: "14%" }}>
           <button
             onClick={(e) => {
               e.stopPropagation();
