@@ -50,7 +50,7 @@
   },
   "tabs": {
     "moodboard": "Konceptas",
-    "design": "Vaizdavimas",
+    "design": "Dizainas",
     "specs": "Medžiagos",
     "budget": "Biudžetas",
     "plan": "Planas"
@@ -534,7 +534,7 @@
       "visualize": "Vizualizuoti",
       "selectStyle": "Pasirinkti Stilių",
       "selectPalette": "Pasirinkti Paletę",
-      "selectMaterialsFirst": "Pirmiausia pasirinkite medžiagas moodboard'e",
+      "selectMaterialsFirst": "Pirmiausia pasirinkite apdailos medžiagas",
       "styleHint": "1 žingsnis iš 2: Pasirinkite dizaino stilių",
       "paletteHint": "2 žingsnis iš 2: Pasirinkite paletę arba aprašykite medžiagas",
       "replace": "Pakeisti",
@@ -1306,7 +1306,12 @@
     "infoGoesTitle": "Dera kartu",
     "infoGoesDesc": "Šis ženklelis rodo, kad medžiaga rekomenduojama pagal jūsų kitus pasirinkimus — šios medžiagos peržiūrėtos gyvai ir dera su kitais paviršiais.",
     "infoSearchTitle": "Paieška pagal kodą",
-    "infoSearchDesc": "Palieskite paieškos piktogramą medžiagų parinkiklyje, kad rastumėte konkrečią medžiagą pagal techninį kodą."
+    "infoSearchDesc": "Palieskite paieškos piktogramą medžiagų parinkiklyje, kad rastumėte konkrečią medžiagą pagal techninį kodą.",
+    "photoInfoTitle": "Kaip veikia nuotraukų peržiūra",
+    "photoInfoUploadTitle": "Įkelkite kambario nuotrauką",
+    "photoInfoUploadDesc": "Palieskite fotoaparato piktogramą, kad įkeltumėte savo erdvės nuotrauką, tada paspauskite Vizualizuoti, kad medžiagos būtų įkeltos į ją.",
+    "photoInfoConceptTitle": "Perjunkite į Konceptą tekstūrų detalėms",
+    "photoInfoConceptDesc": "Naudokite Koncepto kortelę medžiagų deriniui patikslinti — tekstūrų lenta rodo tikras tekstūras ir nurodo, kurie paviršiai tarpusavyje dera."
   },
   "materialRequest": {
     "link": "Nerandote ko ieškojote? Tekstūros užklausa →",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, X, Sparkles, Layers, Search } from "lucide-react";
+import { RotateCcw, Plus, Check, X, Sparkles, Layers, Search, Camera, ArrowLeftRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
@@ -88,6 +88,18 @@ export function InfoRows({ t }: { t: (key: string) => string }) {
   );
 }
 
+export function PhotoInfoRows({ t }: { t: (key: string) => string }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <InfoRow icon={<Plus className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoStep1Title")} desc={t("moodboard.infoStep1Desc")} />
+      <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
+      <InfoRow icon={<Camera className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoUploadTitle")} desc={t("moodboard.photoInfoUploadDesc")} />
+      <InfoRow icon={<ArrowLeftRight className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoConceptTitle")} desc={t("moodboard.photoInfoConceptDesc")} />
+      <InfoRow icon={<Search className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoSearchTitle")} desc={t("moodboard.infoSearchDesc")} />
+    </div>
+  );
+}
+
 function InfoRow({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
   return (
     <div className="flex items-start gap-3">
@@ -134,6 +146,7 @@ interface KonceptasViewProps {
   onVisualize: () => void;
   onClearAll: () => void;
   onScrollToPicker: () => void;
+  requiredMissing: SlotKey | null;
   t: (key: string) => string;
   language: string;
 }
@@ -151,6 +164,7 @@ export default function KonceptasView({
   onVisualize,
   onClearAll,
   onScrollToPicker,
+  requiredMissing,
   t,
   language,
 }: KonceptasViewProps) {
@@ -406,11 +420,10 @@ export default function KonceptasView({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (allSlotsFilled) {
+              if (!requiredMissing) {
                 onVisualize();
               } else {
-                const firstEmpty = activeSlots.find((k) => !slotSelections[k]) ?? activeSlots[0];
-                setActiveSlot(firstEmpty);
+                setActiveSlot(requiredMissing);
                 onScrollToPicker();
                 toast(t("mobile.stage.selectMaterialsFirst"));
               }

@@ -38,11 +38,14 @@ function buildBubblesFromSlots(
       const pk = (slotSurfaces[slotKey] ?? [])[0];
       if (!pk) return null;
       const matId = overrides[pk];
-      if (!matId) return null;
-      const image = getMaterialByCode(matId)?.imageUrl ?? getCachedImageUrl(matId) ?? getArchetypeById(matId)?.image;
-      if (!image) return null;
-      // Use the primary palette key's translation (matches photo screen swatch labels)
-      return { slotKey, materialId: matId, image, slotLabel: t(`surface.${pk}`) || t(`surface.${slotKey}`) || slotKey };
+      const image = matId
+        ? (getMaterialByCode(matId)?.imageUrl ?? getCachedImageUrl(matId) ?? getArchetypeById(matId)?.image)
+        : null;
+      // Always show floor even when empty — gives the user a tap target to pick a floor material
+      if (!matId && slotKey !== "floor") return null;
+      if (matId && !image) return null;
+      const slotLabel = t(`surface.${pk}`) || t(`surface.${slotKey}`) || slotKey;
+      return { slotKey, materialId: matId ?? "", image: image ?? "/placeholders/floor.webp", slotLabel };
     })
     .filter((b): b is MaterialBubble => b !== null);
 }
@@ -51,6 +54,10 @@ interface StageProps {
   onOpenSelector?: (mode: ControlMode) => void;
   onSwatchTap?: (slotKey: string) => void;
   onGoToMaterials?: () => void;
+  /** Called when visualize is tapped but a required surface is missing — opens picker for that slot inline */
+  onNudgeMissing?: (slotKey: SlotKey) => void;
+  /** First required slot the user hasn't picked yet (floor → mainFronts → worktops), or null if all met */
+  requiredMissing?: SlotKey | null;
   presetImageUrl?: string | null;
   collectionSlots?: Set<string>;
   onAddSlot?: (slotKey: string) => void;
@@ -64,7 +71,7 @@ interface StageProps {
   onAddCategory?: (category: string) => void;
 }
 
-export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, presetImageUrl, collectionSlots, onAddSlot, slotSurfaces, enabledOptionalSlots, addableCategories, onAddCategory }: StageProps = {}) {
+export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, onNudgeMissing, requiredMissing, presetImageUrl, collectionSlots, onAddSlot, slotSurfaces, enabledOptionalSlots, addableCategories, onAddCategory }: StageProps = {}) {
   const { t } = useLanguage();
   const {
     design,
@@ -102,10 +109,14 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
     handleSelectStyle,
   });
 
+  // Current room's images
+  const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
+  const generatedImage = generatedImages[selectedCategory || "Kitchen"] || null;
+
   // Wrapper that generates first, then deducts credit only on success
   const handleGenerateWithCredits = useCallback(async () => {
-    if (!moodboardFilled && !design.freestyleDescription.trim()) {
-      onGoToMaterials?.();
+    if (requiredMissing) {
+      onNudgeMissing?.(requiredMissing);
       toast(t("mobile.stage.selectMaterialsFirst"));
       return;
     }
@@ -128,11 +139,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
     } catch (err) {
       console.error("Generation failed:", err);
     }
-  }, [credits, handleGenerate, useCredit, refetchCredits, moodboardFilled, design.freestyleDescription, onGoToMaterials, t]);
-
-  // Current room's images
-  const uploadedImage = uploadedImages[selectedCategory || "Kitchen"] || null;
-  const generatedImage = generatedImages[selectedCategory || "Kitchen"] || null;
+  }, [credits, handleGenerate, useCredit, refetchCredits, requiredMissing, onNudgeMissing, t]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingUploadTypeRef = useRef<UploadType>("photo");
@@ -318,7 +325,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, pr
       {/* FAB generate button */}
       {hasUserImage && (
         <div className="absolute bottom-16 right-4">
-          {!moodboardFilled ? (
+          {requiredMissing ? (
             <button
               onClick={() => onGoToMaterials?.()}
               className="flex items-center gap-2 px-5 py-3 rounded-full font-medium text-sm shadow-lg min-h-[44px] bg-foreground text-background active:scale-[0.98] transition-all"

@@ -10,7 +10,7 @@ import MaterialSlotPicker, { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE
 import { UploadDialog } from "../dialogs/UploadDialog";
 import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 import Stage from "../Stage";
-import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows } from "./KonceptasView";
+import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows, PhotoInfoRows } from "./KonceptasView";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -65,6 +65,21 @@ export default function DesignView() {
   const [pendingOptionalSlot, setPendingOptionalSlot] = useState<SlotKey | null>(null);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
 
+  // Tracks slots the user has explicitly picked (via picker or collection apply).
+  // Never populated by the materialOverrides sync effect — this is the authoritative
+  // source for the visualisation gate.
+  const [userPickedSlots, setUserPickedSlots] = useState<Set<SlotKey>>(() => {
+    try {
+      const saved = localStorage.getItem("user-picked-slots");
+      if (saved) return new Set(JSON.parse(saved) as SlotKey[]);
+    } catch {}
+    return new Set<SlotKey>();
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("user-picked-slots", JSON.stringify([...userPickedSlots])); } catch {}
+  }, [userPickedSlots]);
+
   // ── User-configurable surface attributes ─────────────────────────────────
   const [slotSurfaces, setSlotSurfaces] = useState<Record<SlotKey, string[]>>(() => {
     try {
@@ -106,6 +121,7 @@ export default function DesignView() {
     })()
   );
   const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
+  const [wasReset, setWasReset] = useState(false);
   const presetIsActive = !!presetImageUrl;
 
   // Persist preset image URL whenever it changes
@@ -321,6 +337,7 @@ export default function DesignView() {
         });
         return { ...prev, [slotKey]: archetypeId };
       });
+      setUserPickedSlots((prev) => new Set([...prev, slotKey]));
       const pks = slotSurfaces[slotKey] ?? [SLOT_TO_PALETTE_KEY[slotKey]].filter(Boolean) as string[];
       const matCode = resolvedCode
         ?? showroomMaterials.find((m) => m.archetypeId === archetypeId && m.role.includes(SLOT_KEY_TO_ROLE[slotKey]))?.technicalCode
@@ -336,6 +353,7 @@ export default function DesignView() {
 
   const handleSlotClear = useCallback((slotKey: SlotKey) => {
     setSlotSelections((prev) => ({ ...prev, [slotKey]: null }));
+    setUserPickedSlots((prev) => { const s = new Set(prev); s.delete(slotKey); return s; });
     setMaterialOverrides((prev) => {
       const next = { ...prev };
       for (const pk of (slotSurfaces[slotKey] ?? [])) delete next[pk];
@@ -364,6 +382,16 @@ export default function DesignView() {
     setSlotSurfaces({ ...DEFAULT_SLOT_SURFACES });
     setActiveSlot(null);
     setPendingOptionalSlot(null);
+    setPresetImageUrl(null);
+    presetMaterialsRef.current = null;
+    setCollectionSlots(new Set());
+    setUserPickedSlots(new Set());
+    setWasReset(true);
+    try {
+      localStorage.removeItem("preset-image-url");
+      localStorage.removeItem("preset-materials-snapshot");
+      localStorage.removeItem("user-picked-slots");
+    } catch {}
   }, [setMaterialOverrides, slotSurfaces]);
 
   const handleAddSurface = useCallback((slotKey: SlotKey, paletteKey: string) => {
@@ -404,6 +432,16 @@ export default function DesignView() {
       pickerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }, []);
+
+  // Called from the photo view when a required surface is missing — enables + opens picker inline
+  const handleNudgeMissing = useCallback((slotKey: SlotKey) => {
+    if (OPTIONAL_SLOTS.includes(slotKey)) {
+      setEnabledOptionalSlots(prev => new Set([...prev, slotKey]));
+      setSlotSurfaces(prev => ({ ...prev, [slotKey]: DEFAULT_SLOT_SURFACES[slotKey] }));
+    }
+    setActiveSlot(slotKey);
+    scrollToPicker();
+  }, [scrollToPicker]);
 
   // Addable categories: only show if there are both slots AND surface types still available
   const addableCategories = useMemo((): string[] => {
@@ -479,6 +517,18 @@ export default function DesignView() {
 
   const allSlotsFilled = activeSlots.every((k) => Boolean(slotSelections[k]));
 
+  // Strict gate for visualization: floor + at least one front + worktops must all be explicitly
+  // Gate: require floor + at least one front + worktops to be set in materialOverrides
+  // slotSelections is derived from materialOverrides, so it correctly reflects what will be sent to the generator.
+  // handleClearAll clears materialOverrides, so after reset this gate correctly blocks until slots are re-filled.
+  const requiredMissing = useMemo((): SlotKey | null => {
+    if (!slotSelections["floor"]) return "floor";
+    const hasFront = (["mainFronts", "additionalFronts", "tertiaryFronts"] as SlotKey[]).some(s => slotSelections[s]);
+    if (!hasFront) return "mainFronts";
+    if (!slotSelections["worktops"]) return "worktops";
+    return null;
+  }, [slotSelections]);
+
   // Compatibility check for the picker idle state
   const hasIncompatibleSlots = useMemo(() => {
     if (graphLoading || !allSlotsFilled) return false;
@@ -546,6 +596,8 @@ export default function DesignView() {
               setCollectionSlots(coveredSlots);
               setPresetImageUrl(imageUrl);
               presetMaterialsRef.current = materials;
+              setUserPickedSlots(new Set([...coveredSlots] as SlotKey[]));
+              setWasReset(false);
               try {
                 if (imageUrl) localStorage.setItem("preset-image-url", imageUrl);
                 else localStorage.removeItem("preset-image-url");
@@ -553,7 +605,7 @@ export default function DesignView() {
               } catch {}
             }}
             hasExistingMaterials={Object.keys(materialOverrides).length > 0}
-            isModified={!presetIsActive && Object.keys(materialOverrides).length > 0}
+            isModified={wasReset || (!presetIsActive && Object.keys(materialOverrides).length > 0)}
             variant="header"
           />
 
@@ -621,6 +673,8 @@ export default function DesignView() {
                     scrollToPicker();
                   }}
                   onGoToMaterials={() => setSubTab("konceptas")}
+                  onNudgeMissing={handleNudgeMissing}
+                  requiredMissing={requiredMissing}
                   presetImageUrl={presetImageUrl}
                   collectionSlots={collectionSlots}
                   slotSurfaces={slotSurfaces}
@@ -650,6 +704,7 @@ export default function DesignView() {
               onVisualize={() => setSubTab("vizualas")}
               onClearAll={handleClearAll}
               onScrollToPicker={scrollToPicker}
+              requiredMissing={requiredMissing}
               t={t}
               language={language}
             />
@@ -771,16 +826,16 @@ export default function DesignView() {
         onClose={() => setShowInspirationDialog(false)}
       />
 
-      {/* Moodboard info sheet */}
+      {/* Info sheet — content differs per sub-tab */}
       {isMobile ? (
         <Sheet open={showInfoSheet} onOpenChange={setShowInfoSheet}>
           <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 pt-5">
             <SheetHeader className="mb-4">
               <SheetTitle className="text-[13px] font-semibold tracking-[0.02em]">
-                {t("moodboard.infoTitle")}
+                {t(subTab === "vizualas" ? "moodboard.photoInfoTitle" : "moodboard.infoTitle")}
               </SheetTitle>
             </SheetHeader>
-            <InfoRows t={t} />
+            {subTab === "vizualas" ? <PhotoInfoRows t={t} /> : <InfoRows t={t} />}
           </SheetContent>
         </Sheet>
       ) : (
@@ -788,10 +843,10 @@ export default function DesignView() {
           <DialogContent className="max-w-sm rounded-2xl px-6 pb-7 pt-5">
             <DialogHeader className="mb-4">
               <DialogTitle className="text-[13px] font-semibold tracking-[0.02em]">
-                {t("moodboard.infoTitle")}
+                {t(subTab === "vizualas" ? "moodboard.photoInfoTitle" : "moodboard.infoTitle")}
               </DialogTitle>
             </DialogHeader>
-            <InfoRows t={t} />
+            {subTab === "vizualas" ? <PhotoInfoRows t={t} /> : <InfoRows t={t} />}
           </DialogContent>
         </Dialog>
       )}

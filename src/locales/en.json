@@ -1305,7 +1305,12 @@
     "infoGoesTitle": "Goes together",
     "infoGoesDesc": "Materials shown with this badge are recommended based on your other picks — they're known to pair well together.",
     "infoSearchTitle": "Search by code",
-    "infoSearchDesc": "Tap the search icon in the picker to find a specific material by its technical code."
+    "infoSearchDesc": "Tap the search icon in the picker to find a specific material by its technical code.",
+    "photoInfoTitle": "How the photo view works",
+    "photoInfoUploadTitle": "Upload your room photo",
+    "photoInfoUploadDesc": "Tap the camera icon to upload a photo of your space, then hit Visualize to render your material selections into it.",
+    "photoInfoConceptTitle": "Switch to Concept for texture detail",
+    "photoInfoConceptDesc": "Use the Concept tab to fine-tune your material mix — the flatlay shows real textures and flags which surfaces pair well together."
   },
   "materialRequest": {
     "link": "Can't find it? Request a material →",
