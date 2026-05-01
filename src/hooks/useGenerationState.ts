@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
-import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta, GEN_DEBUG } from "@/lib/material-generation-utils";
+import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta, LOG_PROMPTS_TO_CONSOLE } from "@/lib/material-generation-utils";
 import { surfaces } from "@/data/rooms/surfaces";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
@@ -504,7 +504,7 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-        if (GEN_DEBUG) { console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative); console.log("[gen] prompt:\n", designPrompt); }
+        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -554,7 +554,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         }
 
 
-        if (GEN_DEBUG) { console.log("[gen] model:", geminiModel); console.log("[gen] prompt:\n", designPrompt); }
+        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", geminiModel); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
@@ -569,7 +569,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
-        if (GEN_DEBUG) console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative, "(generate-interior)");
+        if (LOG_PROMPTS_TO_CONSOLE) console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative, "(generate-interior)");
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,

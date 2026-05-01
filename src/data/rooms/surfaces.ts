@@ -14,5 +14,6 @@ export const surfaces: Record<string, SurfaceSlot> = {
   shelves:        { label: "Shelves",                 category: "front" },
   tallCabinets:   { label: "Tall Cabinets", category: "front" },
   worktops:       { label: "Worktops & Backsplashes", category: "worktop" },
+  island:         { label: "Island",                  category: "front" },
   accents:        { label: "Faucets",                 category: "accent" },
 };

@@ -4,7 +4,7 @@
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 
-export const GEN_DEBUG = true; // set true to log generation prompts/models and material loading to console
+export const LOG_PROMPTS_TO_CONSOLE = false; // set true to log generation prompts/models and material loading to console
 
 export interface MaterialImageWithMeta {
   base64: string;
@@ -80,8 +80,8 @@ export async function loadMaterialImagesWithOverrides(
 
   const promises = items.map(async ({ matId, slotKey, purpose, category, isExplicit }) => {
     const mat = getMaterialByCode(matId);
-    if (!mat) { if (GEN_DEBUG) console.log("[loadMats] skip (not in cache):", slotKey, matId); return null; }
-    if (!mat.imageUrl) { if (GEN_DEBUG) console.log("[loadMats] skip (imageUrl null):", slotKey, matId); return null; }
+    if (!mat) { if (LOG_PROMPTS_TO_CONSOLE) console.log("[loadMats] skip (not in cache):", slotKey, matId); return null; }
+    if (!mat.imageUrl) { if (LOG_PROMPTS_TO_CONSOLE) console.log("[loadMats] skip (imageUrl null):", slotKey, matId); return null; }
 
     try {
       const response = await fetch(mat.imageUrl);
@@ -94,7 +94,7 @@ export async function loadMaterialImagesWithOverrides(
 
       return { base64, slotKey, matId, purpose, category, isExplicit, description: mat.texturePrompt || "", texturePrompt: mat.texturePrompt ?? "" };
     } catch (e) {
-      if (GEN_DEBUG) console.log("[loadMats] fetch failed:", slotKey, matId, e);
+      if (LOG_PROMPTS_TO_CONSOLE) console.log("[loadMats] fetch failed:", slotKey, matId, e);
       return null;
     }
   });
