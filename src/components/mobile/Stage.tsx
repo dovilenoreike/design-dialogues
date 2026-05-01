@@ -58,6 +58,8 @@ interface StageProps {
   onNudgeMissing?: (slotKey: SlotKey) => void;
   /** First required slot the user hasn't picked yet (floor → mainFronts → worktops), or null if all met */
   requiredMissing?: SlotKey | null;
+  hasIncompatibleSlots?: boolean;
+  onRequestReview?: () => void;
   presetImageUrl?: string | null;
   collectionSlots?: Set<string>;
   onAddSlot?: (slotKey: string) => void;
@@ -71,7 +73,7 @@ interface StageProps {
   onAddCategory?: (category: string) => void;
 }
 
-export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, onNudgeMissing, requiredMissing, presetImageUrl, collectionSlots, onAddSlot, slotSurfaces, enabledOptionalSlots, addableCategories, onAddCategory }: StageProps = {}) {
+export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, onNudgeMissing, requiredMissing, hasIncompatibleSlots, onRequestReview, presetImageUrl, collectionSlots, onAddSlot, slotSurfaces, enabledOptionalSlots, addableCategories, onAddCategory }: StageProps = {}) {
   const { t } = useLanguage();
   const {
     design,

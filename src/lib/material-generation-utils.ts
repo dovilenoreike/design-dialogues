@@ -12,6 +12,8 @@ export interface MaterialImageWithMeta {
   matId: string;
   purpose: string;
   category: string;
+  /** true = user explicitly set this surface; false = added by inheritance (e.g. tallCabinets from bottomCabinets) */
+  isExplicit: boolean;
   description: string;
   texturePrompt: string;
 }
@@ -62,19 +64,21 @@ export function buildDetailedMaterialPromptWithOverrides(
 export async function loadMaterialImagesWithOverrides(
   overrides: Record<string, string>,
   excludedSlots?: Set<string>,
+  /** Keys that were explicitly set by the user — anything else is inherited. Defaults to all keys. */
+  explicitKeys?: Set<string>,
 ): Promise<MaterialImageWithMeta[]> {
   // One entry per slot
-  const items: { matId: string; slotKey: string; purpose: string; category: string }[] = [];
+  const items: { matId: string; slotKey: string; purpose: string; category: string; isExplicit: boolean }[] = [];
 
   for (const [slotKey, matId] of Object.entries(overrides)) {
     if (excludedSlots?.has(slotKey)) continue;
     const slotDef = surfaces[slotKey];
     if (!slotDef) continue;
 
-    items.push({ matId, slotKey, purpose: slotDef.label, category: slotDef.category });
+    items.push({ matId, slotKey, purpose: slotDef.label, category: slotDef.category, isExplicit: explicitKeys ? explicitKeys.has(slotKey) : true });
   }
 
-  const promises = items.map(async ({ matId, slotKey, purpose, category }) => {
+  const promises = items.map(async ({ matId, slotKey, purpose, category, isExplicit }) => {
     const mat = getMaterialByCode(matId);
     if (!mat) { if (GEN_DEBUG) console.log("[loadMats] skip (not in cache):", slotKey, matId); return null; }
     if (!mat.imageUrl) { if (GEN_DEBUG) console.log("[loadMats] skip (imageUrl null):", slotKey, matId); return null; }
@@ -88,7 +92,7 @@ export async function loadMaterialImagesWithOverrides(
         reader.readAsDataURL(blob);
       });
 
-      return { base64, slotKey, matId, purpose, category, description: mat.texturePrompt || "", texturePrompt: mat.texturePrompt ?? "" };
+      return { base64, slotKey, matId, purpose, category, isExplicit, description: mat.texturePrompt || "", texturePrompt: mat.texturePrompt ?? "" };
     } catch (e) {
       if (GEN_DEBUG) console.log("[loadMats] fetch failed:", slotKey, matId, e);
       return null;

@@ -668,6 +668,7 @@ export default function DesignView() {
             <div>
               <div className="relative w-full aspect-square">
                 <Stage
+
                   onSwatchTap={(slotKey) => {
                     setActiveSlot(slotKey as SlotKey);
                     scrollToPicker();
@@ -675,6 +676,8 @@ export default function DesignView() {
                   onGoToMaterials={() => setSubTab("konceptas")}
                   onNudgeMissing={handleNudgeMissing}
                   requiredMissing={requiredMissing}
+                  hasIncompatibleSlots={hasIncompatibleSlots}
+                  onRequestReview={() => setShowReviewSheet(true)}
                   presetImageUrl={presetImageUrl}
                   collectionSlots={collectionSlots}
                   slotSurfaces={slotSurfaces}
@@ -687,6 +690,17 @@ export default function DesignView() {
                   })}
                 />
               </div>
+              {hasIncompatibleSlots && (
+                <div className="flex justify-center mt-[40px] pb-1">
+                  <button
+                    onClick={() => setShowReviewSheet(true)}
+                    className="text-[11px] font-medium underline underline-offset-2 active:scale-95 transition-transform"
+                    style={{ color: "rgba(0,0,0,0.45)" }}
+                  >
+                    {t("moodboard.requestReview")}
+                  </button>
+                </div>
+              )}
               <div className="mt-14">
                 <PostVizFeedbackPrompt />
               </div>

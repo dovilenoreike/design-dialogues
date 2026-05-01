@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { DesignSelection, GenerationState, UploadType } from "@/types/design-state";
 import { initialGenerationState } from "@/types/design-state";
 import { loadMaterialImagesWithOverrides, type MaterialImageWithMeta, GEN_DEBUG } from "@/lib/material-generation-utils";
+import { surfaces } from "@/data/rooms/surfaces";
 import { supabase } from "@/integrations/supabase/client";
 import { API_CONFIG } from "@/config/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,24 @@ import { captureError } from "@/lib/sentry";
 import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
+
+/**
+ * Builds the prompt label for a dedup group of surfaces.
+ * - All-front group + only 1 explicit front type chosen → "Cabinets" (AI won't invent non-existent surfaces)
+ * - All-front group + 2+ explicit front types → list only explicitly chosen surface labels
+ * - Mixed/single → join all surface labels
+ */
+function frontSurfaceLabel(
+  categories: string[],
+  explicitSurfaces: string[],
+  allSurfaces: string[],
+  explicitFrontCount: number,
+): string {
+  const allFront = categories.every(c => c === "front");
+  if (!allFront) return allSurfaces.join(", ");
+  if (explicitFrontCount <= 1) return "Cabinets";
+  return explicitSurfaces.length > 0 ? explicitSurfaces.join(", ") : allSurfaces[0];
+}
 
 export interface UseGenerationStateParams {
   design: DesignSelection;
@@ -445,12 +464,19 @@ export function useGenerationState({
         const fd = design.freestyleDescription?.trim() || null;
 
         // Load texture images — same dedup logic as sketch/photo path
-        const materialImagesWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots);
-        type FpDedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[] };
+        const fpExplicitKeys = new Set(Object.keys(materialOverrides));
+        const materialImagesWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots, fpExplicitKeys);
+        const fpExplicitFrontCount = Object.keys(materialOverrides).filter(k => surfaces[k]?.category === "front").length;
+        type FpDedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[]; explicitSurfaces: string[] };
         const fpDedupMap: Record<string, FpDedupEntry> = {};
         for (const m of materialImagesWithMeta) {
-          if (fpDedupMap[m.matId]) { fpDedupMap[m.matId].surfaces.push(m.purpose); fpDedupMap[m.matId].categories.push(m.category); }
-          else { fpDedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category] }; }
+          if (fpDedupMap[m.matId]) {
+            fpDedupMap[m.matId].surfaces.push(m.purpose);
+            fpDedupMap[m.matId].categories.push(m.category);
+            if (m.isExplicit) fpDedupMap[m.matId].explicitSurfaces.push(m.purpose);
+          } else {
+            fpDedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category], explicitSurfaces: m.isExplicit ? [m.purpose] : [] };
+          }
         }
         const dedupedMaterials = Object.values(fpDedupMap);
 
@@ -461,9 +487,9 @@ export function useGenerationState({
           const matInstr = dedupedMaterials
             .map((m, i) => {
               const texture = m.texturePrompt;
-              const allFront = m.categories.every(c => c === "front");
-              const label = allFront ? "Cabinets" : m.surfaces.join(", ");
-              return (m.surfaces.length === 1 || allFront)
+              const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, fpExplicitFrontCount);
+              const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+              return isSingle
                 ? `- Image ${i + 2} (${texture}): apply to ${label}.`
                 : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
             })
@@ -492,17 +518,20 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from render service");
       } else if (isGeminiPath) {
-        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots);
+        const geminiExplicitKeys = new Set(Object.keys(materialOverrides));
+        const geminiExplicitFrontCount = Object.keys(materialOverrides).filter(k => surfaces[k]?.category === "front").length;
+        const materialImagesWithMeta = await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots, geminiExplicitKeys);
 
         // Deduplicate by material ID, tracking all surfaces each material covers
-        type DedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[] };
+        type DedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[]; explicitSurfaces: string[] };
         const dedupMap: Record<string, DedupEntry> = {};
         for (const m of materialImagesWithMeta) {
           if (dedupMap[m.matId]) {
             dedupMap[m.matId].surfaces.push(m.purpose);
             dedupMap[m.matId].categories.push(m.category);
+            if (m.isExplicit) dedupMap[m.matId].explicitSurfaces.push(m.purpose);
           } else {
-            dedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category] };
+            dedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category], explicitSurfaces: m.isExplicit ? [m.purpose] : [] };
           }
         }
         const dedupedMaterials = Object.values(dedupMap);
@@ -510,9 +539,9 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         const matInstr = dedupedMaterials
           .map((m, i) => {
             const texture = m.texturePrompt;
-            const allFront = m.categories.every(c => c === "front");
-            const label = allFront ? "Cabinets" : m.surfaces.join(", ");
-            return (m.surfaces.length === 1 || allFront)
+            const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, geminiExplicitFrontCount);
+            const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            return isSingle
               ? `- Image ${i + 2} (${texture}): apply to ${label}.`
               : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
           })
@@ -731,12 +760,13 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       const fd = design.freestyleDescription?.trim() || null;
 
       // Load texture images — same dedup logic as sketch/photo path
+      const clayExplicitFrontCount = Object.keys(materialOverrides).filter(k => surfaces[k]?.category === "front").length;
       const clayMaterialsWithMeta = fd ? [] : await loadMaterialImagesWithOverrides(materialOverrides, excludedSlots);
-      type ClayDedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[] };
+      type ClayDedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[]; explicitSurfaces: string[] };
       const clayDedupMap: Record<string, ClayDedupEntry> = {};
       for (const m of clayMaterialsWithMeta) {
-        if (clayDedupMap[m.matId]) { clayDedupMap[m.matId].surfaces.push(m.purpose); clayDedupMap[m.matId].categories.push(m.category); }
-        else { clayDedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category] }; }
+        if (clayDedupMap[m.matId]) { clayDedupMap[m.matId].surfaces.push(m.purpose); clayDedupMap[m.matId].categories.push(m.category); if (m.isExplicit) clayDedupMap[m.matId].explicitSurfaces.push(m.purpose); }
+        else { clayDedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category], explicitSurfaces: m.isExplicit ? [m.purpose] : [] }; }
       }
       const clayDedupedMaterials = Object.values(clayDedupMap);
 
@@ -747,9 +777,9 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         const matInstr = clayDedupedMaterials
           .map((m, i) => {
             const texture = m.texturePrompt;
-            const allFront = m.categories.every(c => c === "front");
-            const label = allFront ? "Cabinets" : m.surfaces.join(", ");
-            return (m.surfaces.length === 1 || allFront)
+            const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, clayExplicitFrontCount);
+            const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            return isSingle
               ? `- Image ${i + 2} (${texture}): apply to ${label}.`
               : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
           })
