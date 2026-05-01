@@ -705,6 +705,8 @@ export default function DesignView() {
               onClearAll={handleClearAll}
               onScrollToPicker={scrollToPicker}
               requiredMissing={requiredMissing}
+              hasIncompatibleSlots={hasIncompatibleSlots}
+              onRequestReview={() => setShowReviewSheet(true)}
               t={t}
               language={language}
             />
@@ -715,7 +717,7 @@ export default function DesignView() {
       {/* RIGHT (desktop) / BOTTOM (mobile): shared inline picker */}
       <div
         ref={pickerRef}
-        className={`${activeSlot ? "h-[320px]" : "h-auto"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden mt-3 lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50`}
+        className={`${activeSlot ? "h-[320px] mt-1" : "h-auto mt-3"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
         onClick={(e) => e.stopPropagation()}
       >
