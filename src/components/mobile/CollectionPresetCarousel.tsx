@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCollectionPresets } from "@/hooks/useCollectionPresets";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
+import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
+import type { MaterialRole } from "@/types/material-types";
 
 interface CollectionPresetCarouselProps {
   /** Room category from design state, e.g. "Kitchen", "Living Room" */
@@ -27,6 +30,8 @@ export default function CollectionPresetCarousel({
   variant = "overlay",
 }: CollectionPresetCarouselProps) {
   const { language } = useLanguage();
+  const { activeShowroom } = useShowroom();
+  const { loading: graphLoading } = useGraphMaterials();
 
   // Normalise "Living Room" → "living-room" to match DB values
   const category = roomCategory
@@ -39,18 +44,44 @@ export default function CollectionPresetCarousel({
     try { return parseInt(localStorage.getItem(indexKey) ?? "0") || 0; } catch { return 0; }
   });
 
+  // Filter presets to those compatible with the active showroom.
+  // Rule: every material whose role is covered by the showroom must be in that showroom's stock.
+  // Materials in roles the showroom doesn't cover (e.g. worktops for a floor-only showroom) are ignored.
+  const filteredPresets = useMemo(() => {
+    if (!activeShowroom || graphLoading) return presets;
+    return presets.filter((preset) =>
+      Object.values(preset.materials).every((code) => {
+        const mat = getMaterialByCode(code);
+        if (!mat) return true; // unknown material — allow rather than hide
+        const showroomCoversRole = mat.role.some((r) =>
+          activeShowroom.surfaceCategories.includes(r as MaterialRole)
+        );
+        if (!showroomCoversRole) return true; // role not covered by this showroom — ignore
+        return mat.showroomIds.includes(activeShowroom.id);
+      })
+    );
+  }, [presets, activeShowroom, graphLoading]);
+
   const applyAt = (next: number) => {
     setIndex(next);
     try { localStorage.setItem(indexKey, String(next)); } catch {}
-    onApplyPreset(presets[next].materials, presets[next].image_url ?? null);
+    onApplyPreset(filteredPresets[next].materials, filteredPresets[next].image_url ?? null);
   };
 
-  // Auto-apply the first preset when presets load and user has no materials yet
+  // Auto-apply the first preset when presets load and user has no materials yet.
+  // Wait for graph to load too when in showroom mode so filtering is accurate.
   useEffect(() => {
-    if (!loading && presets.length > 0 && !hasExistingMaterials) {
+    if (!loading && !graphLoading && filteredPresets.length > 0 && !hasExistingMaterials) {
       applyAt(0);
     }
-  }, [loading, presets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, graphLoading, filteredPresets]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clamp index if filteredPresets shrinks (e.g. after graph loads and filters apply)
+  useEffect(() => {
+    if (filteredPresets.length > 0 && index >= filteredPresets.length) {
+      setIndex(0);
+    }
+  }, [filteredPresets.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset index when category changes
   useEffect(() => {
@@ -62,16 +93,17 @@ export default function CollectionPresetCarousel({
     }
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading || presets.length === 0) return null;
+  // Hide while loading, or while graph is still loading in showroom mode (can't filter yet)
+  if (loading || (activeShowroom && graphLoading) || filteredPresets.length === 0) return null;
 
-  const preset = presets[index];
+  const preset = filteredPresets[index];
   const presetName = (language === "lt" ? preset.name?.lt : preset.name?.en) ?? preset.id;
   const name = isModified
     ? (language === "lt" ? "Tavo derinys" : "Your collection")
     : presetName;
 
-  const goPrev = () => applyAt((index - 1 + presets.length) % presets.length);
-  const goNext = () => applyAt((index + 1) % presets.length);
+  const goPrev = () => applyAt((index - 1 + filteredPresets.length) % filteredPresets.length);
+  const goNext = () => applyAt((index + 1) % filteredPresets.length);
 
   if (variant === "header") {
     return (
