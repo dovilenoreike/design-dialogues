@@ -338,6 +338,10 @@ export default function DesignView() {
         return { ...prev, [slotKey]: archetypeId };
       });
       setUserPickedSlots((prev) => new Set([...prev, slotKey]));
+      // Ensure the flatlay piece is visible — if the slot is optional and not yet on the canvas, enable it now.
+      if (OPTIONAL_SLOTS.includes(slotKey)) {
+        setEnabledOptionalSlots((prev) => prev.has(slotKey) ? prev : new Set([...prev, slotKey]));
+      }
       const pks = slotSurfaces[slotKey] ?? [SLOT_TO_PALETTE_KEY[slotKey]].filter(Boolean) as string[];
       const matCode = resolvedCode
         ?? showroomMaterials.find((m) => m.archetypeId === archetypeId && m.role.includes(SLOT_KEY_TO_ROLE[slotKey]))?.technicalCode
@@ -528,6 +532,17 @@ export default function DesignView() {
     if (!slotSelections["worktops"]) return "worktops";
     return null;
   }, [slotSelections]);
+
+  // Auto-advance to visualization when the last required slot is filled via the picker.
+  // This prevents the user from getting stuck after following the Visualise → fill materials flow.
+  const prevRequiredMissingRef = useRef<SlotKey | null>(requiredMissing);
+  useEffect(() => {
+    const prev = prevRequiredMissingRef.current;
+    prevRequiredMissingRef.current = requiredMissing;
+    if (prev !== null && requiredMissing === null && subTab === "konceptas") {
+      setSubTab("vizualas");
+    }
+  }, [requiredMissing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Compatibility check for the picker idle state
   const hasIncompatibleSlots = useMemo(() => {
