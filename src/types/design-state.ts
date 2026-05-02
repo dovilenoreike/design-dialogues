@@ -3,9 +3,10 @@
  * Groups related state for cleaner component structure
  */
 
-import { DEFAULT_STYLE, DEFAULT_ROOM } from "@/data/visualisations";
-
 export type UploadType = "photo" | "sketch" | "floorplan";
+
+const DEFAULT_STYLE = "scandinavian-minimalism";
+const DEFAULT_ROOM = "Kitchen";
 
 export interface DesignSelection {
   uploadedImages: Record<string, string | null>;  // Per-room uploaded images, keyed by room name

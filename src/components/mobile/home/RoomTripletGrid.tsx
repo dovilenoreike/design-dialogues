@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getVisualization } from "@/data/visualisations";
 
 const ROOM_CONFIG = [
   { slug: "kitchen", displayName: "Kitchen", translationKey: "space.kitchen" },
@@ -25,17 +24,12 @@ export default function RoomTripletGrid({ onRoomSelect }: RoomTripletGridProps) 
       .filter((room) => room.displayName !== currentRoom)
       .map((room) => {
         const generatedImage = generation.generatedImages[room.displayName];
-        const visualizationImage = getVisualization(
-          null,
-          room.displayName,
-          design.selectedStyle
-        );
         return {
           ...room,
-          src: generatedImage || visualizationImage,
+          src: generatedImage || "/placeholders/clay-render.webp",
         };
       });
-  }, [currentRoom, design.selectedStyle, generation.generatedImages]);
+  }, [currentRoom, generation.generatedImages]);
 
   if (triplets.length === 0) return null;
 

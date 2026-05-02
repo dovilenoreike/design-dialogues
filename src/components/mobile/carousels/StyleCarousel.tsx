@@ -2,7 +2,6 @@ import { Check } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { styles, getStyleImage } from "@/data/styles";
-import { getVisualization } from "@/data/visualisations";
 
 export default function StyleCarousel() {
   const { design, handleSelectStyle } = useDesign();
@@ -18,9 +17,7 @@ export default function StyleCarousel() {
       <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide">
         {styles.map((style) => {
           const isSelected = selectedStyle === style.id;
-          // Use style ID for visualization lookup (folder structure is by style)
-          const dynamicImageUrl = getVisualization(null, selectedCategory, style.id);
-          const fallbackImageUrl = getStyleImage(style.id);
+          const imageUrl = getStyleImage(style.id);
 
           return (
             <button
@@ -36,14 +33,9 @@ export default function StyleCarousel() {
                 }`}
               >
                 <img
-                  src={dynamicImageUrl}
+                  src={imageUrl}
                   alt={t(`style.${style.id}`) || style.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    if (fallbackImageUrl) {
-                      e.currentTarget.src = fallbackImageUrl;
-                    }
-                  }}
                 />
                 {isSelected && (
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">

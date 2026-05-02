@@ -1,5 +1,4 @@
 import React from "react";
-import { getVisualization, DEFAULT_PALETTE, DEFAULT_STYLE } from "@/data/visualisations";
 
 interface StageCarouselProps {
   prevImage: string;
@@ -26,7 +25,7 @@ export default function StageCarousel({
   roomName,
   hasUserImage,
 }: StageCarouselProps) {
-  const fallbackImage = getVisualization(DEFAULT_PALETTE, roomName, DEFAULT_STYLE);
+  const fallbackImage = "/placeholders/clay-render.webp";
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     if (e.currentTarget.src !== fallbackImage) e.currentTarget.src = fallbackImage;
   };
