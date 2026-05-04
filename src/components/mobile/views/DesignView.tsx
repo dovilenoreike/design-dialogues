@@ -533,16 +533,6 @@ export default function DesignView() {
     return null;
   }, [slotSelections]);
 
-  // Auto-advance to visualization when the last required slot is filled via the picker.
-  // This prevents the user from getting stuck after following the Visualise → fill materials flow.
-  const prevRequiredMissingRef = useRef<SlotKey | null>(requiredMissing);
-  useEffect(() => {
-    const prev = prevRequiredMissingRef.current;
-    prevRequiredMissingRef.current = requiredMissing;
-    if (prev !== null && requiredMissing === null && subTab === "konceptas") {
-      setSubTab("vizualas");
-    }
-  }, [requiredMissing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Compatibility check for the picker idle state
   const hasIncompatibleSlots = useMemo(() => {
