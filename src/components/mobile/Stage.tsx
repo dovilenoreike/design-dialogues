@@ -427,7 +427,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
       )}
 
       {/* AI concept watermark */}
-      <span className="absolute bottom-1 right-1.5 text-[8px] font-medium tracking-[0.2em] uppercase text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none pointer-events-none">
+      <span className="absolute top-1 left-1.5 text-[8px] font-medium tracking-[0.2em] uppercase text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] select-none pointer-events-none">
         {t("result.visualizationDisclaimer")}
       </span>
 
