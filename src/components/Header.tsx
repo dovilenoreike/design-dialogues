@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, Loader2, Share2, Sparkles, ArrowLeft, LogOut } from "lucide-react";
+import { Menu, Plus, Loader2, Share2, Sparkles, ArrowLeft, LogOut, ChevronDown } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -27,6 +27,8 @@ import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
   const [showroomSheetOpen, setShowroomSheetOpen] = useState(false);
@@ -115,7 +117,7 @@ const Header = () => {
     }
   };
 
-  const DESKTOP_TABS: BottomTab[] = ["design", "specs", "budget", "plan"];
+  const DESKTOP_TABS: BottomTab[] = ["design", "budget", "plan"];
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
@@ -124,6 +126,16 @@ const Header = () => {
       { label: t("nav.partner"), href: "/partner" },
     ] : []),
   ];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (aboutRef.current && !aboutRef.current.contains(e.target as Node)) {
+        setAboutOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleMobileFeedback = () => {
     setIsOpen(false);
@@ -326,6 +338,33 @@ const Header = () => {
             
             {/* Right: Utilities */}
             <div className="justify-self-end flex items-center gap-4">
+              {NAV_ITEMS.length > 0 && (
+                <div ref={aboutRef} className="relative">
+                  <button
+                    onClick={() => setAboutOpen(v => !v)}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {t("nav.about")}
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${aboutOpen ? "rotate-180" : ""}`} strokeWidth={1.8} />
+                  </button>
+                  {aboutOpen && (
+                    <div
+                      className="absolute right-0 top-full mt-2 w-44 rounded-xl bg-background border border-border shadow-lg py-1 z-50"
+                    >
+                      {NAV_ITEMS.map((item) => (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          onClick={() => setAboutOpen(false)}
+                          className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <LanguageSelector />
               <FeedbackTrigger onClick={() => setFeedbackOpen(true)} />
               {designContext && (
