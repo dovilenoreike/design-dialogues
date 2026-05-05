@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, X, Sparkles, Layers, Search, Camera, ArrowLeftRight } from "lucide-react";
+import { RotateCcw, Plus, Check, CheckCheck, AlertTriangle, X, Sparkles, Layers, Search, Camera, ArrowLeftRight } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { useGraphMaterials, getMaterialByCode, getCachedImageUrl } from "@/hooks/useGraphMaterials";
+import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
 export const SLOT_TO_PALETTE_KEY: Record<SlotKey, string | null> = {
@@ -79,6 +80,8 @@ export function InfoRows({ t }: { t: (key: string) => string }) {
     <div className="flex flex-col gap-4">
       <InfoRow icon={<Plus className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoStep1Title")} desc={t("moodboard.infoStep1Desc")} />
       <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
+      <InfoRow icon={<CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoDoubleCheckTitle")} desc={t("moodboard.infoDoubleCheckDesc")} />
+      <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoWoodWarningTitle")} desc={t("moodboard.infoWoodWarningDesc")} />
       <InfoRow icon={<Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} />} title={t("moodboard.infoSparklesTitle")} desc={t("moodboard.infoSparklesDesc")} />
       <InfoRow icon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoUndoTitle")} desc={t("moodboard.infoUndoDesc")} />
       <div style={{ height: "0.5px", backgroundColor: "rgba(0,0,0,0.08)" }} />
@@ -93,6 +96,8 @@ export function PhotoInfoRows({ t }: { t: (key: string) => string }) {
     <div className="flex flex-col gap-4">
       <InfoRow icon={<Plus className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoStep1Title")} desc={t("moodboard.infoStep1Desc")} />
       <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
+      <InfoRow icon={<CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoDoubleCheckTitle")} desc={t("moodboard.infoDoubleCheckDesc")} />
+      <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoWoodWarningTitle")} desc={t("moodboard.infoWoodWarningDesc")} />
       <InfoRow icon={<Camera className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoUploadTitle")} desc={t("moodboard.photoInfoUploadDesc")} />
       <InfoRow icon={<ArrowLeftRight className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoConceptTitle")} desc={t("moodboard.photoInfoConceptDesc")} />
       <InfoRow icon={<Search className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoSearchTitle")} desc={t("moodboard.infoSearchDesc")} />
@@ -176,7 +181,7 @@ export default function KonceptasView({
   const { activeShowroom } = useShowroom();
   const lang = language as "en" | "lt";
 
-  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers } = useGraphMaterials();
+  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners } = useGraphMaterials();
 
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
@@ -248,7 +253,13 @@ export default function KonceptasView({
           const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && otherCodes.length > 0;
           const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
           const showVerified = isCompatible === true;
+          const showDoubleVerified = showVerified && otherCodes.length >= 2 && isCompatibleWithEvery(currentMatId, otherCodes);
           const showNudge = isCompatible === false && !!graphBestCode;
+          const sameRoleCodes = (Object.keys(slotSurfaces) as SlotKey[])
+            .filter(k => k !== piece.slot && SLOT_KEY_TO_ROLE[k] === slotRole)
+            .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
+            .filter((c): c is string => !!c);
+          const showWoodWarning = showIndicator && getUnapprovedWoodPartners(currentMatId, sameRoleCodes).length > 0;
           const isActive = piece.slot === activeSlot;
 
           return (
@@ -340,9 +351,41 @@ export default function KonceptasView({
                   <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                 </button>
               )}
-              {showVerified && (
-                <div className="absolute top-1 left-1" style={{ zIndex: 1 }}>
-                  <Check className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.5 }} strokeWidth={2} />
+              {(showVerified || (showWoodWarning && !showNudge)) && (
+                <div className="absolute top-1 left-1 flex items-center gap-0.5" style={{ zIndex: 1 }}>
+                  {showVerified && (
+                    <HybridTooltip
+                      side="bottom"
+                      content={
+                        <div className="max-w-[180px]">
+                          <p className="font-medium text-xs">{t(showDoubleVerified ? "moodboard.infoDoubleCheckTitle" : "moodboard.infoCheckTitle")}</p>
+                          <p className="text-xs opacity-75 mt-0.5">{t(showDoubleVerified ? "moodboard.infoDoubleCheckDesc" : "moodboard.infoCheckDesc")}</p>
+                        </div>
+                      }
+                    >
+                      <button onClick={(e) => e.stopPropagation()} className="flex items-center">
+                        {showDoubleVerified
+                          ? <CheckCheck className="w-3.5 h-3.5" style={{ color: '#ffffff', opacity: 0.65 }} strokeWidth={2} />
+                          : <Check className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.5 }} strokeWidth={2} />
+                        }
+                      </button>
+                    </HybridTooltip>
+                  )}
+                  {showWoodWarning && !showNudge && (
+                    <HybridTooltip
+                      side="bottom"
+                      content={
+                        <div className="max-w-[180px]">
+                          <p className="font-medium text-xs">{t("moodboard.infoWoodWarningTitle")}</p>
+                          <p className="text-xs opacity-75 mt-0.5">{t("moodboard.infoWoodWarningDesc")}</p>
+                        </div>
+                      }
+                    >
+                      <button onClick={(e) => e.stopPropagation()} className="flex items-center">
+                        <AlertTriangle className="w-3 h-3" style={{ color: '#ca8a04', opacity: 0.85 }} strokeWidth={2} />
+                      </button>
+                    </HybridTooltip>
+                  )}
                 </div>
               )}
               {showNudge && (

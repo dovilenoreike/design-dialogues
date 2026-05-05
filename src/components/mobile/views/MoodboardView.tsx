@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, type ReactNod
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search, Settings } from "lucide-react";
+import { RotateCcw, Plus, Check, CheckCheck, X, ArrowLeft, Sparkles, Camera, Info, Layers, Search, Settings } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -134,6 +134,7 @@ function InfoRows({ t }: { t: (key: string) => string }) {
     <div className="flex flex-col gap-4">
       <InfoRow icon={<Plus className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoStep1Title")} desc={t("moodboard.infoStep1Desc")} />
       <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
+      <InfoRow icon={<CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoDoubleCheckTitle")} desc={t("moodboard.infoDoubleCheckDesc")} />
       <InfoRow icon={<Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} />} title={t("moodboard.infoSparklesTitle")} desc={t("moodboard.infoSparklesDesc")} />
       <InfoRow icon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoUndoTitle")} desc={t("moodboard.infoUndoDesc")} />
       <div style={{ height: "0.5px", backgroundColor: "rgba(0,0,0,0.08)" }} />

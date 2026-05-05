@@ -200,7 +200,24 @@ export function useGraphMaterials() {
     return countCompatible(slotCode, otherCodes, pairs) >= threshold;
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers };
+  function isCompatibleWithEvery(slotCode: string, otherCodes: string[]): boolean {
+    if (!_cached || otherCodes.length === 0) return false;
+    const { pairs } = _cached;
+    return isCompatibleWithAll(slotCode, otherCodes, pairs);
+  }
+
+  function getUnapprovedWoodPartners(slotCode: string, otherCodes: string[]): string[] {
+    if (!_cached) return [];
+    const { pairs, byCode } = _cached;
+    const mat = byCode.get(slotCode);
+    if (mat?.texture !== 'wood') return [];
+    return otherCodes.filter(c => {
+      const other = byCode.get(c);
+      return other?.texture === 'wood' && !pairs.has(pairKey(slotCode, c));
+    });
+  }
+
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

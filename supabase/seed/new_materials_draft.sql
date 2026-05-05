@@ -132,3 +132,106 @@ UPDATE materials SET
   texture_prompt = 'Very dark charcoal oak planks, subtle grain, matte.',
   image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_burned.webp'
 WHERE technical_code = 'aspecta-burned';
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- NEW MATERIALS — 2026-05-04
+-- Upload webp files to: material-images/SM-art/
+-- ⚠️  w-core-9684-urban: unknown brand/showroom — verify before running
+-- ════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmth, pattern, texture_prompt, image_url, showroom_ids, material_type, tier, chroma, hue_angle) VALUES
+
+-- ── SM-art Atom plain fronts ──────────────────────────────────────────────────
+
+(gen_random_uuid(), 'sm-art-0010-caolino-atom',
+ '{"en":"Caolino Atom","lt":"Caolino Atom"}',
+ ARRAY['front'], 'plain', 88, 0.08, 0,
+ 'Very light warm off-white plain surface, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/SM-art/SM_art_0010_Caolino_Atom.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 4, NULL),
+
+(gen_random_uuid(), 'sm-art-0014-gobi-atom',
+ '{"en":"Gobi Atom","lt":"Gobi Atom"}',
+ ARRAY['front'], 'plain', 72, -0.02, 0,
+ 'Light neutral grey-beige plain surface, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/SM-art/SM_art_0014_Gobi_Atom.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 5, NULL),
+
+(gen_random_uuid(), 'sm-art-3096-bianco-atom',
+ '{"en":"Bianco Atom","lt":"Bianco Atom"}',
+ ARRAY['front'], 'plain', 96, 0.0, 0,
+ 'Near pure white plain surface, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/SM-art/SM_art_3096_Bianco_Atom.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 2, NULL),
+
+-- ── SM-art Intagli / SoHo wood fronts ────────────────────────────────────────
+
+(gen_random_uuid(), 'sm-art-3190-nero-intagli',
+ '{"en":"Nero Intagli","lt":"Nero Intagli"}',
+ ARRAY['front'], 'wood', 5, -0.05, 25,
+ 'Very dark near-black wood with clear vertical grain, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/SM-art/SM_art_3190_Nero_Intagli.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 3, NULL),
+
+(gen_random_uuid(), 'sm-art-s201-grand-soho',
+ '{"en":"Grand SoHo","lt":"Grand SoHo"}',
+ ARRAY['front'], 'wood', 68, 0.10, 28,
+ 'Light sandy warm oak with clear vertical grain, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/SM-art/SM_art_S201_Grand_SoHo.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 8, 35),
+
+-- ── w-core (unknown brand — verify showroom_ids and role before running) ──────
+
+(gen_random_uuid(), 'w-core-9684-urban',
+ '{"en":"Urban","lt":"Urban"}',
+ ARRAY['front'], 'wood', 8, 0.05, 30,
+ 'Very dark warm espresso wood with broad vertical stripe grain, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/W-core/w-core-9684-urban.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 5, 30);
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- NEW FLOOR MATERIALS — 2026-05-04
+-- Upload webp files to: material-images/Aspecta/
+-- ════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmth, pattern, texture_prompt, image_url, showroom_ids, material_type, tier, chroma, hue_angle, layout_pattern) VALUES
+
+(gen_random_uuid(), 'aspecta-como',
+ '{"en":"Como","lt":"Como"}',
+ ARRAY['floor'], 'wood', 70, 0.05, 30,
+ 'Light greige oak in chevron pattern, clear grain, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta-como.webp',
+ ARRAY['solido-grindys'], 'Vinyl', 'optimal',
+ 6, 40, 'chevron'),
+
+(gen_random_uuid(), 'aspecta-pecan',
+ '{"en":"Pecan","lt":"Pecan"}',
+ ARRAY['floor'], 'wood', 38, 0.25, 35,
+ 'Medium-dark warm brown oak with rich grain and knots, plank layout, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta-pecan.webp',
+ ARRAY['solido-grindys'], 'Vinyl', 'optimal',
+ 12, 30, 'plank');
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- NEW MATERIAL — 2026-05-04
+-- Upload to: material-images/Skin/
+-- ════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmth, pattern, texture_prompt, image_url, showroom_ids, material_type, tier, chroma, hue_angle) VALUES
+
+(gen_random_uuid(), 'skin-2451-carbon-fumo',
+ '{"en":"Carbon Fumo","lt":"Carbon Fumo"}',
+ ARRAY['front'], 'wood', 8, 0.0, 22,
+ 'Very dark charcoal wood with clear vertical grain, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Skin/skin-2451-carbon-fumo.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 3, NULL);

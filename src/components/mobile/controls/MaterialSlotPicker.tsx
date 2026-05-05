@@ -97,11 +97,18 @@ export default function MaterialSlotPicker({
   // Reset internal state when slot changes
   useEffect(() => {
     setActiveArchetypeId(null);
-    setActiveWarmthGroup(null);
     setSearchOpen(false);
     setSearchQuery("");
     setShowRequestDialog(false);
-  }, [slot]);
+    // Auto-expand the warmth group row if the selected material lives in Row 3,
+    // so the current selection is always visible when the picker reopens.
+    if (selectedMaterialCode) {
+      const mat = getMaterialByCode(selectedMaterialCode);
+      setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
+    } else {
+      setActiveWarmthGroup(null);
+    }
+  }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
   const availableWithImages = useMemo(() => {
