@@ -1,4 +1,4 @@
-import { Image, ClipboardList, Calculator, Calendar } from "lucide-react";
+import { Image, Calculator, Calendar } from "lucide-react";
 import { useDesign, BottomTab } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -9,7 +9,6 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { id: "design", icon: Image },
-  { id: "specs", icon: ClipboardList },
   { id: "budget", icon: Calculator },
   { id: "plan", icon: Calendar },
 ];

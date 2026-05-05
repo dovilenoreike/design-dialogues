@@ -11,13 +11,14 @@ import { UploadDialog } from "../dialogs/UploadDialog";
 import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 import Stage from "../Stage";
 import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows, PhotoInfoRows } from "./KonceptasView";
+import SpecsView from "./SpecsView";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
-import { useGraphMaterials, getMaterialByCode, getPairCountByCode } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 
 // Static role → primary palette key, used only for the ?material= URL param (runs once on mount)
@@ -49,7 +50,12 @@ export default function DesignView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
 
-  const [subTab, setSubTab] = useState<"vizualas" | "konceptas">("konceptas");
+  const [subTab, setSubTab] = useState<"konceptas" | "vizualas" | "specs">("konceptas");
+
+  const handleSubTabChange = (tab: "konceptas" | "vizualas" | "specs") => {
+    setSubTab(tab);
+    if (tab !== "konceptas") setActiveSlot(null);
+  };
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
@@ -316,6 +322,16 @@ export default function DesignView() {
       .filter((c): c is string => !!c);
   }, [activeSlot, materialOverrides]);
 
+  // Same-role codes — used to suppress wood-warning candidates from the recommended row
+  const sameRoleCodesForPicker = useMemo(() => {
+    if (!activeSlot) return [];
+    const activeRole = SLOT_KEY_TO_ROLE[activeSlot];
+    return (Object.entries(SLOT_TO_PALETTE_KEY) as [SlotKey, string | null][])
+      .filter(([k]) => k !== activeSlot && SLOT_KEY_TO_ROLE[k] === activeRole)
+      .map(([, pk]) => (pk ? materialOverrides[pk] : null))
+      .filter((c): c is string => !!c);
+  }, [activeSlot, materialOverrides]);
+
   // Currently selected material code for the active slot
   const activeSlotMaterialCode = useMemo(() => {
     const pk = activeSlot ? SLOT_TO_PALETTE_KEY[activeSlot] : null;
@@ -549,8 +565,30 @@ export default function DesignView() {
     });
   }, [graphLoading, allSlotsFilled, activeSlots, materialOverrides, isCompatibleWithOthers]);
 
+  // True when every non-accent active slot with a material is VV (matches all other non-accent codes)
+  const allNonAccentsVerified = useMemo(() => {
+    if (graphLoading) return false;
+    const nonAccentSlots = activeSlots.filter(k => k !== "accents");
+    const filledSlots = nonAccentSlots.filter(k => {
+      const pk = SLOT_TO_PALETTE_KEY[k];
+      return pk ? !!materialOverrides[pk] : false;
+    });
+    if (filledSlots.length < 2) return false;
+    return filledSlots.every(k => {
+      const pk = SLOT_TO_PALETTE_KEY[k];
+      const code = pk ? materialOverrides[pk] : null;
+      if (!code) return false;
+      const compatCodes = filledSlots
+        .filter(ok => ok !== k)
+        .map(ok => { const p = SLOT_TO_PALETTE_KEY[ok]; return p ? (materialOverrides[p] ?? null) : null; })
+        .filter((c): c is string => !!c);
+      return matchesAllOtherCodes(code, compatCodes);
+    });
+  }, [graphLoading, activeSlots, materialOverrides]);
+
   const reviewMaterials: ReviewMaterial[] = useMemo(() => {
     if (!allSlotsFilled) return [];
+    const nonAccentSlots = activeSlots.filter(k => k !== "accents");
     return activeSlots.map((slotKey) => {
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       const code = pk ? (materialOverrides[pk] ?? "") : "";
@@ -560,7 +598,15 @@ export default function DesignView() {
         .map((k) => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
         .filter((c): c is string => !!c);
       const compatible = !code || others.length === 0 ? true : isCompatibleWithOthers(code, others);
-      return { slot: slotKey, name: mat?.name?.en ?? code, code, compatible };
+      // VV: exclude accents from compatCodes for non-accent slots (mirrors flatlay logic)
+      const compatCodes = slotKey === "accents"
+        ? others
+        : nonAccentSlots
+            .filter(k => k !== slotKey)
+            .map(k => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
+            .filter((c): c is string => !!c);
+      const matchesAll = compatible && compatCodes.length > 0 && matchesAllOtherCodes(code, compatCodes);
+      return { slot: slotKey, name: mat?.name?.en ?? code, code, compatible, matchesAll };
     });
   }, [allSlotsFilled, activeSlots, materialOverrides, isCompatibleWithOthers]);
 
@@ -653,23 +699,25 @@ export default function DesignView() {
 
           {/* Sub-tab switcher */}
           <div className="flex gap-5 pb-3">
-            {(["konceptas", "vizualas"] as const).map((tab) => (
+            {(["konceptas", "vizualas", "specs"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setSubTab(tab)}
+                onClick={() => handleSubTabChange(tab)}
                 className={`text-[11px] font-medium tracking-[0.06em] uppercase pb-1 transition-colors ${
                   subTab === tab
                     ? "text-foreground border-b border-foreground"
                     : "text-foreground/40 hover:text-foreground/60"
                 }`}
               >
-                {tab === "vizualas" ? t("tab.vizualas") : t("tab.konceptas")}
+                {t(`tab.${tab}`)}
               </button>
             ))}
           </div>
 
           {/* Sub-tab content */}
-          {subTab === "vizualas" ? (
+          {subTab === "specs" ? (
+            <SpecsView />
+          ) : subTab === "vizualas" ? (
             <div>
               <div className="relative w-full aspect-square">
                 <Stage
@@ -678,10 +726,10 @@ export default function DesignView() {
                     setActiveSlot(slotKey as SlotKey);
                     scrollToPicker();
                   }}
-                  onGoToMaterials={() => setSubTab("konceptas")}
+                  onGoToMaterials={() => handleSubTabChange("konceptas")}
                   onNudgeMissing={handleNudgeMissing}
                   requiredMissing={requiredMissing}
-                  hasIncompatibleSlots={hasIncompatibleSlots}
+                  allNonAccentsVerified={allNonAccentsVerified}
                   onRequestReview={() => setShowReviewSheet(true)}
                   presetImageUrl={presetImageUrl}
                   collectionSlots={collectionSlots}
@@ -695,7 +743,7 @@ export default function DesignView() {
                   })}
                 />
               </div>
-              {hasIncompatibleSlots && (
+              {!allNonAccentsVerified && (
                 <div className="flex justify-center mt-[40px] pb-1">
                   <button
                     onClick={() => setShowReviewSheet(true)}
@@ -720,7 +768,7 @@ export default function DesignView() {
               addableCategories={addableCategories}
               onAddCategory={handleAddCategory}
               handleSlotClear={handleSlotClear}
-              onVisualize={() => setSubTab("vizualas")}
+              onVisualize={() => handleSubTabChange("vizualas")}
               onClearAll={handleClearAll}
               onScrollToPicker={scrollToPicker}
               requiredMissing={requiredMissing}
@@ -784,11 +832,11 @@ export default function DesignView() {
                             }
                           }
                         }}
-                        className="flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium tracking-[0.03em] active:scale-95 transition-transform"
+                        className="flex items-center gap-1 h-6 px-2.5 rounded-full text-[10px] font-medium tracking-[0.03em] active:scale-95 transition-all"
                         style={{
-                          backgroundColor: isActive ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.04)",
-                          color: isActive ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.5)",
-                          border: isActive ? "none" : `0.5px dashed rgba(0,0,0,${otherSlot ? "0.12" : "0.2"})`,
+                          backgroundColor: isActive ? "#647d75" : "rgba(0,0,0,0.04)",
+                          color: isActive ? "#ffffff" : "rgba(0,0,0,0.45)",
+                          border: isActive ? "none" : `0.5px dashed rgba(0,0,0,${otherSlot ? "0.12" : "0.18"})`,
                           opacity: !isActive && otherSlot ? 0.5 : 1,
                         }}
                       >
@@ -810,6 +858,7 @@ export default function DesignView() {
               onClose={() => {}}
               onClear={handleSlotClear}
               otherMaterialCodes={otherMaterialCodesForPicker}
+              sameRoleMaterialCodes={sameRoleCodesForPicker}
               selectedMaterialCode={activeSlotMaterialCode}
               getRecommendedCodes={getRecommendedCodes}
               graphMaterials={graphLoading ? undefined : showroomMaterials}

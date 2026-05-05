@@ -152,7 +152,7 @@ interface KonceptasViewProps {
   onClearAll: () => void;
   onScrollToPicker: () => void;
   requiredMissing: SlotKey | null;
-  hasIncompatibleSlots: boolean;
+  allNonAccentsVerified: boolean;
   onRequestReview: () => void;
   t: (key: string) => string;
   language: string;
@@ -172,7 +172,7 @@ export default function KonceptasView({
   onClearAll,
   onScrollToPicker,
   requiredMissing,
-  hasIncompatibleSlots,
+  allNonAccentsVerified,
   onRequestReview,
   t,
   language,
@@ -476,7 +476,7 @@ export default function KonceptasView({
 
         {/* Visualize + review buttons — sits just below the piece arrangement */}
         <div className="absolute inset-x-0 flex justify-center gap-2 bottom-[8%] md:bottom-[12%]">
-          {hasIncompatibleSlots && (
+          {!allNonAccentsVerified && (
             <button
               onClick={(e) => { e.stopPropagation(); onRequestReview(); }}
               className="h-8 px-3 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform text-[11px] font-medium tracking-[0.03em] whitespace-nowrap"

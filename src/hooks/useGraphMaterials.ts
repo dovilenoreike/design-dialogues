@@ -115,6 +115,29 @@ export function getCompatibilityScore(code: string, otherCodes: string[]): numbe
   return weightedScore(code, otherCodes, _cached.pairWeights);
 }
 
+/** Returns true if this material has an approved pair with every one of the given otherCodes. */
+export function matchesAllOtherCodes(code: string, otherCodes: string[]): boolean {
+  if (!_cached || otherCodes.length === 0) return false;
+  const { pairs } = _cached;
+  return otherCodes.every(c => pairs.has(pairKey(code, c)));
+}
+
+/**
+ * Returns true if placing this material would trigger the wood-warning triangle —
+ * i.e. the candidate is wood and at least one same-role code is also wood with no
+ * approved pair between them. Pass only same-role codes (not all others).
+ */
+export function wouldTriggerWoodWarning(code: string, sameRoleCodes: string[]): boolean {
+  if (!_cached || sameRoleCodes.length === 0) return false;
+  const { pairs, byCode } = _cached;
+  const mat = byCode.get(code);
+  if (mat?.texture !== 'wood') return false;
+  return sameRoleCodes.some(c => {
+    const other = byCode.get(c);
+    return other?.texture === 'wood' && !pairs.has(pairKey(code, c));
+  });
+}
+
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
 export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];

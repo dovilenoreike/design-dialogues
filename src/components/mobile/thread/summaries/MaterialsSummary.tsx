@@ -80,7 +80,7 @@ export function MaterialsSummary() {
           </p>
           <p
             className="font-serif text-sm text-neutral-800 leading-snug cursor-pointer"
-            onClick={() => setActiveTab("specs")}
+            onClick={() => setActiveTab("design")}
           >
             {expandedMaterial.description}
             <span className="text-neutral-400"> →</span>

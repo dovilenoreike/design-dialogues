@@ -42,7 +42,7 @@ export default function RoomMaterials() {
             return (
               <button
                 key={matId}
-                onClick={() => setActiveTab("specs")}
+                onClick={() => setActiveTab("design")}
                 className="flex flex-col items-start gap-1.5 active:scale-95 transition-transform"
               >
                 <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 leading-tight line-clamp-1 w-full">

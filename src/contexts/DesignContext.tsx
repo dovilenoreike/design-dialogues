@@ -31,7 +31,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
 
-export type BottomTab = "design" | "specs" | "budget" | "plan";
+export type BottomTab = "design" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
 export type Tier = "Budget" | "Standard" | "Premium";
 

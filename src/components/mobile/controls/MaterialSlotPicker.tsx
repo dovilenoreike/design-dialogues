@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -55,6 +55,8 @@ interface MaterialSlotPickerProps {
   onClose: () => void;
   onClear?: (slotKey: SlotKey) => void;
   otherMaterialCodes?: string[];
+  /** Codes of materials already placed in the same role — used to suppress wood-warning candidates from recommended. */
+  sameRoleMaterialCodes?: string[];
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
   graphMaterials?: SupabaseMaterial[];
@@ -71,6 +73,7 @@ export default function MaterialSlotPicker({
   onClose,
   onClear,
   otherMaterialCodes,
+  sameRoleMaterialCodes,
   selectedMaterialCode,
   getRecommendedCodes,
   graphMaterials,
@@ -208,7 +211,7 @@ export default function MaterialSlotPicker({
   }, [graphMaterials, role, activeLayoutPattern, availablePatterns]);
 
   // ─── Shared row item types ────────────────────────────────────────────────
-  type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; archetypeId: string };
+  type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; matchesAll: boolean; archetypeId: string };
   type Row2Item = RowItem & { warmthGroup: WarmthGroup };
 
   // ─── Inline row data ──────────────────────────────────────────────────────
@@ -225,7 +228,10 @@ export default function MaterialSlotPicker({
     if (recCodes.length === 0) return [];
     const recIndex = new Map(recCodes.map((c, i) => [c, i]));
     return graphMaterials
-      .filter(m => m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) && !!m.archetypeId)
+      .filter(m =>
+        m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) && !!m.archetypeId &&
+        !wouldTriggerWoodWarning(m.technicalCode, sameRoleMaterialCodes ?? [])
+      )
       .sort((a, b) => recIndex.get(a.technicalCode)! - recIndex.get(b.technicalCode)!)
       .map(m => ({
         code: m.technicalCode,
@@ -234,9 +240,10 @@ export default function MaterialSlotPicker({
         materialName: m.name?.[lang] ?? m.technicalCode,
         isSelected: m.technicalCode === selectedMaterialCode,
         isRecommended: true,
+        matchesAll: matchesAllOtherCodes(m.technicalCode, otherMaterialCodes ?? []),
         archetypeId: m.archetypeId!,
       }));
-  }, [slot, graphMaterials, otherMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, graphMaterials, otherMaterialCodes, sameRoleMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
 
   const recommendedCodes = useMemo(() => new Set(recommendedItems.map(r => r.code)), [recommendedItems]);
 
@@ -252,7 +259,7 @@ export default function MaterialSlotPicker({
       if (!best) return null;
       return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
                materialName: best.name?.[lang] ?? best.technicalCode,
-               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false,
+               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
                archetypeId: archetype.id };
     }).filter((x): x is RowItem => x !== null)
       .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
@@ -275,7 +282,7 @@ export default function MaterialSlotPicker({
       if (!best) return null;
       return { code: best.technicalCode, image: best.imageUrl!, name: best.name?.[lang] ?? best.technicalCode,
                materialName: best.name?.[lang] ?? best.technicalCode,
-               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false,
+               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
                archetypeId: effectiveActiveId, warmthGroup: group };
     }).filter((x): x is Row2Item => x !== null)
       .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
@@ -302,7 +309,7 @@ export default function MaterialSlotPicker({
       )
       .map(m => ({ code: m.technicalCode, image: m.imageUrl!, name: m.name?.[lang] ?? m.technicalCode,
                    materialName: m.name?.[lang] ?? m.technicalCode,
-                   isSelected: m.technicalCode === selectedMaterialCode, isRecommended: false,
+                   isSelected: m.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
                    archetypeId: effectiveActiveId }));
   }, [slot, effectiveActiveId, activeWarmthGroup, filteredMaterials, row1Items, row2Items, recommendedCodes, selectedMaterialCode, lang]);
 
@@ -317,6 +324,7 @@ export default function MaterialSlotPicker({
         name: m.name?.[lang] ?? m.technicalCode,
         isSelected: m.technicalCode === selectedMaterialCode,
         isRecommended: recommendedCodes.size > 0 && recommendedCodes.has(m.technicalCode),
+        matchesAll: recommendedCodes.has(m.technicalCode) && matchesAllOtherCodes(m.technicalCode, otherMaterialCodes ?? []),
       }))
       .sort((a, b) =>
         Number(b.isSelected) - Number(a.isSelected) ||
@@ -349,6 +357,7 @@ export default function MaterialSlotPicker({
         materialName: m.name?.[lang] ?? m.technicalCode,
         isSelected: m.technicalCode === selectedMaterialCode,
         isRecommended: recommendedCodes.has(m.technicalCode),
+        matchesAll: false,
         archetypeId: effectiveActiveId,
       }));
   }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
@@ -570,7 +579,7 @@ export default function MaterialSlotPicker({
                     >
                       <img src={mat.image} alt="" className="w-full h-full object-cover" />
                       <div className="absolute top-1 inset-x-1 flex justify-center">
-                        <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.72)" }}>
+                        <span className="text-[8px] font-medium rounded-full px-1.5 py-0.5 leading-none truncate" style={mat.matchesAll ? { backgroundColor: "rgba(0,0,0,0.72)", color: "#ffffff" } : { backgroundColor: "rgba(255,255,255,0.82)", color: "rgba(0,0,0,0.6)" }}>
                           {t("surface.matchingMaterials")}
                         </span>
                       </div>
@@ -625,25 +634,6 @@ export default function MaterialSlotPicker({
           {!isFirstPick && (
             <>
               <SwatchDivider />
-
-              {/* Layout pattern chips — only when the active archetype has multiple patterns */}
-              {availablePatterns.length > 1 && (
-                <div className="flex gap-2 px-4 pt-2.5 pb-1 flex-shrink-0">
-                  {availablePatterns.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setActiveLayoutPattern(p)}
-                      className="px-3 py-1 rounded-full text-[11px] font-medium transition-colors"
-                      style={{
-                        backgroundColor: activeLayoutPattern === p ? "#647d75" : "#f0ede9",
-                        color: activeLayoutPattern === p ? "#ffffff" : "#6b7280",
-                      }}
-                    >
-                      {t(`surface.pattern${p.charAt(0).toUpperCase() + p.slice(1)}`)}
-                    </button>
-                  ))}
-                </div>
-              )}
 
               {!activeArchetypeIsBranched ? (
                 /* ≤ 8 materials in archetype — flat list, no warmth rows */
@@ -792,11 +782,12 @@ export default function MaterialSlotPicker({
                 key={`chip-${archetype.role}-${archetype.id}`}
                 onClick={() => handleArchetypeClick(archetype.id, resolvedCode)}
                 className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                style={{ opacity: (hasSelection || isActive || isRecommended) ? 1 : 0.45, transition: "opacity 0.15s" }}
               >
                 <div
                   className="w-[52px] h-[52px] rounded-xl overflow-hidden relative flex-shrink-0"
                   style={{
-                    border: isActive ? "2px solid #647d75" : "2px solid transparent",
+                    border: (hasSelection || isActive) ? "2px solid #647d75" : "2px solid transparent",
                     transition: "border-color 0.15s",
                   }}
                 >
@@ -808,18 +799,20 @@ export default function MaterialSlotPicker({
                       </span>
                     </div>
                   )}
-                  {hasSelection && !isRecommended && (
+                  {hasSelection && (
                     <div
-                      className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full"
+                      className="absolute bottom-1 right-1 w-4 h-4 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: "#647d75" }}
-                    />
+                    >
+                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                    </div>
                   )}
                 </div>
                 <span
                   className="text-[11px] whitespace-nowrap leading-none"
                   style={{
-                    color: isActive ? "#647d75" : "#9ca3af",
-                    fontWeight: isActive ? 500 : 400,
+                    color: (hasSelection || isActive) ? "#1a1a1a" : "#9ca3af",
+                    fontWeight: (hasSelection || isActive) ? 500 : 400,
                     transition: "color 0.15s",
                   }}
                 >
@@ -865,7 +858,7 @@ export default function MaterialSlotPicker({
                     <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
                     {v.isRecommended && (
                       <div className="absolute top-1 inset-x-1 flex justify-center">
-                        <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate">
+                        <span className="text-[8px] font-medium rounded-full px-1.5 py-0.5 leading-none truncate" style={v.matchesAll ? { backgroundColor: "rgba(0,0,0,0.72)", color: "#ffffff" } : { backgroundColor: "rgba(255,255,255,0.82)", color: "rgba(0,0,0,0.6)" }}>
                           {t("surface.matchingMaterials")}
                         </span>
                       </div>

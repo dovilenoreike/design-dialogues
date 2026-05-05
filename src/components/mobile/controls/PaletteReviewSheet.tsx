@@ -18,6 +18,7 @@ export interface ReviewMaterial {
   name: string;
   code: string;
   compatible: boolean;
+  matchesAll: boolean;
 }
 
 interface PaletteReviewSheetProps {
@@ -90,9 +91,9 @@ export default function PaletteReviewSheet({ isOpen, onClose, materials, onShare
               </div>
               <span
                 className="text-[10px] font-mono shrink-0 ml-2"
-                style={{ color: m.compatible ? '#647d75' : '#ca8a04' }}
+                style={{ color: m.compatible ? (m.matchesAll ? '#647d75' : 'rgba(100,125,117,0.55)') : '#ca8a04' }}
               >
-                {m.compatible ? "✓" : "✗"} {m.code}
+                {m.compatible ? (m.matchesAll ? "✓✓" : "✓") : "✗"} {m.code}
               </span>
             </div>
           ))}
