@@ -133,6 +133,7 @@ export function wouldTriggerWoodWarning(code: string, sameRoleCodes: string[]): 
   const mat = byCode.get(code);
   if (mat?.texture !== 'wood') return false;
   return sameRoleCodes.some(c => {
+    if (c === code) return false;
     const other = byCode.get(c);
     return other?.texture === 'wood' && !pairs.has(pairKey(code, c));
   });
@@ -235,6 +236,7 @@ export function useGraphMaterials() {
     const mat = byCode.get(slotCode);
     if (mat?.texture !== 'wood') return [];
     return otherCodes.filter(c => {
+      if (c === slotCode) return false;
       const other = byCode.get(c);
       return other?.texture === 'wood' && !pairs.has(pairKey(slotCode, c));
     });
