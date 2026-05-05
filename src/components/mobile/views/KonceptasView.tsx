@@ -250,10 +250,17 @@ export default function KonceptasView({
           const graphBestCode = (rawBestCode && showroomCoversSlot)
             ? (getMaterialByCode(rawBestCode)?.showroomIds.includes(activeShowroom!.id) ? rawBestCode : null)
             : rawBestCode;
-          const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && otherCodes.length > 0;
-          const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, otherCodes) : null;
+          // V/VV scoring excludes accents for non-accent tiles — easy matches shouldn't inflate the score
+          const compatCodes = piece.slot === 'accents'
+            ? otherCodes
+            : (Object.keys(slotSurfaces) as SlotKey[])
+                .filter(k => k !== piece.slot && k !== 'accents')
+                .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
+                .filter((c): c is string => !!c);
+          const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && compatCodes.length > 0;
+          const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, compatCodes) : null;
           const showVerified = isCompatible === true;
-          const showDoubleVerified = showVerified && otherCodes.length >= 2 && isCompatibleWithEvery(currentMatId, otherCodes);
+          const showDoubleVerified = showVerified && compatCodes.length >= 2 && isCompatibleWithEvery(currentMatId, compatCodes);
           const showNudge = isCompatible === false && !!graphBestCode;
           const sameRoleCodes = (Object.keys(slotSurfaces) as SlotKey[])
             .filter(k => k !== piece.slot && SLOT_KEY_TO_ROLE[k] === slotRole)
