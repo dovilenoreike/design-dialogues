@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useCollectionPresets } from "@/hooks/useCollectionPresets";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
+import type { SavedPalette } from "@/hooks/useSavedPalettes";
 
 interface CollectionPresetCarouselProps {
   /** Room category from design state, e.g. "Kitchen", "Living Room" */
@@ -20,6 +21,8 @@ interface CollectionPresetCarouselProps {
    * "header" — normal block element with dark text, sits in document flow above sub-tabs.
    */
   variant?: "overlay" | "header";
+  /** User-saved palettes — prepended to the carousel with a heart badge */
+  savedPalettes?: SavedPalette[];
 }
 
 export default function CollectionPresetCarousel({
@@ -28,6 +31,7 @@ export default function CollectionPresetCarousel({
   hasExistingMaterials,
   isModified = false,
   variant = "overlay",
+  savedPalettes = [],
 }: CollectionPresetCarouselProps) {
   const { language } = useLanguage();
   const { activeShowroom } = useShowroom();
@@ -65,7 +69,12 @@ export default function CollectionPresetCarousel({
   const applyAt = (next: number) => {
     setIndex(next);
     try { localStorage.setItem(indexKey, String(next)); } catch {}
-    onApplyPreset(filteredPresets[next].materials, filteredPresets[next].image_url ?? null);
+    // allItems isn't available here yet (defined below), so we recalculate inline
+    const items = [
+      ...savedPalettes.map((p) => ({ materials: p.materials, image_url: null as string | null })),
+      ...filteredPresets,
+    ];
+    if (items[next]) onApplyPreset(items[next].materials, items[next].image_url ?? null);
   };
 
   // Auto-apply the first preset when presets load and user has no materials yet.
@@ -93,17 +102,29 @@ export default function CollectionPresetCarousel({
     }
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Hide while loading, or while graph is still loading in showroom mode (can't filter yet)
-  if (loading || (activeShowroom && graphLoading) || filteredPresets.length === 0) return null;
+  // Merge: saved palettes first, then curated presets
+  const allItems = useMemo(() => [
+    ...savedPalettes.map((p) => ({
+      id: p.id,
+      name: { en: "My palette", lt: "Mano derinys" },
+      image_url: null as string | null,
+      materials: p.materials,
+      isSaved: true,
+    })),
+    ...filteredPresets.map((p) => ({ ...p, isSaved: false })),
+  ], [savedPalettes, filteredPresets]);
 
-  const preset = filteredPresets[index];
+  // Hide while loading, or while graph is still loading in showroom mode (can't filter yet)
+  if (loading || (activeShowroom && graphLoading) || allItems.length === 0) return null;
+
+  const preset = allItems[Math.min(index, allItems.length - 1)];
   const presetName = (language === "lt" ? preset.name?.lt : preset.name?.en) ?? preset.id;
-  const name = isModified
+  const name = isModified && !preset.isSaved
     ? (language === "lt" ? "Tavo derinys" : "Your collection")
     : presetName;
 
-  const goPrev = () => applyAt((index - 1 + filteredPresets.length) % filteredPresets.length);
-  const goNext = () => applyAt((index + 1) % filteredPresets.length);
+  const goPrev = () => applyAt((index - 1 + allItems.length) % allItems.length);
+  const goNext = () => applyAt((index + 1) % allItems.length);
 
   if (variant === "header") {
     return (
@@ -116,7 +137,8 @@ export default function CollectionPresetCarousel({
         >
           <ChevronLeft className="w-4 h-4 text-foreground/60" strokeWidth={1.5} />
         </button>
-        <span className="w-40 text-center text-[12px] font-medium tracking-[0.04em] text-foreground/70 select-none uppercase truncate">
+        <span className="w-40 flex items-center justify-center gap-1 text-[12px] font-medium tracking-[0.04em] text-foreground/70 select-none uppercase truncate">
+          {preset.isSaved && <Heart className="w-3 h-3 flex-shrink-0" style={{ color: "#647d75" }} fill="#647d75" strokeWidth={0} />}
           {name}
         </span>
         <button
@@ -142,7 +164,8 @@ export default function CollectionPresetCarousel({
         >
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <span className="text-sm font-medium text-white select-none [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
+        <span className="flex items-center gap-1 text-sm font-medium text-white select-none [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
+          {preset.isSaved && <Heart className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" strokeWidth={0} />}
           {name}
         </span>
         <button

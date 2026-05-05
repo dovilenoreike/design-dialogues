@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { ArrowLeft, Camera, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
+import { ArrowLeft, Camera, Heart, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes } from "@/hooks/useGraphMaterials";
+import { useSavedPalettes } from "@/hooks/useSavedPalettes";
 import { surfaces } from "@/data/rooms/surfaces";
 
 // Static role → primary palette key, used only for the ?material= URL param (runs once on mount)
@@ -47,6 +48,7 @@ export default function DesignView() {
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
   const { loading: graphLoading, graphMaterials, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
 
@@ -658,6 +660,7 @@ export default function DesignView() {
             hasExistingMaterials={Object.keys(materialOverrides).length > 0}
             isModified={wasReset || (!presetIsActive && Object.keys(materialOverrides).length > 0)}
             variant="header"
+            savedPalettes={savedPalettes}
           />
 
           {/* Shared topbar */}
@@ -686,13 +689,36 @@ export default function DesignView() {
                 <Info className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
               </button>
               {activeSlots.some((k) => slotSelections[k]) && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleClearAll(); }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
-                  style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
-                </button>
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSaved(materialOverrides)) {
+                        const match = savedPalettes.find((p) => isSaved(p.materials));
+                        if (match) unsavePalette(match.id);
+                      } else {
+                        savePalette(materialOverrides, design.selectedCategory, activeShowroom?.id ?? null);
+                      }
+                    }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                    style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                    aria-label={isSaved(materialOverrides) ? t("moodboard.unsavePalette") : t("moodboard.savePalette")}
+                  >
+                    <Heart
+                      className="w-3.5 h-3.5"
+                      style={{ color: isSaved(materialOverrides) ? "#647d75" : "rgba(0,0,0,0.55)" }}
+                      fill={isSaved(materialOverrides) ? "#647d75" : "none"}
+                      strokeWidth={1.6}
+                    />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleClearAll(); }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                    style={{ backgroundColor: "rgba(255,255,255,0.72)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" style={{ color: "rgba(0,0,0,0.55)" }} strokeWidth={1.6} />
+                  </button>
+                </>
               )}
             </div>
           </div>

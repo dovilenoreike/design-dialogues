@@ -58,7 +58,7 @@
   "tab": {
     "vizualas": "Vizualas",
     "konceptas": "Konceptas",
-    "specs": "Spec."
+    "specs": "Medžiagos"
   },
   "home": {
     "materials": "Medžiagos",
@@ -1286,6 +1286,8 @@
     "selectPiece": "Pasirinkite paviršių",
     "someNotPairing": "Ne visos tekstūros peržiūrėtos – galimi nederantys atspalviai.",
     "requestReview": "Prašyti peržiūros",
+    "savePalette": "Išsaugoti paletę",
+    "unsavePalette": "Išsaugota — palieskite, kad pašalintumėte",
     "reviewTitle": "Prašyti paletės peržiūros",
     "reviewDesc": "Pasidalinkite palete ir mes peržiūrėsime medžiagų derinius, pasiūlysime geriau tinkančias alternatyvas ir papildysime biblioteką.",
     "reviewMessage": "Jūsų pastaba (nebūtina)",

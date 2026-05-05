@@ -1285,6 +1285,8 @@
     "selectPiece": "Select a piece",
     "someNotPairing": "Compatibility of some surfaces is not approved.",
     "requestReview": "Request review",
+    "savePalette": "Save palette",
+    "unsavePalette": "Saved — tap to remove",
     "reviewTitle": "Request palette review",
     "reviewDesc": "Share your palette and we'll review material pairings, suggest better-matching options and grow the library.",
     "reviewMessage": "Your note (optional)",
