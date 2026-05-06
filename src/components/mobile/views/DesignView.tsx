@@ -20,6 +20,7 @@ import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes } from "@/hooks/useGraphMaterials";
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
+import { computePaletteHint } from "@/lib/palette-hint";
 import { surfaces } from "@/data/rooms/surfaces";
 
 // Static role → primary palette key, used only for the ?material= URL param (runs once on mount)
@@ -588,6 +589,15 @@ export default function DesignView() {
     });
   }, [graphLoading, activeSlots, materialOverrides]);
 
+  // Palette character hint — only shown once floor + front + worktop are all filled
+  const paletteHint = useMemo(() => {
+    if (graphLoading || requiredMissing !== null) return null;
+    const inputs = Object.entries(materialOverrides)
+      .filter(([pk, code]) => pk !== "accents" && !!code)
+      .map(([pk, code]) => ({ paletteKey: pk, code: code as string }));
+    return computePaletteHint(inputs);
+  }, [graphLoading, requiredMissing, materialOverrides]);
+
   const reviewMaterials: ReviewMaterial[] = useMemo(() => {
     if (!allSlotsFilled) return [];
     const nonAccentSlots = activeSlots.filter(k => k !== "accents");
@@ -804,6 +814,24 @@ export default function DesignView() {
               language={language}
             />
           )}
+
+          {/* Palette hint — mobile only (desktop shows it in the right panel) */}
+          {paletteHint && (
+            <div className="lg:hidden flex flex-col items-center gap-0.5 pt-4 pb-1 px-4 text-center">
+              <span
+                className="text-[10px] font-medium tracking-[0.08em] uppercase"
+                style={{ color: "rgba(0,0,0,0.45)" }}
+              >
+                {t(`paletteHint.${paletteHint.key}.label`)}
+              </span>
+              <span
+                className="text-[11px] leading-snug"
+                style={{ color: "rgba(0,0,0,0.35)", maxWidth: "26rem" }}
+              >
+                {t(`paletteHint.${paletteHint.key}.desc`)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -893,8 +921,34 @@ export default function DesignView() {
           </>
         ) : (
           <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
-            <ArrowLeft className="hidden lg:block w-4 h-4" style={{ color: '#647d75', opacity: 0.5 }} strokeWidth={1.5} />
-            <span className="text-[11px] font-medium tracking-[0.04em] uppercase" style={{ color: 'rgba(0,0,0,0.35)' }}>
+            {/* Desktop: palette hint when available, otherwise normal prompt */}
+            <div className="hidden lg:flex flex-col items-center gap-1.5 text-center px-10">
+              {paletteHint ? (
+                <>
+                  <span
+                    className="text-[10px] font-medium tracking-[0.08em] uppercase"
+                    style={{ color: "rgba(0,0,0,0.45)" }}
+                  >
+                    {t(`paletteHint.${paletteHint.key}.label`)}
+                  </span>
+                  <span
+                    className="text-[11px] leading-snug"
+                    style={{ color: "rgba(0,0,0,0.35)", maxWidth: "20rem" }}
+                  >
+                    {t(`paletteHint.${paletteHint.key}.desc`)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <ArrowLeft className="w-4 h-4" style={{ color: '#647d75', opacity: 0.5 }} strokeWidth={1.5} />
+                  <span className="text-[11px] font-medium tracking-[0.04em] uppercase" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                    {t("moodboard.selectPiece")}
+                  </span>
+                </>
+              )}
+            </div>
+            {/* Mobile: always show the normal prompt (hint appears below the flatlay) */}
+            <span className="lg:hidden text-[11px] font-medium tracking-[0.04em] uppercase" style={{ color: 'rgba(0,0,0,0.35)' }}>
               {t("moodboard.selectPiece")}
             </span>
           </div>

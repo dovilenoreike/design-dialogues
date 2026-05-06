@@ -1362,5 +1362,23 @@
     "seeAll": "See all materials",
     "all": "All materials",
     "clearFilter": "Clear filter"
+  },
+  "paletteHint": {
+    "minimal": {
+      "label": "Minimal",
+      "desc": "Cohesive, restrained palette. Add depth through lighting or large-scale accents."
+    },
+    "balanced": {
+      "label": "Balanced",
+      "desc": "Clear hierarchy with intentional variety. Should feel calm and considered."
+    },
+    "highContrast": {
+      "label": "High contrast",
+      "desc": "Strong tonal swing. Make sure it's intentional — it will draw the most attention."
+    },
+    "mixed": {
+      "label": "Mixed",
+      "desc": "Warm and cool materials without a clear direction — if intentional, it creates character."
+    }
   }
 }

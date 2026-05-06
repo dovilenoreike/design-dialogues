@@ -1363,5 +1363,23 @@
     "seeAll": "Rodyti visas medžiagas",
     "all": "Visos medžiagos",
     "clearFilter": "Išvalyti filtrą"
+  },
+  "paletteHint": {
+    "minimal": {
+      "label": "Minimali",
+      "desc": "Santūri, vientisa paletė. Gylio suteikite per apšvietimą ar akcentus."
+    },
+    "balanced": {
+      "label": "Subalansuota",
+      "desc": "Aiški hierarchija su apgalvota įvairove."
+    },
+    "highContrast": {
+      "label": "Ryškus kontrastas",
+      "desc": "Ryškus kontrastas be vizualiai jungiančių medžiagų. Įsitikinkite, kad tai sąmoningas sprendimas."
+    },
+    "mixed": {
+      "label": "Mišrus derinys",
+      "desc": "Įvairūs toniniai atspalviai. Įsitikinkite kad tai sąmoningas spendimas."
+    }
   }
 }
