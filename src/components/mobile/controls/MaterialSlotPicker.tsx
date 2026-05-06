@@ -259,6 +259,7 @@ export default function MaterialSlotPicker({
       const best = graphMaterials
         .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode))
         .sort((a, b) =>
+          getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
           getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
           getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
         )[0];
@@ -285,6 +286,7 @@ export default function MaterialSlotPicker({
           getWarmthGroup(m.warmth) === group
         )
         .sort((a, b) =>
+          getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
           getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
           getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
         )[0];
@@ -314,6 +316,7 @@ export default function MaterialSlotPicker({
       )
       .sort((a, b) =>
         Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
+        getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
         getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
         getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
       )
@@ -339,6 +342,7 @@ export default function MaterialSlotPicker({
       .sort((a, b) =>
         Number(b.isSelected) - Number(a.isSelected) ||
         Number(b.isRecommended) - Number(a.isRecommended) ||
+        getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
         getPairCountByCode(b.code) - getPairCountByCode(a.code) ||
         getDescriptorScore(b.code, otherMaterialCodes ?? []) - getDescriptorScore(a.code, otherMaterialCodes ?? [])
       );

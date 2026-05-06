@@ -260,7 +260,7 @@ export default function KonceptasView({
           const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && compatCodes.length > 0 && piece.slot !== 'accents';
           const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, compatCodes) : null;
           const showVerified = isCompatible === true;
-          const showDoubleVerified = showVerified && compatCodes.length >= 2 && isCompatibleWithEvery(currentMatId, compatCodes);
+          const showDoubleVerified = showVerified && isCompatibleWithEvery(currentMatId, compatCodes);
           const showNudge = isCompatible === false && !!graphBestCode;
           const sameRoleCodes = (Object.keys(slotSurfaces) as SlotKey[])
             .filter(k => k !== piece.slot && SLOT_KEY_TO_ROLE[k] === slotRole)
