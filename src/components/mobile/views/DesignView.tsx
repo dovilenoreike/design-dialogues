@@ -167,6 +167,7 @@ export default function DesignView() {
   }, [design.selectedCategory]);
 
   const pickerRef = useRef<HTMLDivElement>(null);
+  const flatlayRef = useRef<HTMLDivElement>(null);
   const slotSelectionsRef = useRef<SlotSelections | null>(null);
 
   // ── slotSelections — shared across both sub-views ────────────────────────
@@ -370,6 +371,12 @@ export default function DesignView() {
         for (const pk of pks) next[pk] = matCode;
         return next;
       });
+      // On mobile, scroll back to flatlay so user sees the updated room
+      if (window.innerWidth < 1024) {
+        requestAnimationFrame(() => {
+          flatlayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
     },
     [setMaterialOverrides, showroomMaterials, slotSurfaces],
   );
@@ -625,8 +632,8 @@ export default function DesignView() {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row">
 
-      {/* LEFT (desktop) / TOP (mobile): sub-tab content */}
-      <div className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto">
+      {/* LEFT (desktop) / TOP (mobile): sub-tab content — clicking here closes the picker */}
+      <div ref={flatlayRef} className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto" onClick={() => setActiveSlot(null)}>
         <div className="px-4 pt-3 pb-4 lg:px-8 lg:py-6 lg:max-w-2xl">
 
           {/* Collection carousel — shared header for both sub-views */}
@@ -816,7 +823,7 @@ export default function DesignView() {
           )}
 
           {/* Palette hint — mobile only (desktop shows it in the right panel) */}
-          {paletteHint && (
+          {paletteHint && !activeSlot && (
             <div className="lg:hidden flex flex-col items-center gap-0.5 pt-4 pb-1 px-4 text-center">
               <span
                 className="text-[10px] font-medium tracking-[0.08em] uppercase"
@@ -843,17 +850,27 @@ export default function DesignView() {
         onClick={(e) => e.stopPropagation()}
       >
         {activeSlot ? (
-          <>
-            {/* Surface type toggle pills — shown only for roles with multiple options (fronts) */}
-            {(() => {
+          <MaterialSlotPicker
+            slot={activeSlot}
+            inline={true}
+            selections={slotSelections}
+            onSelect={handleSlotSelect}
+            onClose={() => setActiveSlot(null)}
+            onClear={handleSlotClear}
+            otherMaterialCodes={otherMaterialCodesForPicker}
+            sameRoleMaterialCodes={sameRoleCodesForPicker}
+            selectedMaterialCode={activeSlotMaterialCode}
+            getRecommendedCodes={getRecommendedCodes}
+            graphMaterials={graphLoading ? undefined : showroomMaterials}
+            filterEmptyArchetypes={!graphLoading}
+            subHeader={(() => {
               const assignedPks = slotSurfaces[activeSlot] ?? [];
               const slotRole = SLOT_KEY_TO_ROLE[activeSlot];
               const allForRole = Object.entries(surfaces)
                 .filter(([, def]) => def.category === slotRole)
                 .map(([pk]) => pk);
-              if (allForRole.length <= 1) return null;
+              if (allForRole.length <= 1) return undefined;
 
-              // Which OTHER enabled slot currently owns each palette key
               const enabledSlotKeys: SlotKey[] = ["floor", ...OPTIONAL_SLOTS.filter(s => enabledOptionalSlots.has(s))];
               const ownedByOther = new Map<string, SlotKey>();
               for (const s of enabledSlotKeys) {
@@ -862,7 +879,7 @@ export default function DesignView() {
               }
 
               return (
-                <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-1">
+                <div className="flex flex-wrap items-center gap-1.5 px-4 pt-1 pb-2" style={{ borderBottom: "0.5px solid #e8e4e0" }}>
                   {allForRole.map((pk) => {
                     const isActive = assignedPks.includes(pk);
                     const otherSlot = ownedByOther.get(pk);
@@ -874,12 +891,8 @@ export default function DesignView() {
                         onClick={() => {
                           if (isActive) {
                             if (canRemove) handleRemoveSurface(activeSlot, pk);
-                            // sole assignment — do nothing (slot must keep at least one surface type)
                           } else {
-                            // handleAddSurface removes pk from any other slot's slotSurfaces
                             handleAddSurface(activeSlot, pk);
-                            // If the source slot lost its only surface type, remove it from canvas
-                            // (don't use handleSlotClear — that would delete the material we just moved)
                             if (otherSlot && (slotSurfaces[otherSlot]?.length ?? 0) <= 1) {
                               setEnabledOptionalSlots(prev => { const s = new Set(prev); s.delete(otherSlot); return s; });
                               setSlotSelections(prev => ({ ...prev, [otherSlot]: null }));
@@ -904,21 +917,7 @@ export default function DesignView() {
                 </div>
               );
             })()}
-            <MaterialSlotPicker
-              slot={activeSlot}
-              inline={true}
-              selections={slotSelections}
-              onSelect={handleSlotSelect}
-              onClose={() => {}}
-              onClear={handleSlotClear}
-              otherMaterialCodes={otherMaterialCodesForPicker}
-              sameRoleMaterialCodes={sameRoleCodesForPicker}
-              selectedMaterialCode={activeSlotMaterialCode}
-              getRecommendedCodes={getRecommendedCodes}
-              graphMaterials={graphLoading ? undefined : showroomMaterials}
-              filterEmptyArchetypes={!graphLoading}
-            />
-          </>
+          />
         ) : (
           <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
             {/* Desktop: palette hint when available, otherwise normal prompt */}

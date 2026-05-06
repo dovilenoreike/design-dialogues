@@ -64,6 +64,8 @@ interface MaterialSlotPickerProps {
   filterEmptyArchetypes?: boolean;
   /** Render as an always-visible inline panel instead of a bottom-sheet modal */
   inline?: boolean;
+  /** Optional node rendered between the inline header and the swatch content (e.g. surface type pills) */
+  subHeader?: React.ReactNode;
 }
 
 export default function MaterialSlotPicker({
@@ -79,6 +81,7 @@ export default function MaterialSlotPicker({
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
+  subHeader,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -522,8 +525,22 @@ export default function MaterialSlotPicker({
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
               </button>
             )}
+            {/* Close picker */}
+            {!searchOpen && (
+              <button
+                onClick={onClose}
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#f5f2ef" }}
+                aria-label="Close picker"
+              >
+                <X className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Surface type pills or other sub-header content */}
+        {subHeader}
 
         {/* Swatch rows — each row scrolls independently */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto justify-start pt-3">

@@ -98,34 +98,5 @@ export function computePaletteHint(
     reason = `lightnessStd ${lightnessStd.toFixed(2)}, warmthAvgDist ${warmthAvgDist.toFixed(2)} — moderate variation, coherent`;
   }
 
-  // ── Logging ──────────────────────────────────────────────────────────────
-  console.group("[palette-hint] computation");
-  console.log(`Thresholds: avgDist ≤ ${SIMILAR} → minimal | lightnessStd ≥ ${L_STD_HIGH} → highContrast | warmthAvgDist ≥ ${MIXED_WARMTH_DIST} → mixed`);
-  console.log("Materials:");
-  console.table(norm.map(x => ({
-    paletteKey: x.paletteKey,
-    code:       x.code,
-    name:       (x.mat.name as { en?: string } | null)?.en ?? x.code,
-    lightness:  x.mat.lightness,
-    warmth:     +(x.mat.warmth ?? 0).toFixed(3),
-    texture:    x.mat.texture,
-    normWeight: +x.w.toFixed(3),
-  })));
-  console.log("\nPairwise distances:");
-  console.table(pairs.map(p => ({
-    pair:            `${p.a} ↔ ${p.b}`,
-    lightness:       +p.breakdown.lightnessDiff.toFixed(1),
-    warmthRaw:       +p.breakdown.warmthDiff.toFixed(1),
-    texture:         p.breakdown.textureDiff,
-    total:           +p.dist.toFixed(1),
-    pairWeight:      +p.pairW.toFixed(4),
-    warmthContrib:   +(p.breakdown.warmthDiff * p.pairW).toFixed(4),
-  })));
-  console.log(`\nAggregate:   avgDist         = ${avgDist.toFixed(2)}  (≤ ${SIMILAR} → minimal)`);
-  console.log(`Lightness:   lightnessStd    = ${lightnessStd.toFixed(2)}  (≥ ${L_STD_HIGH} → highContrast)`);
-  console.log(`Warmth:      warmthAvgDist   = ${warmthAvgDist.toFixed(2)}  (≥ ${MIXED_WARMTH_DIST} → mixed)`);
-  console.log(`\n→ "${result}" — ${reason}`);
-  console.groupEnd();
-
   return { key: result };
 }
