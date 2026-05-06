@@ -1366,15 +1366,15 @@
   },
   "paletteHint": {
     "minimal": {
-      "label": "Minimali",
-      "desc": "Santūri, vientisa paletė. Gylio suteikite per apšvietimą ar akcentus."
+      "label": "Minimalistinis derinys",
+      "desc": "Santūri, vientisa paletė. Jaukumo suteikite per apšvietimą ar akcentus."
     },
     "balanced": {
-      "label": "Subalansuota",
-      "desc": "Aiški hierarchija su apgalvota įvairove."
+      "label": "Harmoningas derinys",
+      "desc": "Aiški hierarchija su apgalvota įvairovė."
     },
     "highContrast": {
-      "label": "Ryškus kontrastas",
+      "label": "Kontrastastingas derinys",
       "desc": "Ryškus kontrastas be vizualiai jungiančių medžiagų. Įsitikinkite, kad tai sąmoningas sprendimas."
     },
     "mixed": {
