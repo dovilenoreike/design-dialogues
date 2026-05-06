@@ -532,15 +532,16 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   useEffect(() => {
     if (!isUrlSyncEnabled.current) return;
 
-    const newUrl = buildUrl(
-      activeTab,
-      design.selectedCategory,
-      selectedTier
-    );
-
-    // Only update if URL actually changed
+    const newUrl = buildUrl(activeTab, design.selectedCategory, selectedTier);
+    const newBasePath = newUrl.split('?')[0]; // e.g. "/design"
     const currentUrl = location.pathname + location.search;
-    if (newUrl !== currentUrl) {
+
+    if (location.pathname === newBasePath || location.pathname.startsWith(newBasePath + '/')) {
+      // Already on the right tab — only sync search params, preserve sub-path
+      const newSearch = newUrl.includes('?') ? '?' + newUrl.split('?')[1] : '';
+      const synced = location.pathname + newSearch;
+      if (synced !== currentUrl) navigate(synced, { replace: true });
+    } else if (newUrl !== currentUrl) {
       navigate(newUrl, { replace: true });
     }
   }, [activeTab, design.selectedCategory, selectedTier, navigate, location.pathname, location.search]);

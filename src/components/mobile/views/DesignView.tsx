@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { ArrowLeft, Camera, Heart, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
@@ -51,13 +51,21 @@ export default function DesignView() {
   const { loading: graphLoading, graphMaterials, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
 
-  const [subTab, setSubTab] = useState<"konceptas" | "vizualas" | "specs">("konceptas");
+  const subTab = useMemo((): "konceptas" | "vizualas" | "specs" => {
+    if (location.pathname.endsWith("/visual")) return "vizualas";
+    if (location.pathname.endsWith("/specs")) return "specs";
+    return "konceptas";
+  }, [location.pathname]);
 
   const handleSubTabChange = (tab: "konceptas" | "vizualas" | "specs") => {
-    setSubTab(tab);
     if (tab !== "konceptas") setActiveSlot(null);
+    if (tab === "vizualas") navigate("/design/visual");
+    else if (tab === "specs") navigate("/design/specs");
+    else navigate("/design");
   };
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
@@ -682,12 +690,13 @@ export default function DesignView() {
 
           {/* Shared topbar */}
           <div className="flex items-center justify-between pt-3 pb-2">
-            <span
-              className="text-[11px] font-medium tracking-[0.04em] uppercase"
+            <button
+              onClick={() => handleSubTabChange("konceptas")}
+              className="text-[11px] font-medium tracking-[0.04em] uppercase active:opacity-60 transition-opacity"
               style={{ color: "rgba(0,0,0,0.45)" }}
             >
               {t("moodboard.room")}
-            </span>
+            </button>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowInspirationDialog(true); }}
@@ -741,15 +750,18 @@ export default function DesignView() {
           </div>
 
           {/* Sub-tab switcher */}
-          <div className="flex gap-5 pb-3">
+          <div
+            className="flex mb-3 rounded-full p-[3px]"
+            style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
+          >
             {(["konceptas", "vizualas", "specs"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => handleSubTabChange(tab)}
-                className={`text-[11px] font-medium tracking-[0.06em] uppercase pb-1 transition-colors ${
+                className={`flex-1 text-[12px] font-medium tracking-[0.02em] py-1.5 rounded-full transition-all ${
                   subTab === tab
-                    ? "text-foreground border-b border-foreground"
-                    : "text-foreground/40 hover:text-foreground/60"
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-foreground/50"
                 }`}
               >
                 {t(`tab.${tab}`)}
@@ -839,6 +851,7 @@ export default function DesignView() {
               </span>
             </div>
           )}
+
         </div>
       </div>
 
