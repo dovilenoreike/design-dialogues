@@ -824,16 +824,16 @@ export default function DesignView() {
 
           {/* Palette hint — mobile only (desktop shows it in the right panel) */}
           {paletteHint && !activeSlot && (
-            <div className="lg:hidden flex flex-col items-center gap-0.5 pt-4 pb-1 px-4 text-center">
+            <div className="lg:hidden flex flex-col items-center gap-1 pt-5 pb-1 px-4 text-center">
               <span
-                className="text-[10px] font-medium tracking-[0.08em] uppercase"
-                style={{ color: "rgba(0,0,0,0.45)" }}
+                className="text-[13px] font-medium tracking-[0.08em] uppercase"
+                style={{ color: "rgba(0,0,0,0.7)" }}
               >
                 {t(`paletteHint.${paletteHint.key}.label`)}
               </span>
               <span
-                className="text-[11px] leading-snug"
-                style={{ color: "rgba(0,0,0,0.35)", maxWidth: "26rem" }}
+                className="text-[13px] leading-snug"
+                style={{ color: "rgba(0,0,0,0.55)", maxWidth: "26rem" }}
               >
                 {t(`paletteHint.${paletteHint.key}.desc`)}
               </span>
@@ -921,18 +921,18 @@ export default function DesignView() {
         ) : (
           <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
             {/* Desktop: palette hint when available, otherwise normal prompt */}
-            <div className="hidden lg:flex flex-col items-center gap-1.5 text-center px-10">
+            <div className="hidden lg:flex flex-col items-center gap-1 text-center px-10">
               {paletteHint ? (
                 <>
                   <span
-                    className="text-[10px] font-medium tracking-[0.08em] uppercase"
-                    style={{ color: "rgba(0,0,0,0.45)" }}
+                    className="text-[13px] font-medium tracking-[0.08em] uppercase"
+                    style={{ color: "#647d75" }}
                   >
                     {t(`paletteHint.${paletteHint.key}.label`)}
                   </span>
                   <span
-                    className="text-[11px] leading-snug"
-                    style={{ color: "rgba(0,0,0,0.35)", maxWidth: "20rem" }}
+                    className="text-[13px] leading-snug"
+                    style={{ color: "rgba(0,0,0,0.55)", maxWidth: "20rem" }}
                   >
                     {t(`paletteHint.${paletteHint.key}.desc`)}
                   </span>
