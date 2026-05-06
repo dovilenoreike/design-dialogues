@@ -94,20 +94,41 @@ export function weightedScore(
   }, 0);
 }
 
+/** Average descriptor similarity of a candidate against a set of already-selected materials.
+ *  Higher = closer match. Uses the v2 formula: lightness, warmth, chroma weighted axes. */
+export function descriptorScore(
+  candidate: GraphMaterial,
+  others: GraphMaterial[],
+): number {
+  if (others.length === 0) return 0;
+  return others.reduce((sum, o) =>
+    sum + (100
+      - 0.5 * Math.abs(candidate.lightness - o.lightness)
+      - 1.2 * Math.abs((candidate.warmth ?? 0) - (o.warmth ?? 0)) * 50
+      - 0.5 * Math.abs((candidate.chroma  ?? 0) - (o.chroma  ?? 0))
+    ), 0) / others.length;
+}
+
 export function rankByCompatibility(
   candidates: GraphMaterial[],
   selectedCodes: string[],
   pairs: Set<string>,
   pairWeights?: Map<string, number>,
+  byCode?: Map<string, GraphMaterial>,
 ): GraphMaterial[] {
+  const others = byCode
+    ? selectedCodes.map(c => byCode.get(c)).filter((m): m is GraphMaterial => !!m)
+    : [];
   return [...candidates].sort((a, b) => {
-    const scoreA = pairWeights
+    const wa = pairWeights
       ? weightedScore(a.technicalCode, selectedCodes, pairWeights)
       : selectedCodes.filter((s) => pairs.has(pairKey(a.technicalCode, s))).length;
-    const scoreB = pairWeights
+    const wb = pairWeights
       ? weightedScore(b.technicalCode, selectedCodes, pairWeights)
       : selectedCodes.filter((s) => pairs.has(pairKey(b.technicalCode, s))).length;
-    return scoreB - scoreA;
+    if (wa !== wb) return wb - wa;
+    if (others.length > 0) return descriptorScore(b, others) - descriptorScore(a, others);
+    return 0;
   });
 }
 

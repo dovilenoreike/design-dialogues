@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, getDescriptorScore } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -258,7 +258,10 @@ export default function MaterialSlotPicker({
     return availableWithImages.map(({ archetype }) => {
       const best = graphMaterials
         .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode))
-        .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))[0];
+        .sort((a, b) =>
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
+          getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
+        )[0];
       if (!best) return null;
       return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
                materialName: best.name?.[lang] ?? best.technicalCode,
@@ -281,7 +284,10 @@ export default function MaterialSlotPicker({
           !recommendedCodes.has(m.technicalCode) &&
           getWarmthGroup(m.warmth) === group
         )
-        .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))[0];
+        .sort((a, b) =>
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
+          getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
+        )[0];
       if (!best) return null;
       return { code: best.technicalCode, image: best.imageUrl!, name: best.name?.[lang] ?? best.technicalCode,
                materialName: best.name?.[lang] ?? best.technicalCode,
@@ -308,7 +314,8 @@ export default function MaterialSlotPicker({
       )
       .sort((a, b) =>
         Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
-        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
+        getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
       )
       .map(m => ({ code: m.technicalCode, image: m.imageUrl!, name: m.name?.[lang] ?? m.technicalCode,
                    materialName: m.name?.[lang] ?? m.technicalCode,
@@ -332,7 +339,8 @@ export default function MaterialSlotPicker({
       .sort((a, b) =>
         Number(b.isSelected) - Number(a.isSelected) ||
         Number(b.isRecommended) - Number(a.isRecommended) ||
-        getPairCountByCode(b.code) - getPairCountByCode(a.code)
+        getPairCountByCode(b.code) - getPairCountByCode(a.code) ||
+        getDescriptorScore(b.code, otherMaterialCodes ?? []) - getDescriptorScore(a.code, otherMaterialCodes ?? [])
       );
   }, [slot, effectiveActiveId, filteredMaterials, recommendedCodes, selectedMaterialCode, lang]);
 

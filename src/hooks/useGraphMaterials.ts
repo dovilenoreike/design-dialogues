@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore } from '@/lib/graph-compatibility';
+import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
 import { deriveArchetypeId } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -115,6 +115,17 @@ export function getCompatibilityScore(code: string, otherCodes: string[]): numbe
   return weightedScore(code, otherCodes, _cached.pairWeights);
 }
 
+/** Context-aware descriptor similarity score for a material against the current selection.
+ *  Higher = more similar descriptors. Uses the v2 formula (lightness, warmth, chroma). */
+export function getDescriptorScore(code: string, otherCodes: string[]): number {
+  if (!_cached || otherCodes.length === 0) return 0;
+  const { byCode } = _cached;
+  const candidate = byCode.get(code);
+  if (!candidate) return 0;
+  const others = otherCodes.map(c => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  return descriptorScore(candidate, others);
+}
+
 /** Returns true if this material has an approved pair with every one of the given otherCodes. */
 export function matchesAllOtherCodes(code: string, otherCodes: string[]): boolean {
   if (!_cached || otherCodes.length === 0) return false;
@@ -196,7 +207,7 @@ export function useGraphMaterials() {
     targetRole?: string,
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
-    const { pairs, pairWeights, graphMaterials: mats } = _cached;
+    const { pairs, pairWeights, byCode, graphMaterials: mats } = _cached;
     const threshold = Math.min(2, otherCodes.length);
     let pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;
@@ -213,7 +224,7 @@ export function useGraphMaterials() {
       const narrowed = sameTexture.filter((m) => isSimilarLightness(m.lightness, slotMat.lightness));
       pool = narrowed.length > 0 ? narrowed : sameTexture;
     }
-    return rankByCompatibility(pool, otherCodes, pairs, pairWeights)
+    return rankByCompatibility(pool, otherCodes, pairs, pairWeights, byCode)
       .map((m) => m.technicalCode);
   }
 
