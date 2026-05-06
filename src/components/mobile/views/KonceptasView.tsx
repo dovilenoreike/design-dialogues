@@ -257,7 +257,7 @@ export default function KonceptasView({
                 .filter(k => k !== piece.slot && k !== 'accents')
                 .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
                 .filter((c): c is string => !!c);
-          const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && compatCodes.length > 0;
+          const showIndicator = !graphLoading && !!archetypeId && !!currentMatId && compatCodes.length > 0 && piece.slot !== 'accents';
           const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, compatCodes) : null;
           const showVerified = isCompatible === true;
           const showDoubleVerified = showVerified && compatCodes.length >= 2 && isCompatibleWithEvery(currentMatId, compatCodes);

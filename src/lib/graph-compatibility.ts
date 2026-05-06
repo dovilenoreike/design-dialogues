@@ -58,7 +58,7 @@ export function isCompatibleWithAll(
   selectedCodes: string[],
   pairs: Set<string>,
 ): boolean {
-  return selectedCodes.every((sel) => pairs.has(pairKey(candidateCode, sel)));
+  return selectedCodes.every((sel) => sel === candidateCode || pairs.has(pairKey(candidateCode, sel)));
 }
 
 export function getCompatibleCandidates(
@@ -80,7 +80,7 @@ export function countCompatible(
   selectedCodes: string[],
   pairs: Set<string>,
 ): number {
-  return selectedCodes.filter((sel) => pairs.has(pairKey(candidateCode, sel))).length;
+  return selectedCodes.filter((sel) => sel === candidateCode || pairs.has(pairKey(candidateCode, sel))).length;
 }
 
 export function weightedScore(

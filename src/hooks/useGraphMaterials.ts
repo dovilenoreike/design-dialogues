@@ -119,7 +119,7 @@ export function getCompatibilityScore(code: string, otherCodes: string[]): numbe
 export function matchesAllOtherCodes(code: string, otherCodes: string[]): boolean {
   if (!_cached || otherCodes.length === 0) return false;
   const { pairs } = _cached;
-  return otherCodes.every(c => pairs.has(pairKey(code, c)));
+  return otherCodes.every(c => c === code || pairs.has(pairKey(code, c)));
 }
 
 /**

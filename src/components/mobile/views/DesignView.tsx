@@ -608,7 +608,7 @@ export default function DesignView() {
   const reviewMaterials: ReviewMaterial[] = useMemo(() => {
     if (!allSlotsFilled) return [];
     const nonAccentSlots = activeSlots.filter(k => k !== "accents");
-    return activeSlots.map((slotKey) => {
+    return nonAccentSlots.map((slotKey) => {
       const pk = SLOT_TO_PALETTE_KEY[slotKey];
       const code = pk ? (materialOverrides[pk] ?? "") : "";
       const mat = code ? getMaterialByCode(code) : undefined;
@@ -815,7 +815,7 @@ export default function DesignView() {
               onClearAll={handleClearAll}
               onScrollToPicker={scrollToPicker}
               requiredMissing={requiredMissing}
-              hasIncompatibleSlots={hasIncompatibleSlots}
+              allNonAccentsVerified={allNonAccentsVerified}
               onRequestReview={() => setShowReviewSheet(true)}
               t={t}
               language={language}

@@ -82,20 +82,15 @@ export function computePaletteHint(
 
   // ── 4. Classify ──────────────────────────────────────────────────────────
   let result: PaletteHintKey;
-  let reason: string;
 
   if (avgDist <= SIMILAR) {
     result = "minimal";
-    reason = `avgDist ${avgDist.toFixed(2)} ≤ ${SIMILAR}`;
   } else if (isMixed) {
     result = "mixed";
-    reason = `warmthAvgDist ${warmthAvgDist.toFixed(2)} ≥ ${MIXED_WARMTH_DIST} — warm and cool surfaces without a dominant story`;
   } else if (L_high) {
     result = "highContrast";
-    reason = `lightnessStd ${lightnessStd.toFixed(2)} ≥ ${L_STD_HIGH}, warmth coherent (warmthAvgDist ${warmthAvgDist.toFixed(2)})`;
   } else {
     result = "balanced";
-    reason = `lightnessStd ${lightnessStd.toFixed(2)}, warmthAvgDist ${warmthAvgDist.toFixed(2)} — moderate variation, coherent`;
   }
 
   return { key: result };
