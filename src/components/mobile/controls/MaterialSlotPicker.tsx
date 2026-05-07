@@ -325,10 +325,7 @@ export default function MaterialSlotPicker({
         m.technicalCode !== row1Code &&
         !recommendedCodes.has(m.technicalCode)
       )
-      .sort((a, b) =>
-        Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
-        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
-      )
+      .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))
       .map(m => ({
         code: m.technicalCode,
         image: m.imageUrl!,
@@ -682,7 +679,7 @@ export default function MaterialSlotPicker({
                       {expanded.siblings.map(sibling => (
                         <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                           <SwatchButton
-                            onClick={() => { handleRow3Click(sibling); setExpandedClusterKey(null); }}
+                            onClick={() => { handleRow3Click(sibling); }}
                             isActive={sibling.isSelected}
                           >
                             <img src={sibling.image} alt="" className="w-full h-full object-cover" />
