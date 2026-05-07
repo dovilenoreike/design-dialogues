@@ -188,6 +188,24 @@ export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];
 }
 
+/**
+ * Resolves a material code for a specific showroom.
+ * - If the material is already in the showroom, returns it unchanged.
+ * - If not, looks for a synonym that IS in the showroom and returns that instead.
+ * - Falls back to the original code if no synonym matches (e.g. role not covered by showroom).
+ */
+export function resolveCodeForShowroom(code: string, showroomId: string): string {
+  if (!_cached) return code;
+  const mat = _cached.byCode.get(code);
+  if (!mat) return code;
+  if (mat.showroomIds.includes(showroomId)) return code;
+  if (!mat.synonymId) return code;
+  const synonym = _cached.graphMaterials.find(
+    (m) => m.synonymId === mat.synonymId && m.technicalCode !== code && m.showroomIds.includes(showroomId)
+  );
+  return synonym?.technicalCode ?? code;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useGraphMaterials() {

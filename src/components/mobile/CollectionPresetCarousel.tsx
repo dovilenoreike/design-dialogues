@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useCollectionPresets } from "@/hooks/useCollectionPresets";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
-import { useGraphMaterials, getMaterialByCode } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, resolveCodeForShowroom } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { SavedPalette } from "@/hooks/useSavedPalettes";
 
@@ -49,8 +49,8 @@ export default function CollectionPresetCarousel({
   });
 
   // Filter presets to those compatible with the active showroom.
-  // Rule: every material whose role is covered by the showroom must be in that showroom's stock.
-  // Materials in roles the showroom doesn't cover (e.g. worktops for a floor-only showroom) are ignored.
+  // Rule: every material whose role is covered by the showroom must be in that showroom's stock
+  // — or have a synonym that is. Materials in uncovered roles are ignored.
   const filteredPresets = useMemo(() => {
     if (!activeShowroom || graphLoading) return presets;
     return presets.filter((preset) =>
@@ -61,7 +61,9 @@ export default function CollectionPresetCarousel({
           activeShowroom.surfaceCategories.includes(r as MaterialRole)
         );
         if (!showroomCoversRole) return true; // role not covered by this showroom — ignore
-        return mat.showroomIds.includes(activeShowroom.id);
+        // Accept if the material itself is in the showroom, or a synonym is
+        return resolveCodeForShowroom(code, activeShowroom.id) !== code
+          || mat.showroomIds.includes(activeShowroom.id);
       })
     );
   }, [presets, activeShowroom, graphLoading]);
@@ -74,7 +76,17 @@ export default function CollectionPresetCarousel({
       ...savedPalettes.map((p) => ({ materials: p.materials, image_url: null as string | null })),
       ...filteredPresets,
     ];
-    if (items[next]) onApplyPreset(items[next].materials, items[next].image_url ?? null);
+    if (!items[next]) return;
+    // Remap any material codes to their showroom synonym where applicable
+    const materials = activeShowroom
+      ? Object.fromEntries(
+          Object.entries(items[next].materials).map(([slot, code]) => [
+            slot,
+            resolveCodeForShowroom(code, activeShowroom.id),
+          ])
+        )
+      : items[next].materials;
+    onApplyPreset(materials, items[next].image_url ?? null);
   };
 
   // Auto-apply the first preset when presets load and user has no materials yet.
