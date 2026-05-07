@@ -397,37 +397,45 @@ export default function MaterialSlotPicker({
     [archetypeFlatItems, clusterIdByCode],
   );
 
-  function getActiveItem(cluster: ClusterCell): RowItem {
-    return [cluster.representative, ...cluster.siblings].find(m => m.isSelected)
-      ?? cluster.representative;
-  }
+  // Expand the cluster containing the selected material; collapse if no cluster matches.
+  useEffect(() => {
+    for (const cluster of archetypeClusters) {
+      if (cluster.siblings.length === 0) continue;
+      if (cluster.representative.isSelected || cluster.siblings.some(s => s.isSelected)) {
+        setExpandedClusterKey(cluster.representative.code);
+        return;
+      }
+    }
+    setExpandedClusterKey(null);
+  }, [archetypeClusters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function clusterHasBetterSibling(cluster: ClusterCell): boolean {
     if ((otherMaterialCodes ?? []).length === 0 || cluster.siblings.length === 0) return false;
-    const active = getActiveItem(cluster);
-    const activeScore = getCompatibilityScore(active.code, otherMaterialCodes ?? []);
-    return cluster.siblings.some(s => getCompatibilityScore(s.code, otherMaterialCodes ?? []) > activeScore);
+    const repScore = getCompatibilityScore(cluster.representative.code, otherMaterialCodes ?? []);
+    return cluster.siblings.some(s => getCompatibilityScore(s.code, otherMaterialCodes ?? []) > repScore);
   }
 
   function renderClusterRow(clusters: ClusterCell[]): React.ReactNode {
     return clusters.map((cluster) => {
-      const activeItem = getActiveItem(cluster);
+      const rep = cluster.representative;
       const hasSiblings = cluster.siblings.length > 0;
       const showWand = clusterHasBetterSibling(cluster);
-      const clusterKey = cluster.representative.code;
+      const clusterKey = rep.code;
       const isExpanded = expandedClusterKey === clusterKey;
+      // A sibling is selected — show border to indicate this cluster has a pick, but no check mark
+      const siblingSelected = cluster.siblings.some(s => s.isSelected);
 
       return (
         <div key={`cl-${clusterKey}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
           <SwatchButton
             onClick={() => {
-              handleRow3Click(activeItem);
+              handleRow3Click(rep);
               if (hasSiblings) setExpandedClusterKey(prev => prev === clusterKey ? null : clusterKey);
             }}
-            isActive={activeItem.isSelected || isExpanded}
+            isActive={rep.isSelected || isExpanded || siblingSelected}
           >
-            <img src={activeItem.image} alt="" className="w-full h-full object-cover" />
-            {activeItem.isSelected && (
+            <img src={rep.image} alt="" className="w-full h-full object-cover" />
+            {rep.isSelected && (
               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
               </div>
@@ -439,8 +447,8 @@ export default function MaterialSlotPicker({
             )}
           </SwatchButton>
           <span className="text-[10px] text-center w-full truncate leading-tight"
-            style={{ color: activeItem.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: activeItem.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-            {activeItem.name}
+            style={{ color: (rep.isSelected || siblingSelected) ? "#1a1a1a" : "#9ca3af", fontWeight: (rep.isSelected || siblingSelected) ? 500 : 400, minHeight: "1.2em" }}>
+            {rep.name}
           </span>
         </div>
       );
