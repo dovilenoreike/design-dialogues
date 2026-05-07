@@ -188,6 +188,16 @@ export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];
 }
 
+/** Returns all synonym siblings of a material (same synonym_id, different code). Empty if no synonyms. */
+export function getSynonymMaterials(code: string): SupabaseMaterial[] {
+  if (!_cached) return [];
+  const mat = _cached.byCode.get(code);
+  if (!mat?.synonymId) return [];
+  return _cached.graphMaterials.filter(
+    (m) => m.synonymId === mat.synonymId && m.technicalCode !== code
+  );
+}
+
 /**
  * Resolves a material code for a specific showroom.
  * - If the material is already in the showroom, returns it unchanged.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MapPin, Clock, X, Phone, Globe, Mail } from "lucide-react";
 import type { ProviderBrand, ShowroomResult } from "@/data/sourcing/types";
 import {
@@ -18,7 +18,9 @@ import { useCity, CITIES, CITY_LABELS, type City } from "@/contexts/CityContext"
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getShowroomsForMaterial, getProvidersForMaterial, getSpecialtyForMaterial } from "@/data/sourcing";
+import { getMaterialByCode, getSynonymMaterials } from "@/hooks/useGraphMaterials";
 import { useProvider } from "@/contexts/ProviderContext";
+import { useShowroom } from "@/contexts/ShowroomContext";
 import { sendEmail } from "@/lib/send-email";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -56,12 +58,48 @@ const MaterialSourcingSheet = ({
   const { city, setCity } = useCity();
   const isMobile = useIsMobile();
   const { activeProvider } = useProvider();
+  const { activeShowroom } = useShowroom();
   const [contactProvider, setContactProvider] = useState<ProviderBrand | null>(null);
   const [contactShowroom, setContactShowroom] = useState<ShowroomResult | null>(null);
   const [msgName, setMsgName] = useState("");
   const [msgEmail, setMsgEmail] = useState("");
   const [msgText, setMsgText] = useState("");
   const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+  // Synonym variant browsing — reset to original material whenever the sheet opens for a new material
+  const [activeCode, setActiveCode] = useState<string | null>(null);
+  useEffect(() => { setActiveCode(null); }, [material?.technicalCode]);
+
+  const synonyms = useMemo(
+    () => (material?.technicalCode ? getSynonymMaterials(material.technicalCode) : []),
+    [material?.technicalCode],
+  );
+
+  // All variants: original first, then synonyms.
+  // In a showroom session, hide synonyms stocked by other showrooms (don't expose competitors).
+  const allVariants = useMemo(() => {
+    if (!material?.technicalCode || synonyms.length === 0) return [];
+    const visibleSynonyms = activeShowroom
+      ? synonyms.filter((m) => m.showroomIds.includes(activeShowroom.id))
+      : synonyms;
+    if (visibleSynonyms.length === 0) return [];
+    return [material.technicalCode, ...visibleSynonyms.map((m) => m.technicalCode)];
+  }, [material?.technicalCode, synonyms, activeShowroom]);
+
+  // Resolved display material — swap image/name/showrooms when a synonym dot is active
+  const displayMaterial = useMemo((): typeof material => {
+    if (!material) return material;
+    if (!activeCode || activeCode === material.technicalCode) return material;
+    const syn = getMaterialByCode(activeCode);
+    if (!syn) return material;
+    return {
+      ...material,
+      name: (syn.name?.en ?? syn.name?.lt) ?? material.name,
+      technicalCode: syn.technicalCode,
+      imageUrl: syn.imageUrl ?? material.imageUrl,
+      showroomIds: syn.showroomIds,
+    };
+  }, [material, activeCode]);
 
   const handleProviderMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +158,7 @@ const MaterialSourcingSheet = ({
 
   if (!material) return null;
 
-  const showroomResult = getShowroomsForMaterial(city, material.showroomIds);
+  const showroomResult = getShowroomsForMaterial(city, displayMaterial!.showroomIds);
   const specialty = getSpecialtyForMaterial(material.materialType);
   const allProviders = getProvidersForMaterial(city, material.materialType);
   const providers = activeProvider
@@ -141,10 +179,10 @@ const MaterialSourcingSheet = ({
     <div className="overflow-y-auto">
       {/* Hero Image */}
       <div className="relative w-full bg-muted overflow-hidden" style={{ aspectRatio: "16/9" }}>
-        {material.imageUrl ? (
+        {displayMaterial!.imageUrl ? (
           <img
-            src={material.imageUrl}
-            alt={material.name}
+            src={displayMaterial!.imageUrl}
+            alt={displayMaterial!.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -157,14 +195,30 @@ const MaterialSourcingSheet = ({
         >
           <X size={14} />
         </button>
+        {allVariants.length > 1 && (
+          <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
+            {allVariants.map((code) => {
+              const isActive = (activeCode ?? material.technicalCode) === code;
+              return (
+                <button
+                  key={code}
+                  onClick={() => setActiveCode(code)}
+                  className="w-1.5 h-1.5 rounded-full transition-all"
+                  style={{ backgroundColor: isActive ? "white" : "rgba(255,255,255,0.45)" }}
+                  aria-label={code}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Meta */}
       <div className="px-5 pt-4">
-        <h2 className="text-xl font-medium text-foreground leading-snug">{material.name}</h2>
-        {material.technicalCode && (
+        <h2 className="text-xl font-medium text-foreground leading-snug">{displayMaterial!.name}</h2>
+        {displayMaterial!.technicalCode && (
           <span className="inline-block mt-1.5 bg-muted rounded-md px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
-            {material.technicalCode}
+            {displayMaterial!.technicalCode}
           </span>
         )}
       </div>
@@ -328,10 +382,10 @@ const MaterialSourcingSheet = ({
 
           {/* Hero Image */}
           <div className="relative w-full mt-3 bg-muted overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {material.imageUrl ? (
+            {displayMaterial!.imageUrl ? (
               <img
-                src={material.imageUrl}
-                alt={material.name}
+                src={displayMaterial!.imageUrl}
+                alt={displayMaterial!.name}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -344,14 +398,30 @@ const MaterialSourcingSheet = ({
             >
               <X size={14} />
             </button>
+            {allVariants.length > 1 && (
+              <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
+                {allVariants.map((code) => {
+                  const isActive = (activeCode ?? material.technicalCode) === code;
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => setActiveCode(code)}
+                      className="w-1.5 h-1.5 rounded-full transition-all"
+                      style={{ backgroundColor: isActive ? "white" : "rgba(255,255,255,0.45)" }}
+                      aria-label={code}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Meta */}
           <div className="px-4 pt-3.5">
-            <h2 className="text-xl font-medium text-foreground leading-snug">{material.name}</h2>
-            {material.technicalCode && (
+            <h2 className="text-xl font-medium text-foreground leading-snug">{displayMaterial!.name}</h2>
+            {displayMaterial!.technicalCode && (
               <span className="inline-block mt-1.5 bg-muted rounded-md px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
-                {material.technicalCode}
+                {displayMaterial!.technicalCode}
               </span>
             )}
           </div>
