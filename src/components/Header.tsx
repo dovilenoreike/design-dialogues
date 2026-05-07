@@ -204,7 +204,7 @@ const Header = () => {
             )}
 
             {isShowroomMode && activeShowroom ? (
-              <div className="flex-1 text-center px-2 truncate">
+              <button onClick={() => { navigate("/"); setActiveTab?.("design"); }} className="flex-1 text-center px-2 truncate">
                 <span className="text-xl font-serif font-medium tracking-tight text-foreground">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                   {activeShowroom.name}
@@ -212,9 +212,9 @@ const Header = () => {
                 <span className="block text-[10px] text-muted-foreground tracking-wide">
                   {t("showroom.poweredBy")}
                 </span>
-              </div>
+              </button>
             ) : isProviderMode && activeProvider ? (
-              <div className="flex-1 text-center px-2 truncate">
+              <button onClick={() => { navigate("/"); setActiveTab?.("design"); }} className="flex-1 text-center px-2 truncate">
                 <span className="text-xl font-serif font-medium tracking-tight text-foreground">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                   {activeProvider.name}
@@ -222,7 +222,7 @@ const Header = () => {
                 <span className="block text-[10px] text-muted-foreground tracking-wide">
                   {t("provider.poweredBy")}
                 </span>
-              </div>
+              </button>
             ) : (
               <Link
                 to="/"
@@ -269,7 +269,7 @@ const Header = () => {
             {/* Left: Logo / Co-branding */}
             <div className="justify-self-start">
               {isShowroomMode && activeShowroom ? (
-                <div className="text-left">
+                <button onClick={() => { navigate("/"); setActiveTab?.("design"); }} className="text-left">
                   <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
                     <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                     {activeShowroom.name}
@@ -277,9 +277,9 @@ const Header = () => {
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("showroom.poweredBy")}
                   </span>
-                </div>
+                </button>
               ) : isProviderMode && activeProvider ? (
-                <div className="text-left">
+                <button onClick={() => { navigate("/"); setActiveTab?.("design"); }} className="text-left">
                   <span className="text-2xl font-serif font-medium tracking-tight text-foreground">
                     <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#647d75] mr-2 align-middle" />
                     {activeProvider.name}
@@ -287,7 +287,7 @@ const Header = () => {
                   <span className="ml-2 text-xs text-muted-foreground">
                     {t("provider.poweredBy")}
                   </span>
-                </div>
+                </button>
               ) : (
                 <Link
                   to="/"
