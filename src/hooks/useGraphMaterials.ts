@@ -239,11 +239,16 @@ export function useGraphMaterials() {
     if (otherCodes.length === 0) return null;
     // Gate: current material already compatible with all others → no nudge
     if (isCompatibleWithAll(slotCode, otherCodes, pairs)) return null;
+    const slotMat = _cached.byCode.get(slotCode);
+    const slotSynonymId = slotMat?.synonymId ?? null;
     const candidates = getCompatibleCandidates(otherCodes, mats, pairs, targetRole)
-      .filter((m) => m.technicalCode !== slotCode);
+      .filter((m) =>
+        m.technicalCode !== slotCode &&
+        // Never suggest a synonym — they're visually identical, nudging to one is meaningless
+        !(slotSynonymId && m.synonymId === slotSynonymId)
+      );
     if (candidates.length === 0) return null;
     // Narrow to same texture + similar lightness as the slot's current material
-    const slotMat = mats.find((m) => m.technicalCode === slotCode);
     if (slotMat) {
       const narrowed = candidates.filter((m) =>
         m.texture === slotMat.texture &&
@@ -269,7 +274,7 @@ export function useGraphMaterials() {
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
     const { pairs, pairWeights, byCode, graphMaterials: mats } = _cached;
-    const threshold = Math.min(2, otherCodes.length);
+    const threshold = Math.max(1, otherCodes.length - 1);
     let pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;
       if (targetRole && !m.role.includes(targetRole)) return false;
@@ -292,7 +297,7 @@ export function useGraphMaterials() {
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
     if (!_cached || otherCodes.length === 0) return false;
     const { pairs } = _cached;
-    const threshold = Math.min(2, otherCodes.length);
+    const threshold = Math.max(1, otherCodes.length - 1);
     return countCompatible(slotCode, otherCodes, pairs) >= threshold;
   }
 

@@ -261,7 +261,7 @@ export default function KonceptasView({
           const isCompatible = showIndicator ? isCompatibleWithOthers(currentMatId, compatCodes) : null;
           const showVerified = isCompatible === true;
           const showDoubleVerified = showVerified && isCompatibleWithEvery(currentMatId, compatCodes);
-          const showNudge = isCompatible === false && !!graphBestCode;
+          const showNudge = isCompatible === false && !!graphBestCode && !(lastSwap?.pk === pk);
           const sameRoleCodes = (Object.keys(slotSurfaces) as SlotKey[])
             .filter(k => k !== piece.slot && SLOT_KEY_TO_ROLE[k] === slotRole)
             .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
