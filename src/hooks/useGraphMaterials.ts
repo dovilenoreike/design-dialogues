@@ -106,7 +106,7 @@ async function loadGraphData(): Promise<GraphCache> {
     if (m.synonymId) codeToSynonym.set(m.technicalCode, m.synonymId);
   }
   for (const [key, weight] of [...pairWeights]) {
-    const [codeA, codeB] = key.split('|');
+    const [codeA, codeB] = key.split('::');
     for (const [code, partner] of [[codeA, codeB], [codeB, codeA]]) {
       const synId = codeToSynonym.get(code);
       if (!synId) continue;
