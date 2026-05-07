@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, Trash2, X, Search } from "lucide-react";
+import { Check, Trash2, X, Search, Wand2 } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -18,19 +18,6 @@ import MaterialRequestDialog from "./MaterialRequestDialog";
 
 type LayoutPattern = "plank" | "chevron" | "herringbone" | "tile" | "even";
 const PATTERN_ORDER: LayoutPattern[] = ["plank", "chevron", "herringbone", "tile", "even"];
-
-// ─── Warmth sub-category logic ────────────────────────────────────────────────
-
-type WarmthGroup = "warm" | "neutral" | "cold";
-const WARMTH_GROUPS: WarmthGroup[] = ["warm", "neutral", "cold"];
-const WARMTH_THRESHOLDS = { warm: 0.35, cold: -0.35 };
-
-function getWarmthGroup(warmth: number | null | undefined): WarmthGroup {
-  const w = warmth ?? 50;
-  if (w > WARMTH_THRESHOLDS.warm) return "warm";
-  if (w < WARMTH_THRESHOLDS.cold) return "cold";
-  return "neutral";
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +55,25 @@ interface MaterialSlotPickerProps {
   subHeader?: React.ReactNode;
 }
 
+// ─── Row item types (module-level so cluster helpers can reference them) ──────
+
+type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; matchesAll: boolean; archetypeId: string };
+type ClusterCell = { representative: RowItem; siblings: RowItem[] };
+
+/** Group pre-sorted RowItems by cluster_id. First item in each group = representative. */
+function buildClusters(items: RowItem[], clusterIdByCode: Map<string, string | null>): ClusterCell[] {
+  const groups = new Map<string, RowItem[]>();
+  for (const item of items) {
+    const key = clusterIdByCode.get(item.code) ?? item.code;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(item);
+  }
+  return Array.from(groups.values()).map(members => ({
+    representative: members[0],
+    siblings: members.slice(1),
+  }));
+}
+
 export default function MaterialSlotPicker({
   slot,
   selections,
@@ -88,8 +94,6 @@ export default function MaterialSlotPicker({
 
   // Which archetype chip is expanded (user-driven)
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
-  // Warmth sub-category selection (inline mode only)
-  const [activeWarmthGroup, setActiveWarmthGroup] = useState<WarmthGroup | null>(null);
   // Layout pattern filter — only applied for floor slots
   const [activeLayoutPattern, setActiveLayoutPattern] = useState<LayoutPattern>("plank");
   // Code search
@@ -97,6 +101,8 @@ export default function MaterialSlotPicker({
   const [searchQuery, setSearchQuery] = useState("");
   // Material request
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+  // Which cluster's sibling row is currently expanded (keyed by representative code)
+  const [expandedClusterKey, setExpandedClusterKey] = useState<string | null>(null);
 
   const role = slot ? SLOT_KEY_TO_ROLE[slot] : null;
 
@@ -106,14 +112,7 @@ export default function MaterialSlotPicker({
     setSearchOpen(false);
     setSearchQuery("");
     setShowRequestDialog(false);
-    // Auto-expand the warmth group row if the selected material lives in Row 3,
-    // so the current selection is always visible when the picker reopens.
-    if (selectedMaterialCode) {
-      const mat = getMaterialByCode(selectedMaterialCode);
-      setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
-    } else {
-      setActiveWarmthGroup(null);
-    }
+    setExpandedClusterKey(null);
   }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
@@ -188,6 +187,9 @@ export default function MaterialSlotPicker({
     return availableWithImages[0]?.archetype.id ?? null;
   }, [activeArchetypeId, availableWithImages, slot, selections]);
 
+  // Collapse sibling expansion when archetype changes
+  useEffect(() => { setExpandedClusterKey(null); }, [effectiveActiveId]);
+
   // Patterns actually present in the active archetype's materials — drives chip visibility
   const availablePatterns = useMemo((): LayoutPattern[] => {
     if (!effectiveActiveId || !graphMaterials || !slot) return [];
@@ -213,11 +215,14 @@ export default function MaterialSlotPicker({
     return graphMaterials.filter((m) => m.layoutPattern === activeLayoutPattern);
   }, [graphMaterials, role, activeLayoutPattern, availablePatterns]);
 
-  // ─── Shared row item types ────────────────────────────────────────────────
-  type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; matchesAll: boolean; archetypeId: string };
-  type Row2Item = RowItem & { warmthGroup: WarmthGroup };
 
   // ─── Inline row data ──────────────────────────────────────────────────────
+
+  // Cluster id lookup — needed for deduplication in recommended and flat rows
+  const clusterIdByCode = useMemo(
+    () => new Map((graphMaterials ?? []).map(m => [m.technicalCode, m.clusterId ?? null])),
+    [graphMaterials],
+  );
 
   // Recommended section: all materials ranked by compatibility score
   // Not applicable to accents — they use archetypeId as code and pair with everything
@@ -248,7 +253,20 @@ export default function MaterialSlotPicker({
       }));
   }, [slot, graphMaterials, otherMaterialCodes, sameRoleMaterialCodes, getRecommendedCodes, selectedMaterialCode, lang]);
 
-  const recommendedCodes = useMemo(() => new Set(recommendedItems.map(r => r.code)), [recommendedItems]);
+  // De-duplicate recommended by cluster — one representative per cluster (highest-scored first)
+  const clusteredRecommendedItems = useMemo((): RowItem[] => {
+    const seen = new Set<string>();
+    return recommendedItems.filter(item => {
+      const key = clusterIdByCode.get(item.code) ?? item.code;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [recommendedItems, clusterIdByCode]);
+
+  // Only the shown representatives are excluded from the flat row —
+  // siblings remain available there for expansion
+  const recommendedCodes = useMemo(() => new Set(clusteredRecommendedItems.map(r => r.code)), [clusteredRecommendedItems]);
 
   // Row 1: best-ranked material per archetype (excluding recommended — those appear above)
   // For accent slots: use archetype image directly since accents select by archetypeId, not material code
@@ -271,60 +289,6 @@ export default function MaterialSlotPicker({
     }).filter((x): x is RowItem => x !== null)
       .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
   }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang]);
-
-  // Row 2: best per warmth group in active archetype, excluding Row 1 and recommended
-  const row2Items = useMemo((): Row2Item[] => {
-    if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
-    return WARMTH_GROUPS.map(group => {
-      const best = filteredMaterials
-        .filter(m =>
-          m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
-          m.technicalCode !== row1Code &&
-          !recommendedCodes.has(m.technicalCode) &&
-          getWarmthGroup(m.warmth) === group
-        )
-        .sort((a, b) =>
-          getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
-          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
-          getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
-        )[0];
-      if (!best) return null;
-      return { code: best.technicalCode, image: best.imageUrl!, name: best.name?.[lang] ?? best.technicalCode,
-               materialName: best.name?.[lang] ?? best.technicalCode,
-               isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
-               archetypeId: effectiveActiveId, warmthGroup: group };
-    }).filter((x): x is Row2Item => x !== null)
-      .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
-  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
-
-  // Row 3: remaining materials in active warmth group, excluding Row 1, Row 2, and recommended
-  const row3Items = useMemo((): RowItem[] => {
-    if (!slot || !effectiveActiveId || !activeWarmthGroup || !filteredMaterials.length) return [];
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const excludeCodes = new Set([
-      row1Items.find(r => r.archetypeId === effectiveActiveId)?.code,
-      row2Items.find(r => r.warmthGroup === activeWarmthGroup)?.code,
-    ].filter(Boolean) as string[]);
-    return filteredMaterials
-      .filter(m =>
-        m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl &&
-        getWarmthGroup(m.warmth) === activeWarmthGroup &&
-        !excludeCodes.has(m.technicalCode) &&
-        !recommendedCodes.has(m.technicalCode)
-      )
-      .sort((a, b) =>
-        Number(b.technicalCode === selectedMaterialCode) - Number(a.technicalCode === selectedMaterialCode) ||
-        getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
-        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
-        getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
-      )
-      .map(m => ({ code: m.technicalCode, image: m.imageUrl!, name: m.name?.[lang] ?? m.technicalCode,
-                   materialName: m.name?.[lang] ?? m.technicalCode,
-                   isSelected: m.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
-                   archetypeId: effectiveActiveId }));
-  }, [slot, effectiveActiveId, activeWarmthGroup, filteredMaterials, row1Items, row2Items, recommendedCodes, selectedMaterialCode, lang]);
 
   // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
@@ -377,14 +341,6 @@ export default function MaterialSlotPicker({
       }));
   }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
 
-  // True when the active archetype has enough variants to warrant warmth branching
-  const activeArchetypeIsBranched = useMemo(() => {
-    if (!slot || !effectiveActiveId || !filteredMaterials.length) return false;
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const count = filteredMaterials.filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl).length;
-    return count > 8;
-  }, [slot, effectiveActiveId, filteredMaterials]);
-
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -424,27 +380,75 @@ export default function MaterialSlotPicker({
   const handleRecommendedClick = (item: RowItem) => {
     if (!slot) return;
     setActiveArchetypeId(item.archetypeId);
-    const mat = filteredMaterials.find(m => m.technicalCode === item.code);
-    setActiveWarmthGroup(mat ? getWarmthGroup(mat.warmth) : null);
     onSelect(slot, item.archetypeId, item.code);
   };
 
   const handleRow1Click = (item: RowItem) => {
     setActiveArchetypeId(item.archetypeId);
-    setActiveWarmthGroup(null);
     if (!slot) return;
     onSelect(slot, item.archetypeId, item.code);
-  };
-
-  const handleRow2Click = (item: Row2Item) => {
-    setActiveArchetypeId(item.archetypeId);
-    setActiveWarmthGroup(item.warmthGroup);
-    if (slot) onSelect(slot, item.archetypeId, item.code);
   };
 
   const handleRow3Click = (item: RowItem) => {
     if (slot) onSelect(slot, item.archetypeId, item.code);
   };
+
+  // ─── Cluster helpers ──────────────────────────────────────────────────────
+
+  const archetypeClusters = useMemo(
+    () => buildClusters(archetypeFlatItems, clusterIdByCode),
+    [archetypeFlatItems, clusterIdByCode],
+  );
+
+  function getActiveItem(cluster: ClusterCell): RowItem {
+    return [cluster.representative, ...cluster.siblings].find(m => m.isSelected)
+      ?? cluster.representative;
+  }
+
+  function clusterHasBetterSibling(cluster: ClusterCell): boolean {
+    if ((otherMaterialCodes ?? []).length === 0 || cluster.siblings.length === 0) return false;
+    const active = getActiveItem(cluster);
+    const activeScore = getCompatibilityScore(active.code, otherMaterialCodes ?? []);
+    return cluster.siblings.some(s => getCompatibilityScore(s.code, otherMaterialCodes ?? []) > activeScore);
+  }
+
+  function renderClusterRow(clusters: ClusterCell[]): React.ReactNode {
+    return clusters.map((cluster) => {
+      const activeItem = getActiveItem(cluster);
+      const hasSiblings = cluster.siblings.length > 0;
+      const showWand = clusterHasBetterSibling(cluster);
+      const clusterKey = cluster.representative.code;
+      const isExpanded = expandedClusterKey === clusterKey;
+
+      return (
+        <div key={`cl-${clusterKey}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+          <SwatchButton
+            onClick={() => {
+              handleRow3Click(activeItem);
+              if (hasSiblings) setExpandedClusterKey(prev => prev === clusterKey ? null : clusterKey);
+            }}
+            isActive={activeItem.isSelected || isExpanded}
+          >
+            <img src={activeItem.image} alt="" className="w-full h-full object-cover" />
+            {activeItem.isSelected && (
+              <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+              </div>
+            )}
+            {showWand && (
+              <div className="absolute top-1 right-1">
+                <Wand2 className="w-3 h-3" style={{ color: "#647d75" }} />
+              </div>
+            )}
+          </SwatchButton>
+          <span className="text-[10px] text-center w-full truncate leading-tight"
+            style={{ color: activeItem.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: activeItem.isSelected ? 500 : 400, minHeight: "1.2em" }}>
+            {activeItem.name}
+          </span>
+        </div>
+      );
+    });
+  }
 
   // ─── Inline render ────────────────────────────────────────────────────────
 
@@ -595,10 +599,10 @@ export default function MaterialSlotPicker({
           <>
 
           {/* Recommended swatches — only when best matches exist */}
-          {recommendedItems.length > 0 && (
+          {clusteredRecommendedItems.length > 0 && (
             <>
               <SwatchRow className="pt-3 pb-3">
-                {recommendedItems.map((mat) => (
+                {clusteredRecommendedItems.map((mat) => (
                   <div key={`rec-${mat.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: REC_SWATCH_SIZE }}>
                     <SwatchButton
                       onClick={() => handleRecommendedClick(mat)}
@@ -663,76 +667,41 @@ export default function MaterialSlotPicker({
           {!isFirstPick && (
             <>
               <SwatchDivider />
+              <SwatchRow alignItems="start" className="pt-3 pb-3">
+                {renderClusterRow(archetypeClusters)}
+              </SwatchRow>
 
-              {!activeArchetypeIsBranched ? (
-                /* ≤ 8 materials in archetype — flat list, no warmth rows */
-                <SwatchRow alignItems="start" className="pt-3 pb-3">
-                  {archetypeFlatItems.map((v) => (
-                    <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                      <SwatchButton onClick={() => handleRow3Click(v)} isActive={v.isSelected}>
-                        <img src={v.image} alt="" className="w-full h-full object-cover" />
-                        {v.isSelected && (
-                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                          </div>
-                        )}
-                      </SwatchButton>
-                      <span className="text-[10px] text-center w-full truncate leading-tight"
-                        style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-                        {v.materialName}
-                      </span>
-                    </div>
-                  ))}
-                </SwatchRow>
-              ) : (
-                /* > 8 materials — warmth row + detail row */
-                <>
-                  {/* Row 2 — Warmth sub-categories */}
-                  <SwatchRow alignItems="start" className="pt-3 pb-3">
-                    {row2Items.map((mat) => (
-                      <div key={`r2-${mat.warmthGroup}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                        <SwatchButton onClick={() => handleRow2Click(mat)} isActive={mat.isSelected}>
-                          <img src={mat.image} alt="" className="w-full h-full object-cover" />
-                          {mat.isSelected && (
-                            <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                              <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                            </div>
-                          )}
-                        </SwatchButton>
-                        <span className="text-[10px] text-center w-full truncate leading-tight"
-                          style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-                          {mat.isSelected ? mat.materialName : t(`surface.warmth${mat.warmthGroup.charAt(0).toUpperCase() + mat.warmthGroup.slice(1)}`)}
-                        </span>
-                      </div>
-                    ))}
-                  </SwatchRow>
-
-                  {/* Row 3 — Remaining materials in active warmth group */}
-                  {activeWarmthGroup && row3Items.length > 0 && (
-                    <>
-                      <SwatchDivider />
-                      <SwatchRow alignItems="start" className="pt-3 pb-3">
-                        {row3Items.map((v) => (
-                          <div key={v.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                            <SwatchButton onClick={() => handleRow3Click(v)} isActive={v.isSelected}>
-                              <img src={v.image} alt="" className="w-full h-full object-cover" />
-                              {v.isSelected && (
-                                <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                                  <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                                </div>
-                              )}
-                            </SwatchButton>
-                            <span className="text-[10px] text-center w-full truncate leading-tight"
-                              style={{ color: v.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: v.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-                              {v.name}
-                            </span>
-                          </div>
-                        ))}
-                      </SwatchRow>
-                    </>
-                  )}
-                </>
-              )}
+              {/* Sibling expansion row */}
+              {expandedClusterKey && (() => {
+                const expanded = archetypeClusters.find(c => c.representative.code === expandedClusterKey);
+                if (!expanded || expanded.siblings.length === 0) return null;
+                return (
+                  <>
+                    <SwatchDivider />
+                    <SwatchRow alignItems="start" className="pt-3 pb-3">
+                      {expanded.siblings.map(sibling => (
+                        <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                          <SwatchButton
+                            onClick={() => { handleRow3Click(sibling); setExpandedClusterKey(null); }}
+                            isActive={sibling.isSelected}
+                          >
+                            <img src={sibling.image} alt="" className="w-full h-full object-cover" />
+                            {sibling.isSelected && (
+                              <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                                <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                              </div>
+                            )}
+                          </SwatchButton>
+                          <span className="text-[10px] text-center w-full truncate leading-tight"
+                            style={{ color: sibling.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: sibling.isSelected ? 500 : 400, minHeight: "1.2em" }}>
+                            {sibling.name}
+                          </span>
+                        </div>
+                      ))}
+                    </SwatchRow>
+                  </>
+                );
+              })()}
             </>
           )}
 

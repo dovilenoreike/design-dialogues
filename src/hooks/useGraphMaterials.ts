@@ -12,6 +12,8 @@ export interface SupabaseMaterial extends GraphMaterial {
   texturePrompt: string | null;
   showroomIds: string[];
   layoutPattern: string | null;
+  clusterId: string | null;
+  synonymId: string | null;
 }
 
 interface GraphCache {
@@ -21,6 +23,9 @@ interface GraphCache {
   byCode: Map<string, SupabaseMaterial>;
   pairCountByCode: Map<string, number>;
 }
+
+/** Inherited pairings (via synonym_id) receive this fraction of the original weight. */
+const SYNONYM_INHERIT_FACTOR = 0.85;
 
 let _cached: GraphCache | null = null;
 let _fetchPromise: Promise<GraphCache> | null = null;
@@ -45,7 +50,7 @@ async function loadGraphData(): Promise<GraphCache> {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: mats }, { data: pc }] = await Promise.all([
     supabase.from('materials' as any).select(
-      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, name, image_url, material_type, tier, showroom_ids, texture_prompt, layout_pattern'
+      'id, technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, name, image_url, material_type, tier, showroom_ids, texture_prompt, layout_pattern, cluster_id, synonym_id'
     ),
     supabase.from('pair_compatibility' as any).select('code_a, code_b, weight'),
   ]);
@@ -68,6 +73,8 @@ async function loadGraphData(): Promise<GraphCache> {
     texturePrompt: r.texture_prompt ?? null,
     showroomIds: r.showroom_ids ?? [],
     layoutPattern: r.layout_pattern ?? null,
+    clusterId: r.cluster_id ?? null,
+    synonymId: r.synonym_id ?? null,
   }));
   graphMaterials.forEach((m) => {
     const primaryRole = m.role[0];
@@ -86,6 +93,32 @@ async function loadGraphData(): Promise<GraphCache> {
     pairWeights.set(key, w);
     pairCountByCode.set(r.code_a, (pairCountByCode.get(r.code_a) ?? 0) + 1);
     pairCountByCode.set(r.code_b, (pairCountByCode.get(r.code_b) ?? 0) + 1);
+  }
+  // ─── Synonym pair inheritance ──────────────────────────────────────────────
+  const synonymMembers = new Map<string, string[]>();
+  for (const m of graphMaterials) {
+    if (!m.synonymId) continue;
+    if (!synonymMembers.has(m.synonymId)) synonymMembers.set(m.synonymId, []);
+    synonymMembers.get(m.synonymId)!.push(m.technicalCode);
+  }
+  const codeToSynonym = new Map<string, string>();
+  for (const m of graphMaterials) {
+    if (m.synonymId) codeToSynonym.set(m.technicalCode, m.synonymId);
+  }
+  for (const [key, weight] of [...pairWeights]) {
+    const [codeA, codeB] = key.split('|');
+    for (const [code, partner] of [[codeA, codeB], [codeB, codeA]]) {
+      const synId = codeToSynonym.get(code);
+      if (!synId) continue;
+      for (const mate of synonymMembers.get(synId) ?? []) {
+        if (mate === code) continue;
+        const inheritedKey = pairKey(mate, partner);
+        if (pairWeights.has(inheritedKey)) continue; // real pair wins
+        pairWeights.set(inheritedKey, weight * SYNONYM_INHERIT_FACTOR);
+        pairs.add(inheritedKey);
+        // pairCountByCode intentionally NOT updated — count reflects real pairings only
+      }
+    }
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
   _updateImageCache(byCode);
