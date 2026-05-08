@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { deriveArchetypeId } from '@/lib/archetype-rules';
+import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
 export interface SupabaseMaterial extends GraphMaterial {
@@ -184,20 +184,37 @@ export function wouldTriggerWoodWarning(code: string, sameRoleCodes: string[]): 
 }
 
 /**
- * Returns true if placing this material would trigger the stone-warning triangle —
- * i.e. the candidate is stone with pattern > 20 and at least one other code (any role)
- * is also stone with pattern > 20 and has no approved pair with it.
+ * Returns true if placing this material would create an unapproved busy-pattern clash —
+ * i.e. the candidate has pattern > BUSY_PATTERN_THRESHOLD and at least one other code
+ * (any role, any texture) also exceeds the threshold with no approved pair between them.
  */
-export function wouldTriggerStoneWarning(code: string, allOtherCodes: string[]): boolean {
+export function wouldTriggerBusyPatternWarning(code: string, allOtherCodes: string[]): boolean {
   if (!_cached || allOtherCodes.length === 0) return false;
   const { pairs, byCode } = _cached;
   const mat = byCode.get(code);
-  if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= 20) return false;
+  if ((mat?.pattern ?? 0) <= BUSY_PATTERN_THRESHOLD) return false;
   return allOtherCodes.some(c => {
     if (c === code) return false;
     const other = byCode.get(c);
-    return other?.texture === 'stone' && (other.pattern ?? 0) > 20 && !pairs.has(pairKey(code, c));
+    return (other?.pattern ?? 0) > BUSY_PATTERN_THRESHOLD && !pairs.has(pairKey(code, c));
   });
+}
+
+/**
+ * Returns true if any two codes in the palette both have pattern > BUSY_PATTERN_THRESHOLD
+ * and have no approved pair between them.
+ */
+export function hasUnapprovedBusyPatternClash(codes: string[]): boolean {
+  if (!_cached || codes.length < 2) return false;
+  const { pairs, byCode } = _cached;
+  const busy = codes.filter(c => (byCode.get(c)?.pattern ?? 0) > BUSY_PATTERN_THRESHOLD);
+  if (busy.length < 2) return false;
+  for (let i = 0; i < busy.length; i++) {
+    for (let j = i + 1; j < busy.length; j++) {
+      if (!pairs.has(pairKey(busy[i], busy[j]))) return true;
+    }
+  }
+  return false;
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -345,11 +362,11 @@ export function useGraphMaterials() {
     if (!_cached) return [];
     const { pairs, byCode } = _cached;
     const mat = byCode.get(slotCode);
-    if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= 20) return [];
+    if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= BUSY_PATTERN_THRESHOLD) return [];
     return otherCodes.filter(c => {
       if (c === slotCode) return false;
       const other = byCode.get(c);
-      return other?.texture === 'stone' && (other.pattern ?? 0) > 20 && !pairs.has(pairKey(slotCode, c));
+      return other?.texture === 'stone' && (other.pattern ?? 0) > BUSY_PATTERN_THRESHOLD && !pairs.has(pairKey(slotCode, c));
     });
   }
 

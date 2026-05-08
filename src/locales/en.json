@@ -1381,6 +1381,10 @@
     "mixed": {
       "label": "Mixed",
       "desc": "Warm and cool materials without a clear direction — if intentional, it creates character."
+    },
+    "busyPatterns": {
+      "label": "Busy patterns",
+      "desc": "Two or more materials with strong patterns that haven't been reviewed together. Worth checking in a physical sample board."
     }
   }
 }

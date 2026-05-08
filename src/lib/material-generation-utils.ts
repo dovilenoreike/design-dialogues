@@ -4,7 +4,7 @@
 import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 
-export const LOG_PROMPTS_TO_CONSOLE = false; // set true to log generation prompts/models and material loading to console
+export const LOG_PROMPTS_TO_CONSOLE = true; // set true to log generation prompts/models and material loading to console
 
 export interface MaterialImageWithMeta {
   base64: string;

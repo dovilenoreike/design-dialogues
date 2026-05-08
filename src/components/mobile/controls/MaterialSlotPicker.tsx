@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerStoneWarning, getDescriptorScore } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -239,7 +239,7 @@ export default function MaterialSlotPicker({
       .filter(m =>
         m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) && !!m.archetypeId &&
         !wouldTriggerWoodWarning(m.technicalCode, sameRoleMaterialCodes ?? []) &&
-        !wouldTriggerStoneWarning(m.technicalCode, otherMaterialCodes ?? [])
+        !wouldTriggerBusyPatternWarning(m.technicalCode, otherMaterialCodes ?? [])
       )
       .sort((a, b) => recIndex.get(a.technicalCode)! - recIndex.get(b.technicalCode)!)
       .map(m => ({

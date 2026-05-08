@@ -1,6 +1,6 @@
-import { getMaterialByCode, SupabaseMaterial } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, hasUnapprovedBusyPatternClash, SupabaseMaterial } from "@/hooks/useGraphMaterials";
 
-export type PaletteHintKey = "minimal" | "balanced" | "highContrast" | "mixed";
+export type PaletteHintKey = "minimal" | "balanced" | "highContrast" | "mixed" | "busyPatterns";
 export interface PaletteHint { key: PaletteHintKey; }
 
 // Visual dominance weights — larger surface = more influence on the palette read
@@ -89,6 +89,8 @@ export function computePaletteHint(
     result = "mixed";
   } else if (L_high) {
     result = "highContrast";
+  } else if (hasUnapprovedBusyPatternClash(items.map(x => x.code))) {
+    result = "busyPatterns";
   } else {
     result = "balanced";
   }

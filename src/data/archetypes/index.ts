@@ -8,6 +8,7 @@ export const archetypes: Archetype[] = [
   { id: "dark-wood",   role: "floor", label: { en: "Dark Wood",    lt: "Tamsus medis"    }, value: "#5c3d2a" },
   { id: "light-stone", role: "floor", label: { en: "Light Stone",  lt: "Šviesus akmuo"   }, value: "#d8d4cc" },
   { id: "dark-stone",  role: "floor", label: { en: "Dark Stone",   lt: "Tamsus akmuo"    }, value: "#6a6560" },
+  { id: "bold-stone",  role: "floor", label: { en: "Bold Stone",   lt: "Išraiškingas akmuo" }, value: "#b0a898" },
 
   // ── Front / Cabinet Fronts (9) ────────────────────────────────────────────
   { id: "white",       role: "front", label: { en: "White",        lt: "Balta"           }, value: "#f5f5f3" },

@@ -1,4 +1,5 @@
 export const LIGHTNESS_THRESHOLD = 20;
+export const BUSY_PATTERN_THRESHOLD = 29;
 
 export function deriveArchetypeId(
   role: string,
@@ -34,6 +35,7 @@ export function deriveArchetypeId(
 
   // Stone-like floor
   if (isStoneLike && role === 'floor') {
+    if (pattern > BUSY_PATTERN_THRESHOLD) return 'bold-stone';
     return lightness >= 55 ? 'light-stone' : 'dark-stone';
   }
 
