@@ -1308,6 +1308,8 @@
     "infoDoubleCheckDesc": "Ši medžiaga dera su visais jūsų pasirinktais paviršiais.",
     "infoWoodWarningTitle": "Dviejų medžių derinys nepatikrintas",
     "infoWoodWarningDesc": "Šios dvi medinės medžiagos dar nebuvo peržiūrėtos kartu gyvai. Jos gali derėti, tačiau harmonija negarantuojama.",
+    "infoStoneWarningTitle": "Dviejų akmenų derinys nepatikrintas",
+    "infoStoneWarningDesc": "Šios dvi akmeninės medžiagos dar nebuvo peržiūrėtos kartu gyvai. Jos gali derėti, tačiau konkuruojantys raštai gali konfliktuoti.",
     "infoSparklesTitle": "Siūlomas keitimas",
     "infoSparklesDesc": "Palieskite, kad automatiškai pakeistumėte šią medžiagą galbūt geriau derančia alternatyva.",
     "infoUndoTitle": "Atšaukti keitimą",

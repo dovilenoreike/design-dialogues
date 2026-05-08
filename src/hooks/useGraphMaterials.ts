@@ -183,6 +183,23 @@ export function wouldTriggerWoodWarning(code: string, sameRoleCodes: string[]): 
   });
 }
 
+/**
+ * Returns true if placing this material would trigger the stone-warning triangle —
+ * i.e. the candidate is stone with pattern > 20 and at least one other code (any role)
+ * is also stone with pattern > 20 and has no approved pair with it.
+ */
+export function wouldTriggerStoneWarning(code: string, allOtherCodes: string[]): boolean {
+  if (!_cached || allOtherCodes.length === 0) return false;
+  const { pairs, byCode } = _cached;
+  const mat = byCode.get(code);
+  if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= 20) return false;
+  return allOtherCodes.some(c => {
+    if (c === code) return false;
+    const other = byCode.get(c);
+    return other?.texture === 'stone' && (other.pattern ?? 0) > 20 && !pairs.has(pairKey(code, c));
+  });
+}
+
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
 export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];
@@ -319,7 +336,24 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners };
+  /**
+   * Returns unpaired patterned-stone codes from otherCodes (any role).
+   * Triggers when this slot is stone with pattern > 20 and at least one other
+   * material is also stone with pattern > 20 and has no approved pair with it.
+   */
+  function getUnapprovedStonePartners(slotCode: string, otherCodes: string[]): string[] {
+    if (!_cached) return [];
+    const { pairs, byCode } = _cached;
+    const mat = byCode.get(slotCode);
+    if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= 20) return [];
+    return otherCodes.filter(c => {
+      if (c === slotCode) return false;
+      const other = byCode.get(c);
+      return other?.texture === 'stone' && (other.pattern ?? 0) > 20 && !pairs.has(pairKey(slotCode, c));
+    });
+  }
+
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedStonePartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

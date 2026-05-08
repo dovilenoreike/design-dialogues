@@ -1307,6 +1307,8 @@
     "infoDoubleCheckDesc": "This material is compatible with all your other selections.",
     "infoWoodWarningTitle": "Wood combination not yet tested",
     "infoWoodWarningDesc": "These two wood materials haven't been physically reviewed together. They may still work — but harmony isn't guaranteed.",
+    "infoStoneWarningTitle": "Stone combination not yet tested",
+    "infoStoneWarningDesc": "These two patterned stones haven't been physically reviewed together. They may still work — but competing patterns can clash.",
     "infoSparklesTitle": "Suggested swap",
     "infoSparklesDesc": "Tap the sparkle to auto-replace this material with a better-matching option.",
     "infoUndoTitle": "Undo swap",

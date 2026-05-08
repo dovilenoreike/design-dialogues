@@ -47,6 +47,18 @@ export const showroomBrands: ShowroomBrand[] = [
     },
     url: "https://magnusgrindys.lt/",
   },
+    {
+    id: "artile",
+    name: "Artile",
+    surfaceCategories: ["tile", "floor"],
+    isPartner: false,
+    locations: {
+      vilnius: { address: "Lakūnų g. 51, Vilnius",
+        phone: "+370 660 55505", email: "info@artile.lt"
+      }
+    },
+    url: "https://artile.lt/",
+  },
   {
     id: "linea",
     name: "Linea",

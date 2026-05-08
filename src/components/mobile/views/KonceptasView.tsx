@@ -82,6 +82,7 @@ export function InfoRows({ t }: { t: (key: string) => string }) {
       <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
       <InfoRow icon={<CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoDoubleCheckTitle")} desc={t("moodboard.infoDoubleCheckDesc")} />
       <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoWoodWarningTitle")} desc={t("moodboard.infoWoodWarningDesc")} />
+      <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoStoneWarningTitle")} desc={t("moodboard.infoStoneWarningDesc")} />
       <InfoRow icon={<Sparkles className="w-3.5 h-3.5" strokeWidth={1.5} />} title={t("moodboard.infoSparklesTitle")} desc={t("moodboard.infoSparklesDesc")} />
       <InfoRow icon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoUndoTitle")} desc={t("moodboard.infoUndoDesc")} />
       <div style={{ height: "0.5px", backgroundColor: "rgba(0,0,0,0.08)" }} />
@@ -98,6 +99,7 @@ export function PhotoInfoRows({ t }: { t: (key: string) => string }) {
       <InfoRow icon={<Check className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoCheckTitle")} desc={t("moodboard.infoCheckDesc")} />
       <InfoRow icon={<CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoDoubleCheckTitle")} desc={t("moodboard.infoDoubleCheckDesc")} />
       <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoWoodWarningTitle")} desc={t("moodboard.infoWoodWarningDesc")} />
+      <InfoRow icon={<AlertTriangle className="w-3.5 h-3.5" strokeWidth={2} />} title={t("moodboard.infoStoneWarningTitle")} desc={t("moodboard.infoStoneWarningDesc")} />
       <InfoRow icon={<Camera className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoUploadTitle")} desc={t("moodboard.photoInfoUploadDesc")} />
       <InfoRow icon={<ArrowLeftRight className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.photoInfoConceptTitle")} desc={t("moodboard.photoInfoConceptDesc")} />
       <InfoRow icon={<Search className="w-3.5 h-3.5" strokeWidth={1.6} />} title={t("moodboard.infoSearchTitle")} desc={t("moodboard.infoSearchDesc")} />
@@ -181,7 +183,7 @@ export default function KonceptasView({
   const { activeShowroom } = useShowroom();
   const lang = language as "en" | "lt";
 
-  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners } = useGraphMaterials();
+  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedStonePartners } = useGraphMaterials();
 
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
@@ -267,6 +269,7 @@ export default function KonceptasView({
             .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
             .filter((c): c is string => !!c);
           const showWoodWarning = showIndicator && getUnapprovedWoodPartners(currentMatId, sameRoleCodes).length > 0;
+          const showStoneWarning = showIndicator && getUnapprovedStonePartners(currentMatId, otherCodes).length > 0;
           const isActive = piece.slot === activeSlot;
 
           return (
@@ -358,7 +361,7 @@ export default function KonceptasView({
                   <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                 </button>
               )}
-              {(showVerified || (showWoodWarning && !showNudge)) && (
+              {(showVerified || (showWoodWarning && !showNudge) || (showStoneWarning && !showNudge)) && (
                 <div className="absolute top-1 left-1 flex items-center gap-0.5" style={{ zIndex: 1 }}>
                   {showVerified && (
                     <HybridTooltip
@@ -385,6 +388,21 @@ export default function KonceptasView({
                         <div className="max-w-[180px]">
                           <p className="font-medium text-xs">{t("moodboard.infoWoodWarningTitle")}</p>
                           <p className="text-xs opacity-75 mt-0.5">{t("moodboard.infoWoodWarningDesc")}</p>
+                        </div>
+                      }
+                    >
+                      <button onClick={(e) => e.stopPropagation()} className="flex items-center">
+                        <AlertTriangle className="w-3 h-3" style={{ color: '#ca8a04', opacity: 0.85 }} strokeWidth={2} />
+                      </button>
+                    </HybridTooltip>
+                  )}
+                  {showStoneWarning && !showNudge && (
+                    <HybridTooltip
+                      side="bottom"
+                      content={
+                        <div className="max-w-[180px]">
+                          <p className="font-medium text-xs">{t("moodboard.infoStoneWarningTitle")}</p>
+                          <p className="text-xs opacity-75 mt-0.5">{t("moodboard.infoStoneWarningDesc")}</p>
                         </div>
                       }
                     >
