@@ -50,7 +50,7 @@ export const showroomBrands: ShowroomBrand[] = [
     {
     id: "artile",
     name: "Artile",
-    surfaceCategories: ["tile", "floor"],
+    surfaceCategories: ["tile", "floor", "worktop"],
     isPartner: false,
     locations: {
       vilnius: { address: "Lakūnų g. 51, Vilnius",
