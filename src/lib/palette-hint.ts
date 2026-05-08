@@ -1,6 +1,7 @@
-import { getMaterialByCode, hasUnapprovedBusyPatternClash, SupabaseMaterial } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, hasUnapprovedBusyPatternClash, hasUnapprovedWoodWarmthClash, getPairedWoodWarmthMismatches, SupabaseMaterial } from "@/hooks/useGraphMaterials";
+import { WOOD_WARMTH_MISMATCH_THRESHOLD } from "@/lib/archetype-rules";
 
-export type PaletteHintKey = "minimal" | "balanced" | "highContrast" | "mixed" | "busyPatterns";
+export type PaletteHintKey = "minimal" | "balanced" | "highContrast" | "mixed" | "busyPatterns" | "warmthClash";
 export interface PaletteHint { key: PaletteHintKey; }
 
 // Visual dominance weights — larger surface = more influence on the palette read
@@ -77,8 +78,11 @@ export function computePaletteHint(
   // Continuous — no hard zone thresholds. Naturally weighted by surface area via pairW.
   const warmthAvgDist = pairs.reduce((s, p) => s + p.breakdown.warmthDiff * p.pairW, 0) / totalPairW;
 
-  const isMixed   = warmthAvgDist >= MIXED_WARMTH_DIST;
-  const L_high    = lightnessStd  >= L_STD_HIGH;
+  const isMixed      = warmthAvgDist >= MIXED_WARMTH_DIST;
+  const L_high       = lightnessStd  >= L_STD_HIGH;
+  const allCodes     = items.map(x => x.code);
+  const busyClash    = hasUnapprovedBusyPatternClash(allCodes);
+  const woodClash    = hasUnapprovedWoodWarmthClash(allCodes);
 
   // ── 4. Classify ──────────────────────────────────────────────────────────
   let result: PaletteHintKey;
@@ -89,11 +93,39 @@ export function computePaletteHint(
     result = "mixed";
   } else if (L_high) {
     result = "highContrast";
-  } else if (hasUnapprovedBusyPatternClash(items.map(x => x.code))) {
+  } else if (busyClash) {
     result = "busyPatterns";
+  } else if (woodClash) {
+    result = "warmthClash";
   } else {
     result = "balanced";
   }
+
+  const woodMismatches = getPairedWoodWarmthMismatches(allCodes);
+
+  console.group(`[paletteHint] → ${result}`);
+  console.table([
+    { metric: "avgDist",      value: +avgDist.toFixed(1),      threshold: `≤ ${SIMILAR}`,                    fires: "minimal",     triggered: avgDist <= SIMILAR },
+    { metric: "warmthAvgDist",value: +warmthAvgDist.toFixed(1),threshold: `≥ ${MIXED_WARMTH_DIST}`,          fires: "mixed",       triggered: isMixed },
+    { metric: "lightnessStd", value: +lightnessStd.toFixed(1), threshold: `≥ ${L_STD_HIGH}`,                 fires: "highContrast",triggered: L_high },
+    { metric: "busyClash",    value: busyClash,                threshold: "any unpaired",                    fires: "busyPatterns",triggered: busyClash },
+    { metric: "woodClash",    value: woodClash,                threshold: `Δwarmth > ${WOOD_WARMTH_MISMATCH_THRESHOLD} unpaired`, fires: "warmthClash", triggered: woodClash },
+  ]);
+  console.table(norm.map(x => ({
+    code:      x.code,
+    palette:   x.paletteKey,
+    weight:    +x.w.toFixed(2),
+    lightness: x.mat.lightness,
+    warmth:    x.mat.warmth,
+    pattern:   x.mat.pattern,
+    texture:   x.mat.texture,
+  })));
+  if (woodMismatches.length > 0) {
+    console.group("⚠ paired wood pairs with warmth mismatch (approved but visually off)");
+    console.table(woodMismatches);
+    console.groupEnd();
+  }
+  console.groupEnd();
 
   return { key: result };
 }

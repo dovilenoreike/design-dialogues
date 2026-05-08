@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD } from '@/lib/archetype-rules';
+import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
 export interface SupabaseMaterial extends GraphMaterial {
@@ -168,18 +168,20 @@ export function matchesAllOtherCodes(code: string, otherCodes: string[]): boolea
 
 /**
  * Returns true if placing this material would trigger the wood-warning triangle —
- * i.e. the candidate is wood and at least one same-role code is also wood with no
- * approved pair between them. Pass only same-role codes (not all others).
+ * i.e. the candidate is wood and at least one other code (any role) is also wood
+ * with warmth Δ > threshold and no approved pair between them.
  */
-export function wouldTriggerWoodWarning(code: string, sameRoleCodes: string[]): boolean {
-  if (!_cached || sameRoleCodes.length === 0) return false;
+export function wouldTriggerWoodWarning(code: string, otherCodes: string[]): boolean {
+  if (!_cached || otherCodes.length === 0) return false;
   const { pairs, byCode } = _cached;
   const mat = byCode.get(code);
   if (mat?.texture !== 'wood') return false;
-  return sameRoleCodes.some(c => {
+  return otherCodes.some(c => {
     if (c === code) return false;
     const other = byCode.get(c);
-    return other?.texture === 'wood' && !pairs.has(pairKey(code, c));
+    if (other?.texture !== 'wood') return false;
+    if (pairs.has(pairKey(code, c))) return false;
+    return Math.abs((mat.warmth ?? 0) - (other.warmth ?? 0)) > WOOD_WARMTH_MISMATCH_THRESHOLD;
   });
 }
 
@@ -207,7 +209,7 @@ export function wouldTriggerBusyPatternWarning(code: string, allOtherCodes: stri
 export function hasUnapprovedBusyPatternClash(codes: string[]): boolean {
   if (!_cached || codes.length < 2) return false;
   const { pairs, byCode } = _cached;
-  const busy = codes.filter(c => (byCode.get(c)?.pattern ?? 0) > BUSY_PATTERN_THRESHOLD);
+  const busy = [...new Set(codes)].filter(c => (byCode.get(c)?.pattern ?? 0) > BUSY_PATTERN_THRESHOLD);
   if (busy.length < 2) return false;
   for (let i = 0; i < busy.length; i++) {
     for (let j = i + 1; j < busy.length; j++) {
@@ -215,6 +217,47 @@ export function hasUnapprovedBusyPatternClash(codes: string[]): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Returns true if any two codes in the palette are both wood, unpaired,
+ * and have warmth Δ > WOOD_WARMTH_MISMATCH_THRESHOLD.
+ */
+export function hasUnapprovedWoodWarmthClash(codes: string[]): boolean {
+  if (!_cached || codes.length < 2) return false;
+  const { pairs, byCode } = _cached;
+  const woods = [...new Set(codes)].filter(c => byCode.get(c)?.texture === 'wood');
+  if (woods.length < 2) return false;
+  for (let i = 0; i < woods.length; i++) {
+    for (let j = i + 1; j < woods.length; j++) {
+      const a = byCode.get(woods[i]);
+      const b = byCode.get(woods[j]);
+      if (!a || !b) continue;
+      if (pairs.has(pairKey(woods[i], woods[j]))) continue;
+      if (Math.abs((a.warmth ?? 0) - (b.warmth ?? 0)) > WOOD_WARMTH_MISMATCH_THRESHOLD) return true;
+    }
+  }
+  return false;
+}
+
+/** Returns paired wood pairs that have a warmth mismatch > threshold — for admin/dev review. */
+export function getPairedWoodWarmthMismatches(codes: string[]): Array<{ a: string; b: string; deltaWarmth: number }> {
+  if (!_cached) return [];
+  const { pairs, byCode } = _cached;
+  const woods = [...new Set(codes)].filter(c => byCode.get(c)?.texture === 'wood');
+  const result: Array<{ a: string; b: string; deltaWarmth: number }> = [];
+  for (let i = 0; i < woods.length; i++) {
+    for (let j = i + 1; j < woods.length; j++) {
+      const a = byCode.get(woods[i]);
+      const b = byCode.get(woods[j]);
+      if (!a || !b) continue;
+      const delta = Math.abs((a.warmth ?? 0) - (b.warmth ?? 0));
+      if (delta > WOOD_WARMTH_MISMATCH_THRESHOLD && pairs.has(pairKey(woods[i], woods[j]))) {
+        result.push({ a: woods[i], b: woods[j], deltaWarmth: +delta.toFixed(2) });
+      }
+    }
+  }
+  return result;
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -349,28 +392,30 @@ export function useGraphMaterials() {
     return otherCodes.filter(c => {
       if (c === slotCode) return false;
       const other = byCode.get(c);
-      return other?.texture === 'wood' && !pairs.has(pairKey(slotCode, c));
+      if (other?.texture !== 'wood') return false;
+      if (pairs.has(pairKey(slotCode, c))) return false;
+      return Math.abs((mat.warmth ?? 0) - (other.warmth ?? 0)) > WOOD_WARMTH_MISMATCH_THRESHOLD;
     });
   }
 
   /**
-   * Returns unpaired patterned-stone codes from otherCodes (any role).
-   * Triggers when this slot is stone with pattern > 20 and at least one other
-   * material is also stone with pattern > 20 and has no approved pair with it.
+   * Returns unpaired busy-pattern codes from otherCodes (any role, any texture).
+   * Triggers when this slot has pattern > BUSY_PATTERN_THRESHOLD and at least one other
+   * material also exceeds the threshold with no approved pair between them.
    */
-  function getUnapprovedStonePartners(slotCode: string, otherCodes: string[]): string[] {
+  function getUnapprovedBusyPatternPartners(slotCode: string, otherCodes: string[]): string[] {
     if (!_cached) return [];
     const { pairs, byCode } = _cached;
     const mat = byCode.get(slotCode);
-    if (mat?.texture !== 'stone' || (mat.pattern ?? 0) <= BUSY_PATTERN_THRESHOLD) return [];
+    if ((mat?.pattern ?? 0) <= BUSY_PATTERN_THRESHOLD) return [];
     return otherCodes.filter(c => {
       if (c === slotCode) return false;
       const other = byCode.get(c);
-      return other?.texture === 'stone' && (other.pattern ?? 0) > BUSY_PATTERN_THRESHOLD && !pairs.has(pairKey(slotCode, c));
+      return (other?.pattern ?? 0) > BUSY_PATTERN_THRESHOLD && !pairs.has(pairKey(slotCode, c));
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedStonePartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

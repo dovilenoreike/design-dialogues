@@ -1,5 +1,6 @@
 export const LIGHTNESS_THRESHOLD = 20;
 export const BUSY_PATTERN_THRESHOLD = 29;
+export const WOOD_WARMTH_MISMATCH_THRESHOLD = 0.09;
 
 export function deriveArchetypeId(
   role: string,

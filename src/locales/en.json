@@ -1307,8 +1307,8 @@
     "infoDoubleCheckDesc": "This material is compatible with all your other selections.",
     "infoWoodWarningTitle": "Wood combination not yet tested",
     "infoWoodWarningDesc": "These two wood materials haven't been physically reviewed together. They may still work — but harmony isn't guaranteed.",
-    "infoStoneWarningTitle": "Stone combination not yet tested",
-    "infoStoneWarningDesc": "These two patterned stones haven't been physically reviewed together. They may still work — but competing patterns can clash.",
+    "infoBusyPatternWarningTitle": "Busy pattern combination not yet tested",
+    "infoBusyPatternWarningDesc": "Two or more materials with strong patterns haven't been reviewed together. Competing patterns can clash — worth checking on a sample board.",
     "infoSparklesTitle": "Suggested swap",
     "infoSparklesDesc": "Tap the sparkle to auto-replace this material with a better-matching option.",
     "infoUndoTitle": "Undo swap",
@@ -1385,6 +1385,10 @@
     "busyPatterns": {
       "label": "Busy patterns",
       "desc": "Two or more materials with strong patterns that haven't been reviewed together. Worth checking in a physical sample board."
+    },
+    "warmthClash": {
+      "label": "Wood tone mismatch",
+      "desc": "Two or more wood materials with noticeably different warmth tones. Check they sit well together on a physical sample board."
     }
   }
 }

@@ -101,12 +101,16 @@ export function descriptorScore(
   others: GraphMaterial[],
 ): number {
   if (others.length === 0) return 0;
-  return others.reduce((sum, o) =>
-    sum + (100
+  return others.reduce((sum, o) => {
+    // Wood+wood combinations penalise warmth mismatch more heavily —
+    // two woods with similar lightness but different warmth read as clashing.
+    const warmthWeight = (candidate.texture === 'wood' && o.texture === 'wood') ? 2.4 : 1.2;
+    return sum + (100
       - 0.5 * Math.abs(candidate.lightness - o.lightness)
-      - 1.2 * Math.abs((candidate.warmth ?? 0) - (o.warmth ?? 0)) * 50
+      - warmthWeight * Math.abs((candidate.warmth ?? 0) - (o.warmth ?? 0)) * 50
       - 0.5 * Math.abs((candidate.chroma  ?? 0) - (o.chroma  ?? 0))
-    ), 0) / others.length;
+    );
+  }, 0) / others.length;
 }
 
 export function rankByCompatibility(
