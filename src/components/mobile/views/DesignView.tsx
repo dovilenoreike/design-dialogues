@@ -329,7 +329,7 @@ export default function DesignView() {
   // Other material codes (excluding active slot) for compatibility scoring
   const otherMaterialCodesForPicker = useMemo(() => {
     return (Object.entries(SLOT_TO_PALETTE_KEY) as [SlotKey, string | null][])
-      .filter(([k]) => k !== activeSlot)
+      .filter(([k]) => k !== activeSlot && (activeSlot === "accents" || k !== "accents"))
       .map(([, pk]) => (pk ? materialOverrides[pk] : null))
       .filter((c): c is string => !!c);
   }, [activeSlot, materialOverrides]);
@@ -576,7 +576,7 @@ export default function DesignView() {
       const code = pk ? (materialOverrides[pk] ?? null) : null;
       if (!code) return false;
       const others = activeSlots
-        .filter((k) => k !== slotKey)
+        .filter((k) => k !== slotKey && k !== "accents")
         .map((k) => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
         .filter((c): c is string => !!c);
       return others.length > 0 && !isCompatibleWithOthers(code, others);
@@ -621,7 +621,7 @@ export default function DesignView() {
       const code = pk ? (materialOverrides[pk] ?? "") : "";
       const mat = code ? getMaterialByCode(code) : undefined;
       const others = activeSlots
-        .filter((k) => k !== slotKey)
+        .filter((k) => k !== slotKey && k !== "accents")
         .map((k) => { const p = SLOT_TO_PALETTE_KEY[k]; return p ? (materialOverrides[p] ?? null) : null; })
         .filter((c): c is string => !!c);
       const compatible = !code || others.length === 0 ? true : isCompatibleWithOthers(code, others);
