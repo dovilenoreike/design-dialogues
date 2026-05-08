@@ -103,29 +103,6 @@ export function computePaletteHint(
 
   const woodMismatches = getPairedWoodWarmthMismatches(allCodes);
 
-  console.group(`[paletteHint] → ${result}`);
-  console.table([
-    { metric: "avgDist",      value: +avgDist.toFixed(1),      threshold: `≤ ${SIMILAR}`,                    fires: "minimal",     triggered: avgDist <= SIMILAR },
-    { metric: "warmthAvgDist",value: +warmthAvgDist.toFixed(1),threshold: `≥ ${MIXED_WARMTH_DIST}`,          fires: "mixed",       triggered: isMixed },
-    { metric: "lightnessStd", value: +lightnessStd.toFixed(1), threshold: `≥ ${L_STD_HIGH}`,                 fires: "highContrast",triggered: L_high },
-    { metric: "busyClash",    value: busyClash,                threshold: "any unpaired",                    fires: "busyPatterns",triggered: busyClash },
-    { metric: "woodClash",    value: woodClash,                threshold: `Δwarmth > ${WOOD_WARMTH_MISMATCH_THRESHOLD} unpaired`, fires: "warmthClash", triggered: woodClash },
-  ]);
-  console.table(norm.map(x => ({
-    code:      x.code,
-    palette:   x.paletteKey,
-    weight:    +x.w.toFixed(2),
-    lightness: x.mat.lightness,
-    warmth:    x.mat.warmth,
-    pattern:   x.mat.pattern,
-    texture:   x.mat.texture,
-  })));
-  if (woodMismatches.length > 0) {
-    console.group("⚠ paired wood pairs with warmth mismatch (approved but visually off)");
-    console.table(woodMismatches);
-    console.groupEnd();
-  }
-  console.groupEnd();
 
   return { key: result };
 }

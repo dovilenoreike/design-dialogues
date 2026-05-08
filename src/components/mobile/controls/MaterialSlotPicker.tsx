@@ -238,7 +238,7 @@ export default function MaterialSlotPicker({
     return graphMaterials
       .filter(m =>
         m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) && !!m.archetypeId &&
-        !wouldTriggerWoodWarning(m.technicalCode, otherMaterialCodes ?? []) &&
+        !wouldTriggerWoodWarning(m.technicalCode, sameRoleMaterialCodes ?? [], (otherMaterialCodes ?? []).filter(c => !(sameRoleMaterialCodes ?? []).includes(c))) &&
         !wouldTriggerBusyPatternWarning(m.technicalCode, otherMaterialCodes ?? [])
       )
       .sort((a, b) => recIndex.get(a.technicalCode)! - recIndex.get(b.technicalCode)!)

@@ -167,16 +167,28 @@ export function matchesAllOtherCodes(code: string, otherCodes: string[]): boolea
 }
 
 /**
- * Returns true if placing this material would trigger the wood-warning triangle —
- * i.e. the candidate is wood and at least one other code (any role) is also wood
- * with warmth Δ > threshold and no approved pair between them.
+ * Returns true if placing this material would trigger the wood-warning triangle.
+ * - Same role: any unpaired wood pair warns (no warmth threshold — different woods on the
+ *   same surface are always discouraged unless explicitly approved).
+ * - Cross-role: only warns when warmth Δ > WOOD_WARMTH_MISMATCH_THRESHOLD and unpaired.
  */
-export function wouldTriggerWoodWarning(code: string, otherCodes: string[]): boolean {
-  if (!_cached || otherCodes.length === 0) return false;
+export function wouldTriggerWoodWarning(
+  code: string,
+  sameRoleCodes: string[],
+  otherRoleCodes: string[],
+): boolean {
+  if (!_cached) return false;
   const { pairs, byCode } = _cached;
   const mat = byCode.get(code);
   if (mat?.texture !== 'wood') return false;
-  return otherCodes.some(c => {
+  // Same role — no threshold, just unpaired wood+wood
+  if (sameRoleCodes.some(c => {
+    if (c === code) return false;
+    const other = byCode.get(c);
+    return other?.texture === 'wood' && !pairs.has(pairKey(code, c));
+  })) return true;
+  // Cross-role — warmth threshold applies
+  return otherRoleCodes.some(c => {
     if (c === code) return false;
     const other = byCode.get(c);
     if (other?.texture !== 'wood') return false;
@@ -384,18 +396,24 @@ export function useGraphMaterials() {
     return isCompatibleWithAll(slotCode, otherCodes, pairs);
   }
 
-  function getUnapprovedWoodPartners(slotCode: string, otherCodes: string[]): string[] {
+  function getUnapprovedWoodPartners(slotCode: string, sameRoleCodes: string[], otherRoleCodes: string[]): string[] {
     if (!_cached) return [];
     const { pairs, byCode } = _cached;
     const mat = byCode.get(slotCode);
     if (mat?.texture !== 'wood') return [];
-    return otherCodes.filter(c => {
+    const sameRole = sameRoleCodes.filter(c => {
+      if (c === slotCode) return false;
+      const other = byCode.get(c);
+      return other?.texture === 'wood' && !pairs.has(pairKey(slotCode, c));
+    });
+    const crossRole = otherRoleCodes.filter(c => {
       if (c === slotCode) return false;
       const other = byCode.get(c);
       if (other?.texture !== 'wood') return false;
       if (pairs.has(pairKey(slotCode, c))) return false;
       return Math.abs((mat.warmth ?? 0) - (other.warmth ?? 0)) > WOOD_WARMTH_MISMATCH_THRESHOLD;
     });
+    return [...sameRole, ...crossRole];
   }
 
   /**
