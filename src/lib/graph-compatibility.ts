@@ -1,3 +1,5 @@
+import { BUSY_PATTERN_THRESHOLD } from "@/lib/archetype-rules";
+
 export interface GraphMaterial {
   id: string;           // UUID
   technicalCode: string;
@@ -95,7 +97,10 @@ export function weightedScore(
 }
 
 /** Average descriptor similarity of a candidate against a set of already-selected materials.
- *  Higher = closer match. Uses the v2 formula: lightness, warmth, chroma weighted axes. */
+ *  Higher = closer match. Axes: lightness, warmth, chroma.
+ *  Extra penalty when both candidate and an existing material are busy-pattern — even if
+ *  they are approved pairs, two busy surfaces make the palette noisier. On a clean palette
+ *  moderate or bold pattern is not penalised. */
 export function descriptorScore(
   candidate: GraphMaterial,
   others: GraphMaterial[],
@@ -105,10 +110,16 @@ export function descriptorScore(
     // Wood+wood combinations penalise warmth mismatch more heavily —
     // two woods with similar lightness but different warmth read as clashing.
     const warmthWeight = (candidate.texture === 'wood' && o.texture === 'wood') ? 2.4 : 1.2;
+    // Two busy-pattern surfaces together add visual noise even when approved —
+    // push cleaner alternatives higher in ranking. Only fires when the palette
+    // already has a busy-pattern material — clean palettes are not penalised.
+    const busyClashPenalty =
+      candidate.pattern > BUSY_PATTERN_THRESHOLD && o.pattern > BUSY_PATTERN_THRESHOLD ? 30 : 0;
     return sum + (100
-      - 0.5 * Math.abs(candidate.lightness - o.lightness)
+      - 0.5  * Math.abs(candidate.lightness - o.lightness)
       - warmthWeight * Math.abs((candidate.warmth ?? 0) - (o.warmth ?? 0)) * 50
-      - 0.5 * Math.abs((candidate.chroma  ?? 0) - (o.chroma  ?? 0))
+      - 0.5  * Math.abs((candidate.chroma   ?? 0) - (o.chroma  ?? 0))
+      - busyClashPenalty
     );
   }, 0) / others.length;
 }
@@ -123,6 +134,9 @@ export function rankByCompatibility(
   const others = byCode
     ? selectedCodes.map(c => byCode.get(c)).filter((m): m is GraphMaterial => !!m)
     : [];
+  // Max possible pair weight — used to normalise pair score to [0, 1].
+  // Weights are 1.0 (plain), 2.0 (wood/stone + plain), or 3.0 (wood/stone + wood/stone).
+  const maxPairW = selectedCodes.length * 3;
   return [...candidates].sort((a, b) => {
     const wa = pairWeights
       ? weightedScore(a.technicalCode, selectedCodes, pairWeights)
@@ -130,9 +144,16 @@ export function rankByCompatibility(
     const wb = pairWeights
       ? weightedScore(b.technicalCode, selectedCodes, pairWeights)
       : selectedCodes.filter((s) => pairs.has(pairKey(b.technicalCode, s))).length;
-    if (wa !== wb) return wb - wa;
-    if (others.length > 0) return descriptorScore(b, others) - descriptorScore(a, others);
-    return 0;
+    if (others.length === 0) return wb - wa;
+    // Blend normalised pair score (60 %) + descriptor similarity (40 %) so that
+    // visual harmony can pull a cleaner option above one with more pairings.
+    const normWa = maxPairW > 0 ? wa / maxPairW : 0;
+    const normWb = maxPairW > 0 ? wb / maxPairW : 0;
+    const descA = descriptorScore(a, others) / 100;
+    const descB = descriptorScore(b, others) / 100;
+    const combinedA = normWa * 0.6 + descA * 0.4;
+    const combinedB = normWb * 0.6 + descB * 0.4;
+    return combinedB - combinedA;
   });
 }
 

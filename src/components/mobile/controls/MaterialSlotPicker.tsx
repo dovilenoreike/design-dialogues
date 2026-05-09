@@ -145,9 +145,12 @@ export default function MaterialSlotPicker({
         } else {
           const primaryMat = recommendedMat ?? (
             archetypeMats.length > 0
-              ? archetypeMats.reduce((best, m) =>
-                  getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
-                )
+              ? archetypeMats.reduce((best, m) => {
+                  const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
+                  const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
+                  if (descM !== descBest) return descM > descBest ? m : best;
+                  return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
+                })
               : undefined
           );
           resolvedCode = primaryMat?.technicalCode;
@@ -161,21 +164,17 @@ export default function MaterialSlotPicker({
           isRecommended = recommendedCodes.size > 0 && !!recommendedMat;
         }
 
-        const archetypePairScore = archetypeMats.reduce(
-          (sum, m) => sum + getPairCountByCode(m.technicalCode), 0
+        const archetypeDescriptorScore = archetypeMats.reduce(
+          (sum, m) => sum + getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []), 0
         );
-        const archetypePartialScore = archetypeMats.reduce((max, m) =>
-          Math.max(max, getCompatibilityScore(m.technicalCode, otherMaterialCodes ?? [])), 0
-        );
-        return { archetype: a, displayImage, isRecommended, resolvedCode, archetypePairScore, archetypePartialScore };
+        return { archetype: a, displayImage, isRecommended, resolvedCode, archetypeDescriptorScore };
       })
-      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypePairScore: number; archetypePartialScore: number } =>
+      .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypeDescriptorScore: number } =>
         item.displayImage !== null && item.displayImage !== undefined
       )
       .sort((a, b) =>
         Number(b.isRecommended) - Number(a.isRecommended) ||
-        b.archetypePartialScore - a.archetypePartialScore ||
-        b.archetypePairScore - a.archetypePairScore
+        b.archetypeDescriptorScore - a.archetypeDescriptorScore
       );
   }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
 
@@ -326,7 +325,10 @@ export default function MaterialSlotPicker({
         m.technicalCode !== row1Code &&
         !recommendedCodes.has(m.technicalCode)
       )
-      .sort((a, b) => getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode))
+      .sort((a, b) =>
+        getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
+        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+      )
       .map(m => ({
         code: m.technicalCode,
         image: m.imageUrl!,
@@ -411,9 +413,16 @@ export default function MaterialSlotPicker({
   }, [archetypeClusters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function clusterHasBetterSibling(cluster: ClusterCell): boolean {
-    if ((otherMaterialCodes ?? []).length === 0 || cluster.siblings.length === 0) return false;
-    const repScore = getCompatibilityScore(cluster.representative.code, otherMaterialCodes ?? []);
-    return cluster.siblings.some(s => getCompatibilityScore(s.code, otherMaterialCodes ?? []) > repScore);
+    const others = otherMaterialCodes ?? [];
+    if (others.length === 0 || cluster.siblings.length === 0) return false;
+    const repCode = cluster.representative.code;
+    const repScore = getCompatibilityScore(repCode, others);
+    const repFullyPaired = matchesAllOtherCodes(repCode, others);
+    return cluster.siblings.some(s => {
+      if (getCompatibilityScore(s.code, others) > repScore) return true;
+      if (!repFullyPaired && matchesAllOtherCodes(s.code, others)) return true;
+      return false;
+    });
   }
 
   function renderClusterRow(clusters: ClusterCell[]): React.ReactNode {
