@@ -59,7 +59,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const t = (key: string): string => {
-    return translations[language][key] || key;
+    return translations[language][key] ?? key;
   };
 
   const dateLocale = dateLocales[language];

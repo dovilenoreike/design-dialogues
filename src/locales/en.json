@@ -194,6 +194,9 @@
     "cabinetFurniture": "Cabinet Furniture",
     "wardrobes": "Wardrobes",
     "allVariants": "All options",
+    "otherOptionsPrefix": "Other ",
+    "otherOptionsSuffix": " options",
+    "similarShades": "Similar shades",
     "searchByCode": "Search by code…",
     "searchNoResults": "No materials found for this code."
   },

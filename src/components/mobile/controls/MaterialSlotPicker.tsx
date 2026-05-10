@@ -456,10 +456,6 @@ export default function MaterialSlotPicker({
               </div>
             )}
           </SwatchButton>
-          <span className="text-[10px] text-center w-full truncate leading-tight"
-            style={{ color: (rep.isSelected || siblingSelected) ? "#1a1a1a" : "#9ca3af", fontWeight: (rep.isSelected || siblingSelected) ? 500 : 400, minHeight: "1.2em" }}>
-            {rep.name}
-          </span>
         </div>
       );
     });
@@ -637,12 +633,6 @@ export default function MaterialSlotPicker({
                         </div>
                       )}
                     </SwatchButton>
-                    <span
-                      className="text-[10px] text-center w-full truncate leading-tight"
-                      style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}
-                    >
-                      {mat.materialName}
-                    </span>
                   </div>
                 ))}
               </SwatchRow>
@@ -670,10 +660,6 @@ export default function MaterialSlotPicker({
                     </div>
                   )}
                 </SwatchButton>
-                <span className="text-[10px] text-center w-full truncate leading-tight"
-                  style={{ color: mat.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: mat.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-                  {mat.isSelected ? mat.materialName : mat.name}
-                </span>
               </div>
             ))}
           </SwatchRow>
@@ -681,8 +667,18 @@ export default function MaterialSlotPicker({
           {/* Revealed after an archetype is picked */}
           {!isFirstPick && (
             <>
-              <SwatchDivider />
-              <SwatchRow alignItems="start" className="pt-3 pb-3">
+              {activeArchetypeLabel ? (
+                <div className="flex items-center gap-3 px-4 my-3 flex-shrink-0">
+                  <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+                  <span className="text-[10px] tracking-[0.08em]" style={{ color: "#c4bfba" }}>
+                    {t("surface.otherOptionsPrefix")}{activeArchetypeLabel}{t("surface.otherOptionsSuffix")}
+                  </span>
+                  <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+                </div>
+              ) : (
+                <SwatchDivider />
+              )}
+              <SwatchRow alignItems="start" className="pb-3">
                 {renderClusterRow(archetypeClusters)}
               </SwatchRow>
 
@@ -692,8 +688,14 @@ export default function MaterialSlotPicker({
                 if (!expanded || expanded.siblings.length === 0) return null;
                 return (
                   <>
-                    <SwatchDivider />
-                    <SwatchRow alignItems="start" className="pt-3 pb-3">
+                    <div className="flex items-center gap-3 px-4 my-3 flex-shrink-0">
+                      <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+                      <span className="text-[10px] tracking-[0.08em]" style={{ color: "#c4bfba" }}>
+                        {t("surface.similarShades")}
+                      </span>
+                      <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
+                    </div>
+                    <SwatchRow alignItems="start" className="pb-3">
                       {expanded.siblings.map(sibling => (
                         <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                           <SwatchButton
@@ -707,10 +709,6 @@ export default function MaterialSlotPicker({
                               </div>
                             )}
                           </SwatchButton>
-                          <span className="text-[10px] text-center w-full truncate leading-tight"
-                            style={{ color: sibling.isSelected ? "#1a1a1a" : "#9ca3af", fontWeight: sibling.isSelected ? 500 : 400, minHeight: "1.2em" }}>
-                            {sibling.name}
-                          </span>
                         </div>
                       ))}
                     </SwatchRow>

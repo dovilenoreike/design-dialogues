@@ -194,6 +194,9 @@
     "cabinetFurniture": "Korpusiniai baldai",
     "wardrobes": "Spinta",
     "allVariants": "Visi variantai",
+    "otherOptionsPrefix": "Kiti ",
+    "otherOptionsSuffix": " variantai",
+    "similarShades": "Panašūs atspalviai",
     "searchByCode": "Ieškoti pagal kodą…",
     "searchNoResults": "Medžiagų šiuo kodu nerasta."
   },
