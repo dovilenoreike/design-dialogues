@@ -331,12 +331,15 @@ export function useGraphMaterials() {
     if (isCompatibleWithAll(slotCode, otherCodes, pairs)) return null;
     const slotMat = _cached.byCode.get(slotCode);
     const slotSynonymId = slotMat?.synonymId ?? null;
-    const candidates = getCompatibleCandidates(otherCodes, mats, pairs, targetRole)
-      .filter((m) =>
-        m.technicalCode !== slotCode &&
-        // Never suggest a synonym — they're visually identical, nudging to one is meaningless
-        !(slotSynonymId && m.synonymId === slotSynonymId)
-      );
+    // Swap candidate must be compatible with ALL other placed materials so that
+    // accepting the swap immediately earns V (isCompatibleWithEvery) status.
+    const candidates = mats.filter((m) => {
+      if (otherCodes.includes(m.technicalCode)) return false;
+      if (m.technicalCode === slotCode) return false;
+      if (slotSynonymId && m.synonymId === slotSynonymId) return false;
+      if (targetRole && !m.role.includes(targetRole)) return false;
+      return isCompatibleWithAll(m.technicalCode, otherCodes, pairs);
+    });
     if (candidates.length === 0) return null;
     // Narrow to same texture + similar lightness as the slot's current material
     if (slotMat) {
