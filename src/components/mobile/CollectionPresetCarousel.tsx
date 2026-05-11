@@ -11,7 +11,7 @@ interface CollectionPresetCarouselProps {
   /** Room category from design state, e.g. "Kitchen", "Living Room" */
   roomCategory: string | null;
   /** Called when a preset is selected — replaces materialOverrides with preset materials */
-  onApplyPreset: (materials: Record<string, string>, imageUrl: string | null) => void;
+  onApplyPreset: (materials: Record<string, string>, imageUrl: string | null, designer: string | null) => void;
   /** Whether the user already has materials set (prevents auto-applying on mount) */
   hasExistingMaterials: boolean;
   /** When true the user has changed materials — show "Your collection" instead of preset name */
@@ -73,8 +73,8 @@ export default function CollectionPresetCarousel({
     try { localStorage.setItem(indexKey, String(next)); } catch {}
     // allItems isn't available here yet (defined below), so we recalculate inline
     const items = [
-      ...savedPalettes.map((p) => ({ materials: p.materials, image_url: null as string | null })),
-      ...filteredPresets,
+      ...savedPalettes.map((p) => ({ materials: p.materials, image_url: null as string | null, designer: null as string | null })),
+      ...filteredPresets.map((p) => ({ ...p, designer: p.designer ?? null })),
     ];
     if (!items[next]) return;
     // Remap any material codes to their showroom synonym where applicable
@@ -86,7 +86,7 @@ export default function CollectionPresetCarousel({
           ])
         )
       : items[next].materials;
-    onApplyPreset(materials, items[next].image_url ?? null);
+    onApplyPreset(materials, items[next].image_url ?? null, items[next].designer);
   };
 
   // Auto-apply the first preset when presets load and user has no materials yet.

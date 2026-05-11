@@ -8,13 +8,21 @@ import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialS
 import RoomPillBar from "../controls/RoomPillBar";
 import TierPill from "../controls/TierPill";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
+import DesignerCompactCard from "../DesignerCompactCard";
+import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 
-export default function SpecsView() {
+interface SpecsViewProps {
+  /** Designer key from the active collection preset, if it belongs to an external designer */
+  designer?: string | null;
+}
+
+export default function SpecsView({ designer }: SpecsViewProps) {
   const { design, materialOverrides, excludedSlots, selectedTier, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
   const { graphMaterials } = useGraphMaterials();
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
+  const [isDesignerProfileOpen, setIsDesignerProfileOpen] = useState(false);
   const { selectedCategory, freestyleDescription } = design;
 
   // Single unified materials list from materialOverrides
@@ -179,6 +187,14 @@ export default function SpecsView() {
                   );
                 })}
               </div>
+
+              {designer && (
+                <DesignerCompactCard
+                  designerId={designer}
+                  designerTitle=""
+                  onOpenProfile={() => setIsDesignerProfileOpen(true)}
+                />
+              )}
             </>
           )}
         </div>
@@ -190,6 +206,16 @@ export default function SpecsView() {
         onClose={() => setIsSourcingSheetOpen(false)}
         material={selectedMaterialInfo}
       />
+
+      {/* Designer profile sheet — only mounted when a non-DD designer preset is active */}
+      {designer && (
+        <DesignerProfileSheet
+          isOpen={isDesignerProfileOpen}
+          onClose={() => setIsDesignerProfileOpen(false)}
+          designerId={designer}
+          designerTitle=""
+        />
+      )}
 
     </div>
   );

@@ -156,7 +156,6 @@ const DesignerProfileSheet = ({
               )}
             </div>
             {bioAndCta}
-            {collectionsSection}
           </div>
           {contactModal}
         </DialogContent>

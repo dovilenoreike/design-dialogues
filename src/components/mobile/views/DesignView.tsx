@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
-import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes, getApprovedByDesigner } from "@/hooks/useGraphMaterials";
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
 import { computePaletteHint } from "@/lib/palette-hint";
 import { surfaces } from "@/data/rooms/surfaces";
@@ -81,6 +81,7 @@ export default function DesignView() {
   });
   const [pendingOptionalSlot, setPendingOptionalSlot] = useState<SlotKey | null>(null);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [activePresetDesigner, setActivePresetDesigner] = useState<string | null>(null);
 
   // Tracks slots the user has explicitly picked (via picker or collection apply).
   // Never populated by the materialOverrides sync effect — this is the authoritative
@@ -647,8 +648,9 @@ export default function DesignView() {
           {/* Collection carousel — shared header for both sub-views */}
           <CollectionPresetCarousel
             roomCategory={design.selectedCategory}
-            onApplyPreset={(materials, imageUrl) => {
+            onApplyPreset={(materials, imageUrl, designer) => {
               setMaterialOverrides(materials);
+              setActivePresetDesigner(designer && designer !== "dizaino_dialogai" ? designer : null);
 
               // Derive covered slots via DEFAULT_SLOT_SURFACES (not user-modified slotSurfaces)
               const defaultPkToSlot: Record<string, SlotKey> = Object.fromEntries(
@@ -771,7 +773,7 @@ export default function DesignView() {
 
           {/* Sub-tab content */}
           {subTab === "specs" ? (
-            <SpecsView />
+            <SpecsView designer={activePresetDesigner ?? getApprovedByDesigner(Object.values(materialOverrides))} />
           ) : subTab === "vizualas" ? (
             <div>
               <div className="relative w-full aspect-square">

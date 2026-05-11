@@ -21,6 +21,7 @@ interface GraphCache {
   graphMaterials: SupabaseMaterial[];
   pairs: Set<string>;
   pairWeights: Map<string, number>;
+  pairApprovedBy: Map<string, string>; // pair key → approved_by (real pairs only)
   byCode: Map<string, SupabaseMaterial>;
   pairCountByCode: Map<string, number>;
 }
@@ -53,7 +54,7 @@ async function loadGraphData(): Promise<GraphCache> {
     supabase.from('materials' as any).select(
       'id, technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, name, image_url, material_type, tier, showroom_ids, texture_prompt, layout_pattern, cluster_id, synonym_id'
     ),
-    supabase.from('pair_compatibility' as any).select('code_a, code_b, weight'),
+    supabase.from('pair_compatibility' as any).select('code_a, code_b, weight, approved_by'),
   ]);
   const graphMaterials: SupabaseMaterial[] = (mats ?? []).map((r: any) => ({
     id: r.id,
@@ -86,12 +87,14 @@ async function loadGraphData(): Promise<GraphCache> {
   const byCode = new Map(graphMaterials.map((m) => [m.technicalCode, m]));
   const pairs = new Set<string>();
   const pairWeights = new Map<string, number>();
+  const pairApprovedBy = new Map<string, string>();
   const pairCountByCode = new Map<string, number>();
   for (const r of (pc ?? [])) {
     const key = pairKey(r.code_a, r.code_b);
     const w: number = r.weight ?? 1.0;
     pairs.add(key);
     pairWeights.set(key, w);
+    if (r.approved_by) pairApprovedBy.set(key, r.approved_by);
     pairCountByCode.set(r.code_a, (pairCountByCode.get(r.code_a) ?? 0) + 1);
     pairCountByCode.set(r.code_b, (pairCountByCode.get(r.code_b) ?? 0) + 1);
   }
@@ -123,7 +126,7 @@ async function loadGraphData(): Promise<GraphCache> {
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
   _updateImageCache(byCode);
-  return { graphMaterials, pairs, pairWeights, byCode, pairCountByCode };
+  return { graphMaterials, pairs, pairWeights, pairApprovedBy, byCode, pairCountByCode };
 }
 
 // ─── Module-level synchronous lookups (readable once cache is warm) ───────────
@@ -271,6 +274,26 @@ export function getPairedWoodWarmthMismatches(codes: string[]): Array<{ a: strin
     }
   }
   return result;
+}
+
+/**
+ * Returns the first non-dizaino_dialogai designer whose approved pairs are
+ * active within the given set of material codes, or null if none found.
+ * Used to surface the designer card when a user manually assembles a palette
+ * using a designer's curated pairings.
+ */
+export function getApprovedByDesigner(codes: string[]): string | null {
+  if (!_cached || codes.length < 2) return null;
+  const { pairApprovedBy } = _cached;
+  const unique = [...new Set(codes)];
+  for (let i = 0; i < unique.length; i++) {
+    for (let j = i + 1; j < unique.length; j++) {
+      const key = pairKey(unique[i], unique[j]);
+      const designer = pairApprovedBy.get(key);
+      if (designer && designer !== 'dizaino_dialogai') return designer;
+    }
+  }
+  return null;
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
