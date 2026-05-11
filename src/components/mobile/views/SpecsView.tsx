@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getMaterialByCode, useGraphMaterials } from "@/hooks/useGraphMaterials";
+import { computePaletteHint } from "@/lib/palette-hint";
 import MaterialCard from "@/components/MaterialCard";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import RoomPillBar from "../controls/RoomPillBar";
-import TierPill from "../controls/TierPill";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import DesignerCompactCard from "../DesignerCompactCard";
 import DesignerProfileSheet from "@/components/DesignerProfileSheet";
@@ -21,7 +21,15 @@ export default function SpecsView({ designer }: SpecsViewProps) {
   const navigate = useNavigate();
   const { design, materialOverrides, excludedSlots, selectedTier } = useDesign();
   const { t, language } = useLanguage();
-  const { graphMaterials } = useGraphMaterials();
+  const { graphMaterials, graphLoading } = useGraphMaterials();
+
+  const paletteHint = useMemo(() => {
+    if (graphLoading || Object.keys(materialOverrides).length === 0) return null;
+    const inputs = Object.entries(materialOverrides)
+      .filter(([pk, code]) => pk !== "accents" && !!code)
+      .map(([pk, code]) => ({ paletteKey: pk, code: code as string }));
+    return computePaletteHint(inputs);
+  }, [graphLoading, materialOverrides]);
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
   const [selectedMaterialInfo, setSelectedMaterialInfo] = useState<MaterialInfo | null>(null);
   const [isDesignerProfileOpen, setIsDesignerProfileOpen] = useState(false);
@@ -61,14 +69,7 @@ export default function SpecsView({ designer }: SpecsViewProps) {
         <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
-                <RoomPillBar />
-              </div>
-              <div className="flex-shrink-0">
-                <TierPill />
-              </div>
-            </div>
+            <RoomPillBar />
           </div>
 
           {/* Empty State */}
@@ -90,16 +91,8 @@ export default function SpecsView({ designer }: SpecsViewProps) {
         </div>
       ) : freestyleDescription ? (
         <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
-          {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
-                <RoomPillBar />
-              </div>
-              <div className="flex-shrink-0">
-                <TierPill />
-              </div>
-            </div>
+            <RoomPillBar />
           </div>
 
           {/* Editorial Headline */}
@@ -119,10 +112,7 @@ export default function SpecsView({ designer }: SpecsViewProps) {
         <div className="px-4 py-4 lg:max-w-2xl lg:mx-auto">
           {/* Sticky Room Pills + Tier */}
           <div className="sticky top-0 z-10 bg-background pb-3 -mx-4 px-4 pt-1">
-            <div className="flex items-center justify-between gap-3">
-              <RoomPillBar />
-              <TierPill />
-            </div>
+            <RoomPillBar />
           </div>
 
           {groupedMaterials.length === 0 ? (
@@ -143,6 +133,31 @@ export default function SpecsView({ designer }: SpecsViewProps) {
             </div>
           ) : (
             <>
+              {/* Palette hint + change set CTA */}
+              {paletteHint && (
+                <div className="flex flex-col items-center gap-2 pb-4 text-center">
+                  <span
+                    className="text-[13px] font-medium tracking-[0.08em] uppercase"
+                    style={{ color: "rgba(0,0,0,0.7)" }}
+                  >
+                    {t(`paletteHint.${paletteHint.key}.label`)}
+                  </span>
+                  <span
+                    className="text-[13px] leading-snug"
+                    style={{ color: "rgba(0,0,0,0.55)" }}
+                  >
+                    {t(`paletteHint.${paletteHint.key}.desc`)}
+                  </span>
+                  <button
+                    onClick={() => navigate("/design")}
+                    className="mt-1 px-4 py-1.5 rounded-full text-[11px] font-medium tracking-[0.04em] uppercase active:opacity-40 transition-opacity"
+                    style={{ backgroundColor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.45)", border: "0.5px solid rgba(0,0,0,0.08)" }}
+                  >
+                    {t("specs.changeSet")}
+                  </button>
+                </div>
+              )}
+
               {/* Material Cards */}
               <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
                 {groupedMaterials.map(({ matId, slotKeys, mat }) => {

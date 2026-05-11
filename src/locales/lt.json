@@ -120,7 +120,7 @@
     "pure-scandi": "Grynai skandi",
     "spicy-nord": "Charakteringa šiaurė"
   },
-"style": {
+  "style": {
     "scandinavian-minimalism": "Skandinaviškas",
     "japandi": "Japandi",
     "modern-classic": "Šiuolaikinė Klasika",
@@ -211,7 +211,8 @@
     "tierComingSoonDescription": "Kol kas tyrinėkite Optimalus pasirinkimus.",
     "selectPalette": "Pasirinkti Paletę",
     "browsePalettes": "Naršyti paletes",
-    "goToMoodboard": "Rinktis medžiagas"
+    "goToMoodboard": "Rinktis medžiagas",
+    "changeSet": "Keisti rinkinį"
   },
   "material": {
     "purpose": {
@@ -306,7 +307,7 @@
     "standardDesc": "Subalansuota kaina, kokybė ir estetika kasdieniam naudojimui.",
     "premiumDesc": "Aukščiausios kokybės medžiagos ir išskirtinė patirtis erdvėje."
   },
-"service": {
+  "service": {
     "spacePlanning": "Erdvės Išplanavimas",
     "interiorFinishes": "Apdaila ir Medžiagos",
     "furnishingDecor": "Baldai ir Dekoras",

@@ -211,7 +211,8 @@
     "tierComingSoonDescription": "Explore our Standard selection in the meantime.",
     "selectPalette": "Select Palette",
     "browsePalettes": "Browse Palettes",
-    "goToMoodboard": "Choose materials"
+    "goToMoodboard": "Choose materials",
+    "changeSet": "Change set"
   },
   "material": {
     "purpose": {
@@ -792,179 +793,179 @@
       }
     },
     "tag": {
-    "storage": {
-      "hallwayWardrobe": {
-        "underbuilt": "Not enough space for everyday coats and shoes",
-        "minimal": "Compact storage for daily coats and shoes",
-        "optimal": "Enough space for seasonal items and guests"
+      "storage": {
+        "hallwayWardrobe": {
+          "underbuilt": "Not enough space for everyday coats and shoes",
+          "minimal": "Compact storage for daily coats and shoes",
+          "optimal": "Enough space for seasonal items and guests"
+        },
+        "masterWardrobe": {
+          "underbuilt": "Clutter and overcrowded wardrobes are likely",
+          "minimal": "Fits essential clothes and accessories",
+          "optimal": "Enough space for a full wardrobe"
+        },
+        "kidsWardrobe": {
+          "underbuilt": "Clutter and overcrowded wardrobes are likely",
+          "minimal": "Fits essential clothes and toys",
+          "optimal": "Space for sports gear and seasonal items"
+        },
+        "general": {
+          "underbuilt": "Basic items barely fit, clutter is likely",
+          "minimal": "Covers basic household needs",
+          "optimal": "Suitable for larger items and seasonal storage"
+        },
+        "entryDrop": {
+          "no": "Keys and phones constantly get misplaced",
+          "yes": "Tidy and clear routine"
+        }
       },
-      "masterWardrobe": {
-        "underbuilt": "Clutter and overcrowded wardrobes are likely",
-        "minimal": "Fits essential clothes and accessories",
-        "optimal": "Enough space for a full wardrobe"
+      "social": {
+        "diningCount": {
+          "underbuilt": "Not everyone can sit together",
+          "minimal": "Enough only for household members",
+          "optimal": "Comfortable even with guests"
+        },
+        "chairClearance": {
+          "no": "Difficult to sit down and get up",
+          "yes": "Easy to sit down and stand up"
+        },
+        "sofaCapacity": {
+          "underbuilt": "Not enough space to relax comfortably",
+          "minimal": "Enough only for household members",
+          "optimal": "Comfortable both daily and with guests"
+        },
+        "conversation": {
+          "no": "Space is TV-oriented, conversations feel awkward",
+          "yes": "Encourages communication and relationships"
+        },
+        "trafficPaths": {
+          "no": "Movement disrupts TV viewing",
+          "yes": "Cozy and private living room area"
+        }
       },
-      "kidsWardrobe": {
-        "underbuilt": "Clutter and overcrowded wardrobes are likely",
-        "minimal": "Fits essential clothes and toys",
-        "optimal": "Space for sports gear and seasonal items"
+      "kitchen": {
+        "linear": {
+          "underbuilt": "Cooking feels cramped and storage is limited",
+          "minimal": "Functional but tight",
+          "optimal": "Comfortable for cooking and storage"
+        },
+        "tallUnits": {
+          "underbuilt": "May lack space for convenient storage and organization",
+          "minimal": "Enough for basic food items and dishes",
+          "optimal": "Enough space for bulk shopping and household supplies"
+        },
+        "triangle": {
+          "no": "Too much unnecessary walking",
+          "yes": "Comfortable movement in the kitchen"
+        },
+        "prepZone": {
+          "no": "May lack space for safe food preparation",
+          "yes": "Safe and clearly defined prep area"
+        },
+        "aisleWidth": {
+          "no": "People and cabinet doors will interfere with each other",
+          "yes": "Two people can pass each other"
+        },
+        "dishwasherTrap": {
+          "no": "Unloading blocks circulation",
+          "yes": "Cleanup without interruptions"
+        },
+        "fridgeDoor": {
+          "no": "Difficult to place items directly onto the work surface",
+          "yes": "Convenient and logical access to the fridge"
+        },
+        "fridgeOven": {
+          "no": "Wastes energy and may damage the fridge",
+          "yes": "Safe appliance placement"
+        }
       },
-      "general": {
-        "underbuilt": "Basic items barely fit, clutter is likely",
-        "minimal": "Covers basic household needs",
-        "optimal": "Suitable for larger items and seasonal storage"
+      "bedroom": {
+        "bedAccess": {
+          "no": "Hard to make the bed, disturbs the partner",
+          "yes": "Easy access and maintenance for both"
+        },
+        "nightstands": {
+          "no": "Phones will end up on the floor",
+          "yes": "Convenient charging and storage"
+        },
+        "doorConflict": {
+          "no": "Daily annoyance and likely furniture damage",
+          "yes": "Doors open without obstruction"
+        },
+        "sightlines": {
+          "no": "Bedroom loses its sense of privacy",
+          "yes": "Calm and private resting space"
+        },
+        "acoustics": {
+          "no": "Noise is easily heard in the bedroom",
+          "yes": "Quiet sleeping environment"
+        }
       },
-      "entryDrop": {
-        "no": "Keys and phones constantly get misplaced",
-        "yes": "Tidy and clear routine"
+      "bathroom": {
+        "doorSwing": {
+          "no": "May injure a person standing at the sink",
+          "yes": "Safe door solution"
+        },
+        "elbowRoom": {
+          "no": "Uncomfortable to use",
+          "yes": "Comfortable daily use"
+        },
+        "showerHead": {
+          "no": "A cold surprise every time",
+          "yes": "Comfortable and controlled use"
+        }
+      },
+      "homeOffice": {
+        "workZone": {
+          "no": "Household activity may interfere with work",
+          "yes": "Comfortable work area"
+        },
+        "naturalLight": {
+          "no": "Reflections, glare, and eye strain",
+          "yes": "Optimal lighting for work"
+        }
+      },
+      "power": {
+        "bedCharging": {
+          "no": "Cables cross the bed or require extension cords",
+          "yes": "Convenient overnight charging"
+        },
+        "sofaPower": {
+          "no": "Frequent need for extension cords and potential clutter",
+          "yes": "Convenient device charging in the living room"
+        },
+        "entryCharging": {
+          "no": "Devices cannot charge near the entry",
+          "yes": "Charging where you place your items"
+        },
+        "workPower": {
+          "no": "Extension cords and cable clutter",
+          "yes": "Tidy workspace"
+        },
+        "taskLighting": {
+          "no": "Shadows make tasks more difficult",
+          "yes": "Light exactly where it’s needed"
+        }
+      },
+      "doors": {
+        "doorToDoor": {
+          "no": "Doors constantly collide with each other",
+          "yes": "Doors function without obstruction"
+        },
+        "applianceToPerson": {
+          "no": "Friction during cooking and cleaning",
+          "yes": "Unobstructed appliance use"
+        },
+        "applianceToAppliance": {
+          "no": "Tasks can only be done sequentially",
+          "yes": "Can be used simultaneously"
+        },
+        "circulationBlocking": {
+          "no": "Movement with obstacles",
+          "yes": "Clear and comfortable walkways"
+        }
       }
     },
-    "social": {
-      "diningCount": {
-        "underbuilt": "Not everyone can sit together",
-        "minimal": "Enough only for household members",
-        "optimal": "Comfortable even with guests"
-      },
-      "chairClearance": {
-        "no": "Difficult to sit down and get up",
-        "yes": "Easy to sit down and stand up"
-      },
-      "sofaCapacity": {
-        "underbuilt": "Not enough space to relax comfortably",
-        "minimal": "Enough only for household members",
-        "optimal": "Comfortable both daily and with guests"
-      },
-      "conversation": {
-        "no": "Space is TV-oriented, conversations feel awkward",
-        "yes": "Encourages communication and relationships"
-      },
-      "trafficPaths": {
-        "no": "Movement disrupts TV viewing",
-        "yes": "Cozy and private living room area"
-      }
-    },
-    "kitchen": {
-      "linear": {
-        "underbuilt": "Cooking feels cramped and storage is limited",
-        "minimal": "Functional but tight",
-        "optimal": "Comfortable for cooking and storage"
-      },
-      "tallUnits": {
-        "underbuilt": "May lack space for convenient storage and organization",
-        "minimal": "Enough for basic food items and dishes",
-        "optimal": "Enough space for bulk shopping and household supplies"
-      },
-      "triangle": {
-        "no": "Too much unnecessary walking",
-        "yes": "Comfortable movement in the kitchen"
-      },
-      "prepZone": {
-        "no": "May lack space for safe food preparation",
-        "yes": "Safe and clearly defined prep area"
-      },
-      "aisleWidth": {
-        "no": "People and cabinet doors will interfere with each other",
-        "yes": "Two people can pass each other"
-      },
-      "dishwasherTrap": {
-        "no": "Unloading blocks circulation",
-        "yes": "Cleanup without interruptions"
-      },
-      "fridgeDoor": {
-        "no": "Difficult to place items directly onto the work surface",
-        "yes": "Convenient and logical access to the fridge"
-      },
-      "fridgeOven": {
-        "no": "Wastes energy and may damage the fridge",
-        "yes": "Safe appliance placement"
-      }
-    },
-    "bedroom": {
-      "bedAccess": {
-        "no": "Hard to make the bed, disturbs the partner",
-        "yes": "Easy access and maintenance for both"
-      },
-      "nightstands": {
-        "no": "Phones will end up on the floor",
-        "yes": "Convenient charging and storage"
-      },
-      "doorConflict": {
-        "no": "Daily annoyance and likely furniture damage",
-        "yes": "Doors open without obstruction"
-      },
-      "sightlines": {
-        "no": "Bedroom loses its sense of privacy",
-        "yes": "Calm and private resting space"
-      },
-      "acoustics": {
-        "no": "Noise is easily heard in the bedroom",
-        "yes": "Quiet sleeping environment"
-      }
-    },
-    "bathroom": {
-      "doorSwing": {
-        "no": "May injure a person standing at the sink",
-        "yes": "Safe door solution"
-      },
-      "elbowRoom": {
-        "no": "Uncomfortable to use",
-        "yes": "Comfortable daily use"
-      },
-      "showerHead": {
-        "no": "A cold surprise every time",
-        "yes": "Comfortable and controlled use"
-      }
-    },
-    "homeOffice": {
-      "workZone": {
-        "no": "Household activity may interfere with work",
-        "yes": "Comfortable work area"
-      },
-      "naturalLight": {
-        "no": "Reflections, glare, and eye strain",
-        "yes": "Optimal lighting for work"
-      }
-    },
-    "power": {
-      "bedCharging": {
-        "no": "Cables cross the bed or require extension cords",
-        "yes": "Convenient overnight charging"
-      },
-      "sofaPower": {
-        "no": "Frequent need for extension cords and potential clutter",
-        "yes": "Convenient device charging in the living room"
-      },
-      "entryCharging": {
-        "no": "Devices cannot charge near the entry",
-        "yes": "Charging where you place your items"
-      },
-      "workPower": {
-        "no": "Extension cords and cable clutter",
-        "yes": "Tidy workspace"
-      },
-      "taskLighting": {
-        "no": "Shadows make tasks more difficult",
-        "yes": "Light exactly where it’s needed"
-      }
-    },
-    "doors": {
-      "doorToDoor": {
-        "no": "Doors constantly collide with each other",
-        "yes": "Doors function without obstruction"
-      },
-      "applianceToPerson": {
-        "no": "Friction during cooking and cleaning",
-        "yes": "Unobstructed appliance use"
-      },
-      "applianceToAppliance": {
-        "no": "Tasks can only be done sequentially",
-        "yes": "Can be used simultaneously"
-      },
-      "circulationBlocking": {
-        "no": "Movement with obstacles",
-        "yes": "Clear and comfortable walkways"
-      }
-    }
-  },
     "tooltip": {
       "storage": {
         "hallwayWardrobe": "Without adequate entrance storage, coats pile on chairs and the entry feels cluttered. Plan 0.6m per adult + 0.4m per child + 0.6m buffer for guests.",

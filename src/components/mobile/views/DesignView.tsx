@@ -852,24 +852,6 @@ export default function DesignView() {
             />
           )}
 
-          {/* Palette hint — mobile only (desktop shows it in the right panel) */}
-          {paletteHint && !activeSlot && (
-            <div className="lg:hidden flex flex-col items-center gap-1 pt-5 pb-1 px-4 text-center">
-              <span
-                className="text-[13px] font-medium tracking-[0.08em] uppercase"
-                style={{ color: "rgba(0,0,0,0.7)" }}
-              >
-                {t(`paletteHint.${paletteHint.key}.label`)}
-              </span>
-              <span
-                className="text-[13px] leading-snug"
-                style={{ color: "rgba(0,0,0,0.55)", maxWidth: "26rem" }}
-              >
-                {t(`paletteHint.${paletteHint.key}.desc`)}
-              </span>
-            </div>
-          )}
-
         </div>
       </div>
 
@@ -950,9 +932,9 @@ export default function DesignView() {
             })()}
           />
         ) : (
-          <div className="flex lg:h-full items-center justify-center flex-col gap-2 select-none py-4 lg:py-0">
-            {/* Desktop: palette hint when available, otherwise normal prompt */}
-            <div className="hidden lg:flex flex-col items-center gap-1 text-center px-10">
+          <div className="hidden lg:flex lg:h-full items-center justify-center flex-col gap-2 select-none lg:py-0">
+            {/* Desktop only: palette hint when available, otherwise arrow prompt */}
+            <div className="flex flex-col items-center gap-1 text-center px-10">
               {paletteHint ? (
                 <>
                   <span
@@ -977,10 +959,6 @@ export default function DesignView() {
                 </>
               )}
             </div>
-            {/* Mobile: always show the normal prompt (hint appears below the flatlay) */}
-            <span className="lg:hidden text-[11px] font-medium tracking-[0.04em] uppercase" style={{ color: 'rgba(0,0,0,0.35)' }}>
-              {t("moodboard.selectPiece")}
-            </span>
           </div>
         )}
       </div>
