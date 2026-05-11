@@ -14,11 +14,6 @@ import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 
-// ─── Layout pattern filter (floor only) ──────────────────────────────────────
-
-type LayoutPattern = "plank" | "chevron" | "herringbone" | "tile" | "even";
-const PATTERN_ORDER: LayoutPattern[] = ["plank", "chevron", "herringbone", "tile", "even"];
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type SlotKey = "floor" | "mainFronts" | "worktops" | "additionalFronts" | "tertiaryFronts" | "accents" | "mainTiles" | "additionalTiles";
@@ -94,8 +89,6 @@ export default function MaterialSlotPicker({
 
   // Which archetype chip is expanded (user-driven)
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
-  // Layout pattern filter — only applied for floor slots
-  const [activeLayoutPattern, setActiveLayoutPattern] = useState<LayoutPattern>("plank");
   // Code search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,8 +96,6 @@ export default function MaterialSlotPicker({
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   // Which cluster's sibling row is currently expanded (keyed by representative code)
   const [expandedClusterKey, setExpandedClusterKey] = useState<string | null>(null);
-
-  const role = slot ? SLOT_KEY_TO_ROLE[slot] : null;
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -189,30 +180,8 @@ export default function MaterialSlotPicker({
   // Collapse sibling expansion when archetype changes
   useEffect(() => { setExpandedClusterKey(null); }, [effectiveActiveId]);
 
-  // Patterns actually present in the active archetype's materials — drives chip visibility
-  const availablePatterns = useMemo((): LayoutPattern[] => {
-    if (!effectiveActiveId || !graphMaterials || !slot) return [];
-    const slotRole = SLOT_KEY_TO_ROLE[slot];
-    const found = new Set(
-      graphMaterials
-        .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(slotRole) && m.layoutPattern)
-        .map(m => m.layoutPattern as LayoutPattern)
-    );
-    return PATTERN_ORDER.filter(p => found.has(p));
-  }, [effectiveActiveId, graphMaterials, slot]);
-
-  // Reset activeLayoutPattern to first available when archetype changes
-  useEffect(() => {
-    if (availablePatterns.length > 0) setActiveLayoutPattern(availablePatterns[0]);
-  }, [effectiveActiveId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Filter sub-rows by layout_pattern only when the active archetype has multiple patterns
-  const filteredMaterials = useMemo(() => {
-    if (!graphMaterials || !role) return graphMaterials ?? [];
-    if (role !== "floor") return graphMaterials;
-    if (availablePatterns.length <= 1) return graphMaterials;
-    return graphMaterials.filter((m) => m.layoutPattern === activeLayoutPattern);
-  }, [graphMaterials, role, activeLayoutPattern, availablePatterns]);
+  // All materials — no layout_pattern filtering (layout is display metadata, not a picker filter)
+  const filteredMaterials = graphMaterials ?? [];
 
 
   // ─── Inline row data ──────────────────────────────────────────────────────

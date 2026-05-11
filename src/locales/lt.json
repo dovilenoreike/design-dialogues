@@ -52,14 +52,14 @@
   "tabs": {
     "moodboard": "Konceptas",
     "design": "Dizainas",
-    "specs": "Medžiagos",
+    "specs": "Specifikacijos",
     "budget": "Biudžetas",
     "plan": "Planas"
   },
   "tab": {
     "vizualas": "Vizualas",
     "konceptas": "Konceptas",
-    "specs": "Medžiagos"
+    "specs": "Specifikacijos"
   },
   "home": {
     "materials": "Medžiagos",

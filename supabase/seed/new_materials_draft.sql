@@ -68,70 +68,7 @@ INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmt
  ARRAY['solido-grindys'], 'Vinyl', 'optimal',
  8, 37);
 
--- ════════════════════════════════════════════════════════════════════════════
--- RESCORED MATERIALS (update/floor/)
--- Only scores and image_url are changed. name/role/tier/material_type untouched.
--- ════════════════════════════════════════════════════════════════════════════
-
--- ── aspecta-almond ───────────────────────────────────────────────────────────
-UPDATE materials SET
-  texture        = 'wood',
-  lightness      = 70,
-  warmth         = 0.12,
-  pattern        = 35,
-  chroma         = 6,
-  hue_angle      = 37,
-  texture_prompt = 'Light warm sandy beige oak chevron, matte.',
-  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_almond.webp'
-WHERE technical_code = 'aspecta-almond';
-
--- ── aspecta-baron ────────────────────────────────────────────────────────────
-UPDATE materials SET
-  texture        = 'wood',
-  lightness      = 68,
-  warmth         = 0.18,
-  pattern        = 22,
-  chroma         = 8,
-  hue_angle      = 35,
-  texture_prompt = 'Light warm natural oak planks, clear grain, matte.',
-  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_baron.webp'
-WHERE technical_code = 'aspecta-baron';
-
--- ── aspecta-bolsena ──────────────────────────────────────────────────────────
-UPDATE materials SET
-  texture        = 'wood',
-  lightness      = 58,
-  warmth         = 0.03,
-  pattern        = 38,
-  chroma         = 5,
-  hue_angle      = NULL,
-  texture_prompt = 'Medium neutral grey oak chevron, matte.',
-  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_bolsena.webp'
-WHERE technical_code = 'aspecta-bolsena';
-
--- ── aspecta-brienz ───────────────────────────────────────────────────────────
-UPDATE materials SET
-  texture        = 'wood',
-  lightness      = 42,
-  warmth         = 0.25,
-  pattern        = 38,
-  chroma         = 12,
-  hue_angle      = 35,
-  texture_prompt = 'Medium dark warm brown oak chevron, matte.',
-  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_brienz.webp'
-WHERE technical_code = 'aspecta-brienz';
-
--- ── aspecta-burned ───────────────────────────────────────────────────────────
-UPDATE materials SET
-  texture        = 'wood',
-  lightness      = 14,
-  warmth         = 0.05,
-  pattern        = 15,
-  chroma         = 3,
-  hue_angle      = NULL,
-  texture_prompt = 'Very dark charcoal oak planks, subtle grain, matte.',
-  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta_burned.webp'
-WHERE technical_code = 'aspecta-burned';
+-- Aspecta rescores + new materials moved to: supabase/seed/aspecta_2026-05-11.sql
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -197,28 +134,6 @@ INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmt
  5, 30);
 
 
--- ════════════════════════════════════════════════════════════════════════════
--- NEW FLOOR MATERIALS — 2026-05-04
--- Upload webp files to: material-images/Aspecta/
--- ════════════════════════════════════════════════════════════════════════════
-
-INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmth, pattern, texture_prompt, image_url, showroom_ids, material_type, tier, chroma, hue_angle, layout_pattern) VALUES
-
-(gen_random_uuid(), 'aspecta-como',
- '{"en":"Como","lt":"Como"}',
- ARRAY['floor'], 'wood', 70, 0.05, 30,
- 'Light greige oak in chevron pattern, clear grain, matte finish.',
- 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta-como.webp',
- ARRAY['solido-grindys'], 'Vinyl', 'optimal',
- 6, 40, 'chevron'),
-
-(gen_random_uuid(), 'aspecta-pecan',
- '{"en":"Pecan","lt":"Pecan"}',
- ARRAY['floor'], 'wood', 38, 0.25, 35,
- 'Medium-dark warm brown oak with rich grain and knots, plank layout, matte finish.',
- 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Aspecta/aspecta-pecan.webp',
- ARRAY['solido-grindys'], 'Vinyl', 'optimal',
- 12, 30, 'plank');
 
 
 -- ════════════════════════════════════════════════════════════════════════════
