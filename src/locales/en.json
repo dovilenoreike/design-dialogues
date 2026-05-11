@@ -211,7 +211,7 @@
     "tierComingSoonDescription": "Explore our Standard selection in the meantime.",
     "selectPalette": "Select Palette",
     "browsePalettes": "Browse Palettes",
-    "goToMoodboard": "Build Moodboard"
+    "goToMoodboard": "Choose materials"
   },
   "material": {
     "purpose": {
@@ -290,6 +290,11 @@
     "total": "Total",
     "whatsIncluded": "What's Included",
     "notIncluded": "Not included"
+  },
+  "styleMode": {
+    "quiet": "Quiet",
+    "grounded": "Grounded",
+    "intentional": "Intentional"
   },
   "tier": {
     "budget": "Budget",
@@ -539,7 +544,7 @@
       "visualize": "Visualize",
       "selectStyle": "Select Style",
       "selectPalette": "Select Palette",
-      "selectMaterialsFirst": "Choose your materials in the moodboard first",
+      "selectMaterialsFirst": "Choose your materials in the Concept first",
       "styleHint": "Step 1 of 2: Choose a design style",
       "paletteHint": "Step 2 of 2: Choose a palette or describe materials",
       "replace": "Replace",

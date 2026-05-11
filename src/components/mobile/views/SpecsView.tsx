@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Sparkles, MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getMaterialByCode, useGraphMaterials } from "@/hooks/useGraphMaterials";
@@ -17,7 +18,8 @@ interface SpecsViewProps {
 }
 
 export default function SpecsView({ designer }: SpecsViewProps) {
-  const { design, materialOverrides, excludedSlots, selectedTier, setActiveTab } = useDesign();
+  const navigate = useNavigate();
+  const { design, materialOverrides, excludedSlots, selectedTier } = useDesign();
   const { t, language } = useLanguage();
   const { graphMaterials } = useGraphMaterials();
   const [isSourcingSheetOpen, setIsSourcingSheetOpen] = useState(false);
@@ -79,7 +81,7 @@ export default function SpecsView({ designer }: SpecsViewProps) {
               {t("specs.emptyDescription")}
             </p>
             <button
-              onClick={() => setActiveTab("design")}
+              onClick={() => navigate("/design")}
               className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
             >
               {t("specs.goToMoodboard")}
@@ -133,7 +135,7 @@ export default function SpecsView({ designer }: SpecsViewProps) {
                 {t("specs.emptyDescription")}
               </p>
               <button
-                onClick={() => setActiveTab("design")}
+                onClick={() => navigate("/design")}
                 className="mt-6 px-6 py-3 bg-foreground text-background rounded-full font-medium text-sm hover:bg-foreground/90 transition-all active:scale-[0.98]"
               >
                 {t("specs.goToMoodboard")}

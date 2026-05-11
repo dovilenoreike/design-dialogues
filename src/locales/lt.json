@@ -292,6 +292,11 @@
     "whatsIncluded": "Kas Įtraukta",
     "notIncluded": "Neįtraukta"
   },
+  "styleMode": {
+    "quiet": "Minimalu",
+    "grounded": "Subalansuota",
+    "intentional": "Charakteringa"
+  },
   "tier": {
     "budget": "Taupus",
     "standard": "Optimalus",

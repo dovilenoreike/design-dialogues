@@ -212,13 +212,18 @@ function SurfaceConfigList({
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession } = useDesign();
+  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession, styleMode } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
   const isMobile = useIsMobile();
 
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const recommendWithStyle = useCallback(
+    (currentCode: string | null, otherCodes: string[], role?: string) =>
+      getRecommendedCodes(currentCode, otherCodes, role, styleMode),
+    [getRecommendedCodes, styleMode]
+  );
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Apply ?material=CODE url param once graph is loaded (for showroom QR codes)
@@ -826,7 +831,7 @@ export default function MoodboardView() {
             onClear={handleSlotClear}
             otherMaterialCodes={otherMaterialCodesForPicker}
             selectedMaterialCode={activeSlotMaterialCode}
-            getRecommendedCodes={getRecommendedCodes}
+            getRecommendedCodes={recommendWithStyle}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
           />

@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
+import StyleModePill from "../controls/StyleModePill";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes, getApprovedByDesigner } from "@/hooks/useGraphMaterials";
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
@@ -45,10 +46,16 @@ export default function DesignView() {
     isSharedSession,
     sharedMoodboardSlots,
     shareSession,
+    styleMode,
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
   const { loading: graphLoading, graphMaterials, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const recommendWithStyle = useCallback(
+    (currentCode: string | null, otherCodes: string[], role?: string) =>
+      getRecommendedCodes(currentCode, otherCodes, role, styleMode),
+    [getRecommendedCodes, styleMode]
+  );
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -479,8 +486,13 @@ export default function DesignView() {
       setSlotSurfaces(prev => ({ ...prev, [slotKey]: DEFAULT_SLOT_SURFACES[slotKey] }));
     }
     setActiveSlot(slotKey);
-    scrollToPicker();
-  }, [scrollToPicker]);
+    // If on the visual tab, switch to konceptas so the picker is actually visible
+    if (location.pathname.endsWith("/visual")) {
+      navigate("/design");
+    } else {
+      scrollToPicker();
+    }
+  }, [scrollToPicker, location.pathname, navigate]);
 
   // Addable categories: only show if there are both slots AND surface types still available
   const addableCategories = useMemo((): string[] => {
@@ -692,13 +704,16 @@ export default function DesignView() {
 
           {/* Shared topbar */}
           <div className="flex items-center justify-between pt-3 pb-2">
-            <button
-              onClick={() => handleSubTabChange("konceptas")}
-              className="text-[11px] font-medium tracking-[0.04em] uppercase active:opacity-60 transition-opacity"
-              style={{ color: "rgba(0,0,0,0.45)" }}
-            >
-              {t("moodboard.room")}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSubTabChange("konceptas")}
+                className="text-[11px] font-medium tracking-[0.04em] uppercase active:opacity-60 transition-opacity"
+                style={{ color: "rgba(0,0,0,0.45)" }}
+              >
+                {t("moodboard.room")}
+              </button>
+              <StyleModePill />
+            </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowInspirationDialog(true); }}
@@ -875,7 +890,7 @@ export default function DesignView() {
             otherMaterialCodes={otherMaterialCodesForPicker}
             sameRoleMaterialCodes={sameRoleCodesForPicker}
             selectedMaterialCode={activeSlotMaterialCode}
-            getRecommendedCodes={getRecommendedCodes}
+            getRecommendedCodes={recommendWithStyle}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
             subHeader={(() => {
