@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
+import { rankByPaletteScore } from '@/lib/palette-scoring';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -379,7 +380,8 @@ export function useGraphMaterials() {
       const narrowed = sameTexture.filter((m) => isSimilarLightness(m.lightness, slotMat.lightness));
       pool = narrowed.length > 0 ? narrowed : sameTexture;
     }
-    return rankByCompatibility(pool, otherCodes, pairs, pairWeights, byCode)
+    const role = targetRole ?? 'front';
+    return rankByPaletteScore(pool, otherCodes, byCode, role, 'grounded')
       .map((m) => m.technicalCode);
   }
 
