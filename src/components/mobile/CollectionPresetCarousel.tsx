@@ -91,8 +91,10 @@ export default function CollectionPresetCarousel({
 
   // Auto-apply the first preset when presets load and user has no materials yet.
   // Wait for graph to load too when in showroom mode so filtering is accurate.
+  // Skip if the user explicitly reset — they want an empty state across reloads.
   useEffect(() => {
-    if (!loading && !graphLoading && filteredPresets.length > 0 && !hasExistingMaterials) {
+    const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
+    if (!loading && !graphLoading && filteredPresets.length > 0 && !hasExistingMaterials && !userExplicitlyReset) {
       applyAt(0);
     }
   }, [loading, graphLoading, filteredPresets]); // eslint-disable-line react-hooks/exhaustive-deps

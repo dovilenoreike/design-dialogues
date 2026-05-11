@@ -289,6 +289,14 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     });
   }, [setMaterialOverrides, activeShowroom]);
 
+  // Clear the "materials-reset" flag once the user has materials again, so future
+  // resets are still treated as intentional (not mistaken for a fresh user).
+  useEffect(() => {
+    if (Object.keys(materialOverrides).length > 0) {
+      try { localStorage.removeItem("materials-reset"); } catch {}
+    }
+  }, [materialOverrides]);
+
   // Session persistence
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -428,10 +436,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
             };
           });
 
-          // Initialize default materials for new users or when no overrides are persisted yet
-          // Skip if ?material= param is present — QR code flow will populate slots instead
+          // Initialize default materials for new users or when no overrides are persisted yet.
+          // Skip if ?material= param is present (QR code flow) or user explicitly reset.
           const hasMaterialParam = new URLSearchParams(location.search).has("material");
-          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam) {
+          const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
+          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam && !userExplicitlyReset) {
             initializeDefaultMaterials();
           }
 
@@ -464,10 +473,11 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
             setCompletedTasks(new Set(data.completed_tasks));
           }
         } else {
-          // New user — no saved state — seed with graph-ranked defaults
-          // Skip if ?material= param is present — QR code flow will populate slots instead
+          // New user — no saved state — seed with graph-ranked defaults.
+          // Skip if ?material= param is present (QR code flow) or user explicitly reset.
           const hasMaterialParam = new URLSearchParams(location.search).has("material");
-          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam) {
+          const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
+          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam && !userExplicitlyReset) {
             initializeDefaultMaterials();
           }
         }

@@ -437,6 +437,7 @@ export default function DesignView() {
       localStorage.removeItem("preset-image-url");
       localStorage.removeItem("preset-materials-snapshot");
       localStorage.removeItem("user-picked-slots");
+      localStorage.setItem("materials-reset", "1");
     } catch {}
   }, [setMaterialOverrides, slotSurfaces]);
 
