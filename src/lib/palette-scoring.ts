@@ -160,9 +160,9 @@ function chromaError(
 ): number {
   const scale = CHROMA_SCALE[style];
   if (!scale) return 0;
-  if (candidate.chroma <= 5) return 0; // achromatic candidate = neutral, no penalty
+  //if (candidate.chroma <= 5) return 0; // achromatic candidate = neutral, no penalty
   const delta = Math.abs(candidate.chroma - anchor.chroma);
-  if (delta < 5) return 0; // imperceptible difference
+  //if (delta < 5) return 0; // imperceptible difference
   return delta / scale;
 }
 

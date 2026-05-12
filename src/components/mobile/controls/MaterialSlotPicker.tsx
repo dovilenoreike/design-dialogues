@@ -665,7 +665,14 @@ export default function MaterialSlotPicker({
                       <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
                     </div>
                     <SwatchRow alignItems="start" className="pb-3">
-                      {expanded.siblings.map(sibling => (
+                      {expanded.siblings
+                        .slice()
+                        .sort((a, b) =>
+                          Number(matchesAllOtherCodes(b.code, otherMaterialCodes ?? [])) - Number(matchesAllOtherCodes(a.code, otherMaterialCodes ?? [])) ||
+                          getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
+                          getPairCountByCode(b.code) - getPairCountByCode(a.code)
+                        )
+                        .map(sibling => (
                         <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                           <SwatchButton
                             onClick={() => { handleRow3Click(sibling); }}
