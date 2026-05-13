@@ -119,30 +119,56 @@ if (mode === "clusters") {
   const assigned   = materials.filter(m => m.cluster_id !== null);
   const unassigned = materials.filter(m => m.cluster_id === null);
 
-  // Build existing cluster representatives
-  const existingClusters = new Map<string, Material>();
+  // Build existing cluster members (all members, not just one representative)
+  const existingClusters = new Map<string, Material[]>();
   for (const m of assigned) {
-    if (!existingClusters.has(m.cluster_id!)) existingClusters.set(m.cluster_id!, m);
+    const arr = existingClusters.get(m.cluster_id!) ?? [];
+    arr.push(m);
+    existingClusters.set(m.cluster_id!, arr);
   }
 
-  // Assign unassigned materials
-  const newAssignments = new Map<string, string>(); // technical_code → cluster_id
-  for (const mat of unassigned) {
-    let matched: string | null = null;
-    for (const [clusterId, rep] of existingClusters) {
-      if (areSimilar(mat, rep, CLUSTER_THRESHOLDS)) { matched = clusterId; break; }
-    }
-    if (!matched) {
-      for (const [code, clId] of newAssignments) {
-        const rep = unassigned.find(m => m.technical_code === code);
-        if (rep && areSimilar(mat, rep, CLUSTER_THRESHOLDS)) { matched = clId; break; }
+  // Union-Find over unassigned materials — builds connected components so that
+  // A~B and B~C → same component even if A!~C, regardless of processing order.
+  const parent = new Map<string, string>(
+    unassigned.map(m => [m.technical_code, m.technical_code])
+  );
+  function find(x: string): string {
+    if (parent.get(x) !== x) parent.set(x, find(parent.get(x)!));
+    return parent.get(x)!;
+  }
+  for (let i = 0; i < unassigned.length; i++) {
+    for (let j = i + 1; j < unassigned.length; j++) {
+      if (areSimilar(unassigned[i], unassigned[j], CLUSTER_THRESHOLDS)) {
+        const pi = find(unassigned[i].technical_code);
+        const pj = find(unassigned[j].technical_code);
+        if (pi !== pj) parent.set(pi, pj);
       }
     }
-    if (!matched) {
-      matched = randomUUID();
-      existingClusters.set(matched, mat);
+  }
+
+  // Group unassigned materials by their component root
+  const components = new Map<string, Material[]>();
+  for (const mat of unassigned) {
+    const root = find(mat.technical_code);
+    const arr = components.get(root) ?? [];
+    arr.push(mat);
+    components.set(root, arr);
+  }
+
+  // Assign each component to an existing cluster (if any member matches) or a new UUID
+  const newAssignments = new Map<string, string>(); // technical_code → cluster_id
+  for (const members of components.values()) {
+    let clusterId: string | null = null;
+    outer: for (const [cId, existingMembers] of existingClusters) {
+      for (const mat of members) {
+        if (existingMembers.some(rep => areSimilar(mat, rep, CLUSTER_THRESHOLDS))) {
+          clusterId = cId;
+          break outer;
+        }
+      }
     }
-    newAssignments.set(mat.technical_code, matched);
+    if (!clusterId) clusterId = randomUUID();
+    for (const mat of members) newAssignments.set(mat.technical_code, clusterId);
   }
 
   // Build full report
