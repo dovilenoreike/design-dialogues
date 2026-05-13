@@ -101,7 +101,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { data: rows, error } = await (supabase as any)
   .from("materials")
-  .select("technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, cluster_id, synonym_id");
+  .select("technical_code, role, texture, lightness, warmth, pattern, chroma, hue_angle, cluster_id, synonym_id")
+  .order("created_at", { ascending: true })
+  .order("technical_code", { ascending: true });
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 if (error || !rows) {

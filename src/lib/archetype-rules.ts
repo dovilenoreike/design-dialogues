@@ -50,7 +50,9 @@ export function deriveArchetypeId(
       return 'dark';
     } else {
       // Chromatic: pastels and bold colours
-      return lightness >= 55 ? 'pastel' : 'bold';
+      if (lightness >= 55) return 'pastel';
+      if (lightness >= 30) return 'bold';
+      return 'dark';
     }
   }
 
@@ -67,7 +69,9 @@ export function deriveArchetypeId(
         if (lightness >= 45) return 'neutral';
         return 'dark';
       }
-      return lightness >= 55 ? 'pastel' : 'bold';
+      if (lightness >= 55) return 'pastel';
+      if (lightness >= 30) return 'bold';
+      return 'dark';
     }
   }
 

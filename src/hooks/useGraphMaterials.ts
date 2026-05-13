@@ -351,32 +351,36 @@ export function useGraphMaterials() {
     const { pairs, pairWeights, graphMaterials: mats } = _cached;
     if (otherCodes.length === 0) return null;
     // Gate: current material already compatible with all others → no nudge
-    if (isCompatibleWithAll(slotCode, otherCodes, pairs)) return null;
+    if (isCompatibleWithAll(slotCode, otherCodes, pairs)) { return null; }
     const slotMat = _cached.byCode.get(slotCode);
     const slotSynonymId = slotMat?.synonymId ?? null;
-    // Swap candidate must be compatible with ALL other placed materials so that
-    // accepting the swap immediately earns V (isCompatibleWithEvery) status.
-    const candidates = mats.filter((m) => {
+    const vThreshold = Math.max(1, otherCodes.length - 1);
+    const currentHasV = countCompatible(slotCode, otherCodes, pairs) >= vThreshold;
+    const pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;
       if (m.technicalCode === slotCode) return false;
       if (slotSynonymId && m.synonymId === slotSynonymId) return false;
       if (targetRole && !m.role.includes(targetRole)) return false;
-      return isCompatibleWithAll(m.technicalCode, otherCodes, pairs);
+      return true;
     });
-    if (candidates.length === 0) return null;
-    // Narrow to same texture + similar lightness as the slot's current material
+    const vvCandidates = pool.filter((m) => isCompatibleWithAll(m.technicalCode, otherCodes, pairs));
+    const vCandidates = !currentHasV
+      ? pool.filter((m) => countCompatible(m.technicalCode, otherCodes, pairs) >= vThreshold)
+      : [];
+    // Priority (table promise): VV same-tex → V same-tex → VV any → V any.
+    // isSimilarMaterial is a sort key only, never a hard gate.
     if (slotMat) {
-      const narrowed = candidates.filter((m) =>
-        m.texture === slotMat.texture &&
-        isSimilarMaterial(m, slotMat)
-      );
-      if (narrowed.length === 0) return null;
-      // Rank by visual similarity to the current material (most similar first),
-      // so the swap preserves the user's aesthetic intent.
-      const best = [...narrowed].sort((a, b) => visualDistance(a, slotMat) - visualDistance(b, slotMat))[0];
+      const vvNarrowed = vvCandidates.filter((m) => m.texture === slotMat.texture && isSimilarMaterial(m, slotMat));
+      const vNarrowed  = vCandidates.filter((m)  => m.texture === slotMat.texture && isSimilarMaterial(m, slotMat));
+      const finalPool  = vvNarrowed.length > 0 ? vvNarrowed
+        : vNarrowed.length  > 0 ? vNarrowed
+        : [];
+      if (finalPool.length === 0) return null;
+      const best = [...finalPool].sort((a, b) => visualDistance(a, slotMat) - visualDistance(b, slotMat))[0];
       return best?.technicalCode ?? null;
     }
-    const best = rankByCompatibility(candidates, otherCodes, pairs, pairWeights)[0];
+    const allCandidates = vvCandidates.length > 0 ? vvCandidates : vCandidates;
+    const best = rankByCompatibility(allCandidates, otherCodes, pairs, pairWeights)[0];
     return best?.technicalCode ?? null;
   }
 
@@ -390,7 +394,7 @@ export function useGraphMaterials() {
     style: StyleMode = 'grounded',
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
-    const { pairs, pairWeights, byCode, graphMaterials: mats } = _cached;
+    const { pairs, byCode, graphMaterials: mats } = _cached;
     const threshold = Math.max(1, otherCodes.length - 1);
     let pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;

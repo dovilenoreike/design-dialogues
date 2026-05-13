@@ -234,8 +234,9 @@ export default function KonceptasView({
           // always mirrors what was actually written to materialOverrides
           const pk = slotSurfaces[piece.slot]?.[0] ?? SLOT_TO_PALETTE_KEY[piece.slot];
           const overrideCode = pk ? (materialOverrides[pk] ?? "") : "";
+          const mat = overrideCode ? getMaterialByCode(overrideCode) : null;
           const tileImage = overrideCode
-            ? (getMaterialByCode(overrideCode)?.imageUrl ?? getCachedImageUrl(overrideCode))
+            ? (mat?.imageUrl ?? getCachedImageUrl(overrideCode))
             : null;
           const displayImage = tileImage;
           const currentMatId = pk ? (materialOverrides[pk] ?? null) : null;
@@ -448,6 +449,19 @@ export default function KonceptasView({
                     <RotateCcw className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.85 }} />
                   </span>
                 </button>
+              )}
+              {mat && (
+                <div
+                  className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
+                  style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.55))" }}
+                >
+                  <span className="text-white/90 font-mono leading-none" style={{ fontSize: "6px" }}>
+                    L{mat.lightness} W{mat.warmth?.toFixed(2)} C{mat.chroma}
+                  </span>
+                  <span className="text-white/70 font-mono leading-none" style={{ fontSize: "6px" }}>
+                    H{mat.hue_angle ?? "—"} P{mat.pattern}
+                  </span>
+                </div>
               )}
             </div>
           );

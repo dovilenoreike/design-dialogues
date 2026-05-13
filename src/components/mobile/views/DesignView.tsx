@@ -852,6 +852,24 @@ export default function DesignView() {
             />
           )}
 
+          {/* Palette hint — mobile only (desktop shows it in the right panel) */}
+          {paletteHint && !activeSlot && (
+            <div className="lg:hidden flex flex-col items-center gap-1 pt-5 pb-1 px-4 text-center">
+              <span
+                className="text-[13px] font-medium tracking-[0.08em] uppercase"
+                style={{ color: "rgba(0,0,0,0.7)" }}
+              >
+                {t(`paletteHint.${paletteHint.key}.label`)}
+              </span>
+              <span
+                className="text-[13px] leading-snug"
+                style={{ color: "rgba(0,0,0,0.55)", maxWidth: "26rem" }}
+              >
+                {t(`paletteHint.${paletteHint.key}.desc`)}
+              </span>
+            </div>
+          )}
+
         </div>
       </div>
 
