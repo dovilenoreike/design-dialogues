@@ -18,22 +18,16 @@ const AXIS_WEIGHTS: Record<StyleMode, [number, number, number, number, number, n
 };
 
 // ─── Axis 1: Lightness ────────────────────────────────────────────────────────
-// Ideal absolute delta from anchor, per style and role.
 const LIGHTNESS_IDEAL_DELTA: Record<StyleMode, Record<string, number>> = {
   quiet:       { front: 10, worktop: 8,  backsplash: 15 },
   grounded:    { front: 15, worktop: 20, backsplash: 15 },
   intentional: { front: 25, worktop: 32, backsplash: 22 },
 };
-// Error reaches 1.0 this many points away from ideal delta.
 const LIGHTNESS_DELTA_SCALE = 25;
-// Plain (lacquer/paint) fronts going lighter than the anchor blend with the wall — softer slope.
-// Applies only when candidate.lightness > anchor.lightness. Going darker stays normally penalised.
 const LIGHTNESS_PLAIN_SCALE_BONUS = 20;
 const LIGHTNESS_NO_ANCHOR_SCORE = 0.5;
 
 // ─── Axis 2: Warmth ───────────────────────────────────────────────────────────
-// quiet/grounded: ideal = anchor.warmth (match temperature).
-// intentional:    ideal = -anchor.warmth (invite opposite temperature).
 const WARMTH_SCALE: Record<StyleMode, number> = {
   quiet:       0.35,
   grounded:    0.55,
@@ -41,20 +35,24 @@ const WARMTH_SCALE: Record<StyleMode, number> = {
 };
 
 // ─── Axis 3: Hue undertone ────────────────────────────────────────────────────
-// Ideal angular distance between anchor and candidate hue.
 const HUE_IDEAL_DIST: Record<StyleMode, number> = {
-  quiet:       0,    // same hue family
-  grounded:    35,   // related but distinct
-  intentional: 180,  // complementary
+  quiet:       0,
+  grounded:    35,
+  intentional: 180,
 };
 const HUE_SCALE = 180;
 
 // ─── Axis 4: Chroma ───────────────────────────────────────────────────────────
-// quiet/grounded: minimise chroma delta (similar saturation level).
-// intentional:    no constraint (allow any chroma, neither reward nor penalise).
 const CHROMA_SCALE: Partial<Record<StyleMode, number>> = {
   quiet:    6,
   grounded: 12,
+};
+
+// How much the ideal candidate chroma drops per unit of anchor activity.
+const CHROMA_ACTIVITY_FACTOR: Record<StyleMode, number> = {
+  quiet:       0.55,
+  grounded:    0.30,
+  intentional: 0.50,
 };
 
 // ─── Axis 5: Texture ──────────────────────────────────────────────────────────
@@ -63,26 +61,58 @@ const TEXTURE_MAX_FAMILIES: Record<StyleMode, number> = {
 };
 
 // ─── Axis 6: Pattern ──────────────────────────────────────────────────────────
-// Projected total: paletteSum + candidate.pattern.
-// Quiet/grounded use tighter budgets — bold patterns are strongly penalised.
-// No upper cap: errors > 1.0 are intentional for quiet/grounded with heavy pattern.
-const PATTERN_PROJ_FREE: Record<StyleMode, number> = {
-  quiet:       25,
-  grounded:    30,
-  intentional: 40,
-};
+// Error reaches 1.0 when candidate pattern is this many points from ideal.
 const PATTERN_PROJ_SCALE: Record<StyleMode, number> = {
   quiet:       40,
   grounded:    55,
   intentional: 80,
 };
+// How much the ideal candidate pattern drops per unit of anchor activity.
+const PATTERN_ACTIVITY_FACTOR: Record<StyleMode, number> = {
+  quiet:       0.75,
+  grounded:    0.45,
+  intentional: 0.70,
+};
 // Compound factor: applied when a new texture exceeds the family limit AND brings pattern.
 const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 
+// ─── Activity metric ──────────────────────────────────────────────────────────
+// Texture visual complexity contribution (not DB-stored — per-type constant).
+const TEXTURE_COMPLEXITY: Record<string, number> = {
+  plain: 0, wood: 0.65, stone: 0.35, metal: 0.15,
+};
+
+function computeActivity(m: GraphMaterial): number {
+  const tc = TEXTURE_COMPLEXITY[m.texture] ?? 0;
+  return Math.min(100, m.pattern * 0.55 + m.chroma * 0.30 + tc * 15);
+}
+
+// ─── Composition state ────────────────────────────────────────────────────────
+// Visual mass weights for placed materials — heavier surfaces dominate the read.
+const ROLE_VISUAL_MASS: Record<string, number> = {
+  floor: 0.35, front: 0.30, worktop: 0.10, backsplash: 0.05,
+};
+
+interface CompositionState {
+  dominantWarmth:      number;
+  compositionActivity: number;
+}
+
+function computeCompositionState(placed: GraphMaterial[]): CompositionState {
+  let totalW = 0, warmthSum = 0, activitySum = 0;
+  for (const m of placed) {
+    const w = ROLE_VISUAL_MASS[m.role[0]] ?? 0.10;
+    warmthSum   += m.warmth * w;
+    activitySum += computeActivity(m) * w;
+    totalW += w;
+  }
+  if (!totalW) return { dominantWarmth: 0, compositionActivity: 0 };
+  return { dominantWarmth: warmthSum / totalW, compositionActivity: activitySum / totalW };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Returns the already-placed material with the highest visual weight (the palette anchor).
- *  Uses role[0] as primary role. Returns null when no codes are placed. */
+/** Returns the already-placed material with the highest visual weight (the palette anchor). */
 export function identifyAnchor(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
@@ -98,10 +128,7 @@ export function identifyAnchor(
   return anchor;
 }
 
-/** Axis 1 error — Lightness.
- *  All styles: distance from ideal contrast delta.
- *  Plain texture: wider ideal and scale (absorbs wall colour, large delta reads neutral).
- *  Wood-on-wood fronts: directional — candidate should be darker than anchor. */
+/** Axis 1 error — Lightness. */
 function lightnessError(
   candidate: GraphMaterial,
   anchor: GraphMaterial,
@@ -121,7 +148,6 @@ function lightnessError(
     anchor.texture === 'wood';
 
   if (woodOnWoodFront) {
-    // Signed: positive = candidate is darker. Penalises lighter-than-anchor.
     const signedDelta = anchor.lightness - candidate.lightness;
     return Math.abs(signedDelta - idealDelta) / scale;
   }
@@ -152,7 +178,9 @@ function hueError(
   return Math.abs(actualDist - HUE_IDEAL_DIST[style]) / HUE_SCALE;
 }
 
-/** Axis 4 error — Chroma. Quiet/grounded: minimise delta. Intentional: no constraint. */
+/** Axis 4 error — Chroma.
+ *  Ideal candidate chroma is derived from anchor activity: the more active the anchor,
+ *  the lower the target chroma. Intentional style has no chroma constraint. */
 function chromaError(
   candidate: GraphMaterial,
   anchor: GraphMaterial,
@@ -160,28 +188,20 @@ function chromaError(
 ): number {
   const scale = CHROMA_SCALE[style];
   if (!scale) return 0;
-  //if (candidate.chroma <= 5) return 0; // achromatic candidate = neutral, no penalty
-  const delta = Math.abs(candidate.chroma - anchor.chroma);
-  //if (delta < 5) return 0; // imperceptible difference
-  return delta / scale;
+  const anchorActivity = computeActivity(anchor);
+  const idealChroma = Math.max(0, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]);
+  return Math.abs(candidate.chroma - idealChroma) / scale;
 }
 
-/** Axis 5 error — Texture variety.
- *  Plain texture (lacquer/paint) is excluded from family counting — it reads as
- *  wall-coloured and adds no visual texture complexity.
- *  0.0 = plain candidate (always neutral), new texture within family limit, or matches anchor texture (cohesion).
- *  0.5 = present from non-anchor surface, not dominant.
- *  1.0 = dominant non-anchor repeat, or new texture exceeds family limit. */
+/** Axis 5 error — Texture variety. Plain is excluded from family counting. */
 function textureError(
   candidate: GraphMaterial,
   placedMaterials: GraphMaterial[],
   anchor: GraphMaterial,
   style: StyleMode,
 ): number {
-  // Plain is neutral — never adds to or exceeds texture complexity
   if (candidate.texture === 'plain') return 0;
   if (placedMaterials.length === 0) return 0;
-  // Build counts excluding plain (plain doesn't occupy a texture family slot)
   const counts = new Map<string, number>();
   for (const m of placedMaterials) {
     if (m.texture === 'plain') continue;
@@ -191,37 +211,48 @@ function textureError(
   if (!counts.has(ct)) {
     return counts.size >= TEXTURE_MAX_FAMILIES[style] ? 1.0 : 0.0;
   }
-  // Matches anchor texture = cohesion (e.g. wood floor + wood front) — no penalty.
   if (ct === anchor.texture) return 0;
-  // Already present from a non-anchor surface = real accumulation.
   const existing = counts.get(ct)!;
   const maxCount = Math.max(...counts.values());
   return existing >= maxCount ? 1.0 : 0.5;
 }
 
-/** Axis 6 error — Pattern budget. Uses projected total (paletteSum + candidate.pattern).
- *  Backsplash always exempt. Error is uncapped — bold patterns in quiet/grounded
- *  intentionally produce errors > 1.0 for a strong penalty.
- *  Same-texture candidate: only the excess over the anchor pattern counts — finer grain
- *  on the same texture family reads as visual continuation, not added complexity. */
+/** Axis 6 error — Pattern.
+ *  Ideal candidate pattern is activity-derived: the busier the anchor, the calmer
+ *  the next surface should be.
+ *  Worktop exception: compensatory role — if the composition is calm, the worktop
+ *  is allowed to be expressive (adds richness to an otherwise flat palette).
+ *  Backsplash is always exempt. */
 function patternError(
   candidate: GraphMaterial,
-  placedMaterials: GraphMaterial[],
   candidateRole: string,
-  style: StyleMode,
   anchor: GraphMaterial,
+  composition: CompositionState,
+  style: StyleMode,
 ): number {
   if (candidateRole === 'backsplash') return 0;
-  const candidateContribution =
-    candidate.texture === anchor.texture
-      ? Math.max(0, candidate.pattern - anchor.pattern)
-      : candidate.pattern;
-  const projected = placedMaterials.reduce((s, m) => s + m.pattern, 0) + candidateContribution;
-  return Math.max(0, projected - PATTERN_PROJ_FREE[style]) / PATTERN_PROJ_SCALE[style];
+
+  const anchorActivity = computeActivity(anchor);
+
+  let idealPattern: number;
+  if (candidateRole === 'worktop' && composition.compositionActivity < 30) {
+    // Calm composition: countertop earns the right to introduce richness
+    idealPattern = composition.compositionActivity + (30 - composition.compositionActivity) * 0.8;
+  } else {
+    idealPattern = Math.max(0, anchor.pattern - anchorActivity * PATTERN_ACTIVITY_FACTOR[style]);
+  }
+
+  // Same-texture continuation: only the excess over anchor pattern counts.
+  // A front with the same texture family and similar or lower grain = visual continuation.
+  const effectivePattern = candidate.texture === anchor.texture
+    ? Math.max(0, candidate.pattern - anchor.pattern)
+    : candidate.pattern;
+
+  return Math.abs(effectivePattern - idealPattern) / PATTERN_PROJ_SCALE[style];
 }
 
 /** Combined distance-to-ideal score for a single candidate. Returns 0–1.
- *  score = 1 / (1 + weighted_error_sum); perfect match → 1.0, worst case → ~0.5. */
+ *  score = 1 / (1 + weighted_error_sum); perfect match → 1.0. */
 export function scoreCandidate(
   candidate: GraphMaterial,
   placedCodes: string[],
@@ -234,6 +265,8 @@ export function scoreCandidate(
     .filter((m): m is GraphMaterial => !!m);
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return LIGHTNESS_NO_ANCHOR_SCORE;
+
+  const composition = computeCompositionState(placedMaterials);
 
   const errL = lightnessError(candidate, anchor, candidateRole, style);
   const errW = warmthError(candidate, anchor, style);
@@ -251,7 +284,7 @@ export function scoreCandidate(
     !nonPlainCounts.has(candidate.texture) &&
     nonPlainCounts.size >= TEXTURE_MAX_FAMILIES[style];
 
-  const errPRaw = patternError(candidate, placedMaterials, candidateRole, style, anchor);
+  const errPRaw = patternError(candidate, candidateRole, anchor, composition, style);
   const errP = isNewTextureOverLimit ? errPRaw * PATTERN_TEXTURE_OVERLOAD_FACTOR : errPRaw;
 
   const [wL, wW, wH, wC, wT, wP] = AXIS_WEIGHTS[style];
