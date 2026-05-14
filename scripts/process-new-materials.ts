@@ -215,10 +215,10 @@ chroma: 0 (achromatic — pure grey/white/black) → 100 (vivid saturated colour
   Reference: natural wood = 5–15, stone = 2–8, textile = 2–30, concrete = 1–5,
   most fronts = 2–20, bold colour = 50+
 
-hue_angle: dominant hue in degrees (0–360), or null if achromatic (chroma ≤ 5).
+hue_angle: dominant hue in degrees (0–360). Always provide a value — never null.
   0=red, 30=orange, 60=yellow, 120=green, 180=cyan, 240=blue, 300=magenta.
-  Reference: most woods 25–40°, warm beige stone ~35°, cool grey stone null,
-  metals null, coloured fronts wherever the dominant hue sits.
+  Reference: most woods 25–40°, warm beige stone ~35°, cool grey stone ~200–220°,
+  warm white ~30–40°, cool white ~200–220°, coloured fronts wherever the dominant hue sits.
 
 texture_prompt: max 8 words — colour + surface character + finish.
   Example: "Dark charcoal brushed metal, matte finish."

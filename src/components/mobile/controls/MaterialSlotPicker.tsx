@@ -415,7 +415,7 @@ export default function MaterialSlotPicker({
               handleRow3Click(rep);
               if (hasSiblings) setExpandedClusterKey(prev => prev === clusterKey ? null : clusterKey);
             }}
-            isActive={rep.isSelected || isExpanded || siblingSelected}
+            isActive={rep.isSelected || (isExpanded && !siblingSelected)}
           >
             <img src={rep.image} alt="" className="w-full h-full object-cover" />
             {SHOW_COLOUR_SCORES && <RankBadge code={rep.code} />}
@@ -423,6 +423,9 @@ export default function MaterialSlotPicker({
               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
               </div>
+            )}
+            {siblingSelected && !rep.isSelected && (
+              <div className="absolute" style={{ bottom: 5, right: 5, width: 6, height: 6, borderRadius: "50%", backgroundColor: "#647d75" }} />
             )}
           </SwatchButton>
         </div>

@@ -16,9 +16,8 @@ import * as path from "path";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const NUM_CLUSTERS      = 5;
-const ACHROMATIC_CHROMA = 6; // LCH C below this → achromatic, hue_angle = null
-const PATTERN_SCALE     = 2; // multiply raw spread before clamping to [0,100]
+const NUM_CLUSTERS  = 5;
+const PATTERN_SCALE = 2; // multiply raw spread before clamping to [0,100]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,7 +34,7 @@ interface MaterialScores {
   lightness:  number;
   warmth:     number;
   chroma:     number;
-  hue_angle:  number | null;
+  hue_angle:  number;
   pattern:    number;
 }
 
@@ -107,7 +106,7 @@ function computeScores(clusters: Cluster[]): MaterialScores {
   const warmth    = clamp(bWeighted, -1, 1);
 
   const dominant  = clusters.reduce((best, c) => c.f > best.f ? c : best, clusters[0]);
-  const hue_angle = dominant.C >= ACHROMATIC_CHROMA ? Math.round(dominant.H * 10) / 10 : null;
+  const hue_angle = Math.round(dominant.H * 10) / 10;
 
   const Ls = clusters.map(c => c.L);
   const Ss = clusters.map(c => c.C);
@@ -183,7 +182,7 @@ function printScores(scores: MaterialScores): void {
   console.log(`  │  lightness   ${String(scores.lightness).padEnd(20)}│`);
   console.log(`  │  warmth      ${String(scores.warmth).padEnd(20)}│`);
   console.log(`  │  chroma      ${String(scores.chroma).padEnd(20)}│`);
-  console.log(`  │  hue_angle   ${String(scores.hue_angle ?? "null (achromatic)").padEnd(20)}│`);
+  console.log(`  │  hue_angle   ${String(scores.hue_angle).padEnd(20)}│`);
   console.log(`  │  pattern     ${String(scores.pattern).padEnd(20)}│`);
   console.log("  └─────────────────────────────────┘");
 }

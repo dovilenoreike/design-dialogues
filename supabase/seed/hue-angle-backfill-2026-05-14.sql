@@ -1,0 +1,33 @@
+-- hue_angle backfill — generated 2026-05-14 by scripts/backfill-hue-angle.ts
+-- Scored via BCGSC Color Summarizer (dominant cluster HSV hue)
+
+UPDATE materials SET hue_angle = 96 WHERE technical_code = 'kronospan-k526-iron-surfside-ash';
+UPDATE materials SET hue_angle = 96 WHERE technical_code = 'black';
+UPDATE materials SET hue_angle = 96 WHERE technical_code = 'kronospan-0112-snow-grey';
+UPDATE materials SET hue_angle = 39 WHERE technical_code = 'vitacer-missouri-light';
+UPDATE materials SET hue_angle = 231 WHERE technical_code = 'skin-2451-carbon-fumo';
+UPDATE materials SET hue_angle = 41 WHERE technical_code = 'bari-harmony-white';
+UPDATE materials SET hue_angle = 25 WHERE technical_code = 'rondine-angers-white';
+UPDATE materials SET hue_angle = 28 WHERE technical_code = 'gentas-5807-twinkle-pristine';
+UPDATE materials SET hue_angle = 96 WHERE technical_code = 'kronospan-k8685-snow-white';
+UPDATE materials SET hue_angle = 96 WHERE technical_code = 'sm-art-d006-betonmarsiglia-dune';
+UPDATE materials SET hue_angle = 39 WHERE technical_code = 'sm-art-3096-bianco-atom';
+UPDATE materials SET hue_angle = 24 WHERE technical_code = 'gizir-af34-grey';
+UPDATE materials SET hue_angle = 50 WHERE technical_code = 'bottega-lithoteke-selce';
+UPDATE materials SET hue_angle = 40 WHERE technical_code = 'midtown-pearl';
+UPDATE materials SET hue_angle = 39 WHERE technical_code = 'borneo-pearl';
+UPDATE materials SET hue_angle = 44 WHERE technical_code = 'sm-art-ol08-artemis-olympus';
+UPDATE materials SET hue_angle = 28 WHERE technical_code = 'kronospan-k5981-cashmere';
+UPDATE materials SET hue_angle = 229 WHERE technical_code = 'sm-art-ol10-arabescato-olympus';
+UPDATE materials SET hue_angle = 69 WHERE technical_code = 'sm-art-ol09-calacatta-olympus';
+UPDATE materials SET hue_angle = 42 WHERE technical_code = 'sm-art-r007-delaplata-rio';
+UPDATE materials SET hue_angle = 148 WHERE technical_code = 'sm-art-0041-atmosfera-atom';
+UPDATE materials SET hue_angle = 27 WHERE technical_code = 'sm-art-ol01-zeus-olympus';
+UPDATE materials SET hue_angle = 39 WHERE technical_code = 'sm-art-0010-caolino-atom';
+UPDATE materials SET hue_angle = 52 WHERE technical_code = 'kronospan-k564-almond';
+UPDATE materials SET hue_angle = 63 WHERE technical_code = 'kronospan-k680-stone-beige';
+UPDATE materials SET hue_angle = 118 WHERE technical_code = 'sm-art-0042-sottobosco-atom';
+UPDATE materials SET hue_angle = 31 WHERE technical_code = 'chrome';
+UPDATE materials SET hue_angle = 31 WHERE technical_code = 'sm-art-n002-mercurio-nirvana';
+UPDATE materials SET hue_angle = 40 WHERE technical_code = 'sm-art-me02-acciaio-met';
+UPDATE materials SET hue_angle = 15 WHERE technical_code = 'sm-art-r019-branco-rio';
