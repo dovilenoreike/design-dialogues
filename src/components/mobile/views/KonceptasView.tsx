@@ -180,11 +180,11 @@ export default function KonceptasView({
   t,
   language,
 }: KonceptasViewProps) {
-  const { materialOverrides, setMaterialOverrides } = useDesign();
+  const { materialOverrides, setMaterialOverrides, styleMode } = useDesign();
   const { activeShowroom } = useShowroom();
   const lang = language as "en" | "lt";
 
-  const { loading: graphLoading, getBestSwapCode, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners } = useGraphMaterials();
+  const { loading: graphLoading, getBestSwapCode, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners } = useGraphMaterials();
 
   const [lastSwap, setLastSwap] = useState<{ pk: string; fromCode: string; toCode: string } | null>(null);
   const swapJustAppliedRef = useRef(false);
@@ -451,19 +451,24 @@ export default function KonceptasView({
                   </span>
                 </button>
               )}
-              {SHOW_COLOUR_SCORES && mat && (
-                <div
-                  className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
-                  style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.55))" }}
-                >
-                  <span className="text-white/90 font-mono leading-none" style={{ fontSize: "6px" }}>
-                    L{mat.lightness} W{mat.warmth?.toFixed(2)} C{mat.chroma}
-                  </span>
-                  <span className="text-white/70 font-mono leading-none" style={{ fontSize: "6px" }}>
-                    H{mat.hue_angle ?? "—"} P{mat.pattern}
-                  </span>
-                </div>
-              )}
+              {SHOW_COLOUR_SCORES && mat && (() => {
+                const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode) : [];
+                const rankIdx = rankList.indexOf(overrideCode);
+                const rank = rankIdx >= 0 ? rankIdx + 1 : null;
+                return (
+                  <div
+                    className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
+                    style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.55))" }}
+                  >
+                    <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
+                      {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{mat.chroma}
+                    </span>
+                    <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
+                      H{mat.hue_angle ?? "—"} P{mat.pattern}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}

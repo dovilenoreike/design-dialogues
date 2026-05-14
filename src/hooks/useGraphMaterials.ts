@@ -416,6 +416,25 @@ export function useGraphMaterials() {
       .map((m) => m.technicalCode);
   }
 
+  // All materials for the role ranked by palette score — no pair filtering.
+  // Returns empty when nothing is placed (no anchor → scores are meaningless).
+  function getAllRankedCodes(
+    otherCodes: string[],
+    targetRole?: string,
+    style: StyleMode = 'grounded',
+  ): string[] {
+    if (!_cached || otherCodes.length === 0) return [];
+    const { byCode, graphMaterials: mats } = _cached;
+    const pool = mats.filter((m) => {
+      if (otherCodes.includes(m.technicalCode)) return false;
+      if (targetRole && !m.role.includes(targetRole)) return false;
+      return true;
+    });
+    if (pool.length === 0) return [];
+    return rankByPaletteScore(pool, otherCodes, byCode, targetRole ?? 'front', style)
+      .map((m) => m.technicalCode);
+  }
+
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
     if (!_cached || otherCodes.length === 0) return false;
     const { pairs } = _cached;
@@ -466,7 +485,7 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

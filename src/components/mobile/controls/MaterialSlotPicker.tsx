@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Check, Trash2, X, Search } from "lucide-react";
+import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
   SheetClose,
@@ -41,6 +42,7 @@ interface MaterialSlotPickerProps {
   sameRoleMaterialCodes?: string[];
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
+  getAllRankedCodes?: (otherCodes: string[], role: string) => string[];
   graphMaterials?: SupabaseMaterial[];
   /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
   filterEmptyArchetypes?: boolean;
@@ -79,6 +81,7 @@ export default function MaterialSlotPicker({
   sameRoleMaterialCodes,
   selectedMaterialCode,
   getRecommendedCodes,
+  getAllRankedCodes,
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
@@ -184,6 +187,14 @@ export default function MaterialSlotPicker({
   const filteredMaterials = graphMaterials ?? [];
 
 
+  // ─── Global palette rank map (all materials, no pair filter) ─────────────
+  const paletteRankByCode = useMemo((): Map<string, number> => {
+    if (!SHOW_COLOUR_SCORES || !slot || !getAllRankedCodes) return new Map();
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const codes = getAllRankedCodes(otherMaterialCodes ?? [], role);
+    return new Map(codes.map((code, i) => [code, i + 1]));
+  }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Inline row data ──────────────────────────────────────────────────────
 
   // Cluster id lookup — needed for deduplication in recommended and flat rows
@@ -238,17 +249,18 @@ export default function MaterialSlotPicker({
   const recommendedCodes = useMemo(() => new Set(clusteredRecommendedItems.map(r => r.code)), [clusteredRecommendedItems]);
 
   // Row 1: best-ranked material per archetype (excluding recommended — those appear above)
-  // For accent slots: use archetype image directly since accents select by archetypeId, not material code
   const row1Items = useMemo((): RowItem[] => {
     if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
+    const hasRanks = paletteRankByCode.size > 0;
     return availableWithImages.map(({ archetype }) => {
       const best = graphMaterials
         .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode))
-        .sort((a, b) =>
-          getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
-          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
-          getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
+        .sort((a, b) => hasRanks
+          ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
+          : getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
+            getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
+            getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
         )[0];
       if (!best) return null;
       return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
@@ -256,8 +268,13 @@ export default function MaterialSlotPicker({
                isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
                archetypeId: archetype.id };
     }).filter((x): x is RowItem => x !== null)
-      .sort((a, b) => Number(b.isSelected) - Number(a.isSelected));
-  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang]);
+      .sort((a, b) =>
+        Number(b.isSelected) - Number(a.isSelected) ||
+        (paletteRankByCode.size > 0
+          ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
+          : 0)
+      );
+  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]);
 
   // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
@@ -294,9 +311,10 @@ export default function MaterialSlotPicker({
         m.technicalCode !== row1Code &&
         !recommendedCodes.has(m.technicalCode)
       )
-      .sort((a, b) =>
-        getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
-        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+      .sort((a, b) => paletteRankByCode.size > 0
+        ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
+        : getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
       )
       .map(m => ({
         code: m.technicalCode,
@@ -308,7 +326,7 @@ export default function MaterialSlotPicker({
         matchesAll: false,
         archetypeId: effectiveActiveId,
       }));
-  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang]);
+  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]);
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
@@ -400,6 +418,7 @@ export default function MaterialSlotPicker({
             isActive={rep.isSelected || isExpanded || siblingSelected}
           >
             <img src={rep.image} alt="" className="w-full h-full object-cover" />
+            {SHOW_COLOUR_SCORES && <RankBadge code={rep.code} />}
             {rep.isSelected && (
               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -410,6 +429,16 @@ export default function MaterialSlotPicker({
       );
     });
   }
+
+  const RankBadge = ({ code }: { code: string }) => {
+    const rank = paletteRankByCode.get(code);
+    if (!rank) return null;
+    return (
+      <div className="absolute flex items-center justify-center" style={{ bottom: 4, left: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.55)" }}>
+        <span className="text-[8px] font-bold text-white leading-none">{rank}</span>
+      </div>
+    );
+  };
 
   // ─── Inline render ────────────────────────────────────────────────────────
 
@@ -577,6 +606,7 @@ export default function MaterialSlotPicker({
                           {t("surface.matchingMaterials")}
                         </span>
                       </div>
+                      {SHOW_COLOUR_SCORES && <RankBadge code={mat.code} />}
                       {mat.isSelected && (
                         <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                           <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -604,6 +634,7 @@ export default function MaterialSlotPicker({
               <div key={`r1-${mat.archetypeId}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
                 <SwatchButton onClick={() => handleRow1Click(mat)} isActive={mat.isSelected}>
                   <img src={mat.image} alt="" className="w-full h-full object-cover" />
+                  {SHOW_COLOUR_SCORES && <RankBadge code={mat.code} />}
                   {mat.isSelected && (
                     <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                       <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -648,10 +679,10 @@ export default function MaterialSlotPicker({
                     <SwatchRow alignItems="start" className="pb-3">
                       {expanded.siblings
                         .slice()
-                        .sort((a, b) =>
-                          Number(matchesAllOtherCodes(b.code, otherMaterialCodes ?? [])) - Number(matchesAllOtherCodes(a.code, otherMaterialCodes ?? [])) ||
-                          getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
-                          getPairCountByCode(b.code) - getPairCountByCode(a.code)
+                        .sort((a, b) => paletteRankByCode.size > 0
+                          ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
+                          : getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
+                            getPairCountByCode(b.code) - getPairCountByCode(a.code)
                         )
                         .map(sibling => (
                         <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
@@ -660,6 +691,7 @@ export default function MaterialSlotPicker({
                             isActive={sibling.isSelected}
                           >
                             <img src={sibling.image} alt="" className="w-full h-full object-cover" />
+                            {SHOW_COLOUR_SCORES && <RankBadge code={sibling.code} />}
                             {sibling.isSelected && (
                               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />

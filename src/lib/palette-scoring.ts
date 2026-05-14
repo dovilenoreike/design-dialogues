@@ -41,6 +41,8 @@ const HUE_IDEAL_DIST: Record<StyleMode, number> = {
   intentional: 180,
 };
 const HUE_SCALE = 180;
+// Wood-on-wood hue: undertone family should match — drift reads as a clash.
+const HUE_WOOD_SCALE = 70;
 
 // ─── Axis 4: Chroma ───────────────────────────────────────────────────────────
 const CHROMA_SCALE: Partial<Record<StyleMode, number>> = {
@@ -166,15 +168,21 @@ function warmthError(
   return Math.abs(candidate.warmth - ideal) / WARMTH_SCALE[style];
 }
 
-/** Axis 3 error — Hue undertone. Achromatic (null hue_angle) = no constraint. */
+/** Axis 3 error — Hue undertone. Achromatic (null hue_angle) = no constraint.
+ *  Wood-on-wood: idealDist = 0° with a tight scale — undertone family must match. */
 function hueError(
   candidate: GraphMaterial,
   anchor: GraphMaterial,
   style: StyleMode,
 ): number {
-  if (anchor.hue_angle == null || candidate.hue_angle == null) return 0;
+  if (candidate.hue_angle == null && anchor.hue_angle == null) return 0;
+  if (candidate.hue_angle == null) return anchor.chroma / 80; // achromatic candidate next to chromatic anchor
+  if (anchor.hue_angle == null) return 0;
   const d = Math.abs(candidate.hue_angle - anchor.hue_angle);
   const actualDist = Math.min(d, 360 - d);
+  if (candidate.texture === 'wood' && anchor.texture === 'wood') {
+    return actualDist / HUE_WOOD_SCALE;
+  }
   return Math.abs(actualDist - HUE_IDEAL_DIST[style]) / HUE_SCALE;
 }
 
@@ -189,7 +197,7 @@ function chromaError(
   const scale = CHROMA_SCALE[style];
   if (!scale) return 0;
   const anchorActivity = computeActivity(anchor);
-  const idealChroma = Math.max(0, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]);
+  const idealChroma = Math.max(5, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]);
   return Math.abs(candidate.chroma - idealChroma) / scale;
 }
 

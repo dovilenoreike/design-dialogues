@@ -50,11 +50,16 @@ export default function DesignView() {
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
-  const { loading: graphLoading, graphMaterials, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
       getRecommendedCodes(currentCode, otherCodes, role, styleMode),
     [getRecommendedCodes, styleMode]
+  );
+  const allRankedWithStyle = useCallback(
+    (otherCodes: string[], role: string) =>
+      getAllRankedCodes(otherCodes, role, styleMode),
+    [getAllRankedCodes, styleMode]
   );
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -656,7 +661,7 @@ export default function DesignView() {
 
       {/* LEFT (desktop) / TOP (mobile): sub-tab content — clicking here closes the picker */}
       <div ref={flatlayRef} className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto" onClick={() => setActiveSlot(null)}>
-        <div className="px-4 pt-3 pb-4 lg:px-8 lg:py-6 lg:max-w-2xl">
+        <div className="px-4 pt-3 pb-4 lg:px-8 lg:py-6">
 
           {/* Collection carousel — shared header for both sub-views */}
           <CollectionPresetCarousel
@@ -892,6 +897,7 @@ export default function DesignView() {
             sameRoleMaterialCodes={sameRoleCodesForPicker}
             selectedMaterialCode={activeSlotMaterialCode}
             getRecommendedCodes={recommendWithStyle}
+            getAllRankedCodes={allRankedWithStyle}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
             subHeader={(() => {
