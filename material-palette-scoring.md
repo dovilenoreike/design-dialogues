@@ -33,186 +33,432 @@ Surfaces are weighted by visual dominance for scoring purposes. The heaviest pla
 
 If the user starts from a surface other than the floor, the anchor is dynamically assigned to whichever element is placed first, then recalculated as elements are added based on the weight table above.
 
----
+piece of discussion summary of how to define best candidate:
 
-## The Five Scoring Axes
+EXAMPLE OF one-to-one matching
+FLOOR-> FRONTS
+The target deltas should react to:
+* source lightness
+* source activity
+* source warmth
+* source chroma
+* texture type
+Especially:
+* activity
+* lightness
+Those are the dominant compositional drivers.
 
-Each axis returns a value **0–1**. Axes are combined into a weighted sum. Weights vary by style mode.
+STEP 1 — DERIVE VISUAL ACTIVITY
+You need one synthetic metric.
 
----
+activity =
+(pattern * 0.55)
++
+(chroma * 0.30)
++
+(texture_complexity * 15)
 
-### Axis 1 — Lightness
+Texture complexity example:
 
-**What it measures:** Whether the candidate's lightness lands in a harmonious range relative to the anchor, given its role.
+plain  = 0
+stone  = 0.35
+wood   = 0.65
+metal  = 0.15
 
-**Target delta ranges by role and style:**
+Normalize to:
 
-| Candidate role | Quiet | Grounded | Intentional |
-|---|---|---|---|
-| Fronts vs floor | 5–20 | 15–35 | 30–55 |
-| Worktop vs anchor | 0–20 | 10–30 | 20–45 |
-| Backsplash vs anchor | 0–30 | 0–40 | 0–50 |
+0–100
 
-Backsplash is always more permissive — small surface, accent role.
+This becomes the MAIN driver.
 
-**Scoring function:** Score 1.0 at the centre of the target range. Smooth decay to 0.0 at ±15 units outside the range edges. No hard cutoff.
+MINIMAL
+Rule
+The more active the source:
+* the calmer
+* lighter
+* flatter the target should become.
 
-**If no anchor is placed yet:** axis returns neutral 0.5 — no constraint.
+Formula
+Pattern delta
 
----
+Δpattern =
+-(activity * 0.75)
 
-### Axis 2 — Warmth
 
-**What it measures:** Whether the candidate creates warmth duplication or useful contrast against the anchor.
+Chroma delta
 
-**Rules by anchor warmth:**
+Δchroma =
+-(activity * 0.55)
 
-| Anchor warmth | Candidate target zone | Penalty zone |
-|---|---|---|
-| Strong warm (> +0.4) | −0.2 to +0.3 | Above +0.4 |
-| Strong cool (< −0.4) | −0.3 to +0.2 | Below −0.4 |
-| Neutral (−0.2 to +0.2) | Full range | None |
 
-The core rule: **no two dominant elements should share the same warmth extreme.** One warm, one not — or both genuinely neutral.
+Lightness delta
 
-**Style modulation:**
-- **Quiet:** Tighten penalty threshold — flag duplication above +0.3 if anchor is already warm. Warmth direction must stay consistent throughout the palette.
-- **Grounded:** Standard rules. One warmth contrast allowed.
-- **Intentional:** Relax slightly — a second warm element is permitted in the accent role (backsplash).
+if lightness < 45:
+    Δlightness = +32
 
-**Scoring function:** Score 1.0 within target zone. Decay to 0.0 at the penalty boundary.
+elif lightness < 70:
+    Δlightness = +18
 
----
+else:
+    Δlightness = -12
 
-### Axis 3 — Hue Undertone
+Minimal wants separation.
 
-**What it measures:** Angular distance between the candidate's `hue_angle` and the anchor's `hue_angle`.
+Warmth delta
 
-**Only active when both values are populated.** If either is NULL, axis returns neutral 0.5 — no reward, no penalty. NULL signals undertone-agnostic and is compatible with anything.
+Δwarmth =
+-(warmth * 0.35)
 
-**Harmony zones:**
+Slight neutralization.
 
-| Angular distance | Relationship | Score |
-|---|---|---|
-| 0–40° | Tight family match | 1.0 |
-| 40–60° | Ambiguous | 0.5 |
-| 60–120° | Undertone clash | 0.1 |
-| 120–150° | Transition zone | 0.5 |
-| 150–210° | Complementary | 0.9 |
+Hue delta
 
-The problematic zone is 60–120° — close enough to feel accidental, far enough to clash.
+if warmth > 0:
+    Δhue = +4°
 
-**Style modulation:**
-- **Quiet:** Weights family match (0–40°) highest.
-- **Intentional:** Gives near-equal weight to complementary (150–210°).
-- **Grounded:** Sits between.
+else:
+    Δhue = -4°
 
-**Undertone reference bands:**
+Tiny undertone drift only.
 
-| Undertone family | Hue angle | Examples |
-|---|---|---|
-| Pink-red | 340–20° | Warm plaster, blush stone, terracotta |
-| Orange-amber | 20–50° | Oak, honey, amber marble |
-| Yellow-ochre | 50–80° | Limewash, sandstone, warm white |
-| Yellow-green | 80–120° | Sage, cement with green cast |
-| Cool grey-green | 120–180° | Slate, cool linen, blue-green stone |
-| Cool blue | 180–240° | Cool whites, grey-blue stone |
-| Lavender-mauve | 240–300° | Warm grey, taupe with purple cast |
+BALANCED
+Rule
+Preserve identity. Reduce excess.
 
----
+Formula
+Pattern delta
 
-### Axis 4 — Texture
+Δpattern =
+-(activity * 0.45)
 
-**What it measures:** Whether the candidate introduces useful texture variety or duplicates what is already present.
 
-**Texture families:** wood, stone, plain, metal, ceramic, fabric/woven.
+Chroma delta
 
-**Scoring logic:**
+Δchroma =
+-(activity * 0.30)
 
-| Candidate texture status | Score |
-|---|---|
-| Not yet present in palette | 1.0 (up to style limit) |
-| Already present once | 0.5 |
-| Already the dominant texture | 0.1 |
 
-**Style family limits:**
+Lightness delta
 
-| Style | Max families | Third family score | Notes |
-|---|---|---|---|
-| Quiet | 1–2 | 0.1 | Refinement within family matters — fine grain preferred |
-| Grounded | 2–3 | 0.6 | |
-| Intentional | 2–3 | 0.8 in accent role | One statement texture allowed |
+if lightness < 40:
+    Δlightness = +22
 
----
+elif lightness < 70:
+    Δlightness = +10
 
-### Axis 5 — Pattern
+else:
+    Δlightness = -8
 
-**What it measures:** Whether the candidate's pattern level is appropriate given accumulated pattern in the palette.
 
-Compute **palette pattern sum** — sum of `pattern` scores of all placed elements.
+Warmth delta
 
-**Target for candidate by palette pattern sum:**
+Δwarmth =
+-(warmth * 0.10)
 
-| Palette pattern sum | Candidate target | Notes |
-|---|---|---|
-| 0–20 | Any | No constraint |
-| 20–50 | 0–30 | Decay above 40 |
-| 50+ | 0–15 | Strong penalty for adding more |
+Mostly preserved.
 
-**Exception:** Backsplash role always allows one patterned element regardless of palette sum.
+Hue delta
 
-**Style pattern budgets:**
+Δhue = 0° to 3°
 
-| Style | Palette pattern sum target | High-pattern allowance |
-|---|---|---|
-| Quiet | Below 30 total | None |
-| Grounded | Up to 60 | One surface, low-mid pattern |
-| Intentional | One element up to 80 | Allowed if all others are low |
+Almost aligned.
 
----
+CHARACTER
+Rule
+Create controlled tension.
+Not chaos. Not maximal contrast.
 
-## Combining the Axes
+Formula
+Pattern delta
 
-### Formula
+Δpattern =
+-(activity * 0.70)
 
-```
-score = w1·lightness + w2·warmth + w3·undertone + w4·texture + w5·pattern
-```
+Character still wants quieter fronts.
 
-### Weights by Style
+Chroma delta
 
-| Axis | Quiet | Grounded | Intentional |
-|---|---|---|---|
-| Lightness | 0.25 | 0.25 | 0.30 |
-| Warmth | 0.30 | 0.25 | 0.20 |
-| Undertone | 0.20 | 0.20 | 0.20 |
-| Texture | 0.15 | 0.20 | 0.20 |
-| Pattern | 0.10 | 0.10 | 0.10 |
+Δchroma =
+-(activity * 0.50)
 
-Warmth is weighted highest in Quiet — tonal coherence is the main discipline. Lightness gets a slight boost in Intentional — contrast placement is the main discipline. Undertone stays constant across all modes.
+Premium character is usually muted.
 
----
+Lightness delta
 
-## Recommendation Logic
+if lightness < 40:
+    Δlightness = -18
 
-Given the current palette state, for each candidate material:
+elif lightness < 70:
+    Δlightness = -10
 
-1. Identify the **anchor** — heaviest placed element by visual weight
-2. Identify **what is unresolved** — which axis has the most open space or the highest risk given current selections
-3. Compute the five axis scores against current state
-4. Rank candidates by weighted sum for the declared style
-5. Surface top candidates with a **one-line reason** driven by the highest-contributing axis
+else:
+    Δlightness = +14
 
-The reason line makes the recommendation legible to the user and provides a natural foundation for palette audit when that is later introduced.
+Character often inverts hierarchy.
 
----
+Warmth delta
 
-## What "A Good Next Material" Looks Like
+Δwarmth =
+-(warmth * 0.50)
 
-| Axis | Signal that something good is needed | What to look for |
-|---|---|---|
-| Lightness | All placed elements are mid-toned | A candidate that moves toward the light or dark end of the style's target range |
-| Warmth | Anchor is strongly warm or cool, no contrast placed yet | A candidate in the neutral-to-opposite zone |
-| Undertone | Anchor has a populated hue_angle, no other element has responded to it | A candidate in the same family (Quiet) or complementary zone (Intentional) |
-| Texture | All placed elements share one texture family | A candidate from a different family within the style's limit |
-| Pattern | Palette pattern sum is climbing | A plain or very low-pattern candidate |
+Introduce tension.
+
+Hue delta
+
+if warmth > 0:
+    Δhue = -8° to -15°
+
+else:
+    Δhue = +8° to +15°
+
+Controlled undertone contrast.
+
+COMPOSITION -> NEXT MATERIAL 
+THE CORE MODEL
+You should stop thinking:
+
+floor → fronts
+fronts → countertop
+
+Instead think:
+CURRENT COMPOSITION VECTOR
+At any step you already have:
+
+selected_materials = [m1, m2, ...]
+
+You derive:
+
+composition_state
+
+Then generate:
+
+ideal_next_material
+
+
+STEP 1 — DERIVED COMPOSITION METRICS
+For all selected materials calculate:
+
+A. Dominant Warmth
+Not average.
+Weighted by visual mass.
+Example weights:
+Element	Weight
+floor	0.35
+main fronts	0.35
+secondary fronts	0.15
+countertop	0.10
+backsplash	0.05
+Formula
+
+dominant_warmth =
+Σ(material_warmth * weight)
+
+
+B. Composition Activity
+Very important.
+Per material
+
+activity =
+(pattern * 0.55)
++
+(chroma * 0.30)
++
+(texture_complexity * 15)
+
+
+Total composition activity
+
+composition_activity =
+weighted_average(activity)
+
+
+C. Hierarchy Pressure
+This is critical.
+You need to know whether composition already feels:
+* calm
+* balanced
+* overloaded
+
+Formula
+
+hierarchy_pressure =
+Σ(active_materials_over_threshold)
+
+Example:
+
+if activity > 55:
+    contributes strongly
+
+Too many expressive surfaces = visual stress.
+
+D. Warmth Bias
+
+warmth_bias =
+warm / cool dominance
+
+This determines whether next element should:
+* reinforce warmth OR
+* neutralize it.
+
+THE ACTUAL DESIGN RULES
+
+1. FLOOR
+Psychological Role
+
+base warmth
+grounding
+continuous field
+
+Usually:
+* allowed to carry warmth
+* allowed texture richness
+
+2. CABINET FRONTS
+Psychological Role
+
+hierarchy stabilizer
+architectural plane
+
+Usually should:
+* reduce activity
+* calm composition
+* slightly neutralize warmth
+unless floor is extremely cold/light.
+
+3. COUNTERTOP
+Psychological Role
+
+luxury focal surface
+
+This is important: countertops are often where:
+* richness
+* drama
+* material identity returns.
+So unlike fronts: they are ALLOWED to:
+* increase pattern
+* increase contrast
+* introduce stone texture
+* sharpen composition
+
+COUNTERTOP FORMULA
+The logic changes completely.
+
+If current composition is CALM
+Example:
+* flat fronts
+* low pattern
+* medium warmth
+Then countertop may become expressive.
+
+Formula
+Pattern
+
+Δpattern =
++(30 - composition_activity) * 0.8
+
+Low-activity kitchen wants countertop richness.
+
+Chroma
+
+Δchroma =
+-(dominant_chroma * 0.25)
+
+Keep premium restraint.
+
+Lightness
+
+if fronts are dark:
+    countertop lighter
+
+if fronts are light:
+    countertop medium or darker
+
+Because countertop creates:
+* middle bridge
+* visual anchoring
+
+Warmth
+Countertop usually:
+* follows composition warmth OR
+* slightly cools it
+Rarely warmer than all surrounding materials.
+
+Countertop Texture Logic
+
+if fronts are plain:
+    stone texture gains score
+
+if fronts already textured:
+    calm countertop gains score
+
+This is huge.
+Countertop often compensates for missing richness.
+
+4. BACKSPLASH
+Backsplash is NOT independent.
+This is critical.
+It should usually behave as either:
+A. Countertop extension
+OR
+B. Quiet mediator
+NOT another competing material.
+
+BACKSPLASH FORMULA
+If countertop is expressive
+Then backsplash should:
+
+pattern ↓↓↓
+chroma ↓
+texture flatten
+
+Often nearly invisible.
+
+If countertop is calm
+Backsplash may introduce:
+* texture
+* vertical detail
+* reflectivity
+* rhythm
+
+THE MOST IMPORTANT UNIVERSAL RULE
+At every step:
+NEXT MATERIAL SHOULD COMPENSATE CURRENT IMBALANCE
+NOT maximize similarity.
+
+Example
+Current selection:
+* warm busy wood floor
+* calm warm fronts
+Composition currently lacks:
+* focal richness
+* material sharpness
+Therefore countertop formula naturally outputs:
+
+stone
+more pattern
+slightly cooler
+controlled contrast
+
+Exactly what designers often do.
+
+The Actual System You Are Building
+You are not building:
+
+pair matching
+
+You are building:
+dynamic composition balancing
+That is the correct mental model.
+
+The Deepest Rule In Your Whole System
+Probably this:
+every next material should either:
+
+1. calm
+2. balance
+3. enrich
+
+But NEVER:
+
+compete
+

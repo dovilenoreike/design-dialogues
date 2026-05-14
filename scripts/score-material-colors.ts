@@ -18,6 +18,7 @@ import * as path from "path";
 
 const NUM_CLUSTERS      = 5;
 const ACHROMATIC_CHROMA = 6; // LCH C below this → achromatic, hue_angle = null
+const PATTERN_SCALE     = 2; // multiply raw spread before clamping to [0,100]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,7 +118,7 @@ function computeScores(clusters: Cluster[]): MaterialScores {
   // Ramp from 0 contribution at avgS=0 to full contribution at avgS≥25.
   const spreadS = (Math.max(...Ss) - Math.min(...Ss)) * Math.min(1, avgS / 25);
 
-  const pattern = clamp(Math.max(spreadL, spreadS), 0, 100);
+  const pattern = clamp(Math.max(spreadL, spreadS) * PATTERN_SCALE, 0, 100);
 
   return {
     lightness: Math.round(lightness * 10) / 10,
