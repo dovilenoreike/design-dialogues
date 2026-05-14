@@ -108,20 +108,16 @@ function computeScores(clusters: Cluster[]): MaterialScores {
   const dominant  = clusters.reduce((best, c) => c.f > best.f ? c : best, clusters[0]);
   const hue_angle = dominant.C >= ACHROMATIC_CHROMA ? Math.round(dominant.H * 10) / 10 : null;
 
-  const Ls = clusters.map(c => Math.round(c.L));
-  const Ss = clusters.map(c => Math.round(c.C));
-  const Hs = clusters.map(c => Math.round(c.H));
-  const n  = clusters.length;
+  const Ls = clusters.map(c => c.L);
+  const Ss = clusters.map(c => c.C);
 
-  const avgL = Ls.reduce((s, v) => s + v, 0) / n;
-  const avgS = Ss.reduce((s, v) => s + v, 0) / n;
-  const avgH = Hs.reduce((s, v) => s + v, 0) / n;
+  const spreadL = Math.max(...Ls) - Math.min(...Ls);
+  const avgS    = Ss.reduce((s, v) => s + v, 0) / Ss.length;
+  // Dampen S spread for achromatic materials: near-zero avgS means S values are noise.
+  // Ramp from 0 contribution at avgS=0 to full contribution at avgS≥25.
+  const spreadS = (Math.max(...Ss) - Math.min(...Ss)) * Math.min(1, avgS / 25);
 
-  const ratioL = avgL > 0 ? (Math.max(...Ls) - Math.min(...Ls)) / avgL : 0;
-  const ratioS = avgS > 0 ? (Math.max(...Ss) - Math.min(...Ss)) / avgS : 0;
-  const ratioH = avgH > 0 ? (Math.max(...Hs) - Math.min(...Hs)) / avgH : 0;
-
-  const pattern = clamp(Math.max(ratioL, ratioS, ratioH) * 100, 0, 100);
+  const pattern = clamp(Math.max(spreadL, spreadS), 0, 100);
 
   return {
     lightness: Math.round(lightness * 10) / 10,

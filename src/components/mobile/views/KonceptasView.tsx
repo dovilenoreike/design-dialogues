@@ -6,6 +6,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { useGraphMaterials, getMaterialByCode, getCachedImageUrl } from "@/hooks/useGraphMaterials";
+import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
 // ─── Palette key mapping ───────────────────────────────────────────────────
@@ -450,7 +451,7 @@ export default function KonceptasView({
                   </span>
                 </button>
               )}
-              {mat && (
+              {SHOW_COLOUR_SCORES && mat && (
                 <div
                   className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
                   style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.55))" }}

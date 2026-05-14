@@ -6,6 +6,7 @@ import { surfaces } from "@/data/rooms/surfaces";
 import { Flame } from "lucide-react";
 
 export const LOG_PROMPTS_TO_CONSOLE = false; // set true to log generation prompts/models and material loading to console
+export const SHOW_COLOUR_SCORES = false;     // set true to overlay L/W/C/H/P scores on concept squares
 
 export interface MaterialImageWithMeta {
   base64: string;

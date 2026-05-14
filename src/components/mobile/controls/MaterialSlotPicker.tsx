@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, Trash2, X, Search, Wand2 } from "lucide-react";
+import { Check, Trash2, X, Search } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -381,24 +381,10 @@ export default function MaterialSlotPicker({
     setExpandedClusterKey(null);
   }, [archetypeClusters]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function clusterHasBetterSibling(cluster: ClusterCell): boolean {
-    const others = otherMaterialCodes ?? [];
-    if (others.length === 0 || cluster.siblings.length === 0) return false;
-    const repCode = cluster.representative.code;
-    const repScore = getCompatibilityScore(repCode, others);
-    const repFullyPaired = matchesAllOtherCodes(repCode, others);
-    return cluster.siblings.some(s => {
-      if (getCompatibilityScore(s.code, others) > repScore) return true;
-      if (!repFullyPaired && matchesAllOtherCodes(s.code, others)) return true;
-      return false;
-    });
-  }
-
   function renderClusterRow(clusters: ClusterCell[]): React.ReactNode {
     return clusters.map((cluster) => {
       const rep = cluster.representative;
       const hasSiblings = cluster.siblings.length > 0;
-      const showWand = clusterHasBetterSibling(cluster);
       const clusterKey = rep.code;
       const isExpanded = expandedClusterKey === clusterKey;
       // A sibling is selected — show border to indicate this cluster has a pick, but no check mark
@@ -417,11 +403,6 @@ export default function MaterialSlotPicker({
             {rep.isSelected && (
               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-              </div>
-            )}
-            {showWand && (
-              <div className="absolute top-1 right-1">
-                <Wand2 className="w-3 h-3" style={{ color: "#647d75" }} />
               </div>
             )}
           </SwatchButton>

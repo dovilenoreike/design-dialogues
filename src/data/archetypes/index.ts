@@ -28,7 +28,7 @@ export const archetypes: Archetype[] = [
   { id: "soft-texture-light", role: "worktop", label: { en: "Soft Texture Light", lt: "Ramūs šviesūs"        }, value: "#e8e4de" },
   { id: "soft-texture-dark",  role: "worktop", label: { en: "Soft Texture Dark",  lt: "Ramus tamsūs"         }, value: "#c8c0b4" },
   { id: "bold-texture-light", role: "worktop", label: { en: "Bold Texture Light", lt: "Išraiškingi šviesūs" }, value: "#d8cfc0" },
-  { id: "bold-texture-dark",  role: "worktop", label: { en: "Bold Texture Dark",  lt: "Išraiškingas tamsūs"  }, value: "#8c8070" },
+  { id: "bold-texture-dark",  role: "worktop", label: { en: "Bold Texture Dark",  lt: "Išraiškingi tamsūs"  }, value: "#8c8070" },
 
   // ── Accent (5) ────────────────────────────────────────────────────────────
   { id: "gold",   role: "accent", label: { en: "Gold",   lt: "Auksiniai"   }, value: "#c8a84c" },
