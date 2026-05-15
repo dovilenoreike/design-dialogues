@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { rankByPaletteScore, rankWithinCluster, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
+import { rankByPaletteScore, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -462,24 +462,6 @@ export function useGraphMaterials() {
       .map((m) => m.technicalCode);
   }
 
-  // Rank a specific group of materials by within-group harmony.
-  // Axes where all members score similarly get down-weighted — those are structural
-  // to the group, not individual differentiators.
-  function rankWithinClusterCodes(
-    memberCodes: string[],
-    placedCodes: string[],
-    targetRole: string,
-    style: StyleMode = 'grounded',
-  ): string[] {
-    if (!_cached || memberCodes.length <= 1) return memberCodes;
-    const { byCode } = _cached;
-    const members = memberCodes
-      .map((c) => byCode.get(c))
-      .filter((m): m is GraphMaterial => !!m);
-    return rankWithinCluster(members, placedCodes, byCode, targetRole, style)
-      .map((m) => m.technicalCode);
-  }
-
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
     if (!_cached || otherCodes.length === 0) return false;
     const { pairs } = _cached;
@@ -530,7 +512,7 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, rankWithinClusterCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

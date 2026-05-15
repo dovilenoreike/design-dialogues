@@ -43,7 +43,6 @@ interface MaterialSlotPickerProps {
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
   getAllRankedCodes?: (otherCodes: string[], role: string) => string[];
-  rankWithinClusterCodes?: (memberCodes: string[], placedCodes: string[], role: string) => string[];
   graphMaterials?: SupabaseMaterial[];
   /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
   filterEmptyArchetypes?: boolean;
@@ -83,7 +82,6 @@ export default function MaterialSlotPicker({
   selectedMaterialCode,
   getRecommendedCodes,
   getAllRankedCodes,
-  rankWithinClusterCodes,
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
@@ -250,31 +248,25 @@ export default function MaterialSlotPicker({
   // siblings remain available there for expansion
   const recommendedCodes = useMemo(() => new Set(clusteredRecommendedItems.map(r => r.code)), [clusteredRecommendedItems]);
 
-  // Row 1: best-ranked material per archetype (excluding recommended — those appear above)
-  // When materials are placed, uses within-cluster ranking (soft-drop formula) to pick representative.
+  // Row 1: best-ranked material per archetype (excluding recommended — those appear above).
+  // Representative is chosen by global palette rank so the row always surfaces the best overall
+  // match. Within-cluster ranking is reserved for ordering the expanded siblings view.
   const row1Items = useMemo((): RowItem[] => {
     if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    const hasPlaced = (otherMaterialCodes ?? []).length > 0;
     return availableWithImages.map(({ archetype }) => {
       const candidates = graphMaterials.filter(
         m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode)
       );
       if (candidates.length === 0) return null;
 
-      let best: typeof candidates[0];
-      if (hasPlaced && rankWithinClusterCodes) {
-        const ranked = rankWithinClusterCodes(candidates.map(m => m.technicalCode), otherMaterialCodes ?? [], role);
-        best = candidates.find(m => m.technicalCode === ranked[0]) ?? candidates[0];
-      } else {
-        const hasRanks = paletteRankByCode.size > 0;
-        best = candidates.slice().sort((a, b) => hasRanks
-          ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
-          : getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
-            getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
-            getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
-        )[0];
-      }
+      const hasRanks = paletteRankByCode.size > 0;
+      const best = candidates.slice().sort((a, b) => hasRanks
+        ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
+        : getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
+          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
+          getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
+      )[0];
 
       return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
                materialName: best.name?.[lang] ?? best.technicalCode,
@@ -287,7 +279,7 @@ export default function MaterialSlotPicker({
           ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
           : 0)
       );
-  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes, rankWithinClusterCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
@@ -324,28 +316,11 @@ export default function MaterialSlotPicker({
       !recommendedCodes.has(m.technicalCode)
     );
 
-    // Within-archetype ranking: axes where all members are equally off get down-weighted
-    // so warmth/hue/pattern harmony drives the order, not which one is least-bad on lightness.
-    let sortedCodes: string[] | null = null;
-    if (rankWithinClusterCodes && (otherMaterialCodes ?? []).length > 0) {
-      sortedCodes = rankWithinClusterCodes(
-        candidates.map(m => m.technicalCode),
-        otherMaterialCodes ?? [],
-        role,
-      );
-    }
-
-    const sorted = sortedCodes
-      ? candidates.slice().sort((a, b) => {
-          const ia = sortedCodes!.indexOf(a.technicalCode);
-          const ib = sortedCodes!.indexOf(b.technicalCode);
-          return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
-        })
-      : candidates.sort((a, b) => paletteRankByCode.size > 0
-          ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
-          : getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
-            getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
-        );
+    const sorted = candidates.slice().sort((a, b) => paletteRankByCode.size > 0
+      ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
+      : getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
+        getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+    );
 
     return sorted.map(m => ({
       code: m.technicalCode,
@@ -357,7 +332,7 @@ export default function MaterialSlotPicker({
       matchesAll: false,
       archetypeId: effectiveActiveId,
     }));
-  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes, rankWithinClusterCodes]); // eslint-disable-line
+  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]); // eslint-disable-line
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
@@ -714,20 +689,12 @@ export default function MaterialSlotPicker({
                     </div>
                     <SwatchRow alignItems="start" className="pb-3">
                       {(() => {
-                        const allMembers = [expanded.representative, ...expanded.siblings];
-                        const role = slot ? SLOT_KEY_TO_ROLE[slot] : 'front';
-                        const rankedCodes = rankWithinClusterCodes && (otherMaterialCodes ?? []).length > 0
-                          ? rankWithinClusterCodes(allMembers.map(m => m.code), otherMaterialCodes ?? [], role)
-                          : null;
                         return expanded.siblings
                           .slice()
-                          .sort((a, b) => rankedCodes
-                            ? (rankedCodes.indexOf(a.code) === -1 ? Infinity : rankedCodes.indexOf(a.code)) -
-                              (rankedCodes.indexOf(b.code) === -1 ? Infinity : rankedCodes.indexOf(b.code))
-                            : paletteRankByCode.size > 0
-                              ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
-                              : getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
-                                getPairCountByCode(b.code) - getPairCountByCode(a.code)
+                          .sort((a, b) => paletteRankByCode.size > 0
+                            ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
+                            : getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
+                              getPairCountByCode(b.code) - getPairCountByCode(a.code)
                           )
                           .map(sibling => (
                             <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>

@@ -163,7 +163,7 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
     W: { ideal: wDelta(-0.08),          tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
     H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
     C: { ideal: cActivityDelta(-0.12),  tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.10 } },
-    P: { ideal: pActivityDelta(-0.05),  tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
+    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
   },
   textile: {
     L: { ideal: lDelta(+0.08),          tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },

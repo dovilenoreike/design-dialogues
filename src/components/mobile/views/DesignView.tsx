@@ -50,7 +50,7 @@ export default function DesignView() {
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
-  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, rankWithinClusterCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
       getRecommendedCodes(currentCode, otherCodes, role, styleMode),
@@ -60,11 +60,6 @@ export default function DesignView() {
     (otherCodes: string[], role: string) =>
       getAllRankedCodes(otherCodes, role, styleMode),
     [getAllRankedCodes, styleMode]
-  );
-  const rankWithinClusterWithStyle = useCallback(
-    (memberCodes: string[], placedCodes: string[], role: string) =>
-      rankWithinClusterCodes(memberCodes, placedCodes, role, styleMode),
-    [rankWithinClusterCodes, styleMode]
   );
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -903,7 +898,6 @@ export default function DesignView() {
             selectedMaterialCode={activeSlotMaterialCode}
             getRecommendedCodes={recommendWithStyle}
             getAllRankedCodes={allRankedWithStyle}
-            rankWithinClusterCodes={rankWithinClusterWithStyle}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
             subHeader={(() => {
