@@ -43,6 +43,7 @@ interface MaterialSlotPickerProps {
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
   getAllRankedCodes?: (otherCodes: string[], role: string) => string[];
+  rankWithinClusterCodes?: (memberCodes: string[], placedCodes: string[], role: string) => string[];
   graphMaterials?: SupabaseMaterial[];
   /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
   filterEmptyArchetypes?: boolean;
@@ -82,6 +83,7 @@ export default function MaterialSlotPicker({
   selectedMaterialCode,
   getRecommendedCodes,
   getAllRankedCodes,
+  rankWithinClusterCodes,
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
@@ -195,7 +197,7 @@ export default function MaterialSlotPicker({
     return new Map(codes.map((code, i) => [code, i + 1]));
   }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Inline row data ──────────────────────────────────────────────────────
+// ─── Inline row data ──────────────────────────────────────────────────────
 
   // Cluster id lookup — needed for deduplication in recommended and flat rows
   const clusterIdByCode = useMemo(
@@ -249,20 +251,31 @@ export default function MaterialSlotPicker({
   const recommendedCodes = useMemo(() => new Set(clusteredRecommendedItems.map(r => r.code)), [clusteredRecommendedItems]);
 
   // Row 1: best-ranked material per archetype (excluding recommended — those appear above)
+  // When materials are placed, uses within-cluster ranking (soft-drop formula) to pick representative.
   const row1Items = useMemo((): RowItem[] => {
     if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    const hasRanks = paletteRankByCode.size > 0;
+    const hasPlaced = (otherMaterialCodes ?? []).length > 0;
     return availableWithImages.map(({ archetype }) => {
-      const best = graphMaterials
-        .filter(m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode))
-        .sort((a, b) => hasRanks
+      const candidates = graphMaterials.filter(
+        m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode)
+      );
+      if (candidates.length === 0) return null;
+
+      let best: typeof candidates[0];
+      if (hasPlaced && rankWithinClusterCodes) {
+        const ranked = rankWithinClusterCodes(candidates.map(m => m.technicalCode), otherMaterialCodes ?? [], role);
+        best = candidates.find(m => m.technicalCode === ranked[0]) ?? candidates[0];
+      } else {
+        const hasRanks = paletteRankByCode.size > 0;
+        best = candidates.slice().sort((a, b) => hasRanks
           ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
           : getCompatibilityScore(b.technicalCode, otherMaterialCodes ?? []) - getCompatibilityScore(a.technicalCode, otherMaterialCodes ?? []) ||
             getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode) ||
             getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? [])
         )[0];
-      if (!best) return null;
+      }
+
       return { code: best.technicalCode, image: best.imageUrl!, name: archetype.label[lang],
                materialName: best.name?.[lang] ?? best.technicalCode,
                isSelected: best.technicalCode === selectedMaterialCode, isRecommended: false, matchesAll: false,
@@ -274,7 +287,7 @@ export default function MaterialSlotPicker({
           ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
           : 0)
       );
-  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]);
+  }, [slot, graphMaterials, availableWithImages, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes, rankWithinClusterCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Variants for modal mode ──────────────────────────────────────────────
   const activeVariants = useMemo(() => {
@@ -303,30 +316,48 @@ export default function MaterialSlotPicker({
     if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
-    return filteredMaterials
-      .filter(m =>
-        m.archetypeId === effectiveActiveId &&
-        m.role.includes(role) &&
-        m.imageUrl &&
-        m.technicalCode !== row1Code &&
-        !recommendedCodes.has(m.technicalCode)
-      )
-      .sort((a, b) => paletteRankByCode.size > 0
-        ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
-        : getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
-          getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
-      )
-      .map(m => ({
-        code: m.technicalCode,
-        image: m.imageUrl!,
-        name: m.name?.[lang] ?? m.technicalCode,
-        materialName: m.name?.[lang] ?? m.technicalCode,
-        isSelected: m.technicalCode === selectedMaterialCode,
-        isRecommended: recommendedCodes.has(m.technicalCode),
-        matchesAll: false,
-        archetypeId: effectiveActiveId,
-      }));
-  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]);
+    const candidates = filteredMaterials.filter(m =>
+      m.archetypeId === effectiveActiveId &&
+      m.role.includes(role) &&
+      m.imageUrl &&
+      m.technicalCode !== row1Code &&
+      !recommendedCodes.has(m.technicalCode)
+    );
+
+    // Within-archetype ranking: axes where all members are equally off get down-weighted
+    // so warmth/hue/pattern harmony drives the order, not which one is least-bad on lightness.
+    let sortedCodes: string[] | null = null;
+    if (rankWithinClusterCodes && (otherMaterialCodes ?? []).length > 0) {
+      sortedCodes = rankWithinClusterCodes(
+        candidates.map(m => m.technicalCode),
+        otherMaterialCodes ?? [],
+        role,
+      );
+    }
+
+    const sorted = sortedCodes
+      ? candidates.slice().sort((a, b) => {
+          const ia = sortedCodes!.indexOf(a.technicalCode);
+          const ib = sortedCodes!.indexOf(b.technicalCode);
+          return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+        })
+      : candidates.sort((a, b) => paletteRankByCode.size > 0
+          ? (paletteRankByCode.get(a.technicalCode) ?? Infinity) - (paletteRankByCode.get(b.technicalCode) ?? Infinity)
+          : getDescriptorScore(b.technicalCode, otherMaterialCodes ?? []) - getDescriptorScore(a.technicalCode, otherMaterialCodes ?? []) ||
+            getPairCountByCode(b.technicalCode) - getPairCountByCode(a.technicalCode)
+        );
+
+    return sorted.map(m => ({
+      code: m.technicalCode,
+      image: m.imageUrl!,
+      name: m.name?.[lang] ?? m.technicalCode,
+      materialName: m.name?.[lang] ?? m.technicalCode,
+      isSelected: m.technicalCode === selectedMaterialCode,
+      isRecommended: recommendedCodes.has(m.technicalCode),
+      matchesAll: false,
+      archetypeId: effectiveActiveId,
+    }));
+  }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes, rankWithinClusterCodes]); // eslint-disable-line
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
@@ -419,6 +450,7 @@ export default function MaterialSlotPicker({
           >
             <img src={rep.image} alt="" className="w-full h-full object-cover" />
             {SHOW_COLOUR_SCORES && <RankBadge code={rep.code} />}
+
             {rep.isSelected && (
               <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                 <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -437,8 +469,8 @@ export default function MaterialSlotPicker({
     const rank = paletteRankByCode.get(code);
     if (!rank) return null;
     return (
-      <div className="absolute flex items-center justify-center" style={{ bottom: 4, left: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.55)" }}>
-        <span className="text-[8px] font-bold text-white leading-none">{rank}</span>
+      <div className="absolute flex items-center justify-center" style={{ top: 3, right: 3, width: 15, height: 15, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.55)" }}>
+        <span className="text-[7px] font-bold text-white leading-none">{rank}</span>
       </div>
     );
   };
@@ -610,6 +642,7 @@ export default function MaterialSlotPicker({
                         </span>
                       </div>
                       {SHOW_COLOUR_SCORES && <RankBadge code={mat.code} />}
+
                       {mat.isSelected && (
                         <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                           <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
@@ -680,29 +713,40 @@ export default function MaterialSlotPicker({
                       <div className="flex-1" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
                     </div>
                     <SwatchRow alignItems="start" className="pb-3">
-                      {expanded.siblings
-                        .slice()
-                        .sort((a, b) => paletteRankByCode.size > 0
-                          ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
-                          : getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
-                            getPairCountByCode(b.code) - getPairCountByCode(a.code)
-                        )
-                        .map(sibling => (
-                        <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                          <SwatchButton
-                            onClick={() => { handleRow3Click(sibling); }}
-                            isActive={sibling.isSelected}
-                          >
-                            <img src={sibling.image} alt="" className="w-full h-full object-cover" />
-                            {SHOW_COLOUR_SCORES && <RankBadge code={sibling.code} />}
-                            {sibling.isSelected && (
-                              <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                                <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                              </div>
-                            )}
-                          </SwatchButton>
-                        </div>
-                      ))}
+                      {(() => {
+                        const allMembers = [expanded.representative, ...expanded.siblings];
+                        const role = slot ? SLOT_KEY_TO_ROLE[slot] : 'front';
+                        const rankedCodes = rankWithinClusterCodes && (otherMaterialCodes ?? []).length > 0
+                          ? rankWithinClusterCodes(allMembers.map(m => m.code), otherMaterialCodes ?? [], role)
+                          : null;
+                        return expanded.siblings
+                          .slice()
+                          .sort((a, b) => rankedCodes
+                            ? (rankedCodes.indexOf(a.code) === -1 ? Infinity : rankedCodes.indexOf(a.code)) -
+                              (rankedCodes.indexOf(b.code) === -1 ? Infinity : rankedCodes.indexOf(b.code))
+                            : paletteRankByCode.size > 0
+                              ? (paletteRankByCode.get(a.code) ?? Infinity) - (paletteRankByCode.get(b.code) ?? Infinity)
+                              : getCompatibilityScore(b.code, otherMaterialCodes ?? []) - getCompatibilityScore(a.code, otherMaterialCodes ?? []) ||
+                                getPairCountByCode(b.code) - getPairCountByCode(a.code)
+                          )
+                          .map(sibling => (
+                            <div key={sibling.code} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                              <SwatchButton
+                                onClick={() => { handleRow3Click(sibling); }}
+                                isActive={sibling.isSelected}
+                              >
+                                <img src={sibling.image} alt="" className="w-full h-full object-cover" />
+                                {SHOW_COLOUR_SCORES && <RankBadge code={sibling.code} />}
+                
+                                {sibling.isSelected && (
+                                  <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                                    <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                                  </div>
+                                )}
+                              </SwatchButton>
+                            </div>
+                          ));
+                      })()}
                     </SwatchRow>
                   </>
                 );

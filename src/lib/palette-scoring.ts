@@ -10,76 +10,107 @@ const ROLE_ANCHOR_WEIGHT: Record<string, number> = {
   backsplash: 1,
 };
 
-// ─── Combined axis weights [lightness, warmth, hue, chroma, texture, pattern] ─
-const AXIS_WEIGHTS: Record<StyleMode, [number, number, number, number, number, number]> = {
-  quiet:       [0.20, 0.25, 0.15, 0.10, 0.15, 0.15],
-  grounded:    [0.20, 0.20, 0.15, 0.10, 0.20, 0.15],
-  intentional: [0.30, 0.15, 0.20, 0.05, 0.20, 0.10],
+// ─── Score tuning ─────────────────────────────────────────────────────────────
+const SCORE_ERROR_POWER = 1.5;
+const NO_ANCHOR_SCORE   = 0.5;
+
+// ─── Texture error scaling ────────────────────────────────────────────────────
+// textureError() returns categorical 0 / 0.5 / 1.0; scale so it doesn't
+// dominate the continuous axes (L, W, H, C, P) that live in the same 0–1 space.
+const TEXTURE_ERROR_SCALE = 0.20;
+
+// ─── Candidate specs ──────────────────────────────────────────────────────────
+// All values in normalized 0–1 space (L: /100, W: as-is, H: arc/180, C: /100, P: /100).
+// idealDelta: anchor-relative offset (same for all styles — the ideal is style-independent).
+// tolerance: per-style no-punishment zone; tighter = axis is more decisive.
+// H idealDelta = 0: closest hue always wins.
+// C, P: activity-derived ideal is the base; idealDelta adjusts texture-specifically on top.
+
+interface StyleTolerance { quiet: number; grounded: number; intentional: number }
+interface AxisSpec { idealDelta: number; tolerance: StyleTolerance }
+interface CandidateSpec { L: AxisSpec; W: AxisSpec; H: AxisSpec; C: AxisSpec; P: AxisSpec }
+
+const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
+  plain: {
+    L: { idealDelta: +0.10, tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
+    W: { idealDelta: -0.05, tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+    H: { idealDelta:  0,    tolerance: { quiet: 0.02, grounded: 0.03, intentional: 0.06 } },
+    C: { idealDelta: -0.08, tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
+    P: { idealDelta:  0,    tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+  },
+  wood: {
+    L: { idealDelta: +0.08, tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+    W: { idealDelta:  0,    tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.14 } },
+    H: { idealDelta:  0,    tolerance: { quiet: 0.02, grounded: 0.03, intentional: 0.06 } },
+    C: { idealDelta: -0.05, tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+    P: { idealDelta:  0,    tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+  },
+  stone: {
+    L: { idealDelta: +0.05, tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.16 } },
+    W: { idealDelta: -0.08, tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+    H: { idealDelta:  0,    tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
+    C: { idealDelta: -0.12, tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.10 } },
+    P: { idealDelta: -0.05, tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
+  },
+  textile: {
+    L: { idealDelta: +0.08, tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
+    W: { idealDelta: -0.03, tolerance: { quiet: 0.04, grounded: 0.07, intentional: 0.14 } },
+    H: { idealDelta:  0,    tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.07 } },
+    C: { idealDelta: -0.05, tolerance: { quiet: 0.04, grounded: 0.07, intentional: 0.12 } },
+    P: { idealDelta: +0.05, tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
+  },
 };
 
-// ─── Axis 1: Lightness ────────────────────────────────────────────────────────
-const LIGHTNESS_IDEAL_DELTA: Record<StyleMode, Record<string, number>> = {
-  quiet:       { front: 10, worktop: 8,  backsplash: 15 },
-  grounded:    { front: 15, worktop: 20, backsplash: 15 },
-  intentional: { front: 25, worktop: 32, backsplash: 22 },
-};
-const LIGHTNESS_DELTA_SCALE = 25;
-const LIGHTNESS_PLAIN_SCALE_BONUS = 20;
-const LIGHTNESS_NO_ANCHOR_SCORE = 0.5;
-
-// ─── Axis 2: Warmth ───────────────────────────────────────────────────────────
-const WARMTH_SCALE: Record<StyleMode, number> = {
-  quiet:       0.35,
-  grounded:    0.55,
-  intentional: 0.70,
+// Wood-on-wood: hue undertone match dominates at all style levels (very tight H tolerance).
+const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
+  L: { idealDelta: +0.08, tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
+  W: { idealDelta:  0,    tolerance: { quiet: 0.06, grounded: 0.08, intentional: 0.12 } },
+  H: { idealDelta:  0,    tolerance: { quiet: 0.01, grounded: 0.01, intentional: 0.02 } },
+  C: { idealDelta: -0.03, tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
+  P: { idealDelta:  0,    tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
 };
 
-// ─── Axis 3: Hue undertone ────────────────────────────────────────────────────
-const HUE_IDEAL_DIST: Record<StyleMode, number> = {
-  quiet:       0,
-  grounded:    35,
-  intentional: 180,
-};
-const HUE_SCALE = 180;
-// Wood-on-wood hue: undertone family should match — drift reads as a clash.
-const HUE_WOOD_SCALE = 70;
+function getCandidateSpec(candidateTexture: string, anchorTexture: string): CandidateSpec {
+  if (candidateTexture === 'wood' && anchorTexture === 'wood') return CANDIDATE_SPEC_WOOD_ON_WOOD;
+  return CANDIDATE_SPECS[candidateTexture] ?? CANDIDATE_SPECS['plain'];
+}
 
-// ─── Axis 4: Chroma ───────────────────────────────────────────────────────────
-const CHROMA_SCALE: Partial<Record<StyleMode, number>> = {
-  quiet:    6,
-  grounded: 12,
-};
+function toleratedError(actual: number, ideal: number, tol: number): number {
+  return Math.max(0, Math.abs(actual - ideal) - tol);
+}
 
-// How much the ideal candidate chroma drops per unit of anchor activity.
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
+}
+
+// ─── Colour salience ──────────────────────────────────────────────────────────
+// sin(π·L/100) peaks at 1.0 at L=50, → 0 at L=0 and L=100.
+// Applied to chroma errors: very dark/light surfaces are perceptually achromatic.
+function colourSalience(lightness: number): number {
+  return Math.sin(Math.PI * Math.max(0, Math.min(100, lightness)) / 100);
+}
+
+// ─── Activity-derived ideal factors ──────────────────────────────────────────
 const CHROMA_ACTIVITY_FACTOR: Record<StyleMode, number> = {
   quiet:       0.55,
   grounded:    0.30,
   intentional: 0.50,
 };
 
-// ─── Axis 5: Texture ──────────────────────────────────────────────────────────
-const TEXTURE_MAX_FAMILIES: Record<StyleMode, number> = {
-  quiet: 2, grounded: 3, intentional: 3,
-};
-
-// ─── Axis 6: Pattern ──────────────────────────────────────────────────────────
-// Error reaches 1.0 when candidate pattern is this many points from ideal.
-const PATTERN_PROJ_SCALE: Record<StyleMode, number> = {
-  quiet:       40,
-  grounded:    55,
-  intentional: 80,
-};
-// How much the ideal candidate pattern drops per unit of anchor activity.
 const PATTERN_ACTIVITY_FACTOR: Record<StyleMode, number> = {
   quiet:       0.75,
   grounded:    0.45,
   intentional: 0.70,
 };
-// Compound factor: applied when a new texture exceeds the family limit AND brings pattern.
+
+// ─── Texture variety limits ───────────────────────────────────────────────────
+const TEXTURE_MAX_FAMILIES: Record<StyleMode, number> = {
+  quiet: 2, grounded: 3, intentional: 3,
+};
+
 const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 
 // ─── Activity metric ──────────────────────────────────────────────────────────
-// Texture visual complexity contribution (not DB-stored — per-type constant).
 const TEXTURE_COMPLEXITY: Record<string, number> = {
   plain: 0, wood: 0.65, stone: 0.35, metal: 0.15,
 };
@@ -90,7 +121,6 @@ function computeActivity(m: GraphMaterial): number {
 }
 
 // ─── Composition state ────────────────────────────────────────────────────────
-// Visual mass weights for placed materials — heavier surfaces dominate the read.
 const ROLE_VISUAL_MASS: Record<string, number> = {
   floor: 0.35, front: 0.30, worktop: 0.10, backsplash: 0.05,
 };
@@ -130,77 +160,6 @@ export function identifyAnchor(
   return anchor;
 }
 
-/** Axis 1 error — Lightness. */
-function lightnessError(
-  candidate: GraphMaterial,
-  anchor: GraphMaterial,
-  candidateRole: string,
-  style: StyleMode,
-): number {
-  const idealDelta = LIGHTNESS_IDEAL_DELTA[style]?.[candidateRole] ?? 15;
-  const isPlainGoingLighter =
-    candidate.texture === 'plain' && candidate.lightness > anchor.lightness;
-  const scale = isPlainGoingLighter
-    ? LIGHTNESS_DELTA_SCALE + LIGHTNESS_PLAIN_SCALE_BONUS
-    : LIGHTNESS_DELTA_SCALE;
-
-  const woodOnWoodFront =
-    candidateRole === 'front' &&
-    candidate.texture === 'wood' &&
-    anchor.texture === 'wood';
-
-  if (woodOnWoodFront) {
-    const signedDelta = anchor.lightness - candidate.lightness;
-    return Math.abs(signedDelta - idealDelta) / scale;
-  }
-
-  const actualDelta = Math.abs(candidate.lightness - anchor.lightness);
-  return Math.abs(actualDelta - idealDelta) / scale;
-}
-
-/** Axis 2 error — Warmth. */
-function warmthError(
-  candidate: GraphMaterial,
-  anchor: GraphMaterial,
-  style: StyleMode,
-): number {
-  const ideal = style === 'intentional' ? -anchor.warmth : anchor.warmth;
-  return Math.abs(candidate.warmth - ideal) / WARMTH_SCALE[style];
-}
-
-/** Axis 3 error — Hue undertone. Achromatic (null hue_angle) = no constraint.
- *  Wood-on-wood: idealDist = 0° with a tight scale — undertone family must match. */
-function hueError(
-  candidate: GraphMaterial,
-  anchor: GraphMaterial,
-  style: StyleMode,
-): number {
-  if (candidate.hue_angle == null && anchor.hue_angle == null) return 0;
-  if (candidate.hue_angle == null) return anchor.chroma / 80; // achromatic candidate next to chromatic anchor
-  if (anchor.hue_angle == null) return 0;
-  const d = Math.abs(candidate.hue_angle - anchor.hue_angle);
-  const actualDist = Math.min(d, 360 - d);
-  if (candidate.texture === 'wood' && anchor.texture === 'wood') {
-    return actualDist / HUE_WOOD_SCALE;
-  }
-  return Math.abs(actualDist - HUE_IDEAL_DIST[style]) / HUE_SCALE;
-}
-
-/** Axis 4 error — Chroma.
- *  Ideal candidate chroma is derived from anchor activity: the more active the anchor,
- *  the lower the target chroma. Intentional style has no chroma constraint. */
-function chromaError(
-  candidate: GraphMaterial,
-  anchor: GraphMaterial,
-  style: StyleMode,
-): number {
-  const scale = CHROMA_SCALE[style];
-  if (!scale) return 0;
-  const anchorActivity = computeActivity(anchor);
-  const idealChroma = Math.max(5, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]);
-  return Math.abs(candidate.chroma - idealChroma) / scale;
-}
-
 /** Axis 5 error — Texture variety. Plain is excluded from family counting. */
 function textureError(
   candidate: GraphMaterial,
@@ -225,64 +184,70 @@ function textureError(
   return existing >= maxCount ? 1.0 : 0.5;
 }
 
-/** Axis 6 error — Pattern.
- *  Ideal candidate pattern is activity-derived: the busier the anchor, the calmer
- *  the next surface should be.
- *  Worktop exception: compensatory role — if the composition is calm, the worktop
- *  is allowed to be expressive (adds richness to an otherwise flat palette).
- *  Backsplash is always exempt. */
-function patternError(
+/** Per-axis errors in normalized 0–1 space: [L, W, H, C, T, P].
+ *  No weights — importance is expressed through tolerance tightness in CANDIDATE_SPECS. */
+function computeNormalizedErrors(
   candidate: GraphMaterial,
-  candidateRole: string,
   anchor: GraphMaterial,
-  composition: CompositionState,
+  placedMaterials: GraphMaterial[],
+  candidateRole: string,
   style: StyleMode,
-): number {
-  if (candidateRole === 'backsplash') return 0;
-
+  composition: CompositionState,
+): [number, number, number, number, number, number] {
+  const spec = getCandidateSpec(candidate.texture, anchor.texture);
   const anchorActivity = computeActivity(anchor);
 
-  let idealPattern: number;
-  if (candidateRole === 'worktop' && composition.compositionActivity < 30) {
-    // Calm composition: countertop earns the right to introduce richness
-    idealPattern = composition.compositionActivity + (30 - composition.compositionActivity) * 0.8;
+  // L: normalized /100
+  const eL = toleratedError(
+    candidate.lightness / 100,
+    clamp01(anchor.lightness / 100 + spec.L.idealDelta),
+    spec.L.tolerance[style],
+  );
+
+  // W: already 0–1
+  const eW = toleratedError(
+    candidate.warmth,
+    clamp01(anchor.warmth + spec.W.idealDelta),
+    spec.W.tolerance[style],
+  );
+
+  // H: shortest arc / 180 → 0–1; null handling
+  let eH: number;
+  if (candidate.hue_angle == null && anchor.hue_angle == null) {
+    eH = 0;
+  } else if (candidate.hue_angle == null) {
+    eH = (anchor.chroma / 100) * colourSalience(anchor.lightness);
+  } else if (anchor.hue_angle == null) {
+    eH = 0;
   } else {
-    idealPattern = Math.max(0, anchor.pattern - anchorActivity * PATTERN_ACTIVITY_FACTOR[style]);
+    const d = Math.abs(candidate.hue_angle - anchor.hue_angle);
+    const arc = Math.min(d, 360 - d);
+    //eH = toleratedError(arc / 180, spec.H.idealDelta, spec.H.tolerance[style]);
+    eH = toleratedError(arc / 90, spec.H.idealDelta, spec.H.tolerance[style]);
   }
 
-  // Same-texture continuation: only the excess over anchor pattern counts.
-  // A front with the same texture family and similar or lower grain = visual continuation.
+  // C: activity-derived ideal + idealDelta, × colourSalience
+  const activityIdealC = Math.max(5, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]) / 100;
+  const eC = toleratedError(
+    candidate.chroma / 100,
+    clamp01(activityIdealC + spec.C.idealDelta),
+    spec.C.tolerance[style],
+  ) * colourSalience(candidate.lightness);
+
+  // T: categorical, scaled to stay secondary to continuous axes
+  const eT = textureError(candidate, placedMaterials, anchor, style) * TEXTURE_ERROR_SCALE;
+
+  // P: activity-derived ideal + idealDelta; worktop exception; overload factor
+  let activityIdealP: number;
+  if (candidateRole === 'worktop' && composition.compositionActivity < 30) {
+    activityIdealP = (composition.compositionActivity + (30 - composition.compositionActivity) * 0.8) / 100;
+  } else {
+    activityIdealP = Math.max(0, anchor.pattern - anchorActivity * PATTERN_ACTIVITY_FACTOR[style]) / 100;
+  }
+  const idealP = clamp01(activityIdealP + spec.P.idealDelta);
   const effectivePattern = candidate.texture === anchor.texture
     ? Math.max(0, candidate.pattern - anchor.pattern)
     : candidate.pattern;
-
-  return Math.abs(effectivePattern - idealPattern) / PATTERN_PROJ_SCALE[style];
-}
-
-/** Combined distance-to-ideal score for a single candidate. Returns 0–1.
- *  score = 1 / (1 + weighted_error_sum); perfect match → 1.0. */
-export function scoreCandidate(
-  candidate: GraphMaterial,
-  placedCodes: string[],
-  byCode: Map<string, GraphMaterial>,
-  candidateRole: string,
-  style: StyleMode,
-): number {
-  const placedMaterials = placedCodes
-    .map((c) => byCode.get(c))
-    .filter((m): m is GraphMaterial => !!m);
-  const anchor = identifyAnchor(placedCodes, byCode);
-  if (!anchor) return LIGHTNESS_NO_ANCHOR_SCORE;
-
-  const composition = computeCompositionState(placedMaterials);
-
-  const errL = lightnessError(candidate, anchor, candidateRole, style);
-  const errW = warmthError(candidate, anchor, style);
-  const errH = hueError(candidate, anchor, style);
-  const errC = chromaError(candidate, anchor, style);
-  const errT = textureError(candidate, placedMaterials, anchor, style);
-
-  // Compound penalty: new non-plain texture exceeds family limit AND brings high pattern.
   const nonPlainCounts = new Map<string, number>();
   for (const m of placedMaterials) {
     if (m.texture !== 'plain') nonPlainCounts.set(m.texture, (nonPlainCounts.get(m.texture) ?? 0) + 1);
@@ -291,13 +256,121 @@ export function scoreCandidate(
     candidate.texture !== 'plain' &&
     !nonPlainCounts.has(candidate.texture) &&
     nonPlainCounts.size >= TEXTURE_MAX_FAMILIES[style];
+  const ePRaw = candidateRole === 'backsplash'
+    ? 0
+    : toleratedError(effectivePattern / 100, idealP, spec.P.tolerance[style]);
+  const eP = isNewTextureOverLimit ? ePRaw * PATTERN_TEXTURE_OVERLOAD_FACTOR : ePRaw;
 
-  const errPRaw = patternError(candidate, candidateRole, anchor, composition, style);
-  const errP = isNewTextureOverLimit ? errPRaw * PATTERN_TEXTURE_OVERLOAD_FACTOR : errPRaw;
+  return [eL, eW, eH, eC, eT, eP];
+}
 
-  const [wL, wW, wH, wC, wT, wP] = AXIS_WEIGHTS[style];
-  const d = wL * errL + wW * errW + wH * errH + wC * errC + wT * errT + wP * errP;
+/** Ideal target values [idealL, idealW, idealC, idealP, anchorH] for the debug overlay.
+ *  Derived from anchor + style + candidate texture. */
+export function computeIdealTargets(
+  placedCodes: string[],
+  byCode: Map<string, GraphMaterial>,
+  candidateRole: string,
+  style: StyleMode,
+  candidateTexture: string,
+  anchorTexture: string,
+): { idealL: number; idealW: number; idealC: number; idealP: number; anchorH: number | null } | null {
+  const anchor = identifyAnchor(placedCodes, byCode);
+  if (!anchor) return null;
+  const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  const composition = computeCompositionState(placedMaterials);
+  const anchorActivity = computeActivity(anchor);
+  const spec = getCandidateSpec(candidateTexture, anchorTexture);
+
+  const idealL = clamp01(anchor.lightness / 100 + spec.L.idealDelta) * 100;
+  const idealW = clamp01(anchor.warmth + spec.W.idealDelta);
+
+  const activityIdealC = Math.max(5, anchor.chroma - anchorActivity * CHROMA_ACTIVITY_FACTOR[style]) / 100;
+  const idealC = clamp01(activityIdealC + spec.C.idealDelta) * 100;
+
+  let activityIdealP: number;
+  if (candidateRole === 'worktop' && composition.compositionActivity < 30) {
+    activityIdealP = (composition.compositionActivity + (30 - composition.compositionActivity) * 0.8) / 100;
+  } else {
+    activityIdealP = Math.max(0, anchor.pattern - anchorActivity * PATTERN_ACTIVITY_FACTOR[style]) / 100;
+  }
+  const idealP = clamp01(activityIdealP + spec.P.idealDelta) * 100;
+
+  return {
+    idealL: Math.round(idealL),
+    idealW: Math.round(idealW * 100) / 100,
+    idealC: Math.round(idealC * 10) / 10,
+    idealP: Math.round(idealP * 10) / 10,
+    anchorH: anchor.hue_angle ?? null,
+  };
+}
+
+/** Raw per-axis errors [L, W, H, C, T, P] for a single candidate (normalized 0–1). */
+export function computeAxisErrors(
+  candidate: GraphMaterial,
+  placedCodes: string[],
+  byCode: Map<string, GraphMaterial>,
+  candidateRole: string,
+  style: StyleMode,
+): [number, number, number, number, number, number] {
+  const anchor = identifyAnchor(placedCodes, byCode);
+  if (!anchor) return [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+  const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  const composition = computeCompositionState(placedMaterials);
+  return computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition);
+}
+
+/** Combined distance-to-ideal score for a single candidate. Returns 0–1.
+ *  score = 1 / (1 + sum(error^SCORE_ERROR_POWER)); perfect match → 1.0. */
+export function scoreCandidate(
+  candidate: GraphMaterial,
+  placedCodes: string[],
+  byCode: Map<string, GraphMaterial>,
+  candidateRole: string,
+  style: StyleMode,
+): number {
+  const anchor = identifyAnchor(placedCodes, byCode);
+  if (!anchor) return NO_ANCHOR_SCORE;
+  const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  const composition = computeCompositionState(placedMaterials);
+  const errors = computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition);
+  const d = errors.reduce((s, e) => s + e ** SCORE_ERROR_POWER, 0);
   return 1 / (1 + d);
+}
+
+/** Rank a group of candidates by within-group harmony using per-axis min-subtraction.
+ *  Neutralises axes where all members are structurally stuck, without explicit weights. */
+export function rankWithinCluster(
+  members: GraphMaterial[],
+  placedCodes: string[],
+  byCode: Map<string, GraphMaterial>,
+  candidateRole: string,
+  style: StyleMode,
+): GraphMaterial[] {
+  if (members.length <= 1) return [...members];
+
+  const anchor = identifyAnchor(placedCodes, byCode);
+  if (!anchor) return [...members];
+
+  const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  const composition = computeCompositionState(placedMaterials);
+
+  type SixErrors = [number, number, number, number, number, number];
+  const allErrors: SixErrors[] = members.map((m) =>
+    computeNormalizedErrors(m, anchor, placedMaterials, candidateRole, style, composition)
+  );
+
+  const mins = ([0, 1, 2, 3, 4, 5] as const).map((i) =>
+    Math.min(...allErrors.map((e) => e[i]))
+  );
+
+  const pw = SCORE_ERROR_POWER;
+  return [...members]
+    .map((m, mi) => {
+      const d = allErrors[mi].reduce((s, e, i) => s + Math.max(0, e - mins[i]) ** pw, 0);
+      return { m, score: 1 / (1 + d) };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.m);
 }
 
 /** Returns candidates sorted descending by palette harmony score. */

@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { rankByPaletteScore, type StyleMode } from '@/lib/palette-scoring';
+import { rankByPaletteScore, rankWithinCluster, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -296,6 +296,33 @@ export function getApprovedByDesigner(codes: string[]): string | null {
   return null;
 }
 
+/** Per-axis errors [L, W, H, C, T, P] for a candidate against the placed palette. */
+export function getAxisErrorsForCode(
+  code: string,
+  placedCodes: string[],
+  role: string,
+  style: StyleMode = 'grounded',
+): [number, number, number, number, number, number] | null {
+  if (!_cached || placedCodes.length === 0) return null;
+  const { byCode } = _cached;
+  const candidate = byCode.get(code);
+  if (!candidate) return null;
+  return computeAxisErrors(candidate, placedCodes, byCode, role, style);
+}
+
+export function getIdealTargetsForCode(
+  code: string,
+  placedCodes: string[],
+  role: string,
+  style: StyleMode = 'grounded',
+): { idealL: number; idealW: number; idealC: number; idealP: number; anchorH: number | null } | null {
+  if (!_cached || placedCodes.length === 0) return null;
+  const { byCode } = _cached;
+  const candidate = byCode.get(code);
+  if (!candidate) return null;
+  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, byCode.get(placedCodes[0])?.texture ?? '');
+}
+
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
 export function getMaterialsByRole(role: string): SupabaseMaterial[] {
   return _cached?.graphMaterials.filter((m) => m.role.includes(role)) ?? [];
@@ -435,6 +462,24 @@ export function useGraphMaterials() {
       .map((m) => m.technicalCode);
   }
 
+  // Rank a specific group of materials by within-group harmony.
+  // Axes where all members score similarly get down-weighted — those are structural
+  // to the group, not individual differentiators.
+  function rankWithinClusterCodes(
+    memberCodes: string[],
+    placedCodes: string[],
+    targetRole: string,
+    style: StyleMode = 'grounded',
+  ): string[] {
+    if (!_cached || memberCodes.length <= 1) return memberCodes;
+    const { byCode } = _cached;
+    const members = memberCodes
+      .map((c) => byCode.get(c))
+      .filter((m): m is GraphMaterial => !!m);
+    return rankWithinCluster(members, placedCodes, byCode, targetRole, style)
+      .map((m) => m.technicalCode);
+  }
+
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
     if (!_cached || otherCodes.length === 0) return false;
     const { pairs } = _cached;
@@ -485,7 +530,7 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, rankWithinClusterCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

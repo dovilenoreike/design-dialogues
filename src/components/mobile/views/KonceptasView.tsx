@@ -5,7 +5,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
-import { useGraphMaterials, getMaterialByCode, getCachedImageUrl } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getAxisErrorsForCode, getIdealTargetsForCode } from "@/hooks/useGraphMaterials";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
@@ -455,17 +455,42 @@ export default function KonceptasView({
                 const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode) : [];
                 const rankIdx = rankList.indexOf(overrideCode);
                 const rank = rankIdx >= 0 ? rankIdx + 1 : null;
+                const axisErrs = otherCodes.length > 0
+                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, styleMode)
+                  : null;
+                const ideals = otherCodes.length > 0
+                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, styleMode)
+                  : null;
                 return (
                   <div
                     className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
-                    style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.55))" }}
+                    style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.65))" }}
                   >
+                    {/* Row 1: actual values */}
                     <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
                       {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{mat.chroma}
                     </span>
                     <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
                       H{mat.hue_angle ?? "—"} P{mat.pattern}
                     </span>
+                    {ideals && (
+                      <span className="text-yellow-300/80 font-mono leading-none text-[6px] lg:text-[10px]">
+                        →L{ideals.idealL} W{ideals.idealW} C{ideals.idealC} P{ideals.idealP} aH{ideals.anchorH ?? "—"}
+                      </span>
+                    )}
+                    {axisErrs && (() => {
+                      const [eL, eW, eH, eC, eT, eP] = axisErrs.map(e => e.toFixed(2));
+                      return (
+                        <>
+                          <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
+                            eL:{eL} eW:{eW} eH:{eH}
+                          </span>
+                          <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
+                            eC:{eC} eT:{eT} eP:{eP}
+                          </span>
+                        </>
+                      );
+                    })()}
                   </div>
                 );
               })()}
