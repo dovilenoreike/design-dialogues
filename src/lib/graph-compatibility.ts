@@ -1,5 +1,9 @@
 import { BUSY_PATTERN_THRESHOLD } from "@/lib/archetype-rules";
 
+function visualC(chroma: number, lightness: number): number {
+  return chroma * Math.sin(Math.PI * Math.max(0, Math.min(100, lightness)) / 100);
+}
+
 export interface GraphMaterial {
   id: string;           // UUID
   technicalCode: string;
@@ -23,9 +27,9 @@ export function isSimilarMaterial(
 ): boolean {
   return (
     Math.abs(a.lightness - b.lightness) <= lightnessΔ &&
-    Math.abs(a.warmth   - b.warmth)    <= warmthΔ    &&
-    Math.abs(a.pattern  - b.pattern)   <= patternΔ   &&
-    Math.abs(a.chroma   - b.chroma)    <= chromaΔ
+    Math.abs(a.warmth    - b.warmth)    <= warmthΔ    &&
+    Math.abs(a.pattern   - b.pattern)   <= patternΔ   &&
+    Math.abs(visualC(a.chroma, a.lightness) - visualC(b.chroma, b.lightness)) <= chromaΔ
   );
 }
 
@@ -37,9 +41,9 @@ export function visualDistance(
 ): number {
   return (
     Math.abs(a.lightness - b.lightness) / lightnessΔ +
-    Math.abs(a.warmth   - b.warmth)    / warmthΔ    +
-    Math.abs(a.pattern  - b.pattern)   / patternΔ   +
-    Math.abs(a.chroma   - b.chroma)    / chromaΔ
+    Math.abs(a.warmth    - b.warmth)    / warmthΔ    +
+    Math.abs(a.pattern   - b.pattern)   / patternΔ   +
+    Math.abs(visualC(a.chroma, a.lightness) - visualC(b.chroma, b.lightness)) / chromaΔ
   );
 }
 
@@ -118,7 +122,7 @@ export function descriptorScore(
     return sum + (100
       - 0.5  * Math.abs(candidate.lightness - o.lightness)
       - warmthWeight * Math.abs((candidate.warmth ?? 0) - (o.warmth ?? 0)) * 50
-      - 0.5  * Math.abs((candidate.chroma   ?? 0) - (o.chroma  ?? 0))
+      - 0.5  * Math.abs(visualC(candidate.chroma ?? 0, candidate.lightness) - visualC(o.chroma ?? 0, o.lightness))
       - busyClashPenalty
     );
   }, 0) / others.length;

@@ -468,7 +468,7 @@ export default function KonceptasView({
                   >
                     {/* Row 1: actual values */}
                     <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
-                      {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{mat.chroma}
+                      {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{Math.round(mat.chroma * Math.sin(Math.PI * mat.lightness / 100))}
                     </span>
                     <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
                       H{mat.hue_angle ?? "—"} P{mat.pattern}

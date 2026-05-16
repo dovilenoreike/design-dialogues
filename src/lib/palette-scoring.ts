@@ -24,7 +24,7 @@ const TEXTURE_COMPLEXITY: Record<string, number> = {
 
 function computeActivity(m: GraphMaterial): number {
   const tc = TEXTURE_COMPLEXITY[m.texture] ?? 0;
-  return Math.min(100, m.pattern * 0.55 + m.chroma * 0.30 + tc * 15);
+  return Math.min(100, m.pattern * 0.55 + (m.chroma * colourSalience(m.lightness)) * 0.30 + tc * 15);
 }
 
 const ROLE_VISUAL_MASS: Record<string, number> = {
@@ -77,11 +77,12 @@ const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 // All values in normalized space: L /100, W as-is, H arc/90, C /100, P /100.
 
 interface IdealContext {
-  anchor:         GraphMaterial;
-  candidateRole:  string;
-  style:          StyleMode;
-  anchorActivity: number;
-  composition:    CompositionState;
+  anchor:            GraphMaterial;
+  candidateRole:     string;
+  style:             StyleMode;
+  anchorActivity:    number;
+  composition:       CompositionState;
+  candidateLightness: number;
 }
 
 type IdealFn = (ctx: IdealContext) => number;
@@ -99,8 +100,10 @@ const wDelta = (d: number): IdealFn => (ctx) =>
 const hAbsolute = (target: number): IdealFn => () => target;
 
 // C ideal: activity-derived base (busier anchor → lower chroma target) + fixed delta.
+// Uses anchor visual chroma so dark/light anchors don't over-drive the target.
 const cActivityDelta = (d: number): IdealFn => (ctx) => {
-  const base = Math.max(5, ctx.anchor.chroma - ctx.anchorActivity * CHROMA_ACTIVITY_FACTOR[ctx.style]) / 100;
+  const anchorVisualC = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
+  const base = Math.max(5, anchorVisualC - ctx.anchorActivity * CHROMA_ACTIVITY_FACTOR[ctx.style]) / 100;
   return clamp01(base + d);
 };
 
@@ -117,6 +120,30 @@ const pActivityDelta = (d: number): IdealFn => (ctx) => {
 
 // ── Custom ideal functions ────────────────────────────────────────────────────
 // Add named IdealFn constants here when a factory delta isn't expressive enough.
+
+// H ideal for chromatic plain materials (muted and bold archetypes).
+// quiet/grounded: slight hue step from anchor (~30°).
+// intentional: 90° target with wide tolerance → 30°–150° all within free zone.
+const hColourfulIdeal: IdealFn = (ctx) =>
+  ctx.style === 'intentional' ? 1.0 : 1.0 / 3.0;
+
+// C ideal for muted plains: targets half the anchor's visual richness.
+// Expressed in raw chroma space by dividing by candidate's colourSalience,
+// so a dark-muted or light-muted material gets an equivalent visual target.
+const cMutedIdeal: IdealFn = (ctx) => {
+  const anchorVisual = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
+  const targetVisual = Math.max(8, anchorVisual * 0.5);
+  const s = colourSalience(ctx.candidateLightness);
+  return clamp01(targetVisual / (Math.max(0.1, s) * 100));
+};
+
+// C ideal for bold plains: targets 40% more visual richness than the anchor.
+const cBoldIdeal: IdealFn = (ctx) => {
+  const anchorVisual = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
+  const targetVisual = anchorVisual * 1.4;
+  const s = colourSalience(ctx.candidateLightness);
+  return clamp01(targetVisual / (Math.max(0.1, s) * 100));
+};
 
 // Wood L: pulls toward a balanced midpoint (BALANCED_WOOD).
 // For floor↔front pairs the direction is role-determined so that starting from
@@ -163,7 +190,7 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
     W: { ideal: wDelta(-0.08),          tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
     H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
     C: { ideal: cActivityDelta(-0.12),  tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.10 } },
-    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
+    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.30 } },
   },
   textile: {
     L: { ideal: lDelta(+0.08),          tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
@@ -172,6 +199,32 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
     C: { ideal: cActivityDelta(-0.05),  tolerance: { quiet: 0.04, grounded: 0.07, intentional: 0.12 } },
     P: { ideal: pActivityDelta(+0.05),  tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
   },
+};
+
+// ─── Chromatic plain sub-specs ────────────────────────────────────────────────
+// Plain materials with raw chroma ≥ 15 are split by visual chroma
+// (chroma × colourSalience) into muted (visually soft, light or dark) and
+// bold (visually rich, more saturated than the anchor).
+
+const PLAIN_CHROMA_THRESHOLD        = 15;  // below → neutral plain spec
+const VISUAL_CHROMA_MUTED_THRESHOLD = 30;  // below (but chromatic) → muted spec
+
+// Muted: low perceptual richness, intentional hue departure from anchor.
+const CANDIDATE_SPEC_PLAIN_MUTED: CandidateSpec = {
+  L: { ideal: lDelta(+0.10),     tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
+  W: { ideal: wDelta(-0.05),     tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+  H: { ideal: hColourfulIdeal,   tolerance: { quiet: 0.13, grounded: 0.17, intentional: 0.67 } },
+  C: { ideal: cMutedIdeal,       tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
+  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+};
+
+// Bold: visually richer than the anchor, intentional hue departure.
+const CANDIDATE_SPEC_PLAIN_BOLD: CandidateSpec = {
+  L: { ideal: lDelta(+0.10),     tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
+  W: { ideal: wDelta(-0.05),     tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+  H: { ideal: hColourfulIdeal,   tolerance: { quiet: 0.13, grounded: 0.17, intentional: 0.67 } },
+  C: { ideal: cBoldIdeal,        tolerance: { quiet: 0.06, grounded: 0.09, intentional: 0.13 } },
+  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
 };
 
 // Wood-on-wood: hue undertone match dominates at all style levels (very tight H tolerance).
@@ -184,8 +237,20 @@ const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
   P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
 };
 
-function getCandidateSpec(candidateTexture: string, anchorTexture: string): CandidateSpec {
+function getCandidateSpec(
+  candidateTexture: string,
+  anchorTexture: string,
+  candidateChroma?: number,
+  candidateLightness?: number,
+): CandidateSpec {
   if (candidateTexture === 'wood' && anchorTexture === 'wood') return CANDIDATE_SPEC_WOOD_ON_WOOD;
+  if (candidateTexture === 'plain' && candidateChroma != null && candidateLightness != null
+      && candidateChroma >= PLAIN_CHROMA_THRESHOLD) {
+    const visualChroma = candidateChroma * colourSalience(candidateLightness);
+    return visualChroma < VISUAL_CHROMA_MUTED_THRESHOLD
+      ? CANDIDATE_SPEC_PLAIN_MUTED
+      : CANDIDATE_SPEC_PLAIN_BOLD;
+  }
   return CANDIDATE_SPECS[candidateTexture] ?? CANDIDATE_SPECS['plain'];
 }
 
@@ -238,9 +303,9 @@ function computeNormalizedErrors(
   style: StyleMode,
   composition: CompositionState,
 ): [number, number, number, number, number, number] {
-  const spec = getCandidateSpec(candidate.texture, anchor.texture);
+  const spec = getCandidateSpec(candidate.texture, anchor.texture, candidate.chroma, candidate.lightness);
   const anchorActivity = computeActivity(anchor);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition };
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness };
 
   // L
   const eL = toleratedError(candidate.lightness / 100, spec.L.ideal(ctx), spec.L.tolerance[style]);
@@ -304,7 +369,7 @@ export function computeIdealTargets(
   const composition    = computeCompositionState(placedMaterials);
   const anchorActivity = computeActivity(anchor);
   const spec = getCandidateSpec(candidateTexture, anchorTexture);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition };
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50 };
 
   return {
     idealL:  Math.round(spec.L.ideal(ctx) * 100),

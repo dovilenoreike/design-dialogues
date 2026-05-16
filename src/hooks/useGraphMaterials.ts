@@ -81,7 +81,7 @@ async function loadGraphData(): Promise<GraphCache> {
   graphMaterials.forEach((m) => {
     const primaryRole = m.role[0];
     if (primaryRole) {
-      m.archetypeId = deriveArchetypeId(primaryRole, m.texture, m.lightness, m.warmth, m.pattern, m.chroma);
+      m.archetypeId = deriveArchetypeId(primaryRole, m.texture, m.lightness, m.warmth, m.pattern, m.chroma, m.hue_angle);
     }
   });
   const byCode = new Map(graphMaterials.map((m) => [m.technicalCode, m]));

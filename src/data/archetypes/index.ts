@@ -10,21 +10,22 @@ export const archetypes: Archetype[] = [
   { id: "dark-stone",  role: "floor", label: { en: "Dark Stone",   lt: "Tamsaus akmuo"    }, value: "#6a6560" },
   { id: "bold-stone",  role: "floor", label: { en: "Bold Stone",   lt: "Išraiškingas akmuo" }, value: "#b0a898" },
 
-  // ── Front / Cabinet Fronts (9) ────────────────────────────────────────────
-  { id: "white",       role: "front", label: { en: "White",        lt: "Balti"           }, value: "#f5f5f3" },
-  { id: "light-wood",  role: "front", label: { en: "Light Wood",   lt: "Šviesaus medžio"   }, value: "#ddd0b8" },
-  { id: "medium-wood", role: "front", label: { en: "Medium Wood",  lt: "Vidutinio medžio" }, value: "#b89870" },
-  { id: "dark-wood",   role: "front", label: { en: "Dark Wood",    lt: "Tamsaus medžio"    }, value: "#5c3d2a" },
-  { id: "neutral",     role: "front", label: { en: "Neutral",      lt: "Neutralūs"        }, value: "#e0d4c0" },
-  { id: "pastel",      role: "front", label: { en: "Pastel",       lt: "Pasteliniai"       }, value: "#ccd8d0" },
-  { id: "bold",        role: "front", label: { en: "Bold",         lt: "Ryškūs"           }, value: "#4a6058" },
-  { id: "dark",        role: "front", label: { en: "Dark",         lt: "Tamsūs"           }, value: "#2a2a2a" },
-  { id: "metallic",    role: "front", label: { en: "Metallic",     lt: "Metališki"       }, value: "#8c7055" },
+  // ── Front / Cabinet Fronts (8) ────────────────────────────────────────────
+  { id: "light-neutral", role: "front", label: { en: "Light",        lt: "Neutralūs"          }, value: "#ece8e0" },
+  { id: "light-wood",    role: "front", label: { en: "Light Wood",   lt: "Šviesaus medžio"   }, value: "#ddd0b8" },
+  { id: "medium-wood",   role: "front", label: { en: "Medium Wood",  lt: "Vidutinio medžio" }, value: "#b89870" },
+  { id: "dark-wood",     role: "front", label: { en: "Dark Wood",    lt: "Tamsaus medžio"    }, value: "#5c3d2a" },
+  { id: "dark-neutral",  role: "front", label: { en: "Dark",         lt: "Tamsūs" }, value: "#2a2a2a" },
+  { id: "muted",         role: "front", label: { en: "Muted",        lt: "Prislopinti"       }, value: "#b8c4bc" },
+  { id: "bold",          role: "front", label: { en: "Bold",         lt: "Ryškūs"           }, value: "#4a6058" },
+  { id: "metallic",      role: "front", label: { en: "Metallic",     lt: "Metališki"       }, value: "#8c7055" },
 
-  // ── Worktop (7) ───────────────────────────────────────────────────────────
+  // ── Worktop (9) ───────────────────────────────────────────────────────────
   { id: "wood",               role: "worktop", label: { en: "Wood",               lt: "Medžio"              }, value: "#c4a882" },
   { id: "white",              role: "worktop", label: { en: "White",              lt: "Balti"                }, value: "#f5f5f3" },
-  { id: "dark",               role: "worktop", label: { en: "Dark",               lt: "Tamsūs"                }, value: "#1a1a1a" },
+  { id: "dark-neutral",       role: "worktop", label: { en: "Dark",               lt: "Tamsūs neutralūs"     }, value: "#1a1a1a" },
+  { id: "muted",              role: "worktop", label: { en: "Muted",              lt: "Prislopinti"          }, value: "#b8c4bc" },
+  { id: "bold",               role: "worktop", label: { en: "Bold",               lt: "Ryškūs"              }, value: "#4a6058" },
   { id: "soft-texture-light", role: "worktop", label: { en: "Soft Texture Light", lt: "Ramūs šviesūs"        }, value: "#e8e4de" },
   { id: "soft-texture-dark",  role: "worktop", label: { en: "Soft Texture Dark",  lt: "Ramus tamsūs"         }, value: "#c8c0b4" },
   { id: "bold-texture-light", role: "worktop", label: { en: "Bold Texture Light", lt: "Išraiškingi šviesūs" }, value: "#d8cfc0" },

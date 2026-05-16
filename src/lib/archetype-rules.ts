@@ -2,6 +2,18 @@ export const LIGHTNESS_THRESHOLD = 20;
 export const BUSY_PATTERN_THRESHOLD = 29;
 export const WOOD_WARMTH_MISMATCH_THRESHOLD = 0.09;
 
+function visualChroma(chroma: number, lightness: number): number {
+  return chroma * Math.sin(Math.PI * Math.max(0, Math.min(100, lightness)) / 100);
+}
+
+// Neutral = virtually achromatic (vc < 1, any hue)
+//        OR warm-neutral zone (hue 20–60°) with low visual chroma (vc < 20).
+// Everything outside these conditions routes to muted/bold.
+function isNeutralPlain(vc: number, hue_angle: number | null): boolean {
+  if (vc < 1) return true;
+  return hue_angle !== null && hue_angle >= 20 && hue_angle <= 60 && vc < 20;
+}
+
 export function deriveArchetypeId(
   role: string,
   texture: string,
@@ -9,13 +21,14 @@ export function deriveArchetypeId(
   warmth: number,
   pattern: number,
   chroma: number = 0,
+  hue_angle: number | null = null,
 ): string | null {
   // Accent role: map to moodboard archetype IDs (gold / silver / bronze / black / colour)
   if (role === 'accent') {
     if (texture === 'metal') {
-      if (chroma >= 18) return 'gold';       // high chroma warm → gold
-      if (warmth >= 0.1) return 'bronze';    // warm but lower chroma → aged bronze
-      return 'silver';                        // neutral/cool → chrome/silver
+      if (visualChroma(chroma, lightness) >= 15) return 'gold';  // visually warm/rich → gold
+      if (warmth >= 0.1) return 'bronze';                         // warm but lower visual chroma → aged bronze
+      return 'silver';                                             // neutral/cool → chrome/silver
     }
     // plain accent (e.g. black matte, wine red)
     if (lightness < 20) return 'black';
@@ -43,17 +56,13 @@ export function deriveArchetypeId(
   // Cabinet front — any non-wood/stone-like/metal texture (plain, textile, …)
   const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metal';
   if (role === 'front' && isPlainLike) {
-    if (chroma < 15) {
-      // Achromatic: whites, greys, beiges, taupes
-      if (lightness >= 80) return 'white';
-      if (lightness >= 45) return 'neutral';
-      return 'dark';
-    } else {
-      // Chromatic: pastels and bold colours
-      if (lightness >= 55) return 'pastel';
-      if (lightness >= 30) return 'bold';
-      return 'dark';
+    const vc = visualChroma(chroma, lightness);
+    if (isNeutralPlain(vc, hue_angle)) {
+      if (lightness >= 45) return 'light-neutral';
+      return 'dark-neutral';
     }
+    if (vc < 20) return 'muted';
+    return 'bold';
   }
 
   // Worktop
@@ -64,14 +73,13 @@ export function deriveArchetypeId(
       return pattern <= 40 ? 'soft-texture-dark' : 'bold-texture-dark';
     }
     if (isPlainLike) {
-      if (chroma < 15) {
-        if (lightness >= 80) return 'white';
-        if (lightness >= 45) return 'neutral';
-        return 'dark';
+      const vc = visualChroma(chroma, lightness);
+      if (isNeutralPlain(vc, hue_angle)) {
+        if (lightness >= 60) return 'white';
+        return 'dark-neutral';
       }
-      if (lightness >= 55) return 'pastel';
-      if (lightness >= 30) return 'bold';
-      return 'dark';
+      if (vc < 20) return 'muted';
+      return 'bold';
     }
   }
 
