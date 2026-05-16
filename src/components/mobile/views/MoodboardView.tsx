@@ -325,7 +325,7 @@ export default function MoodboardView() {
       const slotKey = PALETTE_KEY_TO_SLOT[paletteKey];
       if (slotKey) initial[slotKey] = matId;
     }
-    if (!initial.floor) initial.floor = "light-wood";
+    if (!initial.floor) initial.floor = "wood";
     return initial;
   });
 

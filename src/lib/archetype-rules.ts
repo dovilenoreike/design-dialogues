@@ -37,50 +37,32 @@ export function deriveArchetypeId(
   // Metal: any other role
   if (texture === 'metal') return 'metallic';
 
-  // Wood: any role except worktop
-  if (texture === 'wood' && role !== 'worktop') {
-    if (lightness >= 60) return 'light-wood';
-    if (lightness >= 35) return 'medium-wood';
-    return 'dark-wood';
+  // Wood: single 'wood' archetype for both floor and front; worktop handled below
+  if (texture === 'wood') {
+    if (role !== 'worktop') return 'wood';
   }
 
   // Stone-like: stone + concrete (same archetype behaviour)
   const isStoneLike = texture === 'stone' || texture === 'concrete';
 
   // Stone-like floor
-  if (isStoneLike && role === 'floor') {
-    if (pattern > BUSY_PATTERN_THRESHOLD) return 'bold-stone';
-    return lightness >= 55 ? 'light-stone' : 'dark-stone';
-  }
+  if (isStoneLike && role === 'floor') return 'stone';
 
   // Cabinet front — any non-wood/stone-like/metal texture (plain, textile, …)
   const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metal';
   if (role === 'front' && isPlainLike) {
     const vc = visualChroma(chroma, lightness);
     if (isNeutralPlain(vc, hue_angle)) {
-      if (lightness >= 45) return 'light-neutral';
-      return 'dark-neutral';
+      return lightness >= 45 ? 'light-neutral' : 'dark-neutral';
     }
-    if (vc < 20) return 'muted';
-    return 'bold';
+    return 'colours';
   }
 
   // Worktop
   if (role === 'worktop') {
     if (texture === 'wood') return 'wood';
-    if (isStoneLike) {
-      if (lightness >= 50) return pattern <= 40 ? 'soft-texture-light' : 'bold-texture-light';
-      return pattern <= 40 ? 'soft-texture-dark' : 'bold-texture-dark';
-    }
-    if (isPlainLike) {
-      const vc = visualChroma(chroma, lightness);
-      if (isNeutralPlain(vc, hue_angle)) {
-        if (lightness >= 60) return 'white';
-        return 'dark-neutral';
-      }
-      if (vc < 20) return 'muted';
-      return 'bold';
-    }
+    if (isStoneLike) return 'stone';
+    if (isPlainLike) return lightness >= 45 ? 'light-neutral' : 'dark-neutral';
   }
 
   return null;

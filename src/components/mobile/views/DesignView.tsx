@@ -240,7 +240,7 @@ export default function DesignView() {
       const slotKey = defaultPkToSlot[paletteKey];
       if (slotKey) initial[slotKey] = matId;
     }
-    if (!initial.floor) initial.floor = "light-wood";
+    if (!initial.floor) initial.floor = "wood";
     return initial;
   });
 
