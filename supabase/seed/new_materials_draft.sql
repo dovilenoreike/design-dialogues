@@ -298,3 +298,44 @@ INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmt
  'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Borneo/BORNEO-PEARL.webp',
  ARRAY['artile'], 'Tiles', 'optimal',
  2, NULL);
+
+
+
+
+-- Draft generated 2026-05-18 by scripts/process-new-materials.ts
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- NEW MATERIALS
+-- Review scores, adjust name.lt translations if needed.
+-- Column order: id, technical_code, name, role, texture,
+--   lightness, warmth, pattern, texture_prompt, image_url, showroom_ids,
+--   material_type, tier, chroma, hue_angle
+-- ════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO materials (id, technical_code, name, role, texture, lightness, warmth, pattern, texture_prompt, image_url, showroom_ids, material_type, tier, chroma, hue_angle) VALUES
+
+-- ── Skin / front ──────────────────────────────────────────────
+(gen_random_uuid(), 'skin-5450-lava',
+ '{"en":"Lava","lt":"Lava"}',
+ ARRAY['front'], 'plain', 12, 0.08, 8,
+ 'Dark near-black warm brown, matte finish.',
+ 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Skin/skin-5450-lava.webp',
+ ARRAY['trukme'], 'LMDP', 'optimal',
+ 6, 28);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- RESCORED MATERIALS (update/)
+-- Only scores and image_url are changed. name/role/tier/material_type untouched.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ── skin-d5456-bronzo ──────────────────────────────────────────────
+UPDATE materials SET
+  texture        = 'plain',
+  lightness      = 35,
+  warmth         = 0.12,
+  pattern        = 8,
+  chroma         = 7,
+  hue_angle      = 32,
+  texture_prompt = 'Medium-dark greige, subtle warm brown cast, matte finish.',
+  image_url      = 'https://nimrggpqcvgpgdmcermb.supabase.co/storage/v1/object/public/material-images/Skin/skin-d5456-bronzo.webp'
+WHERE technical_code = 'skin-d5456-bronzo';

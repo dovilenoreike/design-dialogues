@@ -66,6 +66,8 @@ export default function DesignView() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  // Capture ?material= at mount time — searchParams may be cleared before the graph-loaded effect fires.
+  const mountMaterialParam = useRef(new URLSearchParams(location.search).get("material"));
 
   const subTab = useMemo((): "konceptas" | "vizualas" | "specs" => {
     if (location.pathname.endsWith("/visual")) return "vizualas";
@@ -306,10 +308,13 @@ export default function DesignView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materialOverrides, graphLoading]);
 
-  // Apply ?material=CODE URL param once graph is loaded (for showroom QR codes)
+  // Apply ?material=CODE URL param once graph is loaded (for showroom QR codes).
+  // Reads from the mount-time ref first so the param is never missed if searchParams
+  // gets cleared by another effect before graphLoading flips.
   useEffect(() => {
     if (graphLoading) return;
-    const param = searchParams.get("material");
+    const param = mountMaterialParam.current ?? searchParams.get("material");
+    mountMaterialParam.current = null;
     if (!param) return;
     const newOverrides: Record<string, string> = {};
     const newSelections: Partial<SlotSelections> = {};
