@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, CheckCheck, Trash2, X, Search } from "lucide-react";
+import { Check, CheckCheck, Trash2, X, Search, RotateCcw } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
@@ -706,6 +706,7 @@ export default function MaterialSlotPicker({
               // Prefer palette-ranked best; fall back to availableWithImages resolvedCode
               const bestCode = bestCodeByArchetypeId.get(archetype.id) ?? resolvedCode;
               const chipImage = bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage;
+              const showResetHint = isActive && gridCenterCode !== null;
               return (
                 <button
                   key={`chip-${archetype.id}`}
@@ -718,7 +719,7 @@ export default function MaterialSlotPicker({
                   style={{ opacity: isActive || isRecommended ? 1 : 0.45, transition: "opacity 0.15s" }}
                 >
                   <div
-                    className="w-[52px] h-[52px] overflow-hidden"
+                    className="relative w-[52px] h-[52px] overflow-hidden"
                     style={{
                       borderRadius: 11,
                       border: isActive ? "2px solid #647d75" : "2px solid transparent",
@@ -726,6 +727,11 @@ export default function MaterialSlotPicker({
                     }}
                   >
                     <img src={chipImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
+                    {showResetHint && (
+                      <div className="absolute flex items-center justify-center" style={{ bottom: 3, right: 3, width: 14, height: 14, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.45)" }}>
+                        <RotateCcw className="w-2 h-2 text-white" strokeWidth={2.5} />
+                      </div>
+                    )}
                   </div>
                   <span
                     className="text-[10px] whitespace-nowrap leading-none"

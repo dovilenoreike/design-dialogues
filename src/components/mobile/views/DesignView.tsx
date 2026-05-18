@@ -313,6 +313,7 @@ export default function DesignView() {
     if (!param) return;
     const newOverrides: Record<string, string> = {};
     const newSelections: Partial<SlotSelections> = {};
+    const slotsToEnable: SlotKey[] = [];
     for (const code of param.split(",").map((c) => c.trim()).filter(Boolean)) {
       const mat = getMaterialByCode(code);
       if (!mat) continue;
@@ -320,10 +321,14 @@ export default function DesignView() {
       if (!entry) continue;
       newOverrides[entry.paletteKey] = code;
       if (mat.archetypeId) newSelections[entry.slot] = mat.archetypeId;
+      if (OPTIONAL_SLOTS.includes(entry.slot)) slotsToEnable.push(entry.slot);
     }
     if (Object.keys(newOverrides).length > 0) {
       setMaterialOverrides((prev) => ({ ...prev, ...newOverrides }));
       setSlotSelections((prev) => ({ ...prev, ...newSelections }));
+      if (slotsToEnable.length > 0) {
+        setEnabledOptionalSlots((prev) => new Set([...prev, ...slotsToEnable]));
+      }
       setActiveTab("design");
       setSearchParams((prev) => { prev.delete("material"); return prev; }, { replace: true });
     }
