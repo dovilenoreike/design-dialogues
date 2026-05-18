@@ -817,7 +817,11 @@ export default function DesignView() {
 
           {/* Sub-tab content */}
           {subTab === "specs" ? (
-            <SpecsView designer={activePresetDesigner ?? getApprovedByDesigner(Object.values(materialOverrides))} />
+            <SpecsView
+              designer={activePresetDesigner ?? getApprovedByDesigner(Object.values(materialOverrides))}
+              allNonAccentsVerified={allNonAccentsVerified}
+              onRequestReview={() => setShowReviewSheet(true)}
+            />
           ) : subTab === "vizualas" ? (
             <div>
               <div className="relative w-full aspect-square">

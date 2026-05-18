@@ -15,9 +15,11 @@ import DesignerProfileSheet from "@/components/DesignerProfileSheet";
 interface SpecsViewProps {
   /** Designer key from the active collection preset, if it belongs to an external designer */
   designer?: string | null;
+  allNonAccentsVerified?: boolean;
+  onRequestReview?: () => void;
 }
 
-export default function SpecsView({ designer }: SpecsViewProps) {
+export default function SpecsView({ designer, allNonAccentsVerified = true, onRequestReview }: SpecsViewProps) {
   const navigate = useNavigate();
   const { design, materialOverrides, excludedSlots, selectedTier } = useDesign();
   const { t, language } = useLanguage();
@@ -133,28 +135,43 @@ export default function SpecsView({ designer }: SpecsViewProps) {
             </div>
           ) : (
             <>
-              {/* Palette hint + change set CTA */}
-              {paletteHint && (
+              {/* Palette hint + change set / request review CTA */}
+              {(paletteHint || !allNonAccentsVerified) && (
                 <div className="flex flex-col items-center gap-2 pb-4 text-center">
-                  <span
-                    className="text-[13px] font-medium tracking-[0.08em] uppercase"
-                    style={{ color: "rgba(0,0,0,0.7)" }}
-                  >
-                    {t(`paletteHint.${paletteHint.key}.label`)}
-                  </span>
-                  <span
-                    className="text-[13px] leading-snug"
-                    style={{ color: "rgba(0,0,0,0.55)" }}
-                  >
-                    {t(`paletteHint.${paletteHint.key}.desc`)}
-                  </span>
-                  <button
-                    onClick={() => navigate("/design")}
-                    className="mt-1 px-4 py-1.5 rounded-full text-[11px] font-medium tracking-[0.04em] uppercase active:opacity-40 transition-opacity"
-                    style={{ backgroundColor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.45)", border: "0.5px solid rgba(0,0,0,0.08)" }}
-                  >
-                    {t("specs.changeSet")}
-                  </button>
+                  {paletteHint && (
+                    <>
+                      <span
+                        className="text-[13px] font-medium tracking-[0.08em] uppercase"
+                        style={{ color: "rgba(0,0,0,0.7)" }}
+                      >
+                        {t(`paletteHint.${paletteHint.key}.label`)}
+                      </span>
+                      <span
+                        className="text-[13px] leading-snug"
+                        style={{ color: "rgba(0,0,0,0.55)" }}
+                      >
+                        {t(`paletteHint.${paletteHint.key}.desc`)}
+                      </span>
+                    </>
+                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {!allNonAccentsVerified && onRequestReview && (
+                      <button
+                        onClick={onRequestReview}
+                        className="h-8 px-3 rounded-full text-[11px] font-medium tracking-[0.03em] active:scale-95 transition-transform whitespace-nowrap"
+                        style={{ backgroundColor: "rgba(0,0,0,0.07)", color: "rgba(0,0,0,0.65)" }}
+                      >
+                        {t("moodboard.requestReview")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => navigate("/design")}
+                      className="h-8 px-3 rounded-full text-[11px] font-medium tracking-[0.03em] active:scale-95 transition-transform whitespace-nowrap text-white"
+                      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                    >
+                      {t("specs.changeSet")}
+                    </button>
+                  </div>
                 </div>
               )}
 
