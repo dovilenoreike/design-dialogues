@@ -13,13 +13,19 @@ export interface GridCell {
  * Build a 3×3 warmth × lightness grid relative to a center material.
  * Returns 9 cells in row-major order (row 0..2, col 0..2).
  * The center cell (row=1, col=1) is always the center material itself.
- * Each non-center cell gets the best-ranked material in its warmth × lightness zone.
- * Any cell whose zone has no natural match is filled with the next best unassigned
- * material from the pool so the grid is never visually sparse.
  *
- * @param center  The material to place at the grid center.
- * @param pool    Candidates — same archetypeId + role, with imageUrl. Should exclude center.
- * @param rankedCodes  Output of getAllRankedCodes (best-first). Used to pick within each zone.
+ * Each non-center cell has an ideal (L, W) target offset from center.
+ * Materials are assigned by normalized distance to each cell's ideal target —
+ * rank (from rankedCodes) is the tiebreaker only. This keeps grid positions
+ * driven by lightness/warmth geometry even when pair-score boosts change rank.
+ *
+ * Hard direction constraint preserved:
+ *   lighter material (lDiff > 0) → rows 0 or 1 only
+ *   darker  material (lDiff < 0) → rows 1 or 2 only
+ *
+ * @param center      The material to place at the grid center.
+ * @param pool        Candidates — same archetypeId + role, with imageUrl. Should exclude center.
+ * @param rankedCodes Output of getAllRankedCodes (best-first). Used as tiebreaker.
  */
 export function buildMaterialGrid(
   center: SupabaseMaterial,
@@ -27,80 +33,55 @@ export function buildMaterialGrid(
   rankedCodes: string[],
 ): GridCell[] {
   const rankIndex = new Map(rankedCodes.map((c, i) => [c, i]));
-  const cells: GridCell[] = [];
-  const assigned = new Set<string>([center.technicalCode]);
+  const cells: (SupabaseMaterial | null)[] = Array(9).fill(null);
+  cells[4] = center; // (row=1, col=1)
 
-  // Pass 1: fill each cell with the best material in its natural zone.
-  for (let row = 0; row <= 2; row++) {
-    for (let col = 0; col <= 2; col++) {
-      const r = row as 0 | 1 | 2;
-      const c = col as 0 | 1 | 2;
+  // Ideal L/W offsets from center for each row/col
+  const idealLDiff = [+GRID_LIGHTNESS_STEP, 0, -GRID_LIGHTNESS_STEP]; // row 0=lighter, 2=darker
+  const idealWDiff = [-GRID_WARMTH_STEP,    0, +GRID_WARMTH_STEP];    // col 0=cooler, 2=warmer
 
-      if (r === 1 && c === 1) {
-        cells.push({ row: r, col: c, material: center });
-        continue;
-      }
+  type Pair = { mIdx: number; cellKey: number; dist: number };
+  const pairs: Pair[] = [];
 
-      const candidates = pool.filter(m => {
-        if (assigned.has(m.technicalCode)) return false;
-        const lDiff = m.lightness - center.lightness;
-        const wDiff = (m.warmth ?? 0) - (center.warmth ?? 0);
-
-        const lighter = lDiff >  GRID_LIGHTNESS_STEP;
-        const darker  = lDiff < -GRID_LIGHTNESS_STEP;
-        const cooler  = wDiff < -GRID_WARMTH_STEP;
-        const warmer  = wDiff >  GRID_WARMTH_STEP;
-
-        const rowMatch = r === 0 ? lighter : r === 2 ? darker  : (!lighter && !darker);
-        const colMatch = c === 0 ? cooler  : c === 2 ? warmer  : (!cooler  && !warmer);
-
-        return rowMatch && colMatch;
-      });
-
-      const ranked = candidates
-        .filter(m => rankIndex.has(m.technicalCode))
-        .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!);
-
-      const best = ranked[0] ?? candidates[0] ?? null;
-      if (best) assigned.add(best.technicalCode);
-      cells.push({ row: r, col: c, material: best });
-    }
-  }
-
-  // Pass 2: fill remaining null cells without violating lightness direction.
-  // A material darker than center must never land in row 0 (lighter).
-  // A material lighter than center must never land in row 2 (darker).
-  // Within the allowed rows, prefer the cell closest to the material's natural position.
-  const overflow = pool
-    .filter(m => !assigned.has(m.technicalCode))
-    .sort((a, b) => (rankIndex.get(a.technicalCode) ?? Infinity) - (rankIndex.get(b.technicalCode) ?? Infinity));
-
-  for (const m of overflow) {
-    if (!cells.some(c => c.material === null)) break;
-
+  for (let mIdx = 0; mIdx < pool.length; mIdx++) {
+    const m = pool[mIdx];
     const lDiff = m.lightness - center.lightness;
     const wDiff = (m.warmth ?? 0) - (center.warmth ?? 0);
-    const softRow: 0 | 1 | 2 = lDiff > 0 ? 0 : lDiff < 0 ? 2 : 1;
-    const softCol: 0 | 1 | 2 = wDiff < -0.02 ? 0 : wDiff > 0.02 ? 2 : 1;
 
-    // Hard constraint: lighter materials stay in rows 0–1, darker in rows 1–2.
-    const allowedRows: ReadonlySet<number> =
-      softRow === 0 ? new Set([0, 1]) :
-      softRow === 2 ? new Set([2, 1]) :
-      new Set([0, 1, 2]);
+    for (let row = 0; row <= 2; row++) {
+      for (let col = 0; col <= 2; col++) {
+        if (row === 1 && col === 1) continue;
+        if (lDiff > 0 && row === 2) continue; // lighter → not darker row
+        if (lDiff < 0 && row === 0) continue; // darker  → not lighter row
 
-    let best: GridCell | null = null;
-    let bestScore = Infinity;
-
-    for (const cell of cells) {
-      if (cell.material !== null || !allowedRows.has(cell.row)) continue;
-      // Row distance weighted heavily so direction is never sacrificed for warmth fit.
-      const score = Math.abs(cell.row - softRow) * 10 + Math.abs(cell.col - softCol);
-      if (score < bestScore) { bestScore = score; best = cell; }
+        const dL = (lDiff - idealLDiff[row]) / GRID_LIGHTNESS_STEP;
+        const dW = (wDiff - idealWDiff[col]) / GRID_WARMTH_STEP;
+        pairs.push({ mIdx, cellKey: row * 3 + col, dist: dL * dL + dW * dW });
+      }
     }
-
-    if (best) best.material = m;
   }
 
-  return cells;
+  // Primary: smallest distance. Tiebreaker: best rank.
+  pairs.sort((a, b) => {
+    const dd = a.dist - b.dist;
+    if (Math.abs(dd) > 1e-9) return dd;
+    return (rankIndex.get(pool[a.mIdx].technicalCode) ?? Infinity)
+         - (rankIndex.get(pool[b.mIdx].technicalCode) ?? Infinity);
+  });
+
+  const usedMaterials = new Set<number>();
+  const usedCells     = new Set<number>([4]);
+
+  for (const { mIdx, cellKey } of pairs) {
+    if (usedMaterials.has(mIdx) || usedCells.has(cellKey)) continue;
+    cells[cellKey] = pool[mIdx];
+    usedMaterials.add(mIdx);
+    usedCells.add(cellKey);
+  }
+
+  const result: GridCell[] = [];
+  for (let row = 0; row <= 2; row++)
+    for (let col = 0; col <= 2; col++)
+      result.push({ row: row as 0|1|2, col: col as 0|1|2, material: cells[row * 3 + col] });
+  return result;
 }

@@ -447,7 +447,7 @@ export function useGraphMaterials() {
   //   finalScore = paletteScore × W + normalizedPairScore × (1-W)
   // W=0.5 balances image-derived colour harmony against curated pair compatibility,
   // compensating for photo inaccuracy until material images are replaced.
-  const PALETTE_WEIGHT = 0.5;
+  const PALETTE_WEIGHT = 0.7;
 
   function getAllRankedCodes(
     otherCodes: string[],
