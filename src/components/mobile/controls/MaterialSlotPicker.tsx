@@ -250,8 +250,18 @@ export default function MaterialSlotPicker({
         .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!);
       return ranked[0] ?? gridPool[0];
     }
-    return gridPool[0] ?? null;
-  }, [gridCenterCode, graphMaterials, effectiveActiveId, selectedMaterialCode, allRankedCodes, gridPool]);
+    // No ranked context (nothing else selected) — mirror the chip's fallback:
+    // most pair entries as primary signal, descriptor score as tiebreaker.
+    if (gridPool.length > 0) {
+      return gridPool.reduce((best, m) => {
+        const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
+        const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
+        if (descM !== descBest) return descM > descBest ? m : best;
+        return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
+      });
+    }
+    return null;
+  }, [gridCenterCode, graphMaterials, effectiveActiveId, selectedMaterialCode, allRankedCodes, gridPool, otherMaterialCodes]);
 
   // 3×3 grid cells
   const materialGrid = useMemo((): GridCell[] => {
