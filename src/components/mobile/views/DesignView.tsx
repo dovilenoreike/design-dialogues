@@ -50,7 +50,7 @@ export default function DesignView() {
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
-  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers } = useGraphMaterials();
+  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
       getRecommendedCodes(currentCode, otherCodes, role, styleMode),
@@ -657,13 +657,25 @@ export default function DesignView() {
   }, [allSlotsFilled, activeSlots, materialOverrides, isCompatibleWithOthers]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lg:overflow-hidden lg:flex lg:flex-row">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden lg:flex-row">
 
       {/* LEFT (desktop) / TOP (mobile): sub-tab content — clicking here closes the picker */}
-      <div ref={flatlayRef} className="lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto" onClick={() => setActiveSlot(null)}>
-        <div className="px-4 pt-3 pb-4 lg:px-8 lg:py-6">
+      <div
+        ref={flatlayRef}
+        className={`${activeSlot ? "h-[180px] overflow-hidden flex-shrink-0 cursor-pointer relative" : "flex-1 min-h-0 overflow-y-auto"} lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto lg:cursor-auto lg:h-auto`}
+        onClick={() => setActiveSlot(null)}
+      >
+        {/* Bottom fade to indicate the peek is clipped — mobile only, when picker is open */}
+        {activeSlot && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none lg:hidden"
+            style={{ background: "linear-gradient(to bottom, transparent, rgba(249,248,247,0.92))" }}
+          />
+        )}
+        <div className={`px-4 ${activeSlot ? "pt-1" : "pt-3"} pb-4 lg:px-8 lg:py-6`}>
 
-          {/* Collection carousel — shared header for both sub-views */}
+          {/* Collection carousel — hidden during peek (picker open on mobile) */}
+          <div className={activeSlot ? "hidden lg:block" : ""}>
           <CollectionPresetCarousel
             roomCategory={design.selectedCategory}
             onApplyPreset={(materials, imageUrl, designer) => {
@@ -707,9 +719,10 @@ export default function DesignView() {
             variant="header"
             savedPalettes={savedPalettes}
           />
+          </div>{/* end carousel hide wrapper */}
 
-          {/* Shared topbar */}
-          <div className="flex items-center justify-between pt-3 pb-2">
+          {/* Shared topbar — hidden during peek */}
+          <div className={`${activeSlot ? "hidden lg:flex" : "flex"} items-center justify-between pt-3 pb-2`}>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleSubTabChange("konceptas")}
@@ -772,9 +785,9 @@ export default function DesignView() {
             </div>
           </div>
 
-          {/* Sub-tab switcher */}
+          {/* Sub-tab switcher — hidden during peek */}
           <div
-            className="flex mb-3 rounded-full p-[3px]"
+            className={`${activeSlot ? "hidden lg:flex" : "flex"} mb-3 rounded-full p-[3px]`}
             style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
           >
             {(["konceptas", "vizualas", "specs"] as const).map((tab) => (
@@ -881,7 +894,7 @@ export default function DesignView() {
       {/* RIGHT (desktop) / BOTTOM (mobile): shared inline picker */}
       <div
         ref={pickerRef}
-        className={`${activeSlot ? "h-[320px] mt-1" : "h-auto mt-3"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 border-t lg:border-t-0 lg:border-l bg-neutral-50`}
+        className={`${activeSlot ? "flex-1 min-h-0 overflow-hidden" : "h-auto mt-3 border-t"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -900,6 +913,8 @@ export default function DesignView() {
             getAllRankedCodes={allRankedWithStyle}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
+            isCompatibleWithOthers={isCompatibleWithOthers}
+            isCompatibleWithEvery={isCompatibleWithEvery}
             subHeader={(() => {
               const assignedPks = slotSurfaces[activeSlot] ?? [];
               const slotRole = SLOT_KEY_TO_ROLE[activeSlot];

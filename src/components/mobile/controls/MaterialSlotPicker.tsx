@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, Trash2, X, Search } from "lucide-react";
+import { Check, CheckCheck, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
@@ -51,6 +51,10 @@ interface MaterialSlotPickerProps {
   inline?: boolean;
   /** Optional node rendered between the inline header and the swatch content (e.g. surface type pills) */
   subHeader?: React.ReactNode;
+  /** V badge — compatible with most other selected materials */
+  isCompatibleWithOthers?: (code: string, otherCodes: string[]) => boolean;
+  /** VV badge — compatible with ALL other selected materials */
+  isCompatibleWithEvery?: (code: string, otherCodes: string[]) => boolean;
 }
 
 // ─── Row item types (module-level so cluster helpers can reference them) ──────
@@ -87,6 +91,8 @@ export default function MaterialSlotPicker({
   filterEmptyArchetypes = false,
   inline = false,
   subHeader,
+  isCompatibleWithOthers,
+  isCompatibleWithEvery,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -763,11 +769,28 @@ export default function MaterialSlotPicker({
                         }}
                       >
                         <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                        {/* Selection indicator — bottom-right */}
                         {isSelected && (
                           <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
                             <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
                           </div>
                         )}
+                        {/* V/VV compatibility badge — bottom-left, shown on all cells including selected */}
+                        {(() => {
+                          const others = otherMaterialCodes ?? [];
+                          if (others.length === 0 || (!isCompatibleWithOthers && !isCompatibleWithEvery)) return null;
+                          const isVV = isCompatibleWithEvery?.(mat.technicalCode, others) ?? false;
+                          const isV  = !isVV && (isCompatibleWithOthers?.(mat.technicalCode, others) ?? false);
+                          if (!isVV && !isV) return null;
+                          return (
+                            <div className="absolute flex items-center justify-center" style={{ bottom: 4, left: 4, width: 16, height: 16, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.45)" }}>
+                              {isVV
+                                ? <CheckCheck className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                                : <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                              }
+                            </div>
+                          );
+                        })()}
                       </button>
                     );
                   })}

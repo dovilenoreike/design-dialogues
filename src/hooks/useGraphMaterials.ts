@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { rankByPaletteScore, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
+import { rankByPaletteScore, scoreCandidate, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -443,23 +443,36 @@ export function useGraphMaterials() {
       .map((m) => m.technicalCode);
   }
 
-  // All materials for the role ranked by palette score — no pair filtering.
-  // Returns empty when nothing is placed (no anchor → scores are meaningless).
+  // All materials for the role ranked by blended score:
+  //   finalScore = paletteScore × W + normalizedPairScore × (1-W)
+  // W=0.5 balances image-derived colour harmony against curated pair compatibility,
+  // compensating for photo inaccuracy until material images are replaced.
+  const PALETTE_WEIGHT = 0.5;
+
   function getAllRankedCodes(
     otherCodes: string[],
     targetRole?: string,
     style: StyleMode = 'grounded',
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
-    const { byCode, graphMaterials: mats } = _cached;
+    const { byCode, pairWeights, graphMaterials: mats } = _cached;
+    const role = targetRole ?? 'front';
     const pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;
       if (targetRole && !m.role.includes(targetRole)) return false;
       return true;
     });
     if (pool.length === 0) return [];
-    return rankByPaletteScore(pool, otherCodes, byCode, targetRole ?? 'front', style)
-      .map((m) => m.technicalCode);
+    const maxPairW = otherCodes.length * 3;
+    return [...pool].sort((a, b) => {
+      const pA = scoreCandidate(a, otherCodes, byCode, role, style);
+      const pB = scoreCandidate(b, otherCodes, byCode, role, style);
+      const cA = maxPairW > 0 ? weightedScore(a.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
+      const cB = maxPairW > 0 ? weightedScore(b.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
+      const sA = pA * PALETTE_WEIGHT + cA * (1 - PALETTE_WEIGHT);
+      const sB = pB * PALETTE_WEIGHT + cB * (1 - PALETTE_WEIGHT);
+      return sB - sA;
+    }).map((m) => m.technicalCode);
   }
 
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
