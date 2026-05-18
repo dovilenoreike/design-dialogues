@@ -264,29 +264,13 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   }, []);
 
   const initializeDefaultMaterials = useCallback(() => {
-    const ROLE_TO_PK: Array<{ role: string; pk: string }> = [
-      { role: "floor", pk: "floor" },
-      { role: "front", pk: "bottomCabinets" },
-      { role: "worktop", pk: "worktops" },
-      { role: "accent", pk: "accents" },
-      { role: "tile", pk: "tiles" },
-    ];
-    setMaterialOverrides(() => {
-      const next: Record<string, string> = {};
-      for (const { role, pk } of ROLE_TO_PK) {
-        const mats = getMaterialsByRole(role).filter(m => m.imageUrl);
-        if (mats.length === 0) continue;
-        if (activeShowroom) {
-          const sm = mats.find(m => m.showroomIds.includes(activeShowroom.id));
-          if (sm) { next[pk] = sm.technicalCode; continue; }
-        }
-        const top = mats.reduce((best, m) =>
-          getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best
-        );
-        next[pk] = top.technicalCode;
-      }
-      return next;
-    });
+    const mats = getMaterialsByRole("floor").filter(m => m.imageUrl);
+    if (mats.length === 0) return;
+    const top = activeShowroom
+      ? (mats.find(m => m.showroomIds.includes(activeShowroom.id)) ??
+         mats.reduce((best, m) => getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best))
+      : mats.reduce((best, m) => getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best);
+    setMaterialOverrides(() => ({ floor: top.technicalCode }));
   }, [setMaterialOverrides, activeShowroom]);
 
   // Clear the "materials-reset" flag once the user has materials again, so future
