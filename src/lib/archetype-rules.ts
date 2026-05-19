@@ -1,6 +1,6 @@
 export const LIGHTNESS_THRESHOLD = 20;
 export const BUSY_PATTERN_THRESHOLD = 29;
-export const WOOD_WARMTH_MISMATCH_THRESHOLD = 0.09;
+export const WOOD_WARMTH_MISMATCH_THRESHOLD = 0.20;
 
 function visualChroma(chroma: number, lightness: number): number {
   return chroma * Math.sin(Math.PI * Math.max(0, Math.min(100, lightness)) / 100);

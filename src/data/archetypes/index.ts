@@ -3,11 +3,11 @@ import type { MaterialRole } from "@/types/material-types";
 
 export const archetypes: Archetype[] = [
   // ── Floor (2) ─────────────────────────────────────────────────────────────
-  { id: "wood",  role: "floor", label: { en: "Wood",  lt: "Mediena" }, value: "#c4a882" },
+  { id: "wood",  role: "floor", label: { en: "Wood",  lt: "Medis" }, value: "#c4a882" },
   { id: "stone", role: "floor", label: { en: "Stone", lt: "Akmuo"   }, value: "#b0a898" },
 
   // ── Front / Cabinet Fronts (5) ────────────────────────────────────────────
-  { id: "wood",          role: "front", label: { en: "Wood",         lt: "Mediena"            }, value: "#b89870" },
+  { id: "wood",          role: "front", label: { en: "Wood",         lt: "Medis"            }, value: "#b89870" },
   { id: "light-neutral", role: "front", label: { en: "Light",        lt: "Šviesūs"            }, value: "#ece8e0" },
   { id: "dark-neutral",  role: "front", label: { en: "Dark",         lt: "Tamsūs"             }, value: "#2a2a2a" },
   { id: "colours",       role: "front", label: { en: "Colours",      lt: "Spalvingi"          }, value: "#9ab4ac" },
@@ -15,7 +15,7 @@ export const archetypes: Archetype[] = [
 
   // ── Worktop (5) ───────────────────────────────────────────────────────────
   { id: "stone",         role: "worktop", label: { en: "Stone",   lt: "Akmuo"    }, value: "#d8d4cc" },
-  { id: "wood",          role: "worktop", label: { en: "Wood",    lt: "Mediena"  }, value: "#c4a882" },
+  { id: "wood",          role: "worktop", label: { en: "Wood",    lt: "Medis"  }, value: "#c4a882" },
   { id: "light-neutral", role: "worktop", label: { en: "Light",   lt: "Šviesūs"  }, value: "#f5f5f3" },
   { id: "dark-neutral",  role: "worktop", label: { en: "Dark",    lt: "Tamsūs"   }, value: "#1a1a1a" },
   { id: "metallic",      role: "worktop", label: { en: "Metal",   lt: "Metalas"  }, value: "#b0b4bc" },

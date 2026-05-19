@@ -25,7 +25,7 @@ const L_STD_HIGH = 30;   // lightness weighted std dev → "High contrast" 22 or
 // warmthDiff is multiplied by 60 to put it on the same scale as lightness (0–100).
 // A clearly warm+cool split (e.g. oak floor vs grey fronts, Δwarmth ≈ 0.45) → warmthAvgDist ≈ 17–22.
 // An all-warm palette → warmthAvgDist ≈ 2–5. Threshold sits between those.
-const MIXED_WARMTH_DIST = 12;
+const MIXED_WARMTH_DIST = 17;
 
 function distanceBreakdown(a: SupabaseMaterial, b: SupabaseMaterial) {
   const lightnessDiff = Math.abs(a.lightness - b.lightness);

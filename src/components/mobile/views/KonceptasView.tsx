@@ -271,8 +271,8 @@ export default function KonceptasView({
             .map(k => { const v = slotSurfaces[k]?.[0]; return v ? materialOverrides[v] : null; })
             .filter((c): c is string => !!c);
           const otherRoleCodes = otherCodes.filter(c => !sameRoleCodes.includes(c));
-          const showWoodWarning = showIndicator && getUnapprovedWoodPartners(currentMatId, sameRoleCodes, otherRoleCodes).length > 0;
-          const showBusyPatternWarning = showIndicator && getUnapprovedBusyPatternPartners(currentMatId, otherCodes).length > 0;
+          const showWoodWarning = showIndicator && !showDoubleVerified && getUnapprovedWoodPartners(currentMatId, sameRoleCodes, otherRoleCodes).length > 0;
+          const showBusyPatternWarning = showIndicator && !showDoubleVerified && getUnapprovedBusyPatternPartners(currentMatId, otherCodes).length > 0;
           const isActive = piece.slot === activeSlot;
 
           return (
