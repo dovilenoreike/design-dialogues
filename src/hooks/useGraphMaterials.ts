@@ -315,12 +315,12 @@ export function getIdealTargetsForCode(
   placedCodes: string[],
   role: string,
   style: StyleMode = 'grounded',
-): { idealL: number; idealW: number; idealC: number; idealP: number; anchorH: number | null } | null {
+): { idealL: number; idealW: number; idealC: number; idealP: number; hRef: number | null; idealHArc: number } | null {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, byCode.get(placedCodes[0])?.texture ?? '');
+  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, '', candidate.archetypeId);
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */

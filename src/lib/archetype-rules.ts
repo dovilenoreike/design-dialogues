@@ -53,7 +53,7 @@ export function deriveArchetypeId(
   if (role === 'front' && isPlainLike) {
     const vc = visualChroma(chroma, lightness);
     if (isNeutralPlain(vc, hue_angle)) {
-      return lightness >= 45 ? 'light-neutral' : 'dark-neutral';
+      return lightness >= 50 ? 'light-neutral' : 'dark-neutral';
     }
     return 'colours';
   }

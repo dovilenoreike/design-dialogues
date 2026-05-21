@@ -475,7 +475,7 @@ export default function KonceptasView({
                     </span>
                     {ideals && (
                       <span className="text-yellow-300/80 font-mono leading-none text-[6px] lg:text-[10px]">
-                        →L{ideals.idealL} W{ideals.idealW} C{ideals.idealC} P{ideals.idealP} aH{ideals.anchorH ?? "—"}
+                        →L{ideals.idealL} W{ideals.idealW} C{ideals.idealC} P{ideals.idealP} hRef{ideals.hRef ?? "—"}±{ideals.idealHArc}°
                       </span>
                     )}
                     {axisErrs && (() => {
