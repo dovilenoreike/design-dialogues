@@ -190,7 +190,7 @@ const lDarkNeutral: IdealFn = (ctx) => {
 // the floor or from the fronts both agree: floor is lighter, fronts are darker.
 // For other role pairs: balanced-midpoint direction (closer to 0.5 → less pull).
 const BALANCED_WOOD      = 0.5;
-const MAX_WOOD_DIFFERENCE = 0.2;
+const MAX_WOOD_DIFFERENCE = 0.3;
 
 const woodLIdeal: IdealFn = (ctx) => {
   let anchorLNorm: number;
@@ -273,7 +273,7 @@ const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
   L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
   W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
-  H: { ideal: hAbsolute(0.1),        tolerance: { quiet: 0.10, grounded: 0.30, intentional: 0.50 } },
+  H: { ideal: hAbsolute(0.03),        tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.05 } },
   C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
