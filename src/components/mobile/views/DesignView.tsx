@@ -57,8 +57,8 @@ export default function DesignView() {
     [getRecommendedCodes, styleMode]
   );
   const allRankedWithStyle = useCallback(
-    (otherCodes: string[], role: string) =>
-      getAllRankedCodes(otherCodes, role, styleMode),
+    (otherCodes: string[], role: string, _style?: string, chipArchetypeId?: string | null) =>
+      getAllRankedCodes(otherCodes, role, styleMode, chipArchetypeId),
     [getAllRankedCodes, styleMode]
   );
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();

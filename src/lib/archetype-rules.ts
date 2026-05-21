@@ -9,7 +9,7 @@ function visualChroma(chroma: number, lightness: number): number {
 // Neutral = virtually achromatic (vc < 1, any hue)
 //        OR warm-neutral zone (hue 20–60°) with low visual chroma (vc < 20).
 // Everything outside these conditions routes to muted/bold.
-function isNeutralPlain(vc: number, hue_angle: number | null): boolean {
+export function isNeutralPlain(vc: number, hue_angle: number | null): boolean {
   if (vc < 1) return true;
   return hue_angle !== null && hue_angle >= 20 && hue_angle <= 60 && vc < 20;
 }
@@ -21,7 +21,7 @@ export function deriveArchetypeId(
   warmth: number,
   pattern: number,
   chroma: number = 0,
-  hue_angle: number | null = null,
+  _hue_angle: number | null = null,
 ): string | null {
   // Accent role: map to moodboard archetype IDs (gold / silver / bronze / black / colour)
   if (role === 'accent') {
@@ -48,15 +48,10 @@ export function deriveArchetypeId(
   // Stone-like floor
   if (isStoneLike && role === 'floor') return 'stone';
 
-  // Cabinet front — any non-wood/stone-like/metal texture (plain, textile, …)
+  // Cabinet front — plain/textile: no archetype classification; scoring derives the spec
+  // from material properties at runtime (see palette-scoring.ts derivePlainArchetypeId).
   const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metal';
-  if (role === 'front' && isPlainLike) {
-    const vc = visualChroma(chroma, lightness);
-    if (isNeutralPlain(vc, hue_angle)) {
-      return lightness >= 50 ? 'light-neutral' : 'dark-neutral';
-    }
-    return 'colours';
-  }
+  if (role === 'front' && isPlainLike) return null;
 
   // Worktop
   if (role === 'worktop') {

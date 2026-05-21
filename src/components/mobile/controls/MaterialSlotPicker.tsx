@@ -43,7 +43,7 @@ interface MaterialSlotPickerProps {
   sameRoleMaterialCodes?: string[];
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
-  getAllRankedCodes?: (otherCodes: string[], role: string) => string[];
+  getAllRankedCodes?: (otherCodes: string[], role: string, style?: string, chipArchetypeId?: string | null) => string[];
   graphMaterials?: SupabaseMaterial[];
   /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
   filterEmptyArchetypes?: boolean;
@@ -55,6 +55,14 @@ interface MaterialSlotPickerProps {
   isCompatibleWithOthers?: (code: string, otherCodes: string[]) => boolean;
   /** VV badge — compatible with ALL other selected materials */
   isCompatibleWithEvery?: (code: string, otherCodes: string[]) => boolean;
+}
+
+// Plain front chips: all three share the same material pool (all plain fronts).
+// Spec selection is handled by the scoring layer (derivePlainArchetypeId / chipArchetypeId).
+const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['light-neutral', 'dark-neutral', 'colours']);
+
+function isPlainFrontChip(archetypeId: string | null | undefined, role: string): boolean {
+  return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
 }
 
 // ─── Row item types (module-level so cluster helpers can reference them) ──────
@@ -125,6 +133,19 @@ export default function MaterialSlotPicker({
     if (!selectedMaterialCode) setGridCenterCode(null);
   }, [selectedMaterialCode]);
 
+  // ─── Per-chip ranked codes for plain front chips ──────────────────────────
+  // Computed independently per chip so each thumbnail reflects its own spec's best candidate.
+  const plainChipRankedCodes = useMemo((): Map<string, string[]> => {
+    if (!slot || !getAllRankedCodes) return new Map();
+    const role = SLOT_KEY_TO_ROLE[slot];
+    if (role !== 'front') return new Map();
+    const map = new Map<string, string[]>();
+    for (const chipId of PLAIN_FRONT_ARCHETYPE_IDS) {
+      map.set(chipId, getAllRankedCodes(otherMaterialCodes ?? [], role, undefined, chipId));
+    }
+    return map;
+  }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
   const availableWithImages = useMemo(() => {
     if (!slot) return [];
@@ -141,7 +162,9 @@ export default function MaterialSlotPicker({
 
     return getArchetypesByRole(role)
       .map((a) => {
-        const archetypeMats = mats.filter((m) => m.archetypeId === a.id && m.role.includes(role));
+        const archetypeMats = mats.filter((m) =>
+          (isPlainFrontChip(a.id, role) ? m.texture === 'plain' : m.archetypeId === a.id) && m.role.includes(role)
+        );
         const recommendedMat = archetypeMats.find((m) => recommendedCodes.has(m.technicalCode));
 
         let displayImage: string | null | undefined;
@@ -153,16 +176,31 @@ export default function MaterialSlotPicker({
           resolvedCode = selectedMaterialCode;
           isRecommended = recommendedCodes.size > 0 && recommendedCodes.has(selectedMaterialCode);
         } else {
-          const primaryMat = recommendedMat ?? (
-            archetypeMats.length > 0
-              ? archetypeMats.reduce((best, m) => {
-                  const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
-                  const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
-                  if (descM !== descBest) return descM > descBest ? m : best;
-                  return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
-                })
-              : undefined
-          );
+          const withImage = archetypeMats.filter(m => !!m.imageUrl);
+          let primaryMat: typeof archetypeMats[0] | undefined;
+          if (isPlainFrontChip(a.id, role) && withImage.length > 0) {
+            // Use the per-chip ranking so the thumbnail reflects the best candidate for THIS chip's spec.
+            const chipRanked = plainChipRankedCodes.get(a.id) ?? [];
+            if (chipRanked.length > 0) {
+              const rankIndex = new Map(chipRanked.map((c, i) => [c, i]));
+              primaryMat = withImage
+                .filter(m => rankIndex.has(m.technicalCode))
+                .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!)[0]
+                ?? withImage[0];
+            } else {
+              primaryMat = withImage[0];
+            }
+          } else {
+            primaryMat = recommendedMat;
+            if (!primaryMat && withImage.length > 0) {
+              primaryMat = archetypeMats.reduce((best, m) => {
+                const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
+                const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
+                if (descM !== descBest) return descM > descBest ? m : best;
+                return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
+              });
+            }
+          }
           resolvedCode = primaryMat?.technicalCode;
           if (filterEmptyArchetypes && graphLoaded && !resolvedCode && role !== "accent") {
             return { archetype: a, displayImage: null as null, isRecommended: false, resolvedCode: undefined };
@@ -186,7 +224,7 @@ export default function MaterialSlotPicker({
         Number(b.isRecommended) - Number(a.isRecommended) ||
         b.archetypeDescriptorScore - a.archetypeDescriptorScore
       );
-  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes]);
+  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes, plainChipRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Effective active archetype ───────────────────────────────────────────
   const effectiveActiveId = useMemo(() => {
@@ -219,38 +257,45 @@ export default function MaterialSlotPicker({
   const paletteRankByCode = useMemo((): Map<string, number> => {
     if (!SHOW_COLOUR_SCORES || !slot || !getAllRankedCodes) return new Map();
     const role = SLOT_KEY_TO_ROLE[slot];
-    const codes = getAllRankedCodes(otherMaterialCodes ?? [], role);
+    const chipId = isPlainFrontChip(effectiveActiveId, role) ? effectiveActiveId : undefined;
+    const codes = getAllRankedCodes(otherMaterialCodes ?? [], role, undefined, chipId);
     return new Map(codes.map((code, i) => [code, i + 1]));
-  }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slot, getAllRankedCodes, otherMaterialCodes, effectiveActiveId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Grid data (inline mode) ──────────────────────────────────────────────
 
-  // Full ranked list for the current slot (not gated by SHOW_COLOUR_SCORES)
+  // Full ranked list for the current slot — chip-aware for plain front archetypes
   const allRankedCodes = useMemo((): string[] => {
     if (!slot || !getAllRankedCodes) return [];
-    return getAllRankedCodes(otherMaterialCodes ?? [], SLOT_KEY_TO_ROLE[slot]);
-  }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+    const role = SLOT_KEY_TO_ROLE[slot];
+    const chipId = isPlainFrontChip(effectiveActiveId, role) ? effectiveActiveId : undefined;
+    return getAllRankedCodes(otherMaterialCodes ?? [], role, undefined, chipId);
+  }, [slot, getAllRankedCodes, otherMaterialCodes, effectiveActiveId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // All materials in the active archetype with images (grid pool)
   const gridPool = useMemo((): SupabaseMaterial[] => {
     if (!slot || !effectiveActiveId || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    return graphMaterials.filter(
-      m => m.archetypeId === effectiveActiveId && m.role.includes(role) && !!m.imageUrl
+    return graphMaterials.filter(m =>
+      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' : m.archetypeId === effectiveActiveId)
+      && m.role.includes(role) && !!m.imageUrl
     );
   }, [slot, effectiveActiveId, graphMaterials]);
 
   // The material at the center of the 3×3 grid
   const effectiveGridCenter = useMemo((): SupabaseMaterial | null => {
+    const role = slot ? SLOT_KEY_TO_ROLE[slot] : '';
+    const plainChip = isPlainFrontChip(effectiveActiveId, role);
+    const inChip = (m: SupabaseMaterial) => plainChip ? m.texture === 'plain' : m.archetypeId === effectiveActiveId;
     // User-navigated center
     if (gridCenterCode) {
       const m = graphMaterials?.find(m => m.technicalCode === gridCenterCode);
-      if (m?.archetypeId === effectiveActiveId) return m;
+      if (m && inChip(m)) return m;
     }
     // Currently selected material (if it belongs to the active archetype)
     if (selectedMaterialCode) {
       const m = graphMaterials?.find(m => m.technicalCode === selectedMaterialCode);
-      if (m?.archetypeId === effectiveActiveId) return m;
+      if (m && inChip(m)) return m;
     }
     // Best ranked in this archetype
     if (allRankedCodes.length > 0 && gridPool.length > 0) {
@@ -286,16 +331,33 @@ export default function MaterialSlotPicker({
     const role = SLOT_KEY_TO_ROLE[slot];
     const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
     const map = new Map<string, string>();
-    for (const { archetype } of availableWithImages) {
-      const candidates = graphMaterials.filter(
-        m => m.archetypeId === archetype.id && m.role.includes(role) && !!m.imageUrl && rankIndex.has(m.technicalCode)
+    for (const { archetype, resolvedCode } of availableWithImages) {
+      if (isPlainFrontChip(archetype.id, role)) {
+        // Plain front chips: use per-chip rankings (not allRankedCodes, which is active-chip only).
+        const chipRanked = plainChipRankedCodes.get(archetype.id);
+        if (chipRanked && chipRanked.length > 0) {
+          const chipRankIndex = new Map(chipRanked.map((c, i) => [c, i]));
+          const candidates = graphMaterials!.filter(m =>
+            m.texture === 'plain' && m.role.includes(role) && !!m.imageUrl && chipRankIndex.has(m.technicalCode)
+          );
+          if (candidates.length > 0) {
+            candidates.sort((a, b) => chipRankIndex.get(a.technicalCode)! - chipRankIndex.get(b.technicalCode)!);
+            map.set(archetype.id, candidates[0].technicalCode);
+            continue;
+          }
+        }
+        if (resolvedCode) map.set(archetype.id, resolvedCode);
+        continue;
+      }
+      const candidates = graphMaterials.filter(m =>
+        m.archetypeId === archetype.id && m.role.includes(role) && !!m.imageUrl && rankIndex.has(m.technicalCode)
       );
       if (candidates.length === 0) continue;
       candidates.sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!);
       map.set(archetype.id, candidates[0].technicalCode);
     }
     return map;
-  }, [slot, graphMaterials, allRankedCodes, availableWithImages]);
+  }, [slot, graphMaterials, allRankedCodes, availableWithImages, plainChipRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
 // ─── Inline row data ──────────────────────────────────────────────────────
 
@@ -318,7 +380,7 @@ export default function MaterialSlotPicker({
     const recIndex = new Map(recCodes.map((c, i) => [c, i]));
     return graphMaterials
       .filter(m =>
-        m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) && !!m.archetypeId &&
+        m.role.includes(role) && m.imageUrl && recIndex.has(m.technicalCode) &&
         !wouldTriggerWoodWarning(m.technicalCode, sameRoleMaterialCodes ?? [], (otherMaterialCodes ?? []).filter(c => !(sameRoleMaterialCodes ?? []).includes(c))) &&
         !wouldTriggerBusyPatternWarning(m.technicalCode, otherMaterialCodes ?? [])
       )
@@ -357,8 +419,9 @@ export default function MaterialSlotPicker({
     if (!slot || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     return availableWithImages.map(({ archetype }) => {
-      const candidates = graphMaterials.filter(
-        m => m.archetypeId === archetype.id && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode)
+      const candidates = graphMaterials.filter(m =>
+        (isPlainFrontChip(archetype.id, role) ? m.texture === 'plain' : m.archetypeId === archetype.id)
+        && m.role.includes(role) && m.imageUrl && !recommendedCodes.has(m.technicalCode)
       );
       if (candidates.length === 0) return null;
 
@@ -388,7 +451,10 @@ export default function MaterialSlotPicker({
     if (!slot || !effectiveActiveId || !filteredMaterials.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     return filteredMaterials
-      .filter(m => m.archetypeId === effectiveActiveId && m.role.includes(role) && m.imageUrl)
+      .filter(m =>
+        (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' : m.archetypeId === effectiveActiveId)
+        && m.role.includes(role) && m.imageUrl
+      )
       .map(m => ({
         code: m.technicalCode, image: m.imageUrl!,
         name: m.name?.[lang] ?? m.technicalCode,
@@ -411,7 +477,7 @@ export default function MaterialSlotPicker({
     const role = SLOT_KEY_TO_ROLE[slot];
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
     const candidates = filteredMaterials.filter(m =>
-      m.archetypeId === effectiveActiveId &&
+      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' : m.archetypeId === effectiveActiveId) &&
       m.role.includes(role) &&
       m.imageUrl &&
       m.technicalCode !== row1Code &&

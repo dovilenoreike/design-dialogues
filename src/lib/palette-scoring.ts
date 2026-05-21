@@ -114,6 +114,7 @@ interface IdealContext {
   anchorActivity:    number;
   composition:       CompositionState;
   candidateLightness: number;
+  candidateHueArc:   number | null; // shortest arc from composition dominantHue (or anchor hue); null if no reference
 }
 
 type IdealFn = (ctx: IdealContext) => number;
@@ -153,20 +154,22 @@ const pActivityDelta = (d: number): IdealFn => (ctx) => {
 // Add named IdealFn constants here when a factory delta isn't expressive enough.
 
 // H ideal for chromatic plain materials — composition-activity-driven.
-// Busy palette (high activity) → harmonise with composition hue (target arc 0°).
-// Calm palette (low activity) → add gentle hue interest (target arc ~30°).
-// Intentional style → bold contrast encouraged (target arc ~90°).
+// Busy palette → harmonise with composition hue (target arc 0°).
+// Calm palette → gentle hue interest (target arc ~30°).
+// Intentional → bold contrast (target arc 90°).
 const hChromatic: IdealFn = (ctx) => {
   if (ctx.style === 'intentional') return 1.0;
   const activityNorm = Math.min(1, ctx.composition.compositionActivity / 50);
   return clamp01((1 - activityNorm) / 3.0);
 };
 
-// C ideal for chromatic plains — targets 85% of composition's average raw chroma.
-// Slight muted-first lean; colourSalience on the error (in computeNormalizedErrors)
-// naturally excuses pure-white and pure-black candidates.
-const cCompositionAligned: IdealFn = (ctx) => {
-  const target = Math.max(5, ctx.composition.avgChroma * 0.85);
+// C ideal for chromatic plains — chroma target is coupled to hue arc.
+// Same-hue materials (arc ≈ 0°, e.g. warm beige against beige) need high chroma (vc ≥ 25)
+// to read as colour. Divergent-hue materials (arc ≥ 90°, e.g. sage, mint) only need
+// vc ≥ ~12 because the hue itself signals colour against the palette neutral.
+const cChromatic: IdealFn = (ctx) => {
+  const arcNorm = ctx.candidateHueArc != null ? clamp01(ctx.candidateHueArc / 90) : 0;
+  const target = Math.max(10, 25 * (1 - arcNorm * 0.5)); // 25 → 12.5 as arc 0° → 90°
   const s = colourSalience(ctx.candidateLightness);
   return clamp01(target / (Math.max(0.1, s) * 100));
 };
@@ -174,7 +177,7 @@ const cCompositionAligned: IdealFn = (ctx) => {
 // L ideal for light neutral plain materials — pushes candidates ABOVE composition avgLightness.
 const lNeutralPlain: IdealFn = (ctx) => {
   const avg = ctx.composition.avgLightness;
-  return clamp01((avg * 0.4 + 60) / 100);
+  return clamp01((avg * 0.5 + 50) / 100);
 };
 
 // L ideal for dark neutral plain materials — mirrors lNeutralPlain around avgLightness.
@@ -182,7 +185,8 @@ const lNeutralPlain: IdealFn = (ctx) => {
 // Clamped to dark-neutral territory (L 5–45).
 const lDarkNeutral: IdealFn = (ctx) => {
   const avg = ctx.composition.avgLightness;
-  return clamp01(Math.min(45, Math.max(5, avg * 1.5 - 50)) / 100);
+  //return clamp01(Math.min(45, Math.max(5, avg * 1.5 - 50)) / 100);
+  return clamp01(Math.min(45, Math.max(5, avg - 50) * 2) / 100);
 };
 
 // Wood L: pulls toward a balanced midpoint (BALANCED_WOOD).
@@ -261,18 +265,18 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
 // Routed exclusively by candidate.archetypeId — no chroma thresholds.
 
 const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
-  L: { ideal: lDelta(+0.10),       tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
-  W: { ideal: wDelta(-0.05),       tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-  H: { ideal: hChromatic,          tolerance: { quiet: 0.16, grounded: 0.30, intentional: 0.50 } },
-  C: { ideal: cCompositionAligned, tolerance: { quiet: 0.08, grounded: 0.15, intentional: 0.22 } },
-  P: { ideal: pActivityDelta(0),   tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+  L: { ideal: lDelta(+0.10),   tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
+  W: { ideal: wDelta(-0.05),   tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+  H: { ideal: hChromatic,      tolerance: { quiet: 0.16, grounded: 0.30, intentional: 0.50 } },
+  C: { ideal: cChromatic,      tolerance: { quiet: 0.04, grounded: 0.08, intentional: 0.14 } },
+  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
 };
 
 // Light neutral: targets high L (above avgLightness), cool, low chroma.
 // H reference is dominantHue (see computeNormalizedErrors).
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
   L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
+  W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
   H: { ideal: hAbsolute(0.03),        tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.05 } },
   C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
@@ -283,9 +287,9 @@ const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
   L: { ideal: lDarkNeutral,          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.18 } },
   W: { ideal: wDelta(-0.05),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
-  H: { ideal: hAbsolute(0.1),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
+  H: { ideal: hAbsolute(0.03),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
   C: { ideal: cActivityDelta(0.03), tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
-  P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+  P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
 
 // Wood-on-wood: hue undertone match dominates at all style levels (very tight H tolerance).
@@ -301,13 +305,13 @@ const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
 function getCandidateSpec(
   candidateTexture: string,
   anchorTexture: string,
-  candidateArchetypeId?: string | null,
+  plainArchetypeId?: string | null,
 ): CandidateSpec {
   if (candidateTexture === 'wood' && anchorTexture === 'wood') return CANDIDATE_SPEC_WOOD_ON_WOOD;
   if (candidateTexture === 'plain') {
-    if (candidateArchetypeId === 'colours')      return CANDIDATE_SPEC_PLAIN_CHROMATIC;
-    if (candidateArchetypeId === 'dark-neutral') return CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL;
-    return CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL; // covers 'light-neutral', null (debug overlay), unknown
+    if (plainArchetypeId === 'colours')      return CANDIDATE_SPEC_PLAIN_CHROMATIC;
+    if (plainArchetypeId === 'dark-neutral') return CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL;
+    return CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL;
   }
   return CANDIDATE_SPECS[candidateTexture] ?? CANDIDATE_SPECS['plain'];
 }
@@ -360,10 +364,22 @@ function computeNormalizedErrors(
   candidateRole: string,
   style: StyleMode,
   composition: CompositionState,
+  chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] {
-  const spec = getCandidateSpec(candidate.texture, anchor.texture, candidate.archetypeId);
+  const spec = getCandidateSpec(candidate.texture, anchor.texture, chipArchetypeId);
   const anchorActivity = computeActivity(anchor);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness };
+
+  // H reference and candidate hue arc — computed before ctx so cChromatic can read candidateHueArc.
+  const hRef = candidate.texture === 'plain' && composition.dominantHue != null
+    ? composition.dominantHue
+    : anchor.hue_angle;
+  let candidateHueArc: number | null = null;
+  if (candidate.hue_angle != null && hRef != null) {
+    const d = Math.abs(candidate.hue_angle - hRef);
+    candidateHueArc = Math.min(d, 360 - d);
+  }
+
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness, candidateHueArc };
 
   // L
   const eL = toleratedError(candidate.lightness / 100, spec.L.ideal(ctx), spec.L.tolerance[style]);
@@ -372,13 +388,7 @@ function computeNormalizedErrors(
   const eW = toleratedError(candidate.warmth, spec.W.ideal(ctx), spec.W.tolerance[style]);
 
   // H: shortest arc / 90 → 0–1 (90° = full error).
-  // Chromatic plains use composition dominantHue as reference (not just floor).
   let eH: number;
-  // All plain materials use dominantHue as H reference — so hue targets the composition
-  // centroid (between all placed materials), not the floor alone.
-  const hRef = candidate.texture === 'plain' && composition.dominantHue != null
-    ? composition.dominantHue
-    : anchor.hue_angle;
   if (candidate.hue_angle == null && hRef == null) {
     eH = 0;
   } else if (candidate.hue_angle == null) {
@@ -386,9 +396,7 @@ function computeNormalizedErrors(
   } else if (hRef == null) {
     eH = 0;
   } else {
-    const d   = Math.abs(candidate.hue_angle - hRef);
-    const arc = Math.min(d, 360 - d);
-    eH = toleratedError(arc / 90, spec.H.ideal(ctx), spec.H.tolerance[style]);
+    eH = toleratedError(candidateHueArc! / 90, spec.H.ideal(ctx), spec.H.tolerance[style]);
   }
 
   // C: × colourSalience so chroma errors shrink at extreme lightness
@@ -425,16 +433,16 @@ export function computeIdealTargets(
   candidateRole: string,
   style: StyleMode,
   candidateTexture: string,
-  _anchorTexture: string,  // kept for API compatibility; actual anchor is resolved internally
-  candidateArchetypeId?: string | null,
+  _anchorTexture: string,
+  chipArchetypeId?: string | null,
 ): { idealL: number; idealW: number; idealC: number; idealP: number; hRef: number | null; idealHArc: number } | null {
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return null;
   const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   const composition    = computeCompositionState(placedMaterials);
   const anchorActivity = computeActivity(anchor);
-  const spec = getCandidateSpec(candidateTexture, anchor.texture, candidateArchetypeId ?? null);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50 };
+  const spec = getCandidateSpec(candidateTexture, anchor.texture, chipArchetypeId);
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50, candidateHueArc: null };
 
   const hRef = candidateTexture === 'plain' && composition.dominantHue != null
     ? composition.dominantHue
@@ -457,12 +465,13 @@ export function computeAxisErrors(
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
   style: StyleMode,
+  chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] {
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
   const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   const composition = computeCompositionState(placedMaterials);
-  return computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition);
+  return computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition, chipArchetypeId);
 }
 
 /** Combined distance-to-ideal score for a single candidate. Returns 0–1.
@@ -473,12 +482,13 @@ export function scoreCandidate(
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
   style: StyleMode,
+  chipArchetypeId?: string | null,
 ): number {
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return NO_ANCHOR_SCORE;
   const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   const composition = computeCompositionState(placedMaterials);
-  const errors = computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition);
+  const errors = computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition, chipArchetypeId);
   const d = errors.reduce((s, e) => s + e ** SCORE_ERROR_POWER, 0);
   return 1 / (1 + d);
 }

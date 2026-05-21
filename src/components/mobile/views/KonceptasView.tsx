@@ -6,6 +6,7 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getAxisErrorsForCode, getIdealTargetsForCode } from "@/hooks/useGraphMaterials";
+import { isNeutralPlain } from "@/lib/archetype-rules";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
@@ -452,14 +453,24 @@ export default function KonceptasView({
                 </button>
               )}
               {SHOW_COLOUR_SCORES && mat && (() => {
-                const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode) : [];
+                // For plain front materials derive the chip spec from material properties (debug only).
+                let overlayChipId: string | null = null;
+                if (mat.texture === 'plain' && slotRole === 'front') {
+                  const vc = mat.chroma * Math.sin(Math.PI * mat.lightness / 100);
+                  if (!isNeutralPlain(vc, mat.hue_angle ?? null)) {
+                    overlayChipId = 'colours';
+                  } else {
+                    overlayChipId = mat.lightness >= 45 ? 'light-neutral' : 'dark-neutral';
+                  }
+                }
+                const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode, overlayChipId) : [];
                 const rankIdx = rankList.indexOf(overrideCode);
                 const rank = rankIdx >= 0 ? rankIdx + 1 : null;
                 const axisErrs = otherCodes.length > 0
-                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, styleMode)
+                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, styleMode, overlayChipId)
                   : null;
                 const ideals = otherCodes.length > 0
-                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, styleMode)
+                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, styleMode, overlayChipId)
                   : null;
                 return (
                   <div

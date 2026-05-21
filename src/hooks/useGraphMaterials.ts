@@ -302,12 +302,13 @@ export function getAxisErrorsForCode(
   placedCodes: string[],
   role: string,
   style: StyleMode = 'grounded',
+  chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] | null {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeAxisErrors(candidate, placedCodes, byCode, role, style);
+  return computeAxisErrors(candidate, placedCodes, byCode, role, style, chipArchetypeId);
 }
 
 export function getIdealTargetsForCode(
@@ -315,12 +316,13 @@ export function getIdealTargetsForCode(
   placedCodes: string[],
   role: string,
   style: StyleMode = 'grounded',
+  chipArchetypeId?: string | null,
 ): { idealL: number; idealW: number; idealC: number; idealP: number; hRef: number | null; idealHArc: number } | null {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, '', candidate.archetypeId);
+  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, '', chipArchetypeId);
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -453,6 +455,7 @@ export function useGraphMaterials() {
     otherCodes: string[],
     targetRole?: string,
     style: StyleMode = 'grounded',
+    chipArchetypeId?: string | null,
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
     const { byCode, pairWeights, graphMaterials: mats } = _cached;
@@ -465,8 +468,8 @@ export function useGraphMaterials() {
     if (pool.length === 0) return [];
     const maxPairW = otherCodes.length * 3;
     return [...pool].sort((a, b) => {
-      const pA = scoreCandidate(a, otherCodes, byCode, role, style);
-      const pB = scoreCandidate(b, otherCodes, byCode, role, style);
+      const pA = scoreCandidate(a, otherCodes, byCode, role, style, chipArchetypeId);
+      const pB = scoreCandidate(b, otherCodes, byCode, role, style, chipArchetypeId);
       const cA = maxPairW > 0 ? weightedScore(a.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const cB = maxPairW > 0 ? weightedScore(b.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const sA = pA * PALETTE_WEIGHT + cA * (1 - PALETTE_WEIGHT);
