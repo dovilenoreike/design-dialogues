@@ -193,8 +193,18 @@ export default function MaterialSlotPicker({
     if (activeArchetypeId && availableWithImages.some(i => i.archetype.id === activeArchetypeId)) return activeArchetypeId;
     const selId = slot ? selections[slot] : null;
     if (selId && availableWithImages.some(i => i.archetype.id === selId)) return selId;
+    // If same-role slots already have materials, open the first archetype not yet used in this role.
+    if (sameRoleMaterialCodes?.length) {
+      const usedIds = new Set(
+        sameRoleMaterialCodes
+          .map(code => graphMaterials?.find(m => m.technicalCode === code)?.archetypeId)
+          .filter((id): id is string => !!id)
+      );
+      const next = availableWithImages.find(i => !usedIds.has(i.archetype.id));
+      if (next) return next.archetype.id;
+    }
     return availableWithImages[0]?.archetype.id ?? null;
-  }, [activeArchetypeId, availableWithImages, slot, selections]);
+  }, [activeArchetypeId, availableWithImages, slot, selections, sameRoleMaterialCodes, graphMaterials]);
 
   // Collapse sibling expansion + reset grid center when archetype changes
   useEffect(() => {
