@@ -31,18 +31,39 @@ const ROLE_VISUAL_MASS: Record<string, number> = {
   floor: 0.35, front: 0.30, worktop: 0.10, backsplash: 0.05,
 };
 
-interface CompositionState { dominantWarmth: number; compositionActivity: number }
+interface CompositionState {
+  dominantWarmth:      number;
+  compositionActivity: number;
+  dominantHue:         number | null; // circular mean of placed hue angles, weighted by mass × visualChroma
+  avgChroma:           number;        // weighted mean of placed materials' raw chroma (by mass)
+}
 
 function computeCompositionState(placed: GraphMaterial[]): CompositionState {
-  let totalW = 0, warmthSum = 0, activitySum = 0;
+  let totalW = 0, warmthSum = 0, activitySum = 0, chromaSum = 0;
+  let sinSum = 0, cosSum = 0, hueWeightTotal = 0;
   for (const m of placed) {
     const w = ROLE_VISUAL_MASS[m.role[0]] ?? 0.10;
     warmthSum   += m.warmth * w;
     activitySum += computeActivity(m) * w;
+    chromaSum   += m.chroma * w;
     totalW += w;
+    if (m.hue_angle != null) {
+      const hw = w * m.chroma * colourSalience(m.lightness);
+      sinSum += hw * Math.sin(m.hue_angle * Math.PI / 180);
+      cosSum += hw * Math.cos(m.hue_angle * Math.PI / 180);
+      hueWeightTotal += hw;
+    }
   }
-  if (!totalW) return { dominantWarmth: 0, compositionActivity: 0 };
-  return { dominantWarmth: warmthSum / totalW, compositionActivity: activitySum / totalW };
+  if (!totalW) return { dominantWarmth: 0, compositionActivity: 0, dominantHue: null, avgChroma: 0 };
+  const dominantHue = hueWeightTotal > 0
+    ? (Math.atan2(sinSum, cosSum) * 180 / Math.PI + 360) % 360
+    : null;
+  return {
+    dominantWarmth:      warmthSum / totalW,
+    compositionActivity: activitySum / totalW,
+    dominantHue,
+    avgChroma:           chromaSum / totalW,
+  };
 }
 
 // ─── Score tuning ─────────────────────────────────────────────────────────────
@@ -121,28 +142,23 @@ const pActivityDelta = (d: number): IdealFn => (ctx) => {
 // ── Custom ideal functions ────────────────────────────────────────────────────
 // Add named IdealFn constants here when a factory delta isn't expressive enough.
 
-// H ideal for chromatic plain materials (muted and bold archetypes).
-// quiet/grounded: slight hue step from anchor (~30°).
-// intentional: 90° target with wide tolerance → 30°–150° all within free zone.
-const hColourfulIdeal: IdealFn = (ctx) =>
-  ctx.style === 'intentional' ? 1.0 : 1.0 / 3.0;
-
-// C ideal for muted plains: targets half the anchor's visual richness.
-// Expressed in raw chroma space by dividing by candidate's colourSalience,
-// so a dark-muted or light-muted material gets an equivalent visual target.
-const cMutedIdeal: IdealFn = (ctx) => {
-  const anchorVisual = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
-  const targetVisual = Math.max(8, anchorVisual * 0.5);
-  const s = colourSalience(ctx.candidateLightness);
-  return clamp01(targetVisual / (Math.max(0.1, s) * 100));
+// H ideal for chromatic plain materials — composition-activity-driven.
+// Busy palette (high activity) → harmonise with composition hue (target arc 0°).
+// Calm palette (low activity) → add gentle hue interest (target arc ~30°).
+// Intentional style → bold contrast encouraged (target arc ~90°).
+const hChromatic: IdealFn = (ctx) => {
+  if (ctx.style === 'intentional') return 1.0;
+  const activityNorm = Math.min(1, ctx.composition.compositionActivity / 50);
+  return clamp01((1 - activityNorm) / 3.0);
 };
 
-// C ideal for bold plains: targets 40% more visual richness than the anchor.
-const cBoldIdeal: IdealFn = (ctx) => {
-  const anchorVisual = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
-  const targetVisual = anchorVisual * 1.4;
+// C ideal for chromatic plains — targets 85% of composition's average raw chroma.
+// Slight muted-first lean; colourSalience on the error (in computeNormalizedErrors)
+// naturally excuses pure-white and pure-black candidates.
+const cCompositionAligned: IdealFn = (ctx) => {
+  const target = Math.max(5, ctx.composition.avgChroma * 0.85);
   const s = colourSalience(ctx.candidateLightness);
-  return clamp01(targetVisual / (Math.max(0.1, s) * 100));
+  return clamp01(target / (Math.max(0.1, s) * 100));
 };
 
 // Wood L: pulls toward a balanced midpoint (BALANCED_WOOD).
@@ -201,30 +217,18 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
   },
 };
 
-// ─── Chromatic plain sub-specs ────────────────────────────────────────────────
-// Plain materials with raw chroma ≥ 15 are split by visual chroma
-// (chroma × colourSalience) into muted (visually soft, light or dark) and
-// bold (visually rich, more saturated than the anchor).
+// ─── Chromatic plain spec ─────────────────────────────────────────────────────
+// Single spec for all plain materials with raw chroma ≥ PLAIN_CHROMA_THRESHOLD.
+// Replaces the former muted/bold split which caused cliff effects at vc=30.
 
-const PLAIN_CHROMA_THRESHOLD        = 15;  // below → neutral plain spec
-const VISUAL_CHROMA_MUTED_THRESHOLD = 30;  // below (but chromatic) → muted spec
+const PLAIN_CHROMA_THRESHOLD = 15;  // below → neutral plain spec
 
-// Muted: low perceptual richness, intentional hue departure from anchor.
-const CANDIDATE_SPEC_PLAIN_MUTED: CandidateSpec = {
-  L: { ideal: lDelta(+0.10),     tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
-  W: { ideal: wDelta(-0.05),     tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-  H: { ideal: hColourfulIdeal,   tolerance: { quiet: 0.13, grounded: 0.17, intentional: 0.67 } },
-  C: { ideal: cMutedIdeal,       tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
-  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
-};
-
-// Bold: visually richer than the anchor, intentional hue departure.
-const CANDIDATE_SPEC_PLAIN_BOLD: CandidateSpec = {
-  L: { ideal: lDelta(+0.10),     tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
-  W: { ideal: wDelta(-0.05),     tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-  H: { ideal: hColourfulIdeal,   tolerance: { quiet: 0.13, grounded: 0.17, intentional: 0.67 } },
-  C: { ideal: cBoldIdeal,        tolerance: { quiet: 0.06, grounded: 0.09, intentional: 0.13 } },
-  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
+  L: { ideal: lDelta(+0.10),       tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
+  W: { ideal: wDelta(-0.05),       tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
+  H: { ideal: hChromatic,          tolerance: { quiet: 0.16, grounded: 0.30, intentional: 0.50 } },
+  C: { ideal: cCompositionAligned, tolerance: { quiet: 0.08, grounded: 0.15, intentional: 0.22 } },
+  P: { ideal: pActivityDelta(0),   tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
 };
 
 // Wood-on-wood: hue undertone match dominates at all style levels (very tight H tolerance).
@@ -241,15 +245,10 @@ function getCandidateSpec(
   candidateTexture: string,
   anchorTexture: string,
   candidateChroma?: number,
-  candidateLightness?: number,
 ): CandidateSpec {
   if (candidateTexture === 'wood' && anchorTexture === 'wood') return CANDIDATE_SPEC_WOOD_ON_WOOD;
-  if (candidateTexture === 'plain' && candidateChroma != null && candidateLightness != null
-      && candidateChroma >= PLAIN_CHROMA_THRESHOLD) {
-    const visualChroma = candidateChroma * colourSalience(candidateLightness);
-    return visualChroma < VISUAL_CHROMA_MUTED_THRESHOLD
-      ? CANDIDATE_SPEC_PLAIN_MUTED
-      : CANDIDATE_SPEC_PLAIN_BOLD;
+  if (candidateTexture === 'plain' && candidateChroma != null && candidateChroma >= PLAIN_CHROMA_THRESHOLD) {
+    return CANDIDATE_SPEC_PLAIN_CHROMATIC;
   }
   return CANDIDATE_SPECS[candidateTexture] ?? CANDIDATE_SPECS['plain'];
 }
@@ -303,7 +302,8 @@ function computeNormalizedErrors(
   style: StyleMode,
   composition: CompositionState,
 ): [number, number, number, number, number, number] {
-  const spec = getCandidateSpec(candidate.texture, anchor.texture, candidate.chroma, candidate.lightness);
+  const isChromatic = candidate.texture === 'plain' && (candidate.chroma ?? 0) >= PLAIN_CHROMA_THRESHOLD;
+  const spec = getCandidateSpec(candidate.texture, anchor.texture, candidate.chroma);
   const anchorActivity = computeActivity(anchor);
   const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness };
 
@@ -313,16 +313,18 @@ function computeNormalizedErrors(
   // W
   const eW = toleratedError(candidate.warmth, spec.W.ideal(ctx), spec.W.tolerance[style]);
 
-  // H: shortest arc / 90 → 0–1 (90° = full error); null handling outside the spec
+  // H: shortest arc / 90 → 0–1 (90° = full error).
+  // Chromatic plains use composition dominantHue as reference (not just floor).
   let eH: number;
-  if (candidate.hue_angle == null && anchor.hue_angle == null) {
+  const hRef = isChromatic && composition.dominantHue != null ? composition.dominantHue : anchor.hue_angle;
+  if (candidate.hue_angle == null && hRef == null) {
     eH = 0;
   } else if (candidate.hue_angle == null) {
     eH = (anchor.chroma / 100) * colourSalience(anchor.lightness);
-  } else if (anchor.hue_angle == null) {
+  } else if (hRef == null) {
     eH = 0;
   } else {
-    const d   = Math.abs(candidate.hue_angle - anchor.hue_angle);
+    const d   = Math.abs(candidate.hue_angle - hRef);
     const arc = Math.min(d, 360 - d);
     eH = toleratedError(arc / 90, spec.H.ideal(ctx), spec.H.tolerance[style]);
   }
