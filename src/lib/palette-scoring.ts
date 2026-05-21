@@ -277,7 +277,7 @@ const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
   L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
   W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  H: { ideal: hAbsolute(0.03),        tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.05 } },
+  H: { ideal: hAbsolute(0.0),        tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.05 } },
   C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
@@ -287,7 +287,7 @@ const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
   L: { ideal: lDarkNeutral,          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.18 } },
   W: { ideal: wDelta(-0.05),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
-  H: { ideal: hAbsolute(0.03),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
+  H: { ideal: hAbsolute(0.0),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
   C: { ideal: cActivityDelta(0.03), tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };

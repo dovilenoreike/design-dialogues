@@ -220,10 +220,11 @@ export default function MaterialSlotPicker({
       .filter((item): item is { archetype: Archetype; displayImage: string; isRecommended: boolean; resolvedCode: string | undefined; archetypeDescriptorScore: number } =>
         item.displayImage !== null && item.displayImage !== undefined
       )
-      .sort((a, b) =>
-        Number(b.isRecommended) - Number(a.isRecommended) ||
-        b.archetypeDescriptorScore - a.archetypeDescriptorScore
-      );
+      .sort((a, b) => {
+        // Fixed canonical order — chips must not jump as materials are placed.
+        const order = getArchetypesByRole(role);
+        return order.findIndex(x => x.id === a.archetype.id) - order.findIndex(x => x.id === b.archetype.id);
+      });
   }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes, plainChipRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Effective active archetype ───────────────────────────────────────────
@@ -232,14 +233,26 @@ export default function MaterialSlotPicker({
     const selId = slot ? selections[slot] : null;
     if (selId && availableWithImages.some(i => i.archetype.id === selId)) return selId;
     // If same-role slots already have materials, open the first archetype not yet used in this role.
-    if (sameRoleMaterialCodes?.length) {
+    // Use selections (not m.archetypeId) — plain front materials have archetypeId=null so the
+    // chip must be read from selections. Search canonical archetype order, not descriptor-score order.
+    if (sameRoleMaterialCodes?.length && slot) {
+      const role = SLOT_KEY_TO_ROLE[slot];
       const usedIds = new Set(
-        sameRoleMaterialCodes
-          .map(code => graphMaterials?.find(m => m.technicalCode === code)?.archetypeId)
+        (Object.keys(SLOT_KEY_TO_ROLE) as (keyof typeof SLOT_KEY_TO_ROLE)[])
+          .filter(k => k !== slot && SLOT_KEY_TO_ROLE[k] === role && !!selections[k])
+          .map(k => selections[k])
           .filter((id): id is string => !!id)
       );
-      const next = availableWithImages.find(i => !usedIds.has(i.archetype.id));
-      if (next) return next.archetype.id;
+      const available = new Set(availableWithImages.map(i => i.archetype.id));
+      const next = getArchetypesByRole(role).find(a => !usedIds.has(a.id) && available.has(a.id));
+      if (next) return next.id;
+    }
+    // Default: first archetype in canonical order that has materials available.
+    if (slot) {
+      const role = SLOT_KEY_TO_ROLE[slot];
+      const available = new Set(availableWithImages.map(i => i.archetype.id));
+      const first = getArchetypesByRole(role).find(a => available.has(a.id));
+      if (first) return first.id;
     }
     return availableWithImages[0]?.archetype.id ?? null;
   }, [activeArchetypeId, availableWithImages, slot, selections, sameRoleMaterialCodes, graphMaterials]);
