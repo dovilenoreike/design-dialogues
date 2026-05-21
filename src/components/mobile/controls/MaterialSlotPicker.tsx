@@ -706,7 +706,7 @@ export default function MaterialSlotPicker({
               // Prefer palette-ranked best; fall back to availableWithImages resolvedCode
               const bestCode = bestCodeByArchetypeId.get(archetype.id) ?? resolvedCode;
               const chipImage = bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage;
-              const showResetHint = isActive && gridCenterCode !== null;
+              const showResetHint = isActive && !!selectedMaterialCode && !!bestCode && bestCode !== selectedMaterialCode;
               return (
                 <button
                   key={`chip-${archetype.id}`}
