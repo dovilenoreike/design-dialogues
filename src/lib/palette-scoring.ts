@@ -265,7 +265,7 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
 // Routed exclusively by candidate.archetypeId — no chroma thresholds.
 
 const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
-  L: { ideal: lDelta(+0.10),   tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
+  L: { ideal: lDelta(+0.0),   tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
   W: { ideal: wDelta(-0.05),   tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
   H: { ideal: hChromatic,      tolerance: { quiet: 0.16, grounded: 0.30, intentional: 0.50 } },
   C: { ideal: cChromatic,      tolerance: { quiet: 0.04, grounded: 0.08, intentional: 0.14 } },

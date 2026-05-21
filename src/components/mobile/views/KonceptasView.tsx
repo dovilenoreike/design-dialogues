@@ -6,7 +6,6 @@ import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getAxisErrorsForCode, getIdealTargetsForCode } from "@/hooks/useGraphMaterials";
-import { isNeutralPlain } from "@/lib/archetype-rules";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
@@ -453,16 +452,12 @@ export default function KonceptasView({
                 </button>
               )}
               {SHOW_COLOUR_SCORES && mat && (() => {
-                // For plain front materials derive the chip spec from material properties (debug only).
-                let overlayChipId: string | null = null;
-                if (mat.texture === 'plain' && slotRole === 'front') {
-                  const vc = mat.chroma * Math.sin(Math.PI * mat.lightness / 100);
-                  if (!isNeutralPlain(vc, mat.hue_angle ?? null)) {
-                    overlayChipId = 'colours';
-                  } else {
-                    overlayChipId = mat.lightness >= 45 ? 'light-neutral' : 'dark-neutral';
-                  }
-                }
+                // Use the archetype chip that was active when this material was placed.
+                // archetypeId = slotSelections[piece.slot] — fixed per selection, not per-candidate.
+                const PLAIN_FRONT_CHIP_IDS = new Set(['light-neutral', 'dark-neutral', 'colours']);
+                const overlayChipId = (mat.texture === 'plain' && slotRole === 'front' && PLAIN_FRONT_CHIP_IDS.has(archetypeId ?? ''))
+                  ? archetypeId
+                  : null;
                 const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode, overlayChipId) : [];
                 const rankIdx = rankList.indexOf(overrideCode);
                 const rank = rankIdx >= 0 ? rankIdx + 1 : null;
