@@ -198,7 +198,9 @@
     "otherOptionsSuffix": " options",
     "similarShades": "Similar shades",
     "searchByCode": "Search by code…",
-    "searchNoResults": "No materials found for this code."
+    "searchNoResults": "No materials found for this code.",
+    "bestMatch": "Best match",
+    "exploreSimilar": "Explore similar"
   },
   "specs": {
     "fullSpecification": "Full Specification",

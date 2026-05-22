@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, CheckCheck, Trash2, X, Search, RotateCcw } from "lucide-react";
+import { Check, CheckCheck, Trash2, X, Search, RotateCcw, Sparkles } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
@@ -116,6 +116,8 @@ export default function MaterialSlotPicker({
   const [expandedClusterKey, setExpandedClusterKey] = useState<string | null>(null);
   // Center of the 3×3 grid in inline mode (null = derive from selection/ranking)
   const [gridCenterCode, setGridCenterCode] = useState<string | null>(null);
+  // Whether the material section (hero + alternatives) is visible — hidden until user picks an archetype
+  const [materialSectionVisible, setMaterialSectionVisible] = useState<boolean>(() => !!selectedMaterialCode);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -125,12 +127,16 @@ export default function MaterialSlotPicker({
     setShowRequestDialog(false);
     setExpandedClusterKey(null);
     setGridCenterCode(null);
+    setMaterialSectionVisible(!!selectedMaterialCode);
   }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset grid center when selection is cleared (flatlay reset) so the center
   // re-derives from best-ranked rather than showing the stale previous pick.
   useEffect(() => {
-    if (!selectedMaterialCode) setGridCenterCode(null);
+    if (!selectedMaterialCode) {
+      setGridCenterCode(null);
+      setMaterialSectionVisible(false);
+    }
   }, [selectedMaterialCode]);
 
   // ─── Per-chip ranked codes for plain front chips ──────────────────────────
@@ -337,6 +343,28 @@ export default function MaterialSlotPicker({
     const pool = gridPool.filter(m => m.technicalCode !== effectiveGridCenter.technicalCode);
     return buildMaterialGrid(effectiveGridCenter, pool, allRankedCodes);
   }, [effectiveGridCenter, gridPool, allRankedCodes]);
+
+  // True when the hero material is the system's top-ranked pick in the current pool
+  const isHeroTopPick = useMemo((): boolean => {
+    if (!effectiveGridCenter || gridPool.length === 0 || allRankedCodes.length === 0) return false;
+    const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
+    const topInPool = gridPool
+      .filter(m => rankIndex.has(m.technicalCode))
+      .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!)[0];
+    return topInPool?.technicalCode === effectiveGridCenter.technicalCode;
+  }, [effectiveGridCenter, gridPool, allRankedCodes]);
+
+  // Non-center cells for the alternatives strip, sorted by palette rank
+  const alternativeCells = useMemo((): GridCell[] => {
+    const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
+    return materialGrid
+      .filter(c => !(c.row === 1 && c.col === 1) && c.material !== null)
+      .sort((a, b) => {
+        const ra = a.material ? (rankIndex.get(a.material.technicalCode) ?? 999) : 999;
+        const rb = b.material ? (rankIndex.get(b.material.technicalCode) ?? 999) : 999;
+        return ra - rb;
+      });
+  }, [materialGrid, allRankedCodes]);
 
   // Best palette-ranked code per archetype (used for chip image + click target)
   const bestCodeByArchetypeId = useMemo((): Map<string, string> => {
@@ -644,6 +672,10 @@ export default function MaterialSlotPicker({
   const REC_SWATCH_RADIUS = 20;
   const SWATCH_SIZE = 64;
   const SWATCH_RADIUS = 16;
+  const HERO_SIZE = 172;
+  const HERO_RADIUS = 20;
+  const ALT_SWATCH_SIZE = 60;
+  const ALT_SWATCH_RADIUS = 12;
 
   const SwatchRow = ({ children, alignItems = "center", className: extraClass = "" }: { children: React.ReactNode; alignItems?: "center" | "start"; className?: string }) => (
     <div
@@ -802,6 +834,7 @@ export default function MaterialSlotPicker({
                   onClick={() => {
                     setActiveArchetypeId(archetype.id);
                     setGridCenterCode(bestCode ?? null);
+                    setMaterialSectionVisible(true);
                     if (slot && bestCode) onSelect(slot, archetype.id, bestCode);
                   }}
                   className="flex flex-col items-center gap-1 flex-shrink-0"
@@ -836,75 +869,123 @@ export default function MaterialSlotPicker({
             })}
           </div>
 
+          {materialSectionVisible && (
+          <div style={{ animation: "msPickerFadeIn 0.2s ease both", backgroundColor: "#ffffff" }}>
+            <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+
           <SwatchDivider />
 
-          {/* 3×3 warmth × lightness grid */}
+          {/* Hero recommendation card — centered */}
           {effectiveGridCenter ? (
-            <div className="flex flex-col items-center px-4 py-4 gap-2 flex-shrink-0">
-              {([0, 1, 2] as const).map((row) => (
-                <div key={row} className="flex gap-2">
-                  {([0, 1, 2] as const).map((col) => {
-                    const cell = materialGrid.find(c => c.row === row && c.col === col);
-                    const mat = cell?.material ?? null;
-                    const isSelected = mat?.technicalCode === selectedMaterialCode;
-                    const isCenter = mat?.technicalCode === effectiveGridCenter.technicalCode;
-
-                    if (!mat) {
-                      return (
-                        <div
-                          key={`${row}-${col}`}
-                          className="flex-shrink-0"
-                          style={{ width: 88, height: 88, borderRadius: 16, backgroundColor: "#d1cdc8", opacity: 0.2 }}
-                        />
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={`${row}-${col}`}
-                        onClick={() => handleGridCellClick({ row, col, material: mat })}
-                        className="relative flex-shrink-0 active:scale-95"
-                        style={{
-                          width: 88,
-                          height: 88,
-                          borderRadius: 16,
-                          overflow: "hidden",
-                          border: (isSelected || isCenter) ? "2px solid #647d75" : "2px solid transparent",
-                          transition: "border-color 0.15s, transform 0.1s",
-                        }}
-                      >
-                        <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
-                        {/* Selection indicator — bottom-right */}
-                        {isSelected && (
-                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                          </div>
-                        )}
-                        {/* V/VV compatibility badge — bottom-left, shown on all cells including selected */}
-                        {(() => {
-                          const others = otherMaterialCodes ?? [];
-                          if (others.length === 0 || (!isCompatibleWithOthers && !isCompatibleWithEvery)) return null;
-                          const isVV = isCompatibleWithEvery?.(mat.technicalCode, others) ?? false;
-                          const isV  = !isVV && (isCompatibleWithOthers?.(mat.technicalCode, others) ?? false);
-                          if (!isVV && !isV) return null;
-                          return (
-                            <div className="absolute flex items-center justify-center" style={{ bottom: 4, left: 4, width: 16, height: 16, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.45)" }}>
-                              {isVV
-                                ? <CheckCheck className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
-                                : <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
-                              }
-                            </div>
-                          );
-                        })()}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
+            <div className="flex flex-col items-center px-4 pt-5 pb-3 flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (slot && effectiveActiveId) onSelect(slot, effectiveActiveId, effectiveGridCenter.technicalCode);
+                }}
+                className="relative flex-shrink-0 active:scale-95"
+                style={{
+                  width: HERO_SIZE,
+                  height: HERO_SIZE,
+                  borderRadius: HERO_RADIUS,
+                  overflow: "hidden",
+                  transition: "transform 0.1s",
+                }}
+              >
+                <img src={effectiveGridCenter.imageUrl!} alt="" className="w-full h-full object-cover" />
+                {/* "Best match" badge — overlaid on image, only when system-derived */}
+                {isHeroTopPick && (
+                  <div
+                    className="absolute flex items-center gap-1"
+                    style={{
+                      top: 10, right: 10,
+                      backgroundColor: "rgba(0, 0, 0, 0.35)",
+                      borderRadius: 20,
+                      paddingLeft: 7, paddingRight: 8, paddingTop: 4, paddingBottom: 4,
+                    }}
+                  >
+                    <Sparkles className="w-2.5 h-2.5 text-white flex-shrink-0" strokeWidth={2} />
+                    <span className="text-[9px] font-medium text-white leading-none">{t("surface.bestMatch")}</span>
+                  </div>
+                )}
+                {/* V/VV compatibility badge — top-left */}
+                {(() => {
+                  const others = otherMaterialCodes ?? [];
+                  if (others.length === 0) return null;
+                  const heroVV = isCompatibleWithEvery?.(effectiveGridCenter.technicalCode, others) ?? false;
+                  const heroV  = !heroVV && (isCompatibleWithOthers?.(effectiveGridCenter.technicalCode, others) ?? false);
+                  if (!heroVV && !heroV) return null;
+                  return (
+                    <div className="absolute flex items-center justify-center" style={{ top: 8, left: 8, width: 16, height: 16 }}>
+                      {heroVV
+                        ? <CheckCheck className="w-3 h-3 text-white" strokeWidth={2.5} />
+                        : <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                      }
+                    </div>
+                  );
+                })()}
+                {/* Selection indicator */}
+                {effectiveGridCenter.technicalCode === selectedMaterialCode && (
+                  <div className="absolute flex items-center justify-center" style={{ bottom: 8, right: 8, width: 20, height: 20, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                    <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                  </div>
+                )}
+              </button>
+              {/* Material name */}
+              {(effectiveGridCenter.name?.[lang] ?? effectiveGridCenter.technicalCode) && (
+                <span className="text-[12px] text-center mt-2 truncate" style={{ color: "rgba(0,0,0,0.45)", maxWidth: HERO_SIZE }}>
+                  {effectiveGridCenter.name?.[lang] ?? effectiveGridCenter.technicalCode}
+                </span>
+              )}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center py-8">
               <p className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>{t("surface.searchNoResults")}</p>
+            </div>
+          )}
+
+          {/* Alternatives strip — centered */}
+          {effectiveGridCenter && alternativeCells.length > 0 && (
+            <div
+              className="flex justify-center gap-2 px-4 pb-5 overflow-x-auto flex-shrink-0"
+              style={{ scrollbarWidth: "none" } as React.CSSProperties}
+            >
+              {alternativeCells.map(({ row, col, material: mat }) => {
+                if (!mat) return null;
+                const isSelected = mat.technicalCode === selectedMaterialCode;
+                const others = otherMaterialCodes ?? [];
+                const isVV = others.length > 0 && (isCompatibleWithEvery?.(mat.technicalCode, others) ?? false);
+                const isV  = others.length > 0 && !isVV && (isCompatibleWithOthers?.(mat.technicalCode, others) ?? false);
+                return (
+                  <button
+                    key={`alt-${row}-${col}`}
+                    onClick={() => handleGridCellClick({ row, col, material: mat })}
+                    className="relative flex-shrink-0 active:scale-95"
+                    style={{
+                      width: ALT_SWATCH_SIZE,
+                      height: ALT_SWATCH_SIZE,
+                      borderRadius: ALT_SWATCH_RADIUS,
+                      overflow: "hidden",
+                      border: isSelected ? "2px solid #647d75" : "2px solid transparent",
+                      transition: "border-color 0.15s, transform 0.1s",
+                    }}
+                  >
+                    <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                    {isSelected && (
+                      <div className="absolute flex items-center justify-center" style={{ bottom: 3, right: 3, width: 13, height: 13, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                        <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                      </div>
+                    )}
+                    {(isVV || isV) && (
+                      <div className="absolute flex items-center justify-center" style={{ top: 3, left: 3, width: 13, height: 13 }}>
+                        {isVV
+                          ? <CheckCheck className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                          : <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                        }
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -918,6 +999,9 @@ export default function MaterialSlotPicker({
               {t("materialRequest.link")}
             </button>
           </div>
+
+          </div>
+          )}
 
           </>
         )}

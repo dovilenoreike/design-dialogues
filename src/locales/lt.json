@@ -198,7 +198,9 @@
     "otherOptionsSuffix": " variantai",
     "similarShades": "Panašūs atspalviai",
     "searchByCode": "Ieškoti pagal kodą…",
-    "searchNoResults": "Medžiagų šiuo kodu nerasta."
+    "searchNoResults": "Medžiagų šiuo kodu nerasta.",
+    "bestMatch": "Geriausias variantas",
+    "exploreSimilar": "Panašūs atspalviai"
   },
   "specs": {
     "fullSpecification": "Pilna specifikacija",

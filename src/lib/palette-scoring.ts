@@ -282,10 +282,10 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
   },
   stone: {
     L: { ideal: lDelta(+0.05),          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.16 } },
-    W: { ideal: wDelta(-0.08),          tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-    H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
-    C: { ideal: cActivityDelta(-0.12),  tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.10 } },
-    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.30 } },
+    W: { ideal: wDelta(-0.08),          tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.10 } },
+    H: { ideal: hAbsolute(0.05),           tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
+    C: { ideal: cActivityDelta(-0.12),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
+    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.1, grounded: 0.20, intentional: 0.30 } },
   },
   textile: {
     L: { ideal: lDelta(+0.08),          tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
@@ -312,7 +312,7 @@ const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
   L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
   W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  H: { ideal: hLightNeutral(0.1),      tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+  H: { ideal: hLightNeutral(0.08),      tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
   C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
@@ -333,7 +333,7 @@ const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
   L: { ideal: woodLIdeal,             tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
   W: { ideal: wDelta(0),              tolerance: { quiet: 0.06, grounded: 0.08, intentional: 0.12 } },
   H: { ideal: hAbsolute(0.05),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  C: { ideal: cActivityDelta(0.0),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
+  C: { ideal: cActivityDelta(0.0),  tolerance: { quiet: 0.25, grounded: 0.25, intentional: 0.25 } },
   P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
 };
 
