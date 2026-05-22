@@ -108,13 +108,14 @@ const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 // All values in normalized space: L /100, W as-is, H arc/90, C /100, P /100.
 
 interface IdealContext {
-  anchor:            GraphMaterial;
-  candidateRole:     string;
-  style:             StyleMode;
-  anchorActivity:    number;
-  composition:       CompositionState;
+  anchor:             GraphMaterial;
+  candidateRole:      string;
+  style:              StyleMode;
+  anchorActivity:     number;
+  composition:        CompositionState;
   candidateLightness: number;
-  candidateHueArc:   number | null; // shortest arc from composition dominantHue (or anchor hue); null if no reference
+  candidateHueArc:    number | null; // shortest arc from composition dominantHue (or anchor hue); null if no reference
+  placedMaterials:    GraphMaterial[];
 }
 
 type IdealFn = (ctx: IdealContext) => number;
@@ -153,6 +154,13 @@ const pActivityDelta = (d: number): IdealFn => (ctx) => {
 // ── Custom ideal functions ────────────────────────────────────────────────────
 // Add named IdealFn constants here when a factory delta isn't expressive enough.
 
+// Proximity of placed roles to a light neutral front (for hLightNeutral).
+const ROLE_PROXIMITY_FOR_NEUTRAL: Record<string, number> = {
+  worktop:    1.0, // direct contact, same visual plane
+  backsplash: 0.5, // visible but behind
+  floor:      0.3, // interrupted by carcass + toekick
+};
+
 // H ideal for chromatic plain materials — composition-activity-driven.
 // Busy palette → harmonise with composition hue (target arc 0°).
 // Calm palette → gentle hue interest (target arc ~30°).
@@ -172,6 +180,33 @@ const cChromatic: IdealFn = (ctx) => {
   const target = Math.max(10, 25 * (1 - arcNorm * 0.5)); // 25 → 12.5 as arc 0° → 90°
   const s = colourSalience(ctx.candidateLightness);
   return clamp01(target / (Math.max(0.1, s) * 100));
+};
+
+// H ideal for light neutral plains — proximity-weighted dominance hue of adjacent placed materials.
+// Returns the arc (in arc/90 space) between composition dominantHue and the weighted hue that the
+// neutral "sees": worktop > backsplash > floor, scaled by lightness similarity and chroma,
+// divided by texture complexity (smooth surfaces dominate more). +d shifts the target arc.
+const hLightNeutral = (d: number): IdealFn => (ctx) => {
+  if (ctx.composition.dominantHue == null) return clamp01(d);
+  const L_ideal = lNeutralPlain(ctx);
+  let sinSum = 0, cosSum = 0, wTotal = 0;
+  for (const m of ctx.placedMaterials) {
+    if (m.hue_angle == null || m.chroma < 3) continue;
+    const P = ROLE_PROXIMITY_FOR_NEUTRAL[m.role[0]] ?? 0;
+    if (P === 0) continue;
+    const S = Math.max(0, 1 - Math.abs(m.lightness / 100 - L_ideal));
+    const C = m.chroma / 100;
+    const T = (TEXTURE_COMPLEXITY[m.texture] ?? 0) + 0.1;
+    const w = P * S * C / T;
+    const rad = m.hue_angle * Math.PI / 180;
+    sinSum += w * Math.sin(rad);
+    cosSum += w * Math.cos(rad);
+    wTotal += w;
+  }
+  if (wTotal === 0) return clamp01(d);
+  const h_dom = (Math.atan2(sinSum, cosSum) * 180 / Math.PI + 360) % 360;
+  const diff = Math.abs(h_dom - ctx.composition.dominantHue);
+  return clamp01(Math.min(diff, 360 - diff) / 90 + d);
 };
 
 // L ideal for light neutral plain materials — pushes candidates ABOVE composition avgLightness.
@@ -277,8 +312,8 @@ const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
   L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
   W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  H: { ideal: hAbsolute(0.0),        tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.05 } },
-  C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
+  H: { ideal: hLightNeutral(0.1),      tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+  C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
 
@@ -297,8 +332,8 @@ const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
 const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
   L: { ideal: woodLIdeal,             tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
   W: { ideal: wDelta(0),              tolerance: { quiet: 0.06, grounded: 0.08, intentional: 0.12 } },
-  H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  C: { ideal: cActivityDelta(0.03),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
+  H: { ideal: hAbsolute(0.1),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
+  C: { ideal: cActivityDelta(-0.03),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
   P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
 };
 
@@ -379,7 +414,7 @@ function computeNormalizedErrors(
     candidateHueArc = Math.min(d, 360 - d);
   }
 
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness, candidateHueArc };
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness, candidateHueArc, placedMaterials };
 
   // L
   const eL = toleratedError(candidate.lightness / 100, spec.L.ideal(ctx), spec.L.tolerance[style]);
@@ -442,7 +477,7 @@ export function computeIdealTargets(
   const composition    = computeCompositionState(placedMaterials);
   const anchorActivity = computeActivity(anchor);
   const spec = getCandidateSpec(candidateTexture, anchor.texture, chipArchetypeId);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50, candidateHueArc: null };
+  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50, candidateHueArc: null, placedMaterials };
 
   const hRef = candidateTexture === 'plain' && composition.dominantHue != null
     ? composition.dominantHue
