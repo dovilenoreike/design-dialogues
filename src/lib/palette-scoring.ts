@@ -323,7 +323,7 @@ const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
   L: { ideal: lDarkNeutral,          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.18 } },
   W: { ideal: wDelta(-0.05),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
   H: { ideal: hAbsolute(0.0),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
-  C: { ideal: cActivityDelta(0.03), tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
+  C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
   P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
 };
 
@@ -332,8 +332,8 @@ const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
 const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
   L: { ideal: woodLIdeal,             tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
   W: { ideal: wDelta(0),              tolerance: { quiet: 0.06, grounded: 0.08, intentional: 0.12 } },
-  H: { ideal: hAbsolute(0.1),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  C: { ideal: cActivityDelta(-0.03),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
+  H: { ideal: hAbsolute(0.05),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
+  C: { ideal: cActivityDelta(0.0),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
   P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
 };
 
