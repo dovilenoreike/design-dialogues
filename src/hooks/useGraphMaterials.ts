@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { rankByPaletteScore, scoreCandidate, computeAxisErrors, computeIdealTargets, type StyleMode } from '@/lib/palette-scoring';
+import { rankByPaletteScore, scoreCandidate, computeAxisErrors, computeIdealTargets } from '@/lib/palette-scoring';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -301,28 +301,26 @@ export function getAxisErrorsForCode(
   code: string,
   placedCodes: string[],
   role: string,
-  style: StyleMode = 'grounded',
   chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] | null {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeAxisErrors(candidate, placedCodes, byCode, role, style, chipArchetypeId);
+  return computeAxisErrors(candidate, placedCodes, byCode, role, chipArchetypeId);
 }
 
 export function getIdealTargetsForCode(
   code: string,
   placedCodes: string[],
   role: string,
-  style: StyleMode = 'grounded',
   chipArchetypeId?: string | null,
 ): { idealL: number; idealW: number; idealC: number; idealP: number; hRef: number | null; idealHArc: number } | null {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeIdealTargets(placedCodes, byCode, role, style, candidate.texture, '', chipArchetypeId);
+  return computeIdealTargets(placedCodes, byCode, role, candidate.texture, '', chipArchetypeId);
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -420,7 +418,6 @@ export function useGraphMaterials() {
     currentCode: string | null,
     otherCodes: string[],
     targetRole?: string,
-    style: StyleMode = 'grounded',
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
     const { pairs, byCode, graphMaterials: mats } = _cached;
@@ -441,7 +438,7 @@ export function useGraphMaterials() {
       pool = narrowed.length > 0 ? narrowed : sameTexture;
     }
     const role = targetRole ?? 'front';
-    return rankByPaletteScore(pool, otherCodes, byCode, role, style)
+    return rankByPaletteScore(pool, otherCodes, byCode, role)
       .map((m) => m.technicalCode);
   }
 
@@ -454,7 +451,6 @@ export function useGraphMaterials() {
   function getAllRankedCodes(
     otherCodes: string[],
     targetRole?: string,
-    style: StyleMode = 'grounded',
     chipArchetypeId?: string | null,
   ): string[] {
     if (!_cached || otherCodes.length === 0) return [];
@@ -468,8 +464,8 @@ export function useGraphMaterials() {
     if (pool.length === 0) return [];
     const maxPairW = otherCodes.length * 3;
     return [...pool].sort((a, b) => {
-      const pA = scoreCandidate(a, otherCodes, byCode, role, style, chipArchetypeId);
-      const pB = scoreCandidate(b, otherCodes, byCode, role, style, chipArchetypeId);
+      const pA = scoreCandidate(a, otherCodes, byCode, role, chipArchetypeId);
+      const pB = scoreCandidate(b, otherCodes, byCode, role, chipArchetypeId);
       const cA = maxPairW > 0 ? weightedScore(a.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const cB = maxPairW > 0 ? weightedScore(b.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const sA = pA * PALETTE_WEIGHT + cA * (1 - PALETTE_WEIGHT);

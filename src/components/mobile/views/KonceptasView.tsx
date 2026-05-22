@@ -180,7 +180,7 @@ export default function KonceptasView({
   t,
   language,
 }: KonceptasViewProps) {
-  const { materialOverrides, setMaterialOverrides, styleMode } = useDesign();
+  const { materialOverrides, setMaterialOverrides } = useDesign();
   const { activeShowroom } = useShowroom();
   const lang = language as "en" | "lt";
 
@@ -458,14 +458,14 @@ export default function KonceptasView({
                 const overlayChipId = (mat.texture === 'plain' && slotRole === 'front' && PLAIN_FRONT_CHIP_IDS.has(archetypeId ?? ''))
                   ? archetypeId
                   : null;
-                const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, styleMode, overlayChipId) : [];
+                const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, overlayChipId) : [];
                 const rankIdx = rankList.indexOf(overrideCode);
                 const rank = rankIdx >= 0 ? rankIdx + 1 : null;
                 const axisErrs = otherCodes.length > 0
-                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, styleMode, overlayChipId)
+                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, overlayChipId)
                   : null;
                 const ideals = otherCodes.length > 0
-                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, styleMode, overlayChipId)
+                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, overlayChipId)
                   : null;
                 return (
                   <div

@@ -27,7 +27,6 @@ import { getErrorTranslationKey } from "@/lib/error-messages";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import type { VibeTag } from "@/data/collections/types";
-import type { StyleMode } from "@/lib/palette-scoring";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
@@ -111,10 +110,6 @@ interface DesignContextValue {
   excludedSlots: Set<string>;
   setExcludedSlots: React.Dispatch<React.SetStateAction<Set<string>>>;
 
-  // Palette style mode — affects scoring weights and target zones in recommendations
-  styleMode: StyleMode;
-  setStyleMode: (mode: StyleMode) => void;
-
   // Moodboard vibe (Layer 1) — null until user picks a vibe
   vibeTag: VibeTag | null;
   vibeChosen: boolean;
@@ -188,19 +183,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   const [layoutAuditResponses, setLayoutAuditResponses] = useState<Record<string, AuditResponse>>({});
   const [layoutAuditVariables, setLayoutAuditVariables] = useState<AuditVariables>(defaultAuditVariables);
 
-  // Palette style mode — persisted to localStorage
-  const [styleMode, setStyleModeState] = useState<StyleMode>(() => {
-    try {
-      const saved = localStorage.getItem('palette-style-mode');
-      if (saved === 'quiet' || saved === 'grounded' || saved === 'intentional') return saved;
-    } catch {}
-    return 'grounded';
-  });
-
-  const setStyleMode = useCallback((mode: StyleMode) => {
-    setStyleModeState(mode);
-    try { localStorage.setItem('palette-style-mode', mode); } catch {}
-  }, []);
 
   // Moodboard vibe (Layer 1) — persisted so it survives refresh; shared session takes priority
   const [vibeTag, setVibeTagState] = useState<VibeTag | null>(() => {
@@ -855,8 +837,6 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
     setMaterialOverrides,
     excludedSlots,
     setExcludedSlots,
-    styleMode,
-    setStyleMode,
     vibeTag,
     vibeChosen,
     setVibeTag,

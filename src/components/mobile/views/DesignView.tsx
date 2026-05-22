@@ -17,7 +17,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
-import StyleModePill from "../controls/StyleModePill";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes, getApprovedByDesigner } from "@/hooks/useGraphMaterials";
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
@@ -46,20 +45,19 @@ export default function DesignView() {
     isSharedSession,
     sharedMoodboardSlots,
     shareSession,
-    styleMode,
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
   const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
-      getRecommendedCodes(currentCode, otherCodes, role, styleMode),
-    [getRecommendedCodes, styleMode]
+      getRecommendedCodes(currentCode, otherCodes, role),
+    [getRecommendedCodes]
   );
   const allRankedWithStyle = useCallback(
     (otherCodes: string[], role: string, _style?: string, chipArchetypeId?: string | null) =>
-      getAllRankedCodes(otherCodes, role, styleMode, chipArchetypeId),
-    [getAllRankedCodes, styleMode]
+      getAllRankedCodes(otherCodes, role, chipArchetypeId),
+    [getAllRankedCodes]
   );
   const { savedPalettes, isSaved, savePalette, unsavePalette } = useSavedPalettes();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -741,7 +739,6 @@ export default function DesignView() {
               >
                 {t("moodboard.room")}
               </button>
-              <StyleModePill />
             </div>
             <div className="flex items-center gap-1.5">
               <button

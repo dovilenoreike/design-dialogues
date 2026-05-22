@@ -1,6 +1,5 @@
 import type { GraphMaterial } from '@/lib/graph-compatibility';
 
-export type StyleMode = 'quiet' | 'grounded' | 'intentional';
 
 // ─── Pure utilities ───────────────────────────────────────────────────────────
 function toleratedError(actual: number, ideal: number, tol: number): number {
@@ -88,17 +87,9 @@ const NO_ANCHOR_SCORE    = 0.5;
 const TEXTURE_ERROR_SCALE = 0.20;
 
 // ─── Activity-derived ideal factors ──────────────────────────────────────────
-const CHROMA_ACTIVITY_FACTOR: Record<StyleMode, number> = {
-  quiet: 0.55, grounded: 0.30, intentional: 0.50,
-};
-
-const PATTERN_ACTIVITY_FACTOR: Record<StyleMode, number> = {
-  quiet: 0.75, grounded: 0.45, intentional: 0.70,
-};
-
-const TEXTURE_MAX_FAMILIES: Record<StyleMode, number> = {
-  quiet: 2, grounded: 3, intentional: 3,
-};
+const CHROMA_ACTIVITY_FACTOR  = 0.30;
+const PATTERN_ACTIVITY_FACTOR = 0.45;
+const TEXTURE_MAX_FAMILIES    = 3;
 
 const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 
@@ -110,7 +101,6 @@ const PATTERN_TEXTURE_OVERLOAD_FACTOR = 2.0;
 interface IdealContext {
   anchor:             GraphMaterial;
   candidateRole:      string;
-  style:              StyleMode;
   anchorActivity:     number;
   composition:        CompositionState;
   candidateLightness: number;
@@ -136,7 +126,7 @@ const hAbsolute = (target: number): IdealFn => () => target;
 // Uses anchor visual chroma so dark/light anchors don't over-drive the target.
 const cActivityDelta = (d: number): IdealFn => (ctx) => {
   const anchorVisualC = ctx.anchor.chroma * colourSalience(ctx.anchor.lightness);
-  const base = Math.max(5, anchorVisualC - ctx.anchorActivity * CHROMA_ACTIVITY_FACTOR[ctx.style]) / 100;
+  const base = Math.max(5, anchorVisualC - ctx.anchorActivity * CHROMA_ACTIVITY_FACTOR) / 100;
   return clamp01(base + d);
 };
 
@@ -146,7 +136,7 @@ const pActivityDelta = (d: number): IdealFn => (ctx) => {
   if (ctx.candidateRole === 'worktop' && ctx.composition.compositionActivity < 30) {
     base = (ctx.composition.compositionActivity + (30 - ctx.composition.compositionActivity) * 0.8) / 100;
   } else {
-    base = Math.max(0, ctx.anchor.pattern - ctx.anchorActivity * PATTERN_ACTIVITY_FACTOR[ctx.style]) / 100;
+    base = Math.max(0, ctx.anchor.pattern - ctx.anchorActivity * PATTERN_ACTIVITY_FACTOR) / 100;
   }
   return clamp01(base + d);
 };
@@ -164,9 +154,7 @@ const ROLE_PROXIMITY_FOR_NEUTRAL: Record<string, number> = {
 // H ideal for chromatic plain materials — composition-activity-driven.
 // Busy palette → harmonise with composition hue (target arc 0°).
 // Calm palette → gentle hue interest (target arc ~30°).
-// Intentional → bold contrast (target arc 90°).
 const hChromatic: IdealFn = (ctx) => {
-  if (ctx.style === 'intentional') return 1.0;
   const activityNorm = Math.min(1, ctx.composition.compositionActivity / 50);
   return clamp01((1 - activityNorm) / 3.0);
 };
@@ -261,38 +249,37 @@ const woodLIdeal: IdealFn = (ctx) => {
 // One entry per candidateTexture. Each axis: { ideal: IdealFn, tolerance: per-style }.
 // Tolerance = no-punishment zone in 0–1 space. Tighter → axis is more decisive.
 
-interface StyleTolerance { quiet: number; grounded: number; intentional: number }
-interface AxisSpec { ideal: IdealFn; tolerance: StyleTolerance }
+interface AxisSpec { ideal: IdealFn; tolerance: number }
 interface CandidateSpec { L: AxisSpec; W: AxisSpec; H: AxisSpec; C: AxisSpec; P: AxisSpec }
 
 const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
   plain: {
-    L: { ideal: lDelta(+0.10),          tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
-    W: { ideal: wDelta(-0.05),          tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-    H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.02, grounded: 0.03, intentional: 0.06 } },
-    C: { ideal: cActivityDelta(-0.08),  tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
-    P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+    L: { ideal: lDelta(+0.10),         tolerance: 0.10 },
+    W: { ideal: wDelta(-0.05),         tolerance: 0.06 },
+    H: { ideal: hAbsolute(0),          tolerance: 0.03 },
+    C: { ideal: cActivityDelta(-0.08), tolerance: 0.06 },
+    P: { ideal: pActivityDelta(0),     tolerance: 0.04 },
   },
   wood: {
-    L: { ideal: woodLIdeal,             tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
-    W: { ideal: wDelta(0),              tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.14 } },
-    H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.02, grounded: 0.03, intentional: 0.06 } },
-    C: { ideal: cActivityDelta(-0.05),  tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
-    P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.05, grounded: 0.08, intentional: 0.12 } },
+    L: { ideal: woodLIdeal,            tolerance: 0.08 },
+    W: { ideal: wDelta(0),             tolerance: 0.08 },
+    H: { ideal: hAbsolute(0),          tolerance: 0.03 },
+    C: { ideal: cActivityDelta(-0.05), tolerance: 0.08 },
+    P: { ideal: pActivityDelta(0),     tolerance: 0.08 },
   },
   stone: {
-    L: { ideal: lDelta(+0.05),          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.16 } },
-    W: { ideal: wDelta(-0.08),          tolerance: { quiet: 0.05, grounded: 0.05, intentional: 0.10 } },
-    H: { ideal: hAbsolute(0.05),           tolerance: { quiet: 0.03, grounded: 0.05, intentional: 0.08 } },
-    C: { ideal: cActivityDelta(-0.12),  tolerance: { quiet: 0.15, grounded: 0.15, intentional: 0.15 } },
-    P: { ideal: pActivityDelta(0.05),  tolerance: { quiet: 0.1, grounded: 0.20, intentional: 0.30 } },
+    L: { ideal: lDelta(+0.05),         tolerance: 0.12 },
+    W: { ideal: wDelta(-0.08),         tolerance: 0.05 },
+    H: { ideal: hAbsolute(0.05),       tolerance: 0.05 },
+    C: { ideal: cActivityDelta(-0.12), tolerance: 0.15 },
+    P: { ideal: pActivityDelta(0.05),  tolerance: 0.20 },
   },
   textile: {
-    L: { ideal: lDelta(+0.08),          tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.14 } },
-    W: { ideal: wDelta(-0.03),          tolerance: { quiet: 0.04, grounded: 0.07, intentional: 0.14 } },
-    H: { ideal: hAbsolute(0),           tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.07 } },
-    C: { ideal: cActivityDelta(-0.05),  tolerance: { quiet: 0.04, grounded: 0.07, intentional: 0.12 } },
-    P: { ideal: pActivityDelta(+0.05),  tolerance: { quiet: 0.04, grounded: 0.06, intentional: 0.10 } },
+    L: { ideal: lDelta(+0.08),         tolerance: 0.10 },
+    W: { ideal: wDelta(-0.03),         tolerance: 0.07 },
+    H: { ideal: hAbsolute(0),          tolerance: 0.04 },
+    C: { ideal: cActivityDelta(-0.05), tolerance: 0.07 },
+    P: { ideal: pActivityDelta(+0.05), tolerance: 0.06 },
   },
 };
 
@@ -300,41 +287,41 @@ const CANDIDATE_SPECS: Record<string, CandidateSpec> = {
 // Routed exclusively by candidate.archetypeId — no chroma thresholds.
 
 const CANDIDATE_SPEC_PLAIN_CHROMATIC: CandidateSpec = {
-  L: { ideal: lDelta(+0.0),   tolerance: { quiet: 0.06, grounded: 0.10, intentional: 0.16 } },
-  W: { ideal: wDelta(-0.05),   tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.12 } },
-  H: { ideal: hChromatic,      tolerance: { quiet: 0.16, grounded: 0.30, intentional: 0.50 } },
-  C: { ideal: cChromatic,      tolerance: { quiet: 0.04, grounded: 0.08, intentional: 0.14 } },
-  P: { ideal: pActivityDelta(0), tolerance: { quiet: 0.02, grounded: 0.04, intentional: 0.08 } },
+  L: { ideal: lDelta(+0.0),     tolerance: 0.10 },
+  W: { ideal: wDelta(-0.05),    tolerance: 0.06 },
+  H: { ideal: hChromatic,       tolerance: 0.30 },
+  C: { ideal: cChromatic,       tolerance: 0.08 },
+  P: { ideal: pActivityDelta(0), tolerance: 0.04 },
 };
 
 // Light neutral: targets high L (above avgLightness), cool, low chroma.
 // H reference is dominantHue (see computeNormalizedErrors).
 const CANDIDATE_SPEC_PLAIN_LIGHT_NEUTRAL: CandidateSpec = {
-  L: { ideal: lNeutralPlain,         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  W: { ideal: wDelta(-0.15),         tolerance: { quiet: 0.02, grounded: 0.05, intentional: 0.05 } },
-  H: { ideal: hLightNeutral(0.08),      tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
+  L: { ideal: lNeutralPlain,         tolerance: 0.05 },
+  W: { ideal: wDelta(-0.15),         tolerance: 0.05 },
+  H: { ideal: hLightNeutral(0.08),   tolerance: 0.02 },
+  C: { ideal: cActivityDelta(-0.05), tolerance: 0.02 },
+  P: { ideal: pActivityDelta(0),     tolerance: 0.15 },
 };
 
 // Dark neutral: targets low L (below avgLightness), slight cool lean, low chroma.
 // Mirror of light-neutral on the L axis.
 const CANDIDATE_SPEC_PLAIN_DARK_NEUTRAL: CandidateSpec = {
-  L: { ideal: lDarkNeutral,          tolerance: { quiet: 0.07, grounded: 0.12, intentional: 0.18 } },
-  W: { ideal: wDelta(-0.05),         tolerance: { quiet: 0.06, grounded: 0.12, intentional: 0.18 } },
-  H: { ideal: hAbsolute(0.0),        tolerance: { quiet: 0.10, grounded: 0.15, intentional: 0.2 } },
-  C: { ideal: cActivityDelta(-0.05), tolerance: { quiet: 0.03, grounded: 0.06, intentional: 0.10 } },
-  P: { ideal: pActivityDelta(0),     tolerance: { quiet: 0.05, grounded: 0.15, intentional: 0.15 } },
+  L: { ideal: lDarkNeutral,          tolerance: 0.12 },
+  W: { ideal: wDelta(-0.05),         tolerance: 0.12 },
+  H: { ideal: hAbsolute(0.0),        tolerance: 0.15 },
+  C: { ideal: cActivityDelta(-0.05), tolerance: 0.06 },
+  P: { ideal: pActivityDelta(0),     tolerance: 0.15 },
 };
 
 // Wood-on-wood: hue undertone match dominates at all style levels (very tight H tolerance).
 // woodLIdeal handles both the general wood case and wood-on-wood via role detection.
 const CANDIDATE_SPEC_WOOD_ON_WOOD: CandidateSpec = {
-  L: { ideal: woodLIdeal,             tolerance: { quiet: 0.05, grounded: 0.07, intentional: 0.10 } },
-  W: { ideal: wDelta(0),              tolerance: { quiet: 0.06, grounded: 0.08, intentional: 0.12 } },
-  H: { ideal: hAbsolute(0.05),           tolerance: { quiet: 0.02, grounded: 0.02, intentional: 0.02 } },
-  C: { ideal: cActivityDelta(0.0),  tolerance: { quiet: 0.25, grounded: 0.25, intentional: 0.25 } },
-  P: { ideal: pActivityDelta(0),      tolerance: { quiet: 0.08, grounded: 0.10, intentional: 0.14 } },
+  L: { ideal: woodLIdeal,            tolerance: 0.07 },
+  W: { ideal: wDelta(0),             tolerance: 0.08 },
+  H: { ideal: hAbsolute(0.05),       tolerance: 0.02 },
+  C: { ideal: cActivityDelta(0.0),   tolerance: 0.25 },
+  P: { ideal: pActivityDelta(0),     tolerance: 0.10 },
 };
 
 function getCandidateSpec(
@@ -374,7 +361,6 @@ function textureError(
   candidate: GraphMaterial,
   placedMaterials: GraphMaterial[],
   anchor: GraphMaterial,
-  style: StyleMode,
 ): number {
   if (candidate.texture === 'plain') return 0;
   if (placedMaterials.length === 0) return 0;
@@ -384,7 +370,7 @@ function textureError(
     counts.set(m.texture, (counts.get(m.texture) ?? 0) + 1);
   }
   const ct = candidate.texture;
-  if (!counts.has(ct)) return counts.size >= TEXTURE_MAX_FAMILIES[style] ? 1.0 : 0.0;
+  if (!counts.has(ct)) return counts.size >= TEXTURE_MAX_FAMILIES ? 1.0 : 0.0;
   if (ct === anchor.texture) return 0;
   const existing = counts.get(ct)!;
   return existing >= Math.max(...counts.values()) ? 1.0 : 0.5;
@@ -397,7 +383,6 @@ function computeNormalizedErrors(
   anchor: GraphMaterial,
   placedMaterials: GraphMaterial[],
   candidateRole: string,
-  style: StyleMode,
   composition: CompositionState,
   chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] {
@@ -414,13 +399,13 @@ function computeNormalizedErrors(
     candidateHueArc = Math.min(d, 360 - d);
   }
 
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: candidate.lightness, candidateHueArc, placedMaterials };
+  const ctx: IdealContext = { anchor, candidateRole, anchorActivity, composition, candidateLightness: candidate.lightness, candidateHueArc, placedMaterials };
 
   // L
-  const eL = toleratedError(candidate.lightness / 100, spec.L.ideal(ctx), spec.L.tolerance[style]);
+  const eL = toleratedError(candidate.lightness / 100, spec.L.ideal(ctx), spec.L.tolerance);
 
   // W
-  const eW = toleratedError(candidate.warmth, spec.W.ideal(ctx), spec.W.tolerance[style]);
+  const eW = toleratedError(candidate.warmth, spec.W.ideal(ctx), spec.W.tolerance);
 
   // H: shortest arc / 90 → 0–1 (90° = full error).
   let eH: number;
@@ -431,15 +416,15 @@ function computeNormalizedErrors(
   } else if (hRef == null) {
     eH = 0;
   } else {
-    eH = toleratedError(candidateHueArc! / 90, spec.H.ideal(ctx), spec.H.tolerance[style]);
+    eH = toleratedError(candidateHueArc! / 90, spec.H.ideal(ctx), spec.H.tolerance);
   }
 
   // C: × colourSalience so chroma errors shrink at extreme lightness
-  const eC = toleratedError(candidate.chroma / 100, spec.C.ideal(ctx), spec.C.tolerance[style])
+  const eC = toleratedError(candidate.chroma / 100, spec.C.ideal(ctx), spec.C.tolerance)
     * colourSalience(candidate.lightness);
 
   // T: categorical, scaled to stay secondary to continuous axes
-  const eT = textureError(candidate, placedMaterials, anchor, style) * TEXTURE_ERROR_SCALE;
+  const eT = textureError(candidate, placedMaterials, anchor) * TEXTURE_ERROR_SCALE;
 
   // P: backsplash exempt; overload factor when new texture exceeds family limit
   const nonPlainCounts = new Map<string, number>();
@@ -449,13 +434,13 @@ function computeNormalizedErrors(
   const isNewTextureOverLimit =
     candidate.texture !== 'plain' &&
     !nonPlainCounts.has(candidate.texture) &&
-    nonPlainCounts.size >= TEXTURE_MAX_FAMILIES[style];
+    nonPlainCounts.size >= TEXTURE_MAX_FAMILIES;
   const effectivePattern = candidate.texture === anchor.texture
     ? Math.max(0, candidate.pattern - anchor.pattern)
     : candidate.pattern;
   const ePRaw = candidateRole === 'backsplash'
     ? 0
-    : toleratedError(effectivePattern / 100, spec.P.ideal(ctx), spec.P.tolerance[style]);
+    : toleratedError(effectivePattern / 100, spec.P.ideal(ctx), spec.P.tolerance);
   const eP = isNewTextureOverLimit ? ePRaw * PATTERN_TEXTURE_OVERLOAD_FACTOR : ePRaw;
 
   return [eL, eW, eH, eC, eT, eP];
@@ -466,7 +451,6 @@ export function computeIdealTargets(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
-  style: StyleMode,
   candidateTexture: string,
   _anchorTexture: string,
   chipArchetypeId?: string | null,
@@ -477,7 +461,7 @@ export function computeIdealTargets(
   const composition    = computeCompositionState(placedMaterials);
   const anchorActivity = computeActivity(anchor);
   const spec = getCandidateSpec(candidateTexture, anchor.texture, chipArchetypeId);
-  const ctx: IdealContext = { anchor, candidateRole, style, anchorActivity, composition, candidateLightness: 50, candidateHueArc: null, placedMaterials };
+  const ctx: IdealContext = { anchor, candidateRole, anchorActivity, composition, candidateLightness: 50, candidateHueArc: null, placedMaterials };
 
   const hRef = candidateTexture === 'plain' && composition.dominantHue != null
     ? composition.dominantHue
@@ -499,14 +483,13 @@ export function computeAxisErrors(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
-  style: StyleMode,
   chipArchetypeId?: string | null,
 ): [number, number, number, number, number, number] {
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
   const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   const composition = computeCompositionState(placedMaterials);
-  return computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition, chipArchetypeId);
+  return computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, composition, chipArchetypeId);
 }
 
 /** Combined distance-to-ideal score for a single candidate. Returns 0–1.
@@ -516,14 +499,13 @@ export function scoreCandidate(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
-  style: StyleMode,
   chipArchetypeId?: string | null,
 ): number {
   const anchor = identifyAnchor(placedCodes, byCode);
   if (!anchor) return NO_ANCHOR_SCORE;
   const placedMaterials = placedCodes.map((c) => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   const composition = computeCompositionState(placedMaterials);
-  const errors = computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, style, composition, chipArchetypeId);
+  const errors = computeNormalizedErrors(candidate, anchor, placedMaterials, candidateRole, composition, chipArchetypeId);
   const d = errors.reduce((s, e) => s + e ** SCORE_ERROR_POWER, 0);
   return 1 / (1 + d);
 }
@@ -535,7 +517,6 @@ export function rankWithinCluster(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
-  style: StyleMode,
 ): GraphMaterial[] {
   if (members.length <= 1) return [...members];
   const anchor = identifyAnchor(placedCodes, byCode);
@@ -546,7 +527,7 @@ export function rankWithinCluster(
 
   type SixErrors = [number, number, number, number, number, number];
   const allErrors: SixErrors[] = members.map((m) =>
-    computeNormalizedErrors(m, anchor, placedMaterials, candidateRole, style, composition)
+    computeNormalizedErrors(m, anchor, placedMaterials, candidateRole, composition)
   );
 
   const mins = ([0, 1, 2, 3, 4, 5] as const).map((i) =>
@@ -569,12 +550,11 @@ export function rankByPaletteScore(
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
-  style: StyleMode,
 ): GraphMaterial[] {
   const scores = new Map(
     candidates.map((c) => [
       c.technicalCode,
-      scoreCandidate(c, placedCodes, byCode, candidateRole, style),
+      scoreCandidate(c, placedCodes, byCode, candidateRole),
     ])
   );
   return [...candidates].sort(

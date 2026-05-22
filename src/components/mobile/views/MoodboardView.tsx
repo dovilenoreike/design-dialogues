@@ -212,7 +212,7 @@ function SurfaceConfigList({
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function MoodboardView() {
-  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession, styleMode } = useDesign();
+  const { materialOverrides, setMaterialOverrides, setActiveTab, vibeTag, clearVibeTag, resetVibeChoice, isSharedSession, sharedMoodboardSlots, shareSession } = useDesign();
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
   const { activeShowroom } = useShowroom();
@@ -221,8 +221,8 @@ export default function MoodboardView() {
   const { loading: graphLoading, graphMaterials, getBestSwapCode, getRecommendedCodes, isCompatibleWithOthers } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
-      getRecommendedCodes(currentCode, otherCodes, role, styleMode),
-    [getRecommendedCodes, styleMode]
+      getRecommendedCodes(currentCode, otherCodes, role),
+    [getRecommendedCodes]
   );
   const [searchParams, setSearchParams] = useSearchParams();
 
