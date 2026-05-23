@@ -454,7 +454,7 @@ export default function KonceptasView({
               {SHOW_COLOUR_SCORES && mat && (() => {
                 // Use the archetype chip that was active when this material was placed.
                 // archetypeId = slotSelections[piece.slot] — fixed per selection, not per-candidate.
-                const PLAIN_FRONT_CHIP_IDS = new Set(['light-neutral', 'dark-neutral', 'colours']);
+                const PLAIN_FRONT_CHIP_IDS = new Set(['plain']);
                 const overlayChipId = (mat.texture === 'plain' && slotRole === 'front' && PLAIN_FRONT_CHIP_IDS.has(archetypeId ?? ''))
                   ? archetypeId
                   : null;

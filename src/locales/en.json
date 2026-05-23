@@ -200,7 +200,20 @@
     "searchByCode": "Search by code…",
     "searchNoResults": "No materials found for this code.",
     "bestMatch": "Best match",
-    "exploreSimilar": "Explore similar"
+    "exploreSimilar": "Explore similar",
+    "direction": {
+      "tonalMatch": "Tonal match",
+      "lighterEcho": "Lighter echo",
+      "darkerEcho": "Darker echo",
+      "softContrast": "Soft contrast",
+      "temperatureShift": "Warmer / cooler",
+      "grainContrast": "Grain contrast",
+      "lightNeutral": "Light neutral",
+      "mediumNeutral": "Medium neutral",
+      "darkNeutral": "Dark neutral",
+      "pastel": "Pastel",
+      "richColour": "Colour"
+    }
   },
   "specs": {
     "fullSpecification": "Full Specification",
