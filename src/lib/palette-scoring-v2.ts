@@ -27,6 +27,10 @@ const ROLE_VISUAL_MASS: Record<string, number> = {
   floor: 0.35, front: 0.30, worktop: 0.10, backsplash: 0.05,
 };
 
+const ROLE_ANCHOR_WEIGHT: Record<string, number> = {
+  floor: 4, front: 3, worktop: 2, backsplash: 1,
+};
+
 function massOf(m: GraphMaterial): number {
   return ROLE_VISUAL_MASS[m.role[0]] ?? 0.10;
 }
@@ -330,8 +334,8 @@ export function harmonyScore(
 ): number {
   if (placed.length === 0) return NO_PALETTE_SCORE;
 
-  let relErrSum = 0;
-  let relCount  = 0;
+  let relErrSum    = 0;
+  let relWeightSum = 0;
 
   for (const p of placed) {
     const placedRole = p.role[0];
@@ -339,17 +343,15 @@ export function harmonyScore(
     const rel = desiredRelationship(candidateRole, placedRole, state);
     if (!rel) continue;
 
+    const roleWeight = ROLE_ANCHOR_WEIGHT[placedRole] ?? 1;
     let err = pairError(candidate, p, rel, state);
     if (rel.bridge) err += bridgeError(candidate, p, state) * 0.5;
-    relErrSum += err;
-    relCount  += 1;
+    relErrSum    += err * roleWeight;
+    relWeightSum += roleWeight;
   }
 
-  if (relCount === 0) return NO_PALETTE_SCORE;
-  // Average across relationships (N-invariant) → power → squash to 0–1.
-  // Keeps single-material and 3-material palettes producing comparable score magnitudes,
-  // so the existing PALETTE_WEIGHT blend at the caller side remains meaningful.
-  const avgErr = relErrSum / relCount;
+  if (relWeightSum === 0) return NO_PALETTE_SCORE;
+  const avgErr = relErrSum / relWeightSum;
   return 1 / (1 + Math.pow(avgErr, SCORE_ERROR_POWER));
 }
 
@@ -372,12 +374,12 @@ export function paletteScoreV2(
 // ─── Direction taxonomy ──────────────────────────────────────────────────────
 export type DirectionId =
   | 'tonal_match' | 'lighter_echo' | 'darker_echo'
-  | 'soft_contrast' | 'temperature_shift' | 'grain_contrast'
+  | 'soft_contrast' | 'temperature_shift'
   | 'light_neutral' | 'medium_neutral' | 'dark_neutral'
   | 'pastel' | 'rich_colour';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
-  wood:  ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift', 'grain_contrast'],
+  wood:  ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
   stone: ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast'],
   plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour'],
   // metallic / gold / silver / bronze / black / accents → no directions; flat list
@@ -476,12 +478,14 @@ export function directionForCandidate(
   }
 
   if (archetype === 'wood') {
-    if (Math.abs(dW) > 0.15 && Math.abs(dL) < 0.06) return 'temperature_shift';
-    if (Math.abs(dL) < 0.06 && Math.abs(dW) < 0.10 && dP > 20) return 'grain_contrast';
-    if (dL > 0.08) return 'lighter_echo';
-    if (dL < -0.08) return 'darker_echo';
-    if (Math.abs(dL) > 0.04) return 'soft_contrast';
-    return 'tonal_match';
+    if (Math.abs(dW) > 0.15 && Math.abs(dL) < 0.08) return 'temperature_shift';
+    // soft_contrast: always exists — extreme push opposite to where the reference sits.
+    // ref.L ≥ 50 → show darkest candidates; ref.L < 50 → show lightest candidates.
+    if (ref.L >= 50 && dL < -0.25) return 'soft_contrast';
+    if (ref.L < 50 && dL > 0.25) return 'soft_contrast';
+    if (dL > 0.1) return 'lighter_echo';
+    if (dL < -0.1) return 'darker_echo';
+    return 'tonal_match'; // nearest match — harmony score picks the closest candidate
   }
 
   if (archetype === 'stone') {
@@ -547,6 +551,35 @@ export interface RankedClusteredEntry {
   clusterKey: string;
 }
 
+/** Direction-aware wood-on-wood score. Only called when the candidate is wood and a wood
+ *  reference exists in the palette. Scores hue (and L for tonal_match) relative to the
+ *  reference wood's position.
+ *  - tonal_match:           ideal hue arc = 0°  (same undertone family), tight L match
+ *  - lighter_echo/darker_echo: ideal hue arc = 10° (slight undertone shift), no L penalty */
+function woodOnWoodScore(
+  candidate: GraphMaterial,
+  woodRef: DirectionRef,
+  direction: DirectionId,
+): number {
+  let hArc = 0;
+  if (woodRef.hue != null && candidate.hue_angle != null) {
+    const raw = Math.abs(candidate.hue_angle - woodRef.hue);
+    hArc = Math.min(raw, 360 - raw) / 90;
+  }
+
+  let err = 0;
+  if (direction === 'tonal_match') {
+    const dL = Math.abs(candidate.lightness - woodRef.L) / 100;
+    err += toleratedError(dL, 0, 0.06);
+    err += toleratedError(hArc, 0, 5 / 90) * 1.5;
+  } else {
+    // lighter_echo or darker_echo: slight hue shift is ideal, identical undertone is not
+    err += toleratedError(hArc, 10 / 90, 8 / 90) * 2.0;
+  }
+
+  return 1 / (1 + Math.pow(err, SCORE_ERROR_POWER));
+}
+
 /** Score every candidate, gate by harmony threshold (with relaxation), tag with
  *  direction + cluster key, and return sorted desc by score. The picker is free
  *  to group by `direction` (sub-cluster headings) and/or `clusterKey` (variety). */
@@ -576,12 +609,25 @@ export function rankClusteredCandidates(
     passed = scored.filter((s) => s.score >= threshold);
   }
 
-  return passed
-    .map(({ material, score }) => ({
+  const placedWood = state.byArchetype.get('wood') ?? [];
+  const woodRef = placedWood.length > 0 ? directionReference('wood', state) : null;
+
+  const entries = passed.map(({ material, score: harmScore }) => {
+    const direction = directionForCandidate(material, state, chipArchetypeId);
+
+    let finalScore = harmScore;
+    if (woodRef && material.texture === 'wood' && direction) {
+      const woodScore = woodOnWoodScore(material, woodRef, direction);
+      finalScore = 0.6 * harmScore + 0.4 * woodScore;
+    }
+
+    return {
       code: material.technicalCode,
-      score,
-      direction: directionForCandidate(material, state, chipArchetypeId),
+      score: finalScore,
+      direction,
       clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
-    }))
-    .sort((a, b) => b.score - a.score);
+    };
+  });
+
+  return entries.sort((a, b) => b.score - a.score);
 }
