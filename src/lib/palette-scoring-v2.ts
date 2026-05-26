@@ -227,7 +227,7 @@ export function desiredRelationship(roleA: string, roleB: string, _state: Palett
 // Base tolerance per axis in normalised 0–1 space. These + axisWeights +
 // the two tension/range factors below are the only tunable knobs.
 const BASE_TOL: Record<'L' | 'W' | 'H' | 'C', number> = {
-  L: 0.08, W: 0.08, H: 0.10, C: 0.08,
+  L: 0.3, W: 0.08, H: 0.10, C: 0.08,
 };
 const TENSION_FACTOR = 1.0;
 const RANGE_FACTOR   = 0.7;
@@ -463,9 +463,9 @@ export function directionForCandidate(
   if (!ref) return null;
 
   const dL = (candidate.lightness - ref.L) / 100;
-  const dW = candidate.warmth - ref.W;
+  const _dW = candidate.warmth - ref.W;
   const dC = (candidate.chroma - ref.C) / 100;
-  const dP = (candidate.pattern - ref.pattern);
+  const _dP = (candidate.pattern - ref.pattern);
 
   if (archetype === 'plain') {
     // Chroma shift dominates — moves out of neutral lane.
@@ -478,14 +478,8 @@ export function directionForCandidate(
   }
 
   if (archetype === 'wood') {
-    if (Math.abs(dW) > 0.15 && Math.abs(dL) < 0.08) return 'temperature_shift';
-    // soft_contrast: always exists — extreme push opposite to where the reference sits.
-    // ref.L ≥ 50 → show darkest candidates; ref.L < 50 → show lightest candidates.
-    if (ref.L >= 50 && dL < -0.25) return 'soft_contrast';
-    if (ref.L < 50 && dL > 0.25) return 'soft_contrast';
-    if (dL > 0.1) return 'lighter_echo';
-    if (dL < -0.1) return 'darker_echo';
-    return 'tonal_match'; // nearest match — harmony score picks the closest candidate
+    // Wood direction is determined by per-direction scoring in rankClusteredCandidates, not here.
+    return null;
   }
 
   if (archetype === 'stone') {
@@ -551,11 +545,47 @@ export interface RankedClusteredEntry {
   clusterKey: string;
 }
 
+// ─── Wood-on-wood scoring constants ─────────────────────────────────────────
+// Tonal match — raw axis weights (no tolerance zones; every delta costs something).
+const WOOD_TONAL_W_H = 1.5;  // hue undertone — most critical for family identity
+const WOOD_TONAL_W_W = 1.2;  // warmth character (warm oak vs cool ash)
+const WOOD_TONAL_W_C = 0.8;  // chroma/saturation level
+const WOOD_TONAL_W_L = 0.6;  // lightness (small differences acceptable)
+const WOOD_TONAL_W_P = 0.4;  // grain pattern (least critical)
+// Same-family woods naturally vary by ~4.5° in hue (V1 uses hAbsolute(0.05) = 0.05×90°).
+// Ideal is not 0° — a candidate at 4.5° scores better than one at exactly 0°.
+const WOOD_TONAL_IDEAL_HUE_DEG = 0;
+
+// Tonal match blend — minimum wood weight even when woodScore → 0.
+// At 0.15: harmony can contribute at most 85%; wood always has ≥15% influence.
+const WOOD_TONAL_MIN_WOOD_WEIGHT = 0.15;
+
+// Lighter/darker echo — hue: ideal offset from the reference wood (degrees).
+// Candidates at exactly this arc score best; identical or very different hue scores worse.
+const WOOD_ECHO_IDEAL_HUE_DEG = 4.5;
+const WOOD_ECHO_HUE_WEIGHT     = 1.5;
+// Lighter/darker echo — L: ideal delta ±0.10 (10 L units) from reference.
+// lighter_echo ideal = +0.10, darker_echo ideal = −0.10. Scored as raw distance — no hard gate.
+const WOOD_ECHO_IDEAL_L_DELTA = 0.10;
+const WOOD_ECHO_W_L = 1.2;  // L is the defining axis for lighter/darker
+// Lighter/darker echo — warmth and chroma: should stay in family (borrowed from V1 wood-on-wood).
+const WOOD_ECHO_W_W = 0.8;  // warmth should stay in the same warm/cool family
+const WOOD_ECHO_W_C = 0.4;  // chroma loosely — saturation ballpark
+const WOOD_ECHO_W_P = 0.2;  // grain pattern — least critical
+
+// Lighter/darker echo — wrong-direction L multiplier.
+// A candidate that is lighter than the reference scores for darker_echo (and vice versa)
+// with this multiplier on its L error — continuous penalty, no hard cutoff.
+const WOOD_ECHO_WRONG_DIR_MULTIPLIER = 3.0;
+
+// Lighter/darker echo blend — fixed weights (harmony 60%, wood 40%).
+const WOOD_ECHO_HARM_WEIGHT = 0.6;
+const WOOD_ECHO_WOOD_WEIGHT = 0.4;
+
 /** Direction-aware wood-on-wood score. Only called when the candidate is wood and a wood
- *  reference exists in the palette. Scores hue (and L for tonal_match) relative to the
- *  reference wood's position.
- *  - tonal_match:           ideal hue arc = 0°  (same undertone family), tight L match
- *  - lighter_echo/darker_echo: ideal hue arc = 10° (slight undertone shift), no L penalty */
+ *  reference exists in the palette.
+ *  - tonal_match:              all 5 axes, raw distance, no flat tolerance zones
+ *  - lighter_echo/darker_echo: hue only, raw distance from ideal 10° offset */
 function woodOnWoodScore(
   candidate: GraphMaterial,
   woodRef: DirectionRef,
@@ -567,14 +597,30 @@ function woodOnWoodScore(
     hArc = Math.min(raw, 360 - raw) / 90;
   }
 
+  const dW = Math.abs(candidate.warmth  - woodRef.W) / 2;   // warmth range −1..1 → 0..1
+  const dC = Math.abs(candidate.chroma  - woodRef.C) / 100;
+  const dP = Math.abs(candidate.pattern - woodRef.pattern) / 100;
+
   let err = 0;
-  if (direction === 'tonal_match') {
-    const dL = Math.abs(candidate.lightness - woodRef.L) / 100;
-    err += toleratedError(dL, 0, 0.06);
-    err += toleratedError(hArc, 0, 5 / 90) * 1.5;
+  if (direction === 'tonal_match')  { //these woods are expected to be identical!
+    const dL      = Math.abs(candidate.lightness - woodRef.L) / 100;
+    const hIdeal  = WOOD_TONAL_IDEAL_HUE_DEG / 90;
+    err = Math.abs(hArc - hIdeal) * WOOD_TONAL_W_H 
+        + dW                      * WOOD_TONAL_W_W
+        + dC                      * WOOD_TONAL_W_C
+        + dL                      * WOOD_TONAL_W_L
+        + dP                      * WOOD_TONAL_W_P;
   } else {
-    // lighter_echo or darker_echo: slight hue shift is ideal, identical undertone is not
-    err += toleratedError(hArc, 10 / 90, 8 / 90) * 2.0;
+    // lighter_echo / darker_echo: all axes scored, L with directional ideal ±0.10.
+    const signedDL = (candidate.lightness - woodRef.L) / 100;
+    const idealDL  = direction === 'lighter_echo' ? WOOD_ECHO_IDEAL_L_DELTA : -WOOD_ECHO_IDEAL_L_DELTA;
+    const wrongDir = direction === 'lighter_echo' ? signedDL < 0 : signedDL > 0;
+    const hIdeal   = WOOD_ECHO_IDEAL_HUE_DEG / 90;
+    err = Math.abs(signedDL - idealDL) * WOOD_ECHO_W_L * (wrongDir ? WOOD_ECHO_WRONG_DIR_MULTIPLIER : 1.0)
+        + Math.abs(hArc - hIdeal)      * WOOD_ECHO_HUE_WEIGHT
+        + dW                           * WOOD_ECHO_W_W
+        + dC                           * WOOD_ECHO_W_C
+        + dP                           * WOOD_ECHO_W_P;
   }
 
   return 1 / (1 + Math.pow(err, SCORE_ERROR_POWER));
@@ -595,39 +641,47 @@ export function rankClusteredCandidates(
     .filter((m): m is GraphMaterial => !!m);
   const state = computePaletteState(placed);
 
-  // Score everything once.
-  const scored = candidates.map((c) => ({
+  // Score everything — no gate; sort decides rank.
+  const passed = candidates.map((c) => ({
     material: c,
     score: harmonyScore(c, placed, state, candidateRole, chipArchetypeId),
   }));
 
-  // Harmony envelope: drop low scorers, relax threshold if too few pass.
-  let threshold = harmonyThreshold(state.tension);
-  let passed = scored.filter((s) => s.score >= threshold);
-  while (passed.length < 3 && threshold > HARMONY_THRESHOLD_FLOOR) {
-    threshold = Math.max(HARMONY_THRESHOLD_FLOOR, threshold - 0.05);
-    passed = scored.filter((s) => s.score >= threshold);
-  }
-
   const placedWood = state.byArchetype.get('wood') ?? [];
   const woodRef = placedWood.length > 0 ? directionReference('wood', state) : null;
 
-  const entries = passed.map(({ material, score: harmScore }) => {
-    const direction = directionForCandidate(material, state, chipArchetypeId);
+  const WOOD_DIRECTIONS = ['tonal_match', 'lighter_echo', 'darker_echo'] as const;
+  const entries: RankedClusteredEntry[] = [];
 
-    let finalScore = harmScore;
-    if (woodRef && material.texture === 'wood' && direction) {
-      const woodScore = woodOnWoodScore(material, woodRef, direction);
-      finalScore = 0.6 * harmScore + 0.4 * woodScore;
+  for (const { material, score: harmScore } of passed) {
+    if (woodRef && material.texture === 'wood') {
+      // Score each direction independently — the same candidate may appear in multiple slots.
+      for (const dir of WOOD_DIRECTIONS) {
+        const woodScore = woodOnWoodScore(material, woodRef, dir);
+        let finalScore: number;
+        if (dir === 'tonal_match') {
+          const harmWeight = (1 - woodScore) * (1 - WOOD_TONAL_MIN_WOOD_WEIGHT);
+          finalScore = (1 - harmWeight) * woodScore + harmWeight * harmScore;
+        } else {
+          finalScore = WOOD_ECHO_HARM_WEIGHT * harmScore + WOOD_ECHO_WOOD_WEIGHT * woodScore;
+        }
+        entries.push({
+          code: material.technicalCode,
+          score: finalScore,
+          direction: dir,
+          clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
+        });
+      }
+    } else {
+      const direction = directionForCandidate(material, state, chipArchetypeId);
+      entries.push({
+        code: material.technicalCode,
+        score: harmScore,
+        direction,
+        clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
+      });
     }
-
-    return {
-      code: material.technicalCode,
-      score: finalScore,
-      direction,
-      clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
-    };
-  });
+  }
 
   return entries.sort((a, b) => b.score - a.score);
 }
