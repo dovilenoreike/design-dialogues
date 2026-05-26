@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, email } = await req.json();
+    const { userId, email, feedback } = await req.json();
 
     if (!userId || typeof userId !== "string") {
       throw new Error("userId is required");
@@ -26,6 +26,10 @@ serve(async (req) => {
 
     if (!email || typeof email !== "string" || !isValidEmail(email)) {
       throw new Error("Valid email is required");
+    }
+
+    if (!feedback || typeof feedback !== "string" || feedback.trim().length === 0) {
+      throw new Error("Feedback is required");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -37,6 +41,7 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         email: email.toLowerCase().trim(),
+        feedback: feedback.trim(),
       });
 
     if (insertError) {
@@ -56,6 +61,7 @@ serve(async (req) => {
           data: {
             userId,
             email: email.toLowerCase().trim(),
+            feedback: feedback.trim(),
           },
         }),
       });

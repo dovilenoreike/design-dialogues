@@ -22,8 +22,10 @@
     "error": "Nepavyko apdoroti kredito. Bandykite dar kartą.",
     "requestFree": "arba prašyti nemokamų kreditų",
     "requestEmailPlaceholder": "jūsų@el.paštas.lt",
+    "requestFeedbackLabel": "Atsiliepimas",
+    "requestFeedbackPlaceholder": "Ko trūksta ar ką galėtume pagerinti?",
     "requestSubmit": "Siųsti prašymą",
-    "requestSuccess": "Prašymas gautas! Susisieksime.",
+    "requestSuccess": "Prašymas Išsiųstas! Peržiūrėsime ir suteiksime kreditus per 72 val.",
     "requestError": "Nepavyko. Bandykite dar kartą."
   },
   "landing": {

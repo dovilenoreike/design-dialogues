@@ -147,6 +147,7 @@ serve(async (req) => {
           <h2>Free Credits Request</h2>
           <p><strong>Email:</strong> ${data.email}</p>
           <p><strong>User ID:</strong> <code>${data.userId}</code></p>
+          ${data.feedback ? `<p><strong>Feedback:</strong></p><p style="background:#f5f5f5;padding:10px 14px;border-left:3px solid #647d75;border-radius:0 4px 4px 0;">${data.feedback}</p>` : ""}
           <hr>
           <p>To add credits, run in Supabase SQL editor:</p>
           <pre>UPDATE user_credits SET credits = credits + 5 WHERE user_id = '${data.userId}';</pre>

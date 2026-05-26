@@ -3,11 +3,12 @@ import { captureError } from "@/lib/sentry";
 
 export async function requestMoreCredits(
   userId: string,
-  email: string
+  email: string,
+  feedback: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke("request-credits", {
-      body: { userId, email },
+      body: { userId, email, feedback },
     });
 
     if (error) {

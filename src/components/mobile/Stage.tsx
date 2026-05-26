@@ -164,6 +164,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
   const [creditRequestState, setCreditRequestState] = useState<'idle' | 'form' | 'submitting' | 'success' | 'error'>('idle');
   const [creditRequestEmail, setCreditRequestEmail] = useState('');
+  const [creditRequestFeedback, setCreditRequestFeedback] = useState('');
 
   // Material swap rail — which slot's rail is open
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
@@ -456,6 +457,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
                 setShowNoCreditsBanner(false);
                 setCreditRequestState('idle');
                 setCreditRequestEmail('');
+                setCreditRequestFeedback('');
                 buyCredits();
               }}
               className="mt-4 w-full rounded-full bg-foreground py-3 text-sm font-medium text-background active:scale-[0.98] transition-transform"
@@ -474,32 +476,45 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
             )}
 
             {creditRequestState === 'form' && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col gap-2">
                 <input
                   type="email"
                   value={creditRequestEmail}
                   onChange={(e) => setCreditRequestEmail(e.target.value)}
                   placeholder={t("credits.requestEmailPlaceholder")}
-                  className="flex-1 rounded-full border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+                  className="w-full rounded-2xl border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
                 />
+                <div className="flex flex-col gap-1">
+                  <label className="text-left text-xs font-medium text-foreground">
+                    {t("credits.requestFeedbackLabel")} <span style={{ color: '#9a3412' }}>*</span>
+                  </label>
+                  <textarea
+                    value={creditRequestFeedback}
+                    onChange={(e) => setCreditRequestFeedback(e.target.value)}
+                    placeholder={t("credits.requestFeedbackPlaceholder")}
+                    rows={3}
+                    className="w-full rounded-2xl border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
+                  />
+                </div>
                 <button
                   onClick={async () => {
-                    if (!creditRequestEmail || !user) return;
+                    if (!creditRequestEmail || !creditRequestFeedback.trim() || !user) return;
                     setCreditRequestState('submitting');
-                    const result = await requestMoreCredits(user.id, creditRequestEmail);
+                    const result = await requestMoreCredits(user.id, creditRequestEmail, creditRequestFeedback.trim());
                     if (result.success) {
                       setCreditRequestState('success');
                       setTimeout(() => {
                         setShowNoCreditsBanner(false);
                         setCreditRequestState('idle');
                         setCreditRequestEmail('');
+                        setCreditRequestFeedback('');
                       }, 2000);
                     } else {
                       setCreditRequestState('error');
                     }
                   }}
-                  disabled={!creditRequestEmail}
-                  className="rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background disabled:opacity-40 active:scale-[0.98] transition-transform"
+                  disabled={!creditRequestEmail || !creditRequestFeedback.trim()}
+                  className="w-full rounded-full bg-foreground py-2.5 text-xs font-medium text-background disabled:opacity-40 active:scale-[0.98] transition-transform"
                 >
                   {t("credits.requestSubmit")}
                 </button>
@@ -535,6 +550,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
                   setShowNoCreditsBanner(false);
                   setCreditRequestState('idle');
                   setCreditRequestEmail('');
+                  setCreditRequestFeedback('');
                 }}
                 className="mt-2 w-full py-2 text-xs text-muted-foreground"
               >

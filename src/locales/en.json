@@ -22,6 +22,8 @@
     "error": "Failed to process credit. Please try again.",
     "requestFree": "or request free credits",
     "requestEmailPlaceholder": "your@email.com",
+    "requestFeedbackLabel": "What could be improved?",
+    "requestFeedbackPlaceholder": "Share your honest feedback — what's missing, broken, or could be better. This is the exchange for free credits.",
     "requestSubmit": "Send request",
     "requestSuccess": "Request received! We'll be in touch.",
     "requestError": "Failed to submit. Please try again."
