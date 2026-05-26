@@ -15,23 +15,21 @@ const Footer = () => {
           
           {/* Social Placeholders */}
           <div className="flex items-center gap-6">
-            <a 
-              href="#" 
+            <a
+              href="https://www.instagram.com/dizainodialogai/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Instagram
             </a>
-            <a 
-              href="#" 
+            <a
+              href="https://www.facebook.com/profile.php?id=61557522695205"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              LinkedIn
-            </a>
-            <a 
-              href="#" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pinterest
+              Facebook
             </a>
           </div>
           
