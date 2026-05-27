@@ -57,7 +57,10 @@ export function deriveArchetypeId(
   if (role === 'worktop') {
     if (texture === 'wood') return 'wood';
     if (isStoneLike) return 'stone';
-    if (isPlainLike) return 'plain';
+    if (isPlainLike) {
+      if (import.meta.env.VITE_USE_SCORING_V2 === 'true') return 'plain';
+      return lightness >= 45 ? 'light-neutral' : 'dark-neutral';
+    }
   }
 
   return null;

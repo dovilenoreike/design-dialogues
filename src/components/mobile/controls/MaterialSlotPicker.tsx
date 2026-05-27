@@ -60,9 +60,11 @@ interface MaterialSlotPickerProps {
   isCompatibleWithEvery?: (code: string, otherCodes: string[]) => boolean;
 }
 
-// Plain front chips: all three share the same material pool (all plain fronts).
-// Spec selection is handled by the scoring layer (derivePlainArchetypeId / chipArchetypeId).
-const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['plain']);
+// Plain front chips share the same material pool; spec selection is handled by scoring layer.
+// V1 uses granular chips; V2 collapses them into a single 'plain' chip.
+const PLAIN_FRONT_ARCHETYPE_IDS = import.meta.env.VITE_USE_SCORING_V2 === 'true'
+  ? new Set(['plain'])
+  : new Set(['light-neutral', 'dark-neutral', 'colours']);
 
 function isPlainFrontChip(archetypeId: string | null | undefined, role: string): boolean {
   return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
