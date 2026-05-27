@@ -449,9 +449,8 @@ export function useGraphMaterials() {
   // compensating for photo inaccuracy until material images are replaced.
   const PALETTE_WEIGHT = 0.6;
 
-  // Flip to true to source paletteScore from the new relationship engine (palette-scoring-v2).
-  // Keep false until Step 3 (side-by-side validation) confirms parity.
-  const USE_PALETTE_V2 = false;
+  // Controlled by VITE_USE_SCORING_V2=true in .env.local — off by default in production.
+  const USE_PALETTE_V2 = import.meta.env.VITE_USE_SCORING_V2 === 'true';
 
   function getAllRankedCodes(
     otherCodes: string[],
