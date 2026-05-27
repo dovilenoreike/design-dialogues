@@ -560,7 +560,7 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, getClusteredRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, getClusteredRankedCodes: USE_PALETTE_V2 ? getClusteredRankedCodes : undefined, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

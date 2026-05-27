@@ -561,7 +561,7 @@ export default function MaterialSlotPicker({
   // Empty slots render as placeholders so the model stays legible (user can see the full set
   // of directions and which ones have no match in the current pool/state).
   const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry | null]> => {
-    if (!effectiveActiveId) return [];
+    if (!effectiveActiveId || !getClusteredRankedCodes) return [];
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
     const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
@@ -577,7 +577,7 @@ export default function MaterialSlotPicker({
   // Direction tag of the hero material — surfaced below the hero name so the user
   // can see which direction the current pick represents.
   const heroDirection = useMemo((): DirectionId | null => {
-    if (!effectiveGridCenter || clusteredRankedV2.length === 0) return null;
+    if (!getClusteredRankedCodes || !effectiveGridCenter || clusteredRankedV2.length === 0) return null;
     const entry = clusteredRankedV2.find(c => c.code === effectiveGridCenter.technicalCode);
     return entry?.direction ?? null;
   }, [effectiveGridCenter, clusteredRankedV2]);
