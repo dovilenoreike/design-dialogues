@@ -15,6 +15,7 @@ import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 import { buildMaterialGrid, type GridCell } from "@/lib/material-grid";
+import { DIRECTIONS_BY_ARCHETYPE, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,8 @@ interface MaterialSlotPickerProps {
   selectedMaterialCode?: string;
   getRecommendedCodes?: (currentCode: string | null, otherCodes: string[], role?: string) => string[];
   getAllRankedCodes?: (otherCodes: string[], role: string, style?: string, chipArchetypeId?: string | null) => string[];
+  /** v2 engine: harmony-filtered + direction-tagged candidates, used by the "Explore similar" section. */
+  getClusteredRankedCodes?: (otherCodes: string[], role: string, chipArchetypeId?: string | null) => RankedClusteredEntry[];
   graphMaterials?: SupabaseMaterial[];
   /** Only hide archetypes with no matching graph materials when the showroom actively covers this slot's role */
   filterEmptyArchetypes?: boolean;
@@ -59,7 +62,7 @@ interface MaterialSlotPickerProps {
 
 // Plain front chips: all three share the same material pool (all plain fronts).
 // Spec selection is handled by the scoring layer (derivePlainArchetypeId / chipArchetypeId).
-const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['light-neutral', 'dark-neutral', 'colours']);
+const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['plain']);
 
 function isPlainFrontChip(archetypeId: string | null | undefined, role: string): boolean {
   return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
@@ -95,6 +98,7 @@ export default function MaterialSlotPicker({
   selectedMaterialCode,
   getRecommendedCodes,
   getAllRankedCodes,
+  getClusteredRankedCodes,
   graphMaterials,
   filterEmptyArchetypes = false,
   inline = false,
@@ -543,6 +547,41 @@ export default function MaterialSlotPicker({
     }));
   }, [slot, effectiveActiveId, filteredMaterials, row1Items, recommendedCodes, selectedMaterialCode, lang, paletteRankByCode, otherMaterialCodes]); // eslint-disable-line
 
+  // ─── v2: direction-grouped candidates for the "Explore similar" section ──────
+  // Only computed when the parent passes getClusteredRankedCodes (v2 engine path).
+  // Pass effectiveActiveId unconditionally so the hook scopes the pool by archetype
+  // (otherwise stone floor materials leak into the wood floor chip, etc.).
+  const clusteredRankedV2 = useMemo((): RankedClusteredEntry[] => {
+    if (!slot || !effectiveActiveId || !getClusteredRankedCodes) return [];
+    const role = SLOT_KEY_TO_ROLE[slot];
+    return getClusteredRankedCodes(otherMaterialCodes ?? [], role, effectiveActiveId);
+  }, [slot, effectiveActiveId, getClusteredRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Every direction in the archetype's taxonomy gets a slot, even if no candidate maps to it.
+  // Empty slots render as placeholders so the model stays legible (user can see the full set
+  // of directions and which ones have no match in the current pool/state).
+  const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry | null]> => {
+    if (!effectiveActiveId) return [];
+    const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
+    if (order.length === 0) return [];
+    const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
+    for (const c of clusteredRankedV2) {
+      if (!c.direction) continue;
+      if (!topByDirection.has(c.direction)) topByDirection.set(c.direction, c);
+    }
+    return order.map((d): [DirectionId, RankedClusteredEntry | null] => [
+      d, topByDirection.get(d) ?? null,
+    ]);
+  }, [clusteredRankedV2, effectiveActiveId]);
+
+  // Direction tag of the hero material — surfaced below the hero name so the user
+  // can see which direction the current pick represents.
+  const heroDirection = useMemo((): DirectionId | null => {
+    if (!effectiveGridCenter || clusteredRankedV2.length === 0) return null;
+    const entry = clusteredRankedV2.find(c => c.code === effectiveGridCenter.technicalCode);
+    return entry?.direction ?? null;
+  }, [effectiveGridCenter, clusteredRankedV2]);
+
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -936,6 +975,15 @@ export default function MaterialSlotPicker({
                   {effectiveGridCenter.name?.[lang] ?? effectiveGridCenter.technicalCode}
                 </span>
               )}
+              {/* Direction tag — which v2 direction this hero represents */}
+              {heroDirection && (() => {
+                const camel = heroDirection.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+                return (
+                  <span className="text-[10px] tracking-[0.06em] uppercase mt-1" style={{ color: '#647d75' }}>
+                    {t(`surface.direction.${camel}`)}
+                  </span>
+                );
+              })()}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center py-8">
@@ -987,6 +1035,100 @@ export default function MaterialSlotPicker({
                 );
               })}
             </div>
+          )}
+
+          {/* Explore similar — one swatch per direction (best v2 candidate). Stable across picks
+              within the same slot: candidate scores don't depend on the active slot's own pick,
+              so the direction list only changes when other slots or the chip archetype change. */}
+          {directionGroups.length > 0 && (
+            <>
+              <SwatchDivider />
+              <div className="px-4 pt-4 pb-2 flex-shrink-0">
+                <p className="text-[11px] font-medium tracking-[0.06em] uppercase" style={{ color: '#9ca3af' }}>
+                  {t('surface.exploreSimilar')}
+                </p>
+              </div>
+              <div
+                className="flex gap-2.5 px-4 pb-4 overflow-x-auto flex-shrink-0"
+                style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+              >
+                {directionGroups.map(([direction, entry]) => {
+                  const camel = direction.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+                  const label = t(`surface.direction.${camel}`);
+                  const mat = entry ? getMaterialByCode(entry.code) : null;
+                  const hasMatch = !!mat?.imageUrl;
+                  const isSelected = hasMatch && mat!.technicalCode === selectedMaterialCode;
+
+                  if (!hasMatch) {
+                    return (
+                      <div
+                        key={`dir-${direction}`}
+                        className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                        style={{ width: SWATCH_SIZE }}
+                        title="No candidate in the current pool maps to this direction"
+                      >
+                        <div
+                          className="flex-shrink-0"
+                          style={{
+                            width: SWATCH_SIZE,
+                            height: SWATCH_SIZE,
+                            borderRadius: SWATCH_RADIUS,
+                            backgroundColor: '#f0ede9',
+                            border: '1px dashed #d8d4cf',
+                          }}
+                        />
+                        <span
+                          className="text-[10px] text-center leading-tight"
+                          style={{ color: 'rgba(0,0,0,0.30)', maxWidth: SWATCH_SIZE + 12 }}
+                        >
+                          {label}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={`dir-${direction}`}
+                      onClick={() => {
+                        if (slot && effectiveActiveId && entry) onSelect(slot, effectiveActiveId, entry.code);
+                      }}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                      style={{ width: SWATCH_SIZE }}
+                    >
+                      <div
+                        className="relative flex-shrink-0 active:scale-95"
+                        style={{
+                          width: SWATCH_SIZE,
+                          height: SWATCH_SIZE,
+                          borderRadius: SWATCH_RADIUS,
+                          overflow: 'hidden',
+                          border: isSelected ? '2px solid #647d75' : '2px solid transparent',
+                          transition: 'border-color 0.15s, transform 0.1s',
+                        }}
+                      >
+                        <img src={mat!.imageUrl!} alt="" className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className="text-[10px] text-center leading-tight"
+                        style={{
+                          color: isSelected ? '#647d75' : 'rgba(0,0,0,0.55)',
+                          fontWeight: isSelected ? 500 : 400,
+                          maxWidth: SWATCH_SIZE + 12,
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {/* Request link */}

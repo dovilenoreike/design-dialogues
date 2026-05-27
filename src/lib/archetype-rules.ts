@@ -57,7 +57,7 @@ export function deriveArchetypeId(
   if (role === 'worktop') {
     if (texture === 'wood') return 'wood';
     if (isStoneLike) return 'stone';
-    if (isPlainLike) return lightness >= 45 ? 'light-neutral' : 'dark-neutral';
+    if (isPlainLike) return 'plain';
   }
 
   return null;

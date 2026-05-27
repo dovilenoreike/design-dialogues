@@ -48,7 +48,7 @@ export default function DesignView() {
   } = useDesign();
   const { t, language } = useLanguage();
   const { activeShowroom } = useShowroom();
-  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery } = useGraphMaterials();
+  const { loading: graphLoading, graphMaterials, getRecommendedCodes, getAllRankedCodes, getClusteredRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery } = useGraphMaterials();
   const recommendWithStyle = useCallback(
     (currentCode: string | null, otherCodes: string[], role?: string) =>
       getRecommendedCodes(currentCode, otherCodes, role),
@@ -922,6 +922,7 @@ export default function DesignView() {
             selectedMaterialCode={activeSlotMaterialCode}
             getRecommendedCodes={recommendWithStyle}
             getAllRankedCodes={allRankedWithStyle}
+            getClusteredRankedCodes={getClusteredRankedCodes}
             graphMaterials={graphLoading ? undefined : showroomMaterials}
             filterEmptyArchetypes={!graphLoading}
             isCompatibleWithOthers={isCompatibleWithOthers}

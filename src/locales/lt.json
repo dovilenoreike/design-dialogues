@@ -202,7 +202,19 @@
     "searchByCode": "Ieškoti pagal kodą…",
     "searchNoResults": "Medžiagų šiuo kodu nerasta.",
     "bestMatch": "Top",
-    "exploreSimilar": "Panašūs atspalviai"
+    "exploreSimilar": "Panašūs atspalviai",
+    "direction": {
+      "tonalMatch": "Tonalus derinys",
+      "lighterEcho": "Šviesesnis aidas",
+      "darkerEcho": "Tamsesnis aidas",
+      "softContrast": "Švelnus kontrastas",
+      "temperatureShift": "Šiltesnis / vėsesnis",
+      "lightNeutral": "Šviesus neutralus",
+      "mediumNeutral": "Vidutinis neutralus",
+      "darkNeutral": "Tamsus neutralus",
+      "pastel": "Pastelinis",
+      "richColour": "Spalva"
+    }
   },
   "specs": {
     "fullSpecification": "Pilna specifikacija",

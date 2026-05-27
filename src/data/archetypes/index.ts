@@ -6,19 +6,16 @@ export const archetypes: Archetype[] = [
   { id: "wood",  role: "floor", label: { en: "Wood",  lt: "Medis" }, value: "#c4a882" },
   { id: "stone", role: "floor", label: { en: "Stone", lt: "Akmuo"   }, value: "#b0a898" },
 
-  // ── Front / Cabinet Fronts (5) ────────────────────────────────────────────
-  { id: "wood",          role: "front", label: { en: "Wood",         lt: "Medis"            }, value: "#b89870" },
-  { id: "light-neutral", role: "front", label: { en: "Light",        lt: "Šviesūs"            }, value: "#ece8e0" },
-  { id: "dark-neutral",  role: "front", label: { en: "Dark",         lt: "Tamsūs"             }, value: "#2a2a2a" },
-  { id: "colours",       role: "front", label: { en: "Colours",      lt: "Spalvingi"          }, value: "#9ab4ac" },
-  { id: "metallic",      role: "front", label: { en: "Metallic",     lt: "Metališki"          }, value: "#8c7055" },
+  // ── Front / Cabinet Fronts (3) ────────────────────────────────────────────
+  { id: "wood",     role: "front", label: { en: "Wood",     lt: "Medis"     }, value: "#b89870" },
+  { id: "plain",    role: "front", label: { en: "Plain",    lt: "Lygūs"     }, value: "#bfbcb6" },
+  { id: "metallic", role: "front", label: { en: "Metallic", lt: "Metališki" }, value: "#8c7055" },
 
-  // ── Worktop (5) ───────────────────────────────────────────────────────────
-  { id: "stone",         role: "worktop", label: { en: "Stone",   lt: "Akmuo"    }, value: "#d8d4cc" },
-  { id: "wood",          role: "worktop", label: { en: "Wood",    lt: "Medis"  }, value: "#c4a882" },
-  { id: "light-neutral", role: "worktop", label: { en: "Light",   lt: "Šviesūs"  }, value: "#f5f5f3" },
-  { id: "dark-neutral",  role: "worktop", label: { en: "Dark",    lt: "Tamsūs"   }, value: "#1a1a1a" },
-  { id: "metallic",      role: "worktop", label: { en: "Metal",   lt: "Metalas"  }, value: "#b0b4bc" },
+  // ── Worktop (4) ───────────────────────────────────────────────────────────
+  { id: "stone",    role: "worktop", label: { en: "Stone", lt: "Akmuo"   }, value: "#d8d4cc" },
+  { id: "wood",     role: "worktop", label: { en: "Wood",  lt: "Medis"   }, value: "#c4a882" },
+  { id: "plain",    role: "worktop", label: { en: "Plain", lt: "Lygūs"   }, value: "#d8d6d0" },
+  { id: "metallic", role: "worktop", label: { en: "Metal", lt: "Metalas" }, value: "#b0b4bc" },
 
   // ── Accent (5) ────────────────────────────────────────────────────────────
   { id: "gold",   role: "accent", label: { en: "Gold",   lt: "Auksiniai"   }, value: "#c8a84c" },
