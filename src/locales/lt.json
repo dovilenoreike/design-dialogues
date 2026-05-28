@@ -213,7 +213,8 @@
       "mediumNeutral": "Vidutinis neutralus",
       "darkNeutral": "Tamsus neutralus",
       "pastel": "Pastelinis",
-      "richColour": "Spalva"
+      "richColour": "Spalva",
+      "muted": "Prislopinta"
     }
   },
   "specs": {

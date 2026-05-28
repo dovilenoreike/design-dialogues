@@ -213,7 +213,8 @@
       "mediumNeutral": "Medium neutral",
       "darkNeutral": "Dark neutral",
       "pastel": "Pastel",
-      "richColour": "Colour"
+      "richColour": "Colour",
+      "muted": "Muted"
     }
   },
   "specs": {

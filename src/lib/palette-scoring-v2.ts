@@ -386,12 +386,12 @@ export type DirectionId =
   | 'tonal_match' | 'lighter_echo' | 'darker_echo'
   | 'soft_contrast' | 'temperature_shift'
   | 'light_neutral' | 'medium_neutral' | 'dark_neutral'
-  | 'pastel' | 'rich_colour';
+  | 'pastel' | 'rich_colour' | 'muted';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
   wood:  ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
   stone: ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast'],
-  plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour'],
+  plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   // metallic / gold / silver / bronze / black / accents → no directions; flat list
 };
 
@@ -414,6 +414,8 @@ interface DirectionRef {
   C: number;
   hue: number | null;
   pattern: number;
+  L_range: number;  // from state.L_range — drives rangeBonus on L axes
+  C_range: number;  // from state.C_range — drives rangeBonus on C axes
 }
 
 function directionReference(
@@ -445,6 +447,8 @@ function directionReference(
         C: cSum / totalW,
         hue: hueW > 0 ? (Math.atan2(sinSum, cosSum) * 180 / Math.PI + 360) % 360 : null,
         pattern: pSum / totalW,
+        L_range: state.L_range,
+        C_range: state.C_range,
       };
     }
   }
@@ -455,6 +459,8 @@ function directionReference(
       C: state.C_avg,
       hue: state.H_mean,
       pattern: 0, // not tracked at palette level — fine for direction tagging
+      L_range: state.L_range,
+      C_range: state.C_range,
     };
   }
   return null;
@@ -478,10 +484,10 @@ export function directionForCandidate(
   const _dP = (candidate.pattern - ref.pattern);
 
   if (archetype === 'plain') {
-    // Chroma shift dominates — moves out of neutral lane.
     if (dC > 0.25) return 'rich_colour';
     if (dC > 0.10 && candidate.chroma < 30) return 'pastel';
-    // Low-chroma lane: split by L.
+    // Muted: moderate chroma, stays near ref L — coloured but restrained.
+    if (dC > -0.15 && dC <= 0 && Math.abs(dL) <= 0.10) return 'muted';
     if (dL > 0.10) return 'light_neutral';
     if (dL < -0.10) return 'dark_neutral';
     return 'medium_neutral';
@@ -555,90 +561,218 @@ export interface RankedClusteredEntry {
   clusterKey: string;
 }
 
-// ─── Wood-on-wood scoring constants ─────────────────────────────────────────
-// Tonal match — raw axis weights (no tolerance zones; every delta costs something).
-const WOOD_TONAL_W_H = 1.5;  // hue undertone — most critical for family identity
-const WOOD_TONAL_W_W = 1.2;  // warmth character (warm oak vs cool ash)
-const WOOD_TONAL_W_C = 0.8;  // chroma/saturation level
-const WOOD_TONAL_W_L = 0.6;  // lightness (small differences acceptable)
-const WOOD_TONAL_W_P = 0.4;  // grain pattern (least critical)
-// Same-family woods naturally vary by ~4.5° in hue (V1 uses hAbsolute(0.05) = 0.05×90°).
-// Ideal is not 0° — a candidate at 4.5° scores better than one at exactly 0°.
-const WOOD_TONAL_IDEAL_HUE_DEG = 0;
-
-// Tonal match blend — minimum wood weight even when woodScore → 0.
-// At 0.15: harmony can contribute at most 85%; wood always has ≥15% influence.
-const WOOD_TONAL_MIN_WOOD_WEIGHT = 0.15;
-
-// Lighter/darker echo — hue: ideal offset from the reference wood (degrees).
-// Candidates at exactly this arc score best; identical or very different hue scores worse.
-const WOOD_ECHO_IDEAL_HUE_DEG = 4.5;
-const WOOD_ECHO_HUE_WEIGHT     = 1.5;
-// Lighter/darker echo — L: ideal delta ±0.10 (10 L units) from reference.
-// lighter_echo ideal = +0.10, darker_echo ideal = −0.10. Scored as raw distance — no hard gate.
-const WOOD_ECHO_IDEAL_L_DELTA = 0.10;
-const WOOD_ECHO_W_L = 1.2;  // L is the defining axis for lighter/darker
-// Lighter/darker echo — warmth and chroma: should stay in family (borrowed from V1 wood-on-wood).
-const WOOD_ECHO_W_W = 0.8;  // warmth should stay in the same warm/cool family
-const WOOD_ECHO_W_C = 0.4;  // chroma loosely — saturation ballpark
-const WOOD_ECHO_W_P = 0.2;  // grain pattern — least critical
-
-// Lighter/darker echo — wrong-direction L multiplier.
-// A candidate that is lighter than the reference scores for darker_echo (and vice versa)
-// with this multiplier on its L error — continuous penalty, no hard cutoff.
-const WOOD_ECHO_WRONG_DIR_MULTIPLIER = 3.0;
-
-// Lighter/darker echo blend — fixed weights (harmony 60%, wood 40%).
-const WOOD_ECHO_HARM_WEIGHT = 0.6;
-const WOOD_ECHO_WOOD_WEIGHT = 0.4;
-
-/** Direction-aware wood-on-wood score. Only called when the candidate is wood and a wood
- *  reference exists in the palette.
- *  - tonal_match:              all 5 axes, raw distance, no flat tolerance zones
- *  - lighter_echo/darker_echo: hue only, raw distance from ideal 10° offset */
-function woodOnWoodScore(
-  candidate: GraphMaterial,
-  woodRef: DirectionRef,
-  direction: DirectionId,
-): number {
-  let hArc = 0;
-  if (woodRef.hue != null && candidate.hue_angle != null) {
-    const raw = Math.abs(candidate.hue_angle - woodRef.hue);
-    hArc = Math.min(raw, 360 - raw) / 90;
-  }
-
-  const dW = Math.abs(candidate.warmth  - woodRef.W) / 2;   // warmth range −1..1 → 0..1
-  const dC = Math.abs(candidate.chroma  - woodRef.C) / 100;
-  const dP = Math.abs(candidate.pattern - woodRef.pattern) / 100;
-
-  let err = 0;
-  if (direction === 'tonal_match')  { //these woods are expected to be identical!
-    const dL      = Math.abs(candidate.lightness - woodRef.L) / 100;
-    const hIdeal  = WOOD_TONAL_IDEAL_HUE_DEG / 90;
-    err = Math.abs(hArc - hIdeal) * WOOD_TONAL_W_H 
-        + dW                      * WOOD_TONAL_W_W
-        + dC                      * WOOD_TONAL_W_C
-        + dL                      * WOOD_TONAL_W_L
-        + dP                      * WOOD_TONAL_W_P;
-  } else {
-    // lighter_echo / darker_echo: all axes scored, L with directional ideal ±0.10.
-    const signedDL = (candidate.lightness - woodRef.L) / 100;
-    const idealDL  = direction === 'lighter_echo' ? WOOD_ECHO_IDEAL_L_DELTA : -WOOD_ECHO_IDEAL_L_DELTA;
-    const wrongDir = direction === 'lighter_echo' ? signedDL < 0 : signedDL > 0;
-    const hIdeal   = WOOD_ECHO_IDEAL_HUE_DEG / 90;
-    err = Math.abs(signedDL - idealDL) * WOOD_ECHO_W_L * (wrongDir ? WOOD_ECHO_WRONG_DIR_MULTIPLIER : 1.0)
-        + Math.abs(hArc - hIdeal)      * WOOD_ECHO_HUE_WEIGHT
-        + dW                           * WOOD_ECHO_W_W
-        + dC                           * WOOD_ECHO_W_C
-        + dP                           * WOOD_ECHO_W_P;
-  }
-
-  return 1 / (1 + Math.pow(err, SCORE_ERROR_POWER));
+// ─── Direction scoring config ─────────────────────────────────────────────────
+interface AxisConfig {
+  weight:              number;
+  idealDelta:          number;   // signed target deviation from ref, normalised (L/100, W/2, C/100, P/100)
+  wrongDirMultiplier?: number;   // penalty when candidate is on the wrong side of idealDelta
+  absDeviation?:       boolean;  // score |actualDelta| vs idealDelta — both directions treated equally
+  oneSided?:           'above' | 'below'; // no penalty past the ideal in the given direction:
+                                          //   'above' — being above idealDelta is free (lighter-is-better)
+                                          //   'below' — being below idealDelta is free (more-neutral-is-better)
+  rangeBonus?:         number;   // added to idealDelta proportional to palette range on this axis:
+                                 //   effective_idealDelta = idealDelta + rangeBonus × clamp01(range / scale)
 }
 
-/** Score every candidate, gate by harmony threshold (with relaxation), tag with
- *  direction + cluster key, and return sorted desc by score. The picker is free
- *  to group by `direction` (sub-cluster headings) and/or `clusterKey` (variety). */
+interface DirectionConfig {
+  L?:    AxisConfig;
+  W?:    AxisConfig;
+  C?:    AxisConfig;
+  P?:    AxisConfig;
+  H?:    { weight: number; idealDeg: number };  // degrees; no wrong-dir concept for hue
+  blend: { harm: number; dir: number };
+}
+
+const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
+
+  plain: {
+    light_neutral: {
+      L: { weight: 1.4, idealDelta: +0.25, rangeBonus: +0.10, oneSided: 'above', wrongDirMultiplier: 2.5 },
+      C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
+      H: { weight: 0.6, idealDeg: 0 },
+      W: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.45, dir: 0.55 },
+    },
+    medium_neutral: {
+      L: { weight: 1.4, idealDelta: 0 },
+      C: { weight: 1, idealDelta: -0.05, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
+      H: { weight: 1.2, idealDeg: 0.045 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
+      W: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+    muted: {
+      L: { weight: 0.8, idealDelta: 0 },
+      C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
+      H: { weight: 0.6, idealDeg: 0 },
+      W: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+    dark_neutral: {
+      L: { weight: 1.4, idealDelta: -0.15, rangeBonus: -0.15, oneSided: 'below', wrongDirMultiplier: 2.5 },
+      C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
+      H: { weight: 0.6, idealDeg: 0 },
+      W: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.45, dir: 0.55 },
+    },
+    pastel: {
+      L: { weight: 1.5, idealDelta: +0.20 },
+      C: { weight: 1, idealDelta: +0 },
+      H: { weight: 1.5, idealDeg: +20 },
+      blend: { harm: 0.50, dir: 0.50 },
+    },
+    rich_colour: {
+      C: { weight: 1.8, idealDelta: +0.20, wrongDirMultiplier: 2.0 },
+      H: { weight: 1.0, idealDeg: +20 },
+      L: { weight: 0.4, idealDelta: 0 },
+      blend: { harm: 0.40, dir: 0.60 },
+    },
+  },
+
+  stone: {
+    tonal_match: {
+      L: { weight: 1.0, idealDelta: 0 },
+      W: { weight: 0.6, idealDelta: 0 },
+      C: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 0.8, idealDeg: 0 },
+      blend: { harm: 0.50, dir: 0.50 },
+    },
+    lighter_echo: {
+      L: { weight: 1.3, idealDelta: +0.12, wrongDirMultiplier: 2.5 },
+      W: { weight: 0.4, idealDelta: 0 },
+      C: { weight: 0.3, idealDelta: 0 },
+      H: { weight: 0.8, idealDeg: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+    darker_echo: {
+      L: { weight: 1.3, idealDelta: -0.12, wrongDirMultiplier: 2.5 },
+      W: { weight: 0.4, idealDelta: 0 },
+      C: { weight: 0.3, idealDelta: 0 },
+      H: { weight: 0.8, idealDeg: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+    soft_contrast: {
+      L: { weight: 1.2, idealDelta: 0.15, absDeviation: true },
+      W: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 0.8, idealDeg: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+  },
+
+  wood: {
+    tonal_match: {
+      L: { weight: 0.6, idealDelta: 0 },
+      W: { weight: 1.2, idealDelta: 0 },
+      C: { weight: 0.8, idealDelta: 0 },
+      H: { weight: 1.5, idealDeg: 0 },
+      P: { weight: 0.4, idealDelta: 0 },
+      blend: { harm: 0.85, dir: 0.15 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
+    },
+    lighter_echo: {
+      L: { weight: 1.2, idealDelta: +0.10, wrongDirMultiplier: 3.0 },
+      W: { weight: 0.8, idealDelta: 0 },
+      C: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 1.5, idealDeg: 4.5 },
+      P: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.60, dir: 0.40 },
+    },
+    darker_echo: {
+      L: { weight: 1.2, idealDelta: -0.10, wrongDirMultiplier: 3.0 },
+      W: { weight: 0.8, idealDelta: 0 },
+      C: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 1.5, idealDeg: 4.5 },
+      P: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.60, dir: 0.40 },
+    },
+    soft_contrast: {
+      L: { weight: 1.2, idealDelta: 0.15, absDeviation: true },
+      W: { weight: 0.6, idealDelta: 0 },
+      C: { weight: 0.3, idealDelta: 0 },
+      H: { weight: 1.2, idealDeg: 0 },
+      P: { weight: 0.2, idealDelta: 0 },
+      blend: { harm: 0.55, dir: 0.45 },
+    },
+    temperature_shift: {
+      W: { weight: 1.5, idealDelta: 0.30, absDeviation: true },
+      H: { weight: 1.0, idealDeg: 20 },
+      L: { weight: 0.5, idealDelta: 0 },
+      C: { weight: 0.3, idealDelta: 0 },
+      blend: { harm: 0.50, dir: 0.50 },
+    },
+  },
+};
+
+// Minimum direction weight for tonal_match: harmony weight rises as direction score falls,
+// but direction always contributes at least this fraction.
+const TONAL_MATCH_MIN_DIR_WEIGHT = 0.15;
+
+function computeDirectionScore(
+  candidate: GraphMaterial,
+  ref: DirectionRef,
+  config: DirectionConfig,
+): number {
+  let errSum = 0, weightSum = 0;
+
+  function scoreLinearAxis(cfg: AxisConfig | undefined, signedDelta: number, rangeNorm: number): void {
+    if (!cfg) return;
+    const { weight, wrongDirMultiplier, absDeviation, oneSided, rangeBonus } = cfg;
+    const idealDelta = cfg.idealDelta + (rangeBonus ?? 0) * rangeNorm;
+    let err: number;
+    if (absDeviation) {
+      err = Math.abs(Math.abs(signedDelta) - idealDelta);
+    } else if (oneSided === 'above') {
+      // Free once candidate exceeds idealDelta; penalise falling short.
+      err = signedDelta >= idealDelta ? 0 : (idealDelta - signedDelta) * (wrongDirMultiplier ?? 1);
+    } else if (oneSided === 'below') {
+      // Free once candidate goes below idealDelta; penalise exceeding it.
+      err = signedDelta <= idealDelta ? 0 : (signedDelta - idealDelta) * (wrongDirMultiplier ?? 1);
+    } else {
+      const wrongDir = idealDelta !== 0 && (idealDelta > 0 ? signedDelta < 0 : signedDelta > 0);
+      err = Math.abs(signedDelta - idealDelta) * (wrongDir && wrongDirMultiplier ? wrongDirMultiplier : 1);
+    }
+    errSum    += err * weight;
+    weightSum += weight;
+  }
+
+  const lRangeNorm = clamp01(ref.L_range / L_RANGE_SCALE);
+  const cRangeNorm = clamp01(ref.C_range / C_RANGE_SCALE);
+
+  scoreLinearAxis(config.L, (candidate.lightness - ref.L) / 100, lRangeNorm);
+  scoreLinearAxis(config.W, (candidate.warmth    - ref.W) / 2,   0         );
+  scoreLinearAxis(config.C, (candidate.chroma    - ref.C) / 100, cRangeNorm);
+  scoreLinearAxis(config.P, (candidate.pattern   - ref.pattern) / 100, 0   );
+
+  if (config.H) {
+    const { weight, idealDeg } = config.H;
+    let hArc = 0;
+    if (ref.hue != null && candidate.hue_angle != null) {
+      const raw = Math.abs(candidate.hue_angle - ref.hue);
+      hArc = Math.min(raw, 360 - raw) / 90;
+    }
+    errSum    += Math.abs(hArc - idealDeg / 90) * weight;
+    weightSum += weight;
+  }
+
+  if (weightSum === 0) return 0.5;
+  return 1 / (1 + Math.pow(errSum / weightSum, SCORE_ERROR_POWER));
+}
+
+function blendDirectionWithHarmony(
+  dirScore: number,
+  harmScore: number,
+  config: DirectionConfig,
+  direction: DirectionId,
+): number {
+  if (direction === 'tonal_match') {
+    // Adaptive: harmony weight rises as direction score falls, keeping a minimum dir floor.
+    const harmWeight = (1 - dirScore) * (1 - TONAL_MATCH_MIN_DIR_WEIGHT);
+    return (1 - harmWeight) * dirScore + harmWeight * harmScore;
+  }
+  return config.blend.harm * harmScore + config.blend.dir * dirScore;
+}
+
+/** Score every candidate per direction, blend with harmony, and return sorted desc by score.
+ *  Each candidate with a known archetype appears once per direction in that archetype's family.
+ *  Non-directional materials (metallics, accents) appear once with direction = null. */
 export function rankClusteredCandidates(
   candidates: GraphMaterial[],
   placedCodes: string[],
@@ -651,45 +785,27 @@ export function rankClusteredCandidates(
     .filter((m): m is GraphMaterial => !!m);
   const state = computePaletteState(placed);
 
-  // Score everything — no gate; sort decides rank.
-  const passed = candidates.map((c) => ({
-    material: c,
-    score: harmonyScore(c, placed, state, candidateRole, chipArchetypeId),
-  }));
-
-  const placedWood = state.byArchetype.get('wood') ?? [];
-  const woodRef = placedWood.length > 0 ? directionReference('wood', state) : null;
-
-  const WOOD_DIRECTIONS = ['tonal_match', 'lighter_echo', 'darker_echo'] as const;
   const entries: RankedClusteredEntry[] = [];
 
-  for (const { material, score: harmScore } of passed) {
-    if (woodRef && material.texture === 'wood') {
-      // Score each direction independently — the same candidate may appear in multiple slots.
-      for (const dir of WOOD_DIRECTIONS) {
-        const woodScore = woodOnWoodScore(material, woodRef, dir);
-        let finalScore: number;
-        if (dir === 'tonal_match') {
-          const harmWeight = (1 - woodScore) * (1 - WOOD_TONAL_MIN_WOOD_WEIGHT);
-          finalScore = (1 - harmWeight) * woodScore + harmWeight * harmScore;
-        } else {
-          finalScore = WOOD_ECHO_HARM_WEIGHT * harmScore + WOOD_ECHO_WOOD_WEIGHT * woodScore;
-        }
-        entries.push({
-          code: material.technicalCode,
-          score: finalScore,
-          direction: dir,
-          clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
-        });
+  for (const material of candidates) {
+    const harmScore  = harmonyScore(material, placed, state, candidateRole, chipArchetypeId);
+    const clusterKey = `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`;
+
+    const archetype        = archetypeForDirections(material, chipArchetypeId);
+    const directions       = archetype ? DIRECTIONS_BY_ARCHETYPE[archetype] : null;
+    const archetypeConfigs = archetype ? DIRECTION_CONFIGS[archetype] : null;
+    const ref              = archetype ? directionReference(archetype, state) : null;
+
+    if (directions && archetypeConfigs && ref) {
+      for (const dir of directions) {
+        const config = archetypeConfigs[dir];
+        if (!config) continue;
+        const dirScore   = computeDirectionScore(material, ref, config);
+        const finalScore = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
+        entries.push({ code: material.technicalCode, score: finalScore, direction: dir, clusterKey });
       }
     } else {
-      const direction = directionForCandidate(material, state, chipArchetypeId);
-      entries.push({
-        code: material.technicalCode,
-        score: harmScore,
-        direction,
-        clusterKey: `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`,
-      });
+      entries.push({ code: material.technicalCode, score: harmScore, direction: null, clusterKey });
     }
   }
 
