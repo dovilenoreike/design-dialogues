@@ -233,6 +233,12 @@ const TENSION_FACTOR = 1.0;
 const RANGE_FACTOR   = 0.7;
 const SCORE_ERROR_POWER = 1.5;
 
+// Achromatic candidates (hue_angle = null, e.g. pure white) skip the H axis entirely
+// and get zero hue error — which inflates their score in coloured palettes.
+// Apply a small neutrality cost proportional to how chromatic the placed material is,
+// so white-next-to-white is fine but white-next-to-colour is modestly penalised.
+const ACHROMATIC_HUE_PENALTY = 0.15;
+
 // Per-axis normalised delta — 0 = match, 1 = full opposite. Hue uses
 // shortest arc / 90 (matches v1 convention so the tolerance numbers stay comparable).
 function deltaL(a: number, b: number): number { return Math.abs(a - b) / 100; }
@@ -291,8 +297,12 @@ function pairError(
     if (d != null) {
       const err = toleratedError(d, 0, tolFor('H', state));
       errSum += err * aw.H; weightSum += aw.H;
+    } else if (candidate.hue_angle == null && placed.hue_angle != null) {
+      // Candidate is achromatic — scale penalty by how chromatic the placed material is.
+      const placedVisualChroma = clamp01((placed.chroma / 100) * colourSalience(placed.lightness) * 2);
+      errSum += ACHROMATIC_HUE_PENALTY * placedVisualChroma * aw.H;
+      weightSum += aw.H;
     }
-    // If either side is achromatic (hue_angle null), hue contributes nothing.
   }
 
   if (rel.intent === 'contrast') {
@@ -379,8 +389,8 @@ export type DirectionId =
   | 'pastel' | 'rich_colour';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
-  wood:  ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
-  stone: ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast'],
+  wood:  ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  stone: ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast'],
   plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour'],
   // metallic / gold / silver / bronze / black / accents → no directions; flat list
 };

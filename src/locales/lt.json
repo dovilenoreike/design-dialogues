@@ -204,9 +204,9 @@
     "bestMatch": "Top",
     "exploreSimilar": "Panašūs atspalviai",
     "direction": {
-      "tonalMatch": "Tonalus derinys",
-      "lighterEcho": "Šviesesnis aidas",
-      "darkerEcho": "Tamsesnis aidas",
+      "tonalMatch": "Panašus tonas",
+      "lighterEcho": "Šviesesnis",
+      "darkerEcho": "Tamsesnis",
       "softContrast": "Švelnus kontrastas",
       "temperatureShift": "Šiltesnis / vėsesnis",
       "lightNeutral": "Šviesus neutralus",
