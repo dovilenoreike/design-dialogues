@@ -387,13 +387,17 @@ export type DirectionId =
   | 'soft_contrast' | 'temperature_shift'
   | 'light_neutral' | 'medium_neutral' | 'dark_neutral'
   | 'pastel' | 'rich_colour' | 'muted'
-  | 'quiet_stone' | 'natural_stone' | 'bold_movement';
+  | 'quiet_stone' | 'natural_stone' | 'bold_movement'
+  | 'metal';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
-  wood:  ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
-  stone: ['quiet_stone', 'natural_stone', 'bold_movement'],
-  plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
-  // metallic / gold / silver / bronze / black / accents → no directions; flat list
+  wood:     ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
+  plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
+  metallic: ['metal'],
+  gold:     ['metal'],
+  silver:   ['metal'],
+  bronze:   ['metal'],
 };
 
 // Claiming priority: which direction gets exclusive ownership of a material when it scores
@@ -401,9 +405,13 @@ export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
 // tonal_match claims wood first — it's the most specific match and should not be "stolen"
 // by a lighter/darker slot just because it also happens to be a good echo.
 const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
-  wood:  ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
-  stone: ['quiet_stone', 'natural_stone', 'bold_movement'],
-  plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
+  wood:     ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
+  plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
+  metallic: ['metal'],
+  gold:     ['metal'],
+  silver:   ['metal'],
+  bronze:   ['metal'],
 };
 
 // Resolve which direction family applies. Prefer the explicit chip routing
@@ -593,9 +601,16 @@ interface DirectionConfig {
   P?:    AxisConfig;
   H?:    { weight: number; idealDeg: number };  // degrees; no wrong-dir concept for hue
   blend: { harm: number; dir: number };
+  minAbsC?: number;  // hard gate: material must have chroma ≥ this to be eligible for the direction
 }
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
+
+  // Single-direction archetypes — harmony does all the ranking; direction is just a label.
+  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
+  gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
+  silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
+  bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
 
   plain: {
     light_neutral: {
@@ -604,6 +619,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       H: { weight: 0.6, idealDeg: 3 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.45, dir: 0.55 },
+      minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
       L: { weight: 1.4, idealDelta: +0.10 },
@@ -611,6 +627,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       H: { weight: 1.2, idealDeg: 3 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.55, dir: 0.45 },
+      minAbsC: 1,  // preventing complete white
     },
     muted: {
       L: { weight: 0.8, idealDelta: 0 },
@@ -618,6 +635,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       H: { weight: 0.6, idealDeg: 10 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.55, dir: 0.45 },
+      minAbsC: 7,  // preventing complete white
     },
     dark_neutral: {
       L: { weight: 1.4, idealDelta: -0.15, rangeBonus: -0.15, oneSided: 'below', wrongDirMultiplier: 2.5 },
@@ -625,18 +643,21 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       H: { weight: 0.6, idealDeg: 3 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.45, dir: 0.55 },
+      minAbsC: 5,  // preventing complete white
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
       C: { weight: 1, idealDelta: +0 },
       H: { weight: 1.5, idealDeg: +30 },
       blend: { harm: 0.50, dir: 0.50 },
+      minAbsC: 10,  // must have visible colour — chroma < 15 is a near-neutral, not a pastel
     },
     rich_colour: {
-      C: { weight: 1.8, idealDelta: +0.20, wrongDirMultiplier: 2.0 },
+      C: { weight: 1.5, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
       H: { weight: 1.5, idealDeg: +30 },
       L: { weight: 0.4, idealDelta: 0 },
       blend: { harm: 0.40, dir: 0.60 },
+      minAbsC: 20,  // must be clearly saturated
     },
   },
 
@@ -807,12 +828,13 @@ export function rankClusteredCandidates(
       for (const dir of directions) {
         const config = archetypeConfigs[dir];
         if (!config) continue;
+        if (config.minAbsC !== undefined && material.chroma < config.minAbsC) continue;
         const dirScore   = computeDirectionScore(material, ref, config);
         const finalScore = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
-        entries.push({ code: material.technicalCode, score: finalScore, direction: dir, clusterKey });
+        entries.push({ code: material.technicalCode, score: finalScore, direction: dir, clusterKey, archetype });
       }
     } else {
-      entries.push({ code: material.technicalCode, score: harmScore, direction: null, clusterKey });
+      entries.push({ code: material.technicalCode, score: harmScore, direction: null, clusterKey, archetype });
     }
   }
 
