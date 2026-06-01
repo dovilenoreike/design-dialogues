@@ -195,9 +195,11 @@ const RELATIONSHIPS: Record<string, Relationship> = {
   // Floor stabilises; fronts define identity. L matters most, hue is secondary.
   'floor::front':         { axisWeights: { L: 1.0, W: 0.6, H: 0.4, C: 0.3 } },
   // Worktop mediates between fronts. Chroma matters more here (worktop materials carry colour).
-  'front::worktop':       { axisWeights: { L: 0.7, W: 0.5, H: 0.5, C: 0.6 }, bridge: true },
+  //'front::worktop':       { axisWeights: { L: 0.7, W: 0.5, H: 0.5, C: 0.6 }, bridge: true }, our current worktops are actually backsplashes
+  'front::worktop':      { axisWeights: { L: 0.6, W: 0.2, H: 0.5, C: 0.5 } },
   // Floor↔worktop is a looser pair — both horizontal surfaces, hue continuity nice but not vital.
-  'floor::worktop':       { axisWeights: { L: 0.6, W: 0.4, H: 0.5, C: 0.4 } },
+  //'floor::worktop':       { axisWeights: { L: 0.6, W: 0.4, H: 0.5, C: 0.4 } },
+  'floor::worktop':       { axisWeights: { L: 0.6, W: 0.2, H: 0.5, C: 0.4 } },
   // Backsplash sits on the wall behind worktop — tight L+hue match reads as one surface.
   'backsplash::worktop':  { axisWeights: { L: 0.8, W: 0.6, H: 0.6, C: 0.5 } },
   // Fronts ↔ backsplash: visually adjacent but on different planes.
@@ -207,7 +209,8 @@ const RELATIONSHIPS: Record<string, Relationship> = {
   // Accents are small visual elements — chroma/hue can pop, but base axes are gentler.
   'accent::floor':        { axisWeights: { L: 0.3, W: 0.2, H: 0.3, C: 0.2 } },
   'accent::front':        { axisWeights: { L: 0.4, W: 0.3, H: 0.4, C: 0.3 } },
-  'accent::worktop':      { axisWeights: { L: 0.4, W: 0.3, H: 0.4, C: 0.3 } },
+  //'accent::worktop':      { axisWeights: { L: 0.4, W: 0.3, H: 0.4, C: 0.3 } },
+  'accent::worktop':      { axisWeights: { L: 0.3, W: 0.2, H: 0.3, C: 0.2 } },
   'accent::backsplash':   { axisWeights: { L: 0.3, W: 0.2, H: 0.3, C: 0.2 } },
 };
 
