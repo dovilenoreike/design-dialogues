@@ -717,7 +717,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       C: { weight: 0, idealDelta: 0 },
-      H: { weight: 0.6, idealDeg: 0 , mode: 'balance' },
+      H: { weight: 0.6, idealDeg: 0},
       blend: { harm: 0.60, dir: 0.40 },
     },
   },
