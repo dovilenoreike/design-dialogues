@@ -386,13 +386,24 @@ export type DirectionId =
   | 'tonal_match' | 'lighter_echo' | 'darker_echo'
   | 'soft_contrast' | 'temperature_shift'
   | 'light_neutral' | 'medium_neutral' | 'dark_neutral'
-  | 'pastel' | 'rich_colour' | 'muted';
+  | 'pastel' | 'rich_colour' | 'muted'
+  | 'quiet_stone' | 'natural_stone' | 'bold_movement';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
   wood:  ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
-  stone: ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast'],
+  stone: ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   // metallic / gold / silver / bronze / black / accents → no directions; flat list
+};
+
+// Claiming priority: which direction gets exclusive ownership of a material when it scores
+// well across multiple directions. Separate from UI display order (DIRECTIONS_BY_ARCHETYPE).
+// tonal_match claims wood first — it's the most specific match and should not be "stolen"
+// by a lighter/darker slot just because it also happens to be a good echo.
+const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
+  wood:  ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  stone: ['quiet_stone', 'natural_stone', 'bold_movement'],
+  plain: ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
 };
 
 // Resolve which direction family applies. Prefer the explicit chip routing
@@ -499,10 +510,10 @@ export function directionForCandidate(
   }
 
   if (archetype === 'stone') {
-    if (dL > 0.08) return 'lighter_echo';
-    if (dL < -0.08) return 'darker_echo';
-    if (Math.abs(dL) > 0.04) return 'soft_contrast';
-    return 'tonal_match';
+    const dP = (candidate.pattern - ref.pattern) / 100;
+    if (dP >= 0.20) return 'bold_movement';
+    if (dP <= 0.05) return 'quiet_stone';
+    return 'natural_stone';
   }
 
   return null;
@@ -559,6 +570,7 @@ export interface RankedClusteredEntry {
   score: number;
   direction: DirectionId | null;
   clusterKey: string;
+  archetype: string | null;
 }
 
 // ─── Direction scoring config ─────────────────────────────────────────────────
@@ -589,105 +601,100 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     light_neutral: {
       L: { weight: 1.4, idealDelta: +0.25, rangeBonus: +0.10, oneSided: 'above', wrongDirMultiplier: 2.5 },
       C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 0 },
+      H: { weight: 0.6, idealDeg: 3 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.45, dir: 0.55 },
     },
     medium_neutral: {
-      L: { weight: 1.4, idealDelta: 0 },
+      L: { weight: 1.4, idealDelta: +0.10 },
       C: { weight: 1, idealDelta: -0.05, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
-      H: { weight: 1.2, idealDeg: 0.045 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
+      H: { weight: 1.2, idealDeg: 3 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.55, dir: 0.45 },
     },
     muted: {
       L: { weight: 0.8, idealDelta: 0 },
       C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 0 },
+      H: { weight: 0.6, idealDeg: 10 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.55, dir: 0.45 },
     },
     dark_neutral: {
       L: { weight: 1.4, idealDelta: -0.15, rangeBonus: -0.15, oneSided: 'below', wrongDirMultiplier: 2.5 },
       C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, oneSided: 'below', wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 0 },
+      H: { weight: 0.6, idealDeg: 3 },
       W: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.45, dir: 0.55 },
     },
     pastel: {
-      L: { weight: 1.5, idealDelta: +0.20 },
+      L: { weight: 1, idealDelta: +0.20 },
       C: { weight: 1, idealDelta: +0 },
-      H: { weight: 1.5, idealDeg: +20 },
+      H: { weight: 1.5, idealDeg: +30 },
       blend: { harm: 0.50, dir: 0.50 },
     },
     rich_colour: {
       C: { weight: 1.8, idealDelta: +0.20, wrongDirMultiplier: 2.0 },
-      H: { weight: 1.0, idealDeg: +20 },
+      H: { weight: 1.5, idealDeg: +30 },
       L: { weight: 0.4, idealDelta: 0 },
       blend: { harm: 0.40, dir: 0.60 },
     },
   },
 
   stone: {
-    tonal_match: {
-      L: { weight: 1.0, idealDelta: 0 },
-      W: { weight: 0.6, idealDelta: 0 },
+    // Pattern is the primary axis; harmony score handles the tonal/lightness fit.
+    quiet_stone: {
+      P: { weight: 2.0, idealDelta: 0, oneSided: 'below', wrongDirMultiplier: 2.0 },
+      L: { weight: 0.3, idealDelta: 0 },
+      C: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 0.6, idealDeg: 0 },
+      blend: { harm: 0.65, dir: 0.35 },
+    },
+    natural_stone: {
+      P: { weight: 1.5, idealDelta: +0.15 },
+      L: { weight: 0.4, idealDelta: 0 },
       C: { weight: 0.4, idealDelta: 0 },
       H: { weight: 0.8, idealDeg: 0 },
-      blend: { harm: 0.50, dir: 0.50 },
+      blend: { harm: 0.65, dir: 0.35 },
     },
-    lighter_echo: {
-      L: { weight: 1.3, idealDelta: +0.12, wrongDirMultiplier: 2.5 },
-      W: { weight: 0.4, idealDelta: 0 },
-      C: { weight: 0.3, idealDelta: 0 },
-      H: { weight: 0.8, idealDeg: 0 },
-      blend: { harm: 0.55, dir: 0.45 },
-    },
-    darker_echo: {
-      L: { weight: 1.3, idealDelta: -0.12, wrongDirMultiplier: 2.5 },
-      W: { weight: 0.4, idealDelta: 0 },
-      C: { weight: 0.3, idealDelta: 0 },
-      H: { weight: 0.8, idealDeg: 0 },
-      blend: { harm: 0.55, dir: 0.45 },
-    },
-    soft_contrast: {
-      L: { weight: 1.2, idealDelta: 0.15, absDeviation: true },
-      W: { weight: 0.4, idealDelta: 0 },
-      H: { weight: 0.8, idealDeg: 0 },
-      blend: { harm: 0.55, dir: 0.45 },
+    bold_movement: {
+      P: { weight: 2.0, idealDelta: +0.30, oneSided: 'above', wrongDirMultiplier: 2.0 },
+      L: { weight: 0.3, idealDelta: 0 },
+      C: { weight: 0.4, idealDelta: 0 },
+      H: { weight: 0.6, idealDeg: 0 },
+      blend: { harm: 0.60, dir: 0.40 },
     },
   },
 
   wood: {
     tonal_match: {
-      L: { weight: 0.6, idealDelta: 0 },
+      L: { weight: 0.8, idealDelta: 0 },
       W: { weight: 1.2, idealDelta: 0 },
-      C: { weight: 0.8, idealDelta: 0 },
+      C: { weight: 0.6, idealDelta: 0 },
       H: { weight: 1.5, idealDeg: 0 },
       P: { weight: 0.4, idealDelta: 0 },
       blend: { harm: 0.85, dir: 0.15 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
     },
     lighter_echo: {
-      L: { weight: 1.2, idealDelta: +0.10, wrongDirMultiplier: 3.0 },
-      W: { weight: 0.8, idealDelta: 0 },
-      C: { weight: 0.4, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 4.5 },
+      L: { weight: 1.5, idealDelta: +0.13, wrongDirMultiplier: 3.0 },
+      W: { weight: 1.0, idealDelta: 0 },
+      C: { weight: 0.2, idealDelta: 0 },
+      H: { weight: 1.5, idealDeg: 3 },
       P: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.60, dir: 0.40 },
     },
     darker_echo: {
-      L: { weight: 1.2, idealDelta: -0.10, wrongDirMultiplier: 3.0 },
+      L: { weight: 1.5, idealDelta: -0.13, wrongDirMultiplier: 3.0 },
       W: { weight: 0.8, idealDelta: 0 },
-      C: { weight: 0.4, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 4.5 },
+      C: { weight: 0.2, idealDelta: 0 },
+      H: { weight: 1.5, idealDeg: 3 },
       P: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.60, dir: 0.40 },
     },
     soft_contrast: {
-      L: { weight: 1.2, idealDelta: 0.15, absDeviation: true },
+      L: { weight: 1.7, idealDelta: 0.25, absDeviation: true },
       W: { weight: 0.6, idealDelta: 0 },
       C: { weight: 0.3, idealDelta: 0 },
-      H: { weight: 1.2, idealDeg: 0 },
+      H: { weight: 1.2, idealDeg: 3 },
       P: { weight: 0.2, idealDelta: 0 },
       blend: { harm: 0.55, dir: 0.45 },
     },
@@ -809,5 +816,43 @@ export function rankClusteredCandidates(
     }
   }
 
-  return entries.sort((a, b) => b.score - a.score);
+  // Cross-direction deduplication: each material is claimed by its highest-priority direction
+  // (earlier in DIRECTIONS_BY_ARCHETYPE = higher priority). Claiming entries are returned first,
+  // non-claiming entries last — so directionGroups always picks a unique material per slot,
+  // falling back to non-claiming entries only when a direction has no other candidate.
+  const byMaterial = new Map<string, RankedClusteredEntry[]>();
+  for (const e of entries) {
+    const bucket = byMaterial.get(e.code);
+    if (bucket) bucket.push(e); else byMaterial.set(e.code, [e]);
+  }
+  const claimingDirByCode = new Map<string, DirectionId | null>();
+  for (const [code, materialEntries] of byMaterial) {
+    if (materialEntries.length <= 1) { claimingDirByCode.set(code, materialEntries[0]?.direction ?? null); continue; }
+    let claimingDir: DirectionId | null = null;
+    let claimingIdx = Infinity;
+    for (const e of materialEntries) {
+      if (e.direction === null) continue;
+      for (const priority of Object.values(CLAIMING_PRIORITY)) {
+        const idx = priority.indexOf(e.direction);
+        if (idx !== -1 && idx < claimingIdx) {
+          claimingIdx = idx;
+          claimingDir = e.direction;
+        }
+      }
+    }
+    claimingDirByCode.set(code, claimingDir);
+  }
+
+  const claiming: RankedClusteredEntry[]    = [];
+  const nonClaiming: RankedClusteredEntry[] = [];
+  for (const e of entries) {
+    if (e.direction === null || e.direction === claimingDirByCode.get(e.code)) {
+      claiming.push(e);
+    } else {
+      nonClaiming.push(e);
+    }
+  }
+  claiming.sort((a, b) => b.score - a.score);
+  nonClaiming.sort((a, b) => b.score - a.score);
+  return [...claiming, ...nonClaiming];
 }

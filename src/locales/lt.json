@@ -214,7 +214,10 @@
       "darkNeutral": "Tamsus neutralus",
       "pastel": "Pastelinis",
       "richColour": "Spalva",
-      "muted": "Prislopinta"
+      "muted": "Prislopinta",
+      "quietStone": "Rami faktūra",
+      "naturalStone": "Natūrali faktūra",
+      "boldMovement": "Ryški faktūra"
     }
   },
   "specs": {

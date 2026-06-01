@@ -567,9 +567,13 @@ export default function MaterialSlotPicker({
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
     const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
+    const usedCodes = new Set<string>();
     for (const c of clusteredRankedV2) {
       if (!c.direction) continue;
-      if (!topByDirection.has(c.direction)) topByDirection.set(c.direction, c);
+      if (!topByDirection.has(c.direction) && !usedCodes.has(c.code)) {
+        topByDirection.set(c.direction, c);
+        usedCodes.add(c.code);
+      }
     }
     return order.map((d): [DirectionId, RankedClusteredEntry | null] => [
       d, topByDirection.get(d) ?? null,

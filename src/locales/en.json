@@ -214,7 +214,10 @@
       "darkNeutral": "Dark neutral",
       "pastel": "Pastel",
       "richColour": "Colour",
-      "muted": "Muted"
+      "muted": "Muted",
+      "quietStone": "Quiet stone",
+      "naturalStone": "Natural stone",
+      "boldMovement": "Bold movement"
     }
   },
   "specs": {
