@@ -28,7 +28,7 @@ const ROLE_VISUAL_MASS: Record<string, number> = {
 };
 
 const ROLE_ANCHOR_WEIGHT: Record<string, number> = {
-  floor: 4, front: 3, worktop: 2, backsplash: 1,
+  floor: 3, front: 3, worktop: 2, backsplash: 1,
 };
 
 function massOf(m: GraphMaterial): number {
@@ -232,8 +232,7 @@ export function desiredRelationship(roleA: string, roleB: string, _state: Palett
 const BASE_TOL: Record<'L' | 'W' | 'H' | 'C', number> = {
   L: 0.3, W: 0.08, H: 0.10, C: 0.08,
 };
-const TENSION_FACTOR = 1.0;
-const RANGE_FACTOR   = 0.7;
+const TENSION_FACTOR = 0.15;
 const SCORE_ERROR_POWER = 1.5;
 
 // Achromatic candidates (hue_angle = null, e.g. pure white) skip the H axis entirely
@@ -253,20 +252,9 @@ function deltaH(a: number | null, b: number | null): number | null {
   return Math.min(d, 360 - d) / 90;
 }
 
-// Palette range on each axis, normalised to the tolerance scale (0–1).
-function rangeNorm(state: PaletteState, axis: 'L' | 'W' | 'H' | 'C'): number {
-  switch (axis) {
-    case 'L': return clamp01(state.L_range / L_RANGE_SCALE);
-    case 'W': return clamp01(state.W_range / W_RANGE_SCALE);
-    case 'C': return clamp01(state.C_range / C_RANGE_SCALE);
-    case 'H': return state.H_spread; // already 0–1
-  }
-}
 
 function tolFor(axis: 'L' | 'W' | 'H' | 'C', state: PaletteState): number {
-  return BASE_TOL[axis]
-       * (1 + TENSION_FACTOR * state.tension)
-       * (1 + RANGE_FACTOR   * rangeNorm(state, axis));
+  return BASE_TOL[axis] * (1 + TENSION_FACTOR * state.tension);
 }
 
 // Score one pair (candidate ↔ placed material) → average tolerated error across
@@ -600,10 +588,67 @@ export function clusterHarmonious(
   }));
 }
 
+// ─── V2 debug export (replaces v1 computeAxisErrors / computeIdealTargets) ───
+export function computeV2Debug(
+  candidate: GraphMaterial,
+  otherCodes: string[],
+  byCode: Map<string, GraphMaterial>,
+  role: string,
+  chipArchetypeId?: string | null,
+  targetDirection?: string | null,
+): {
+  harmonyScore: number;
+  directionId: DirectionId | null;
+  directionScore: number;
+  tension: number;
+  axisErrors: Record<string, number>;
+  refAvg: { L: number; W: number; C: number; hue: number | null; pattern: number } | null;
+} | null {
+  const placed = otherCodes.map(c => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
+  if (placed.length === 0) return null;
+  const state = computePaletteState(placed);
+  const hScore = harmonyScore(candidate, placed, state, role, chipArchetypeId);
+
+  const archetype     = archetypeForDirections(candidate, chipArchetypeId);
+  const archetypeCfgs = archetype ? DIRECTION_CONFIGS[archetype] : null;
+  const directions    = archetype ? DIRECTIONS_BY_ARCHETYPE[archetype] : null;
+  const ref           = archetype ? directionReference(archetype, state) : null;
+
+  let dirId: DirectionId | null = null;
+  let dirScore = 0;
+  let axisErrors: Record<string, number> = {};
+  if (ref && directions && archetypeCfgs) {
+    if (targetDirection && directions.includes(targetDirection as DirectionId) && archetypeCfgs[targetDirection as DirectionId]) {
+      // Score specifically for the user's chosen direction
+      const config = archetypeCfgs[targetDirection as DirectionId]!;
+      const errs: Record<string, number> = {};
+      dirScore = computeDirectionScore(candidate, ref, config, errs);
+      dirId = targetDirection as DirectionId;
+      axisErrors = errs;
+    } else {
+      let bestBlended = -1;
+      for (const dir of directions) {
+        const config = archetypeCfgs[dir];
+        if (!config) continue;
+        const errs: Record<string, number> = {};
+        const s = computeDirectionScore(candidate, ref, config, errs);
+        const blended = blendDirectionWithHarmony(s, hScore, config, dir);
+        if (blended > bestBlended) { bestBlended = blended; dirId = dir; dirScore = s; axisErrors = errs; }
+      }
+    }
+  }
+
+  const refAvg = ref ? { L: ref.L, W: ref.W, C: ref.C, hue: ref.hue, pattern: ref.pattern } : null;
+
+  return { harmonyScore: hScore, directionId: dirId, directionScore: dirScore, tension: state.tension, axisErrors, refAvg };
+}
+
 // ─── New API for the picker: harmony-filtered + clustered + tagged ──────────
 export interface RankedClusteredEntry {
   code: string;
   score: number;
+  harmonyScore: number;
+  pairScore: number;   // 0–1 normalised pair compatibility; populated by getClusteredRankedCodes, default 0
   direction: DirectionId | null;
   clusterKey: string;
   archetype: string | null;
@@ -617,6 +662,7 @@ interface AxisConfig {
   mode?:               'balance'; // contextual: ideal = (neutral − ref) / normaliser, so the candidate
                                   //   is nudged toward the complement of wherever the palette sits.
                                   //   L neutral=50, W neutral=0, C neutral=0.
+  maxDelta?:           number;    // when mode='balance': clamps the computed ideal to [−maxDelta, +maxDelta]
   wrongDirMultiplier?: number;   // penalty when candidate is on the wrong side of idealDelta
   absDeviation?:       boolean;  // score |actualDelta| vs idealDelta — both directions treated equally
   oneSided?:           'above' | 'below'; // no penalty past the ideal in the given direction:
@@ -631,10 +677,9 @@ interface DirectionConfig {
   W?:    AxisConfig;
   C?:    AxisConfig;
   P?:    AxisConfig;
-  H?:    { weight: number; idealDeg: number; mode?: 'balance' };  // mode='balance' → ideal is complement (180°)
+  H?:    { weight: number; idealDeg: number; mode?: 'balance'; maxDeg?: number };  // mode='balance' → ideal is complement (180°); maxDeg clamps computed ideal
   blend: { harm: number; dir: number };
   minAbsC?: number;       // hard gate: material must have chroma ≥ this to be eligible for the direction
-  coherenceWeight?: number; // multiplier on CONTRAST_COHERENCE_WEIGHT (default 1); 0 = no coherence for this direction
 }
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
@@ -647,7 +692,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 
   plain: {
     light_neutral: {
-      L: { weight: 1.4, idealDelta: +0.25, rangeBonus: +0.10, wrongDirMultiplier: 2.5 },
+      L: { weight: 1, idealDelta: +0.3, rangeBonus: +0.10, wrongDirMultiplier: 2.5 },
       C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
       H: { weight: 0.6, idealDeg: 3, mode: 'balance' },  // small hue shift is fine, but no strong colour — balance around neutral
       W: { weight: 0.2, idealDelta: 0 },
@@ -655,7 +700,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
-      L: { weight: 1.4, idealDelta: +0.10 },
+      L: { weight: 1, idealDelta: +0.10 },
       C: { weight: 1, idealDelta: -0.05, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
       H: { weight: 1.2, idealDeg: 3 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
       W: { weight: 0.2, idealDelta: 0 },
@@ -697,65 +742,58 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
   stone: {
     // Pattern is the primary axis; harmony score handles the tonal/lightness fit.
     quiet_stone: {
-      P: { weight: 2.0, idealDelta: 0, oneSided: 'below', wrongDirMultiplier: 2.0 },
-      L: { weight: 0.5, idealDelta: 0, mode: 'balance'},
+      P: { weight: 1.0, idealDelta: 0, oneSided: 'below', wrongDirMultiplier: 2.0 },
+      L: { weight: 0, idealDelta: 0, mode: 'balance'},
       W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       C: { weight: 0, idealDelta: 0 },
-      H: { weight: 0.6, idealDeg: 0, mode: 'balance' },
-      blend: { harm: 0.65, dir: 0.35 },
+      H: { weight: 1.5, idealDeg: 0},  // some hue variation is fine, but no strong colour — balance around neutral and clamp ideal to small hue shift
+      blend: { harm: 0.5, dir: 0.5 },
     },
     natural_stone: {
-      P: { weight: 1.5, idealDelta: +0.15 },
+      P: { weight: 1, idealDelta: +0.15 },
       L: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       C: { weight: 0, idealDelta: 0 },
-      H: { weight: 0.8, idealDeg: 0, mode: 'balance'},
-      blend: { harm: 0.65, dir: 0.35 },
+      H: { weight: 1.5, idealDeg: 0},
+      blend: { harm: 0.5, dir: 0.5 },
     },
     bold_movement: {
-      P: { weight: 2.0, idealDelta: +0.30, oneSided: 'above', wrongDirMultiplier: 2.0 },
-      L: { weight: 0.5, idealDelta: 0, mode: 'balance' },
+      P: { weight: 1.0, idealDelta: +0.30, oneSided: 'above', wrongDirMultiplier: 2.0 },
+      L: { weight: 0, idealDelta: 0, mode: 'balance' },
       W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       C: { weight: 0, idealDelta: 0 },
-      H: { weight: 0.6, idealDeg: 0},
-      blend: { harm: 0.60, dir: 0.40 },
+      H: { weight: 1.5, idealDeg: 0,}, 
+      blend: { harm: 0.50, dir: 0.50 },
     },
   },
 
   wood: {
     tonal_match: {
-      L: { weight: 0.8, idealDelta: 0 },
-      W: { weight: 1.2, idealDelta: 0 },
-      C: { weight: 0.6, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 0 },
-      P: { weight: 0.4, idealDelta: 0 },
+      L: { weight: 1.2, idealDelta: 0 },
+      W: { weight: 1.2, idealDelta: 0, mode: 'balance', maxDelta: 0.05 },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
+      C: { weight: 0.6, idealDelta: 0, mode: 'balance', maxDelta: 0.05 },
+      H: { weight: 1.7, idealDeg: 0 },
       blend: { harm: 0.85, dir: 0.15 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
-      coherenceWeight: 0,   // tonal match is about sameness — contrast coherence does not apply
     },
     lighter_echo: {
-      L: { weight: 1.5, idealDelta: +0.13, wrongDirMultiplier: 3.0 },
-      W: { weight: 1.0, idealDelta: 0},
-      C: { weight: 0.2, idealDelta: 0 },
+      L: { weight: 0.8, idealDelta: +0.2, wrongDirMultiplier: 10.0 },
+      W: { weight: 0.8, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
+      C: { weight: 0.2, idealDelta: 0,  mode: 'balance', maxDelta: 0.10 },
       H: { weight: 1.5, idealDeg: 3 },
-      P: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.60, dir: 0.40 },
-      coherenceWeight: 1,
+      blend: { harm: 0.50, dir: 0.50 },
     },
     darker_echo: {
-      L: { weight: 1.5, idealDelta: -0.13, wrongDirMultiplier: 3.0 },
-      W: { weight: 0.8, idealDelta: 0},
-      C: { weight: 0.2, idealDelta: 0 },
+      L: { weight: 0.8, idealDelta: -0.15, wrongDirMultiplier: 10.0 },
+      W: { weight: 0.8, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
+      C: { weight: 0.2, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
       H: { weight: 1.5, idealDeg: 3 },
-      P: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.60, dir: 0.40 },
-      coherenceWeight: 1,
+      blend: { harm: 0.50, dir: 0.50 },
     },
     soft_contrast: {
-      L: { weight: 1.7, idealDelta: 0.25, absDeviation: true },
-      W: { weight: 0.6, idealDelta: 0 },
-      C: { weight: 0.3, idealDelta: 0 },
-      H: { weight: 1.2, idealDeg: 3 },
-      P: { weight: 0.2, idealDelta: 0 },
+      L: { weight: 0.7, idealDelta: 0.3, absDeviation: true },
+      H: { weight: 1.5, idealDeg: 3 },
+      W: { weight: 1.5, idealDelta: 0, mode: 'balance', maxDelta: 0.2 },
+      C: { weight: 0.4, idealDelta: 0, mode: 'balance', maxDelta: 0.2 },
       blend: { harm: 0.55, dir: 0.45 },
     },
     temperature_shift: {
@@ -774,12 +812,13 @@ const TONAL_MATCH_MIN_DIR_WEIGHT = 0.15;
 
 // Scale for per-axis error power: errors below this are softened, above are amplified.
 // Inflection point at err=DIR_ERROR_SCALE — adjust to taste (lower = more aggressive).
-const DIR_ERROR_SCALE = 0.10;
+const DIR_ERROR_SCALE = 0.20;
 
 function computeDirectionScore(
   candidate: GraphMaterial,
   ref: DirectionRef,
   config: DirectionConfig,
+  axisErrs?: Record<string, number>,
 ): number {
   let errSum = 0, weightSum = 0;
 
@@ -798,19 +837,28 @@ function computeDirectionScore(
   function scoreLinearAxis(cfg: AxisConfig | undefined, signedDelta: number, rangeNorm: number, axis: 'L'|'W'|'C'|'P'): void {
     if (!cfg) return;
     const { weight, wrongDirMultiplier, absDeviation, oneSided, rangeBonus } = cfg;
-    const baseIdeal  = cfg.mode === 'balance' ? balanceIdealDelta[axis] : cfg.idealDelta;
-    const idealDelta = baseIdeal + (rangeBonus ?? 0) * rangeNorm;
     let err: number;
-    if (absDeviation) {
-      err = Math.abs(Math.abs(signedDelta) - idealDelta);
-    } else if (oneSided === 'above') {
-      err = signedDelta >= idealDelta ? 0 : (idealDelta - signedDelta) * (wrongDirMultiplier ?? 1);
-    } else if (oneSided === 'below') {
-      err = signedDelta <= idealDelta ? 0 : (signedDelta - idealDelta) * (wrongDirMultiplier ?? 1);
+    if (cfg.mode === 'balance' && cfg.maxDelta != null) {
+      // Free zone: [idealDelta, idealDelta + maxDelta * balanceDir]. No penalty inside; error = distance to nearest edge outside.
+      const balanceDir = Math.sign(balanceIdealDelta[axis]);
+      const zoneMin = Math.min(cfg.idealDelta, cfg.idealDelta + balanceDir * cfg.maxDelta);
+      const zoneMax = Math.max(cfg.idealDelta, cfg.idealDelta + balanceDir * cfg.maxDelta);
+      err = Math.max(0, zoneMin - signedDelta, signedDelta - zoneMax);
     } else {
-      const wrongDir = idealDelta !== 0 && (idealDelta > 0 ? signedDelta < 0 : signedDelta > 0);
-      err = Math.abs(signedDelta - idealDelta) * (wrongDir && wrongDirMultiplier ? wrongDirMultiplier : 1);
+      const baseIdeal  = cfg.mode === 'balance' ? balanceIdealDelta[axis] : cfg.idealDelta;
+      const idealDelta = baseIdeal + (rangeBonus ?? 0) * rangeNorm;
+      if (absDeviation) {
+        err = Math.abs(Math.abs(signedDelta) - idealDelta);
+      } else if (oneSided === 'above') {
+        err = signedDelta >= idealDelta ? 0 : (idealDelta - signedDelta) * (wrongDirMultiplier ?? 1);
+      } else if (oneSided === 'below') {
+        err = signedDelta <= idealDelta ? 0 : (signedDelta - idealDelta) * (wrongDirMultiplier ?? 1);
+      } else {
+        const wrongDir = idealDelta !== 0 && (idealDelta > 0 ? signedDelta < 0 : signedDelta > 0);
+        err = Math.abs(signedDelta - idealDelta) * (wrongDir && wrongDirMultiplier ? wrongDirMultiplier : 1);
+      }
     }
+    if (axisErrs) axisErrs[axis] = err;
     // Apply power per-axis: small errors softened, large errors amplified
     errSum    += Math.pow(err / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
     weightSum += weight;
@@ -827,15 +875,29 @@ function computeDirectionScore(
   if (config.H) {
     const { weight, idealDeg, mode: hMode } = config.H;
     // balance: low raw hue range → add up to 30° variety; wide range (≥60°) → match dominant hue
-    const effectiveIdealDeg = hMode === 'balance' ? 30 * (1 - clamp01(ref.H_range / 60)) : idealDeg;
-    let hArc = 0;
-    if (ref.hue != null && candidate.hue_angle != null) {
-      const raw = Math.abs(candidate.hue_angle - ref.hue);
-      hArc = Math.min(raw, 360 - raw) / 90;
+    let effectiveIdealDeg = hMode === 'balance' ? 30 * (1 - clamp01(ref.H_range / 60)) : idealDeg;
+    if (hMode === 'balance' && config.H!.maxDeg != null) {
+      effectiveIdealDeg = Math.min(config.H!.maxDeg, effectiveIdealDeg);
     }
-    const hErr = Math.abs(hArc - effectiveIdealDeg / 90);
-    errSum    += Math.pow(hErr / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
-    weightSum += weight;
+    if (ref.hue != null && candidate.hue_angle == null) {
+      // Achromatic candidate against a chromatic reference — penalise proportionally
+      // to reference visual chroma (same convention as harmonyScore's achromatic penalty).
+      const refVisualC = clamp01((ref.C / 100) * colourSalience(ref.L) * 2);
+      const achroErr = ACHROMATIC_HUE_PENALTY * refVisualC;
+      if (axisErrs) axisErrs['H'] = achroErr;
+      errSum    += Math.pow(achroErr / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
+      weightSum += weight;
+    } else {
+      let hArc = 0;
+      if (ref.hue != null && candidate.hue_angle != null) {
+        const raw = Math.abs(candidate.hue_angle - ref.hue);
+        hArc = Math.min(raw, 360 - raw) / 90;
+      }
+      const hErr = Math.abs(hArc - effectiveIdealDeg / 90);
+      if (axisErrs) axisErrs['H'] = hErr;
+      errSum    += Math.pow(hErr / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
+      weightSum += weight;
+    }
   }
 
   if (weightSum === 0) return 0.5;
@@ -856,30 +918,6 @@ function blendDirectionWithHarmony(
   return config.blend.harm * harmScore + config.blend.dir * dirScore;
 }
 
-// ─── Contrast coherence ───────────────────────────────────────────────────────
-// Hypothesis: lighter-than-palette materials feel more natural when they also
-// shift cooler; darker materials when they shift warmer (light-cool / dark-warm).
-// This is a third score component blended in at a small, configurable weight.
-// Set CONTRAST_COHERENCE_WEIGHT = 0 to disable entirely.
-const CONTRAST_COHERENCE_WEIGHT = 0.05;  // 0 = off; try 0.10–0.20
-const CONTRAST_L_THRESHOLD      = 0.25;  // L delta (0–1 normalised) for full coherence weight
-const CONTRAST_W_SCALE          = 0.12;  // W delta (0–1 normalised) that counts as "moving"
-
-function contrastCoherenceScore(candidate: GraphMaterial, state: PaletteState): number {
-  if (state.placedCount === 0) return 0.5;
-  const lDelta = (candidate.lightness - state.L_avg) / 100;  // +ve = lighter than full palette
-  const wDelta = (candidate.warmth    - state.W_avg) / 2;    // +ve = warmer than full palette
-  // How much does the palette need L contrast? High when palette is uniform, fades as L_range grows.
-  const contrastNeed       = 1 - clamp01(state.L_range / L_RANGE_SCALE);
-  // Does this candidate introduce L contrast? Saturates at CONTRAST_L_THRESHOLD — a gate, not a reward.
-  const candidateContrast  = clamp01(Math.abs(lDelta) / CONTRAST_L_THRESHOLD);
-  const lMag               = candidateContrast * contrastNeed;
-  if (lMag < 0.05) return 0.5;
-  // alignment > 0 when L and W go in opposite directions (the coherent pairing)
-  const alignment = -(lDelta > 0 ? 1 : -1) * wDelta;
-  const coherence = clamp01(0.5 + alignment / CONTRAST_W_SCALE);
-  return 0.5 + lMag * (coherence - 0.5);
-}
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
  *  Each candidate with a known archetype appears once per direction in that archetype's family.
@@ -908,21 +946,16 @@ export function rankClusteredCandidates(
     const ref              = archetype ? directionReference(archetype, state) : null;
 
     if (directions && archetypeConfigs && ref) {
-      const cScore = CONTRAST_COHERENCE_WEIGHT > 0 ? contrastCoherenceScore(material, state) : 0.5;
       for (const dir of directions) {
         const config = archetypeConfigs[dir];
         if (!config) continue;
         if (config.minAbsC !== undefined && material.chroma < config.minAbsC) continue;
-        const dirScore   = computeDirectionScore(material, ref, config);
-        const blended    = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
-        const effectiveCW = CONTRAST_COHERENCE_WEIGHT * (config.coherenceWeight ?? 1);
-        const finalScore  = effectiveCW > 0
-          ? blended * (1 - effectiveCW) + cScore * effectiveCW
-          : blended;
-        entries.push({ code: material.technicalCode, score: finalScore, direction: dir, clusterKey, archetype });
+        const dirScore  = computeDirectionScore(material, ref, config);
+        const finalScore = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
+        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore: 0, direction: dir, clusterKey, archetype });
       }
     } else {
-      entries.push({ code: material.technicalCode, score: harmScore, direction: null, clusterKey, archetype });
+      entries.push({ code: material.technicalCode, score: harmScore, harmonyScore: harmScore, pairScore: 0, direction: null, clusterKey, archetype });
     }
   }
 

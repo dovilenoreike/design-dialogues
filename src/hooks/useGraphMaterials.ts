@@ -1,8 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { GraphMaterial, pairKey, getCompatibleCandidates, rankByCompatibility, isCompatibleWithAll, isSimilarMaterial, visualDistance, countCompatible, weightedScore, descriptorScore } from '@/lib/graph-compatibility';
-import { rankByPaletteScore, scoreCandidate, computeAxisErrors, computeIdealTargets } from '@/lib/palette-scoring';
-import { paletteScoreV2, rankClusteredCandidates, type RankedClusteredEntry } from '@/lib/palette-scoring-v2';
+import { paletteScoreV2, rankClusteredCandidates, computeV2Debug, type RankedClusteredEntry } from '@/lib/palette-scoring-v2';
 import { deriveArchetypeId, BUSY_PATTERN_THRESHOLD, WOOD_WARMTH_MISMATCH_THRESHOLD } from '@/lib/archetype-rules';
 
 /** Full material record as fetched from Supabase — superset of GraphMaterial. */
@@ -32,6 +31,8 @@ const SYNONYM_INHERIT_FACTOR = 0.85;
 
 let _cached: GraphCache | null = null;
 let _fetchPromise: Promise<GraphCache> | null = null;
+let _activeScoringDirection: string | null = null;
+export function setActiveScoringDirection(dir: string | null): void { _activeScoringDirection = dir; }
 
 // ─── Image URL cache — survives page reload so first render shows real images ──
 const IMAGE_CACHE_KEY = "material-image-cache";
@@ -297,31 +298,25 @@ export function getApprovedByDesigner(codes: string[]): string | null {
   return null;
 }
 
-/** Per-axis errors [L, W, H, C, T, P] for a candidate against the placed palette. */
-export function getAxisErrorsForCode(
-  code: string,
-  placedCodes: string[],
-  role: string,
-  chipArchetypeId?: string | null,
-): [number, number, number, number, number, number] | null {
-  if (!_cached || placedCodes.length === 0) return null;
-  const { byCode } = _cached;
-  const candidate = byCode.get(code);
-  if (!candidate) return null;
-  return computeAxisErrors(candidate, placedCodes, byCode, role, chipArchetypeId);
+/** Normalised pair compatibility score (0–1) for a candidate against the given otherCodes. */
+export function getPairScoreForCode(code: string, otherCodes: string[]): number {
+  if (!_cached || otherCodes.length === 0) return 0;
+  const maxPairW = otherCodes.length * 3;
+  return maxPairW > 0 ? weightedScore(code, otherCodes, _cached.pairWeights) / maxPairW : 0;
 }
 
-export function getIdealTargetsForCode(
+/** V2 debug info for a candidate: harmonyScore, coherenceScore, directionId, directionScore, axisErrors. */
+export function getV2DebugForCode(
   code: string,
   placedCodes: string[],
   role: string,
   chipArchetypeId?: string | null,
-): { idealL: number; idealW: number; idealC: number; idealP: number; hRef: number | null; idealHArc: number } | null {
+): ReturnType<typeof computeV2Debug> {
   if (!_cached || placedCodes.length === 0) return null;
   const { byCode } = _cached;
   const candidate = byCode.get(code);
   if (!candidate) return null;
-  return computeIdealTargets(placedCodes, byCode, role, candidate.texture, '', chipArchetypeId);
+  return computeV2Debug(candidate, placedCodes, byCode, role, chipArchetypeId, _activeScoringDirection);
 }
 
 /** Returns all SupabaseMaterials whose role[] includes the given role. */
@@ -356,6 +351,10 @@ export function resolveCodeForShowroom(code: string, showroomId: string): string
   );
   return synonym?.technicalCode ?? code;
 }
+
+// Blend weight: palette quality (harmony + direction + coherence) vs curated pair compatibility.
+// Raise to trust colour scoring more; lower to lean on designer-approved pairings.
+export const PALETTE_WEIGHT = 0.97;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -439,18 +438,10 @@ export function useGraphMaterials() {
       pool = narrowed.length > 0 ? narrowed : sameTexture;
     }
     const role = targetRole ?? 'front';
-    return rankByPaletteScore(pool, otherCodes, byCode, role)
-      .map((m) => m.technicalCode);
+    return [...pool].sort((a, b) =>
+      paletteScoreV2(b, otherCodes, byCode, role) - paletteScoreV2(a, otherCodes, byCode, role)
+    ).map((m) => m.technicalCode);
   }
-
-  // All materials for the role ranked by blended score:
-  //   finalScore = paletteScore × W + normalizedPairScore × (1-W)
-  // W=0.5 balances image-derived colour harmony against curated pair compatibility,
-  // compensating for photo inaccuracy until material images are replaced.
-  const PALETTE_WEIGHT = 0.6;
-
-  // Controlled by VITE_USE_SCORING_V2=true in .env.local — off by default in production.
-  const USE_PALETTE_V2 = import.meta.env.VITE_USE_SCORING_V2 === 'true';
 
   function getAllRankedCodes(
     otherCodes: string[],
@@ -468,12 +459,8 @@ export function useGraphMaterials() {
     if (pool.length === 0) return [];
     const maxPairW = otherCodes.length * 3;
     return [...pool].sort((a, b) => {
-      const pA = USE_PALETTE_V2
-        ? paletteScoreV2(a, otherCodes, byCode, role, chipArchetypeId)
-        : scoreCandidate(a, otherCodes, byCode, role, chipArchetypeId);
-      const pB = USE_PALETTE_V2
-        ? paletteScoreV2(b, otherCodes, byCode, role, chipArchetypeId)
-        : scoreCandidate(b, otherCodes, byCode, role, chipArchetypeId);
+      const pA = paletteScoreV2(a, otherCodes, byCode, role, chipArchetypeId);
+      const pB = paletteScoreV2(b, otherCodes, byCode, role, chipArchetypeId);
       const cA = maxPairW > 0 ? weightedScore(a.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const cB = maxPairW > 0 ? weightedScore(b.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const sA = pA * PALETTE_WEIGHT + cA * (1 - PALETTE_WEIGHT);
@@ -492,7 +479,7 @@ export function useGraphMaterials() {
     chipArchetypeId?: string | null,
   ): RankedClusteredEntry[] {
     if (!_cached) return [];
-    const { byCode, graphMaterials: mats } = _cached;
+    const { byCode, graphMaterials: mats, pairWeights, pairCountByCode } = _cached;
     const role = targetRole ?? 'front';
     const pool = mats.filter((m) => {
       if (otherCodes.includes(m.technicalCode)) return false;
@@ -507,7 +494,29 @@ export function useGraphMaterials() {
       return true;
     });
     if (pool.length === 0) return [];
-    return rankClusteredCandidates(pool, otherCodes, byCode, role, chipArchetypeId);
+    if (otherCodes.length === 0) {
+      // No placed materials — use the most-paired candidate as a synthetic reference
+      // so direction scoring has a meaningful anchor for first-time users.
+      const topRef = pool.reduce((best, m) =>
+        (pairCountByCode.get(m.technicalCode) ?? 0) > (pairCountByCode.get(best.technicalCode) ?? 0) ? m : best
+      );
+      return rankClusteredCandidates(pool, [topRef.technicalCode], byCode, role, chipArchetypeId);
+    }
+    const raw = rankClusteredCandidates(pool, otherCodes, byCode, role, chipArchetypeId);
+    // Blend in pair compatibility using the same PALETTE_WEIGHT constant as getAllRankedCodes.
+    const maxPairW = otherCodes.length * 3;
+    const pairByCode = new Map<string, number>();
+    for (const e of raw) {
+      if (!pairByCode.has(e.code)) {
+        pairByCode.set(e.code, maxPairW > 0 ? weightedScore(e.code, otherCodes, pairWeights) / maxPairW : 0);
+      }
+    }
+    return raw
+      .map(e => ({ ...e, pairScore: pairByCode.get(e.code) ?? 0 }))
+      .sort((a, b) =>
+        (b.score * PALETTE_WEIGHT + b.pairScore * (1 - PALETTE_WEIGHT)) -
+        (a.score * PALETTE_WEIGHT + a.pairScore * (1 - PALETTE_WEIGHT))
+      );
   }
 
   function isCompatibleWithOthers(slotCode: string, otherCodes: string[]): boolean {
@@ -560,7 +569,7 @@ export function useGraphMaterials() {
     });
   }
 
-  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, getClusteredRankedCodes: USE_PALETTE_V2 ? getClusteredRankedCodes : undefined, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
+  return { loading, graphMaterials, getBestSwapCode, getRecommendedCodes, getAllRankedCodes, getClusteredRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners };
 }
 
 function isSimilarLightness(a: number, b: number, threshold = 20): boolean {

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, CheckCheck, Trash2, X, Search, RotateCcw, Sparkles } from "lucide-react";
+import { Check, Trash2, X, Search, RotateCcw } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, PALETTE_WEIGHT, setActiveScoringDirection } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -60,11 +60,7 @@ interface MaterialSlotPickerProps {
   isCompatibleWithEvery?: (code: string, otherCodes: string[]) => boolean;
 }
 
-// Plain front chips share the same material pool; spec selection is handled by scoring layer.
-// V1 uses granular chips; V2 collapses them into a single 'plain' chip.
-const PLAIN_FRONT_ARCHETYPE_IDS = import.meta.env.VITE_USE_SCORING_V2 === 'true'
-  ? new Set(['plain'])
-  : new Set(['light-neutral', 'dark-neutral', 'colours']);
+const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['plain']);
 
 function isPlainFrontChip(archetypeId: string | null | undefined, role: string): boolean {
   return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
@@ -105,8 +101,6 @@ export default function MaterialSlotPicker({
   filterEmptyArchetypes = false,
   inline = false,
   subHeader,
-  isCompatibleWithOthers,
-  isCompatibleWithEvery,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -122,8 +116,8 @@ export default function MaterialSlotPicker({
   const [expandedClusterKey, setExpandedClusterKey] = useState<string | null>(null);
   // Center of the 3×3 grid in inline mode (null = derive from selection/ranking)
   const [gridCenterCode, setGridCenterCode] = useState<string | null>(null);
-  // Whether the material section (hero + alternatives) is visible — hidden until user picks an archetype
-  const [materialSectionVisible, setMaterialSectionVisible] = useState<boolean>(() => !!selectedMaterialCode);
+  // Which direction swatch was last clicked — drives the alternatives strip
+  const [activeDirection, setActiveDirection] = useState<DirectionId | null>(null);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -133,30 +127,48 @@ export default function MaterialSlotPicker({
     setShowRequestDialog(false);
     setExpandedClusterKey(null);
     setGridCenterCode(null);
-    setMaterialSectionVisible(!!selectedMaterialCode);
+    setActiveDirection(null);
+    setActiveScoringDirection(null);
   }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset grid center when selection is cleared (flatlay reset) so the center
   // re-derives from best-ranked rather than showing the stale previous pick.
   useEffect(() => {
-    if (!selectedMaterialCode) {
-      setGridCenterCode(null);
-      setMaterialSectionVisible(false);
-    }
+    if (!selectedMaterialCode) setGridCenterCode(null);
   }, [selectedMaterialCode]);
 
-  // ─── Per-chip ranked codes for plain front chips ──────────────────────────
-  // Computed independently per chip so each thumbnail reflects its own spec's best candidate.
-  const plainChipRankedCodes = useMemo((): Map<string, string[]> => {
-    if (!slot || !getAllRankedCodes) return new Map();
+  // ─── Per-chip palette-best candidate ─────────────────────────────────────
+  // For every archetype chip: which material is the palette's top pick right now?
+  // Only runs when otherMaterialCodes is non-empty — no palette context → no palette score.
+  const perChipBestCode = useMemo((): Map<string, string | null> => {
+    if (!slot || !getClusteredRankedCodes || !graphMaterials?.length || !otherMaterialCodes?.length) return new Map();
     const role = SLOT_KEY_TO_ROLE[slot];
-    if (role !== 'front') return new Map();
-    const map = new Map<string, string[]>();
-    for (const chipId of PLAIN_FRONT_ARCHETYPE_IDS) {
-      map.set(chipId, getAllRankedCodes(otherMaterialCodes ?? [], role, undefined, chipId));
+    const map = new Map<string, string | null>();
+    for (const { id } of getArchetypesByRole(role)) {
+      const entries = getClusteredRankedCodes(otherMaterialCodes, role, id);
+      // One representative per direction (best by finalScore, same logic as directionGroups)
+      const topByDirection = new Map<string, RankedClusteredEntry>();
+      const usedCodes = new Set<string>();
+      for (const e of entries) {
+        if (!e.direction) continue;
+        if (!topByDirection.has(e.direction) && !usedCodes.has(e.code)) {
+          topByDirection.set(e.direction, e);
+          usedCodes.add(e.code);
+        }
+      }
+      // Among direction reps with images, promote the one with the best harmony score
+      const best = [...topByDirection.values()]
+        .filter(e => !!getMaterialByCode(e.code)?.imageUrl)
+        .sort((a, b) => {
+          const paletteA = a.harmonyScore;
+          const paletteB = b.harmonyScore;
+          return (paletteB * PALETTE_WEIGHT + b.pairScore * (1 - PALETTE_WEIGHT)) -
+                 (paletteA * PALETTE_WEIGHT + a.pairScore * (1 - PALETTE_WEIGHT));
+        })[0];
+      map.set(id, best?.code ?? null);
     }
     return map;
-  }, [slot, getAllRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slot, getClusteredRankedCodes, otherMaterialCodes, graphMaterials]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Archetype chips data (sorted by priority) ────────────────────────────
   const availableWithImages = useMemo(() => {
@@ -190,28 +202,19 @@ export default function MaterialSlotPicker({
         } else {
           const withImage = archetypeMats.filter(m => !!m.imageUrl);
           let primaryMat: typeof archetypeMats[0] | undefined;
-          if (isPlainFrontChip(a.id, role) && withImage.length > 0) {
-            // Use the per-chip ranking so the thumbnail reflects the best candidate for THIS chip's spec.
-            const chipRanked = plainChipRankedCodes.get(a.id) ?? [];
-            if (chipRanked.length > 0) {
-              const rankIndex = new Map(chipRanked.map((c, i) => [c, i]));
-              primaryMat = withImage
-                .filter(m => rankIndex.has(m.technicalCode))
-                .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!)[0]
-                ?? withImage[0];
-            } else {
-              primaryMat = withImage[0];
-            }
-          } else {
-            primaryMat = recommendedMat;
-            if (!primaryMat && withImage.length > 0) {
-              primaryMat = archetypeMats.reduce((best, m) => {
-                const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
-                const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
-                if (descM !== descBest) return descM > descBest ? m : best;
-                return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
-              });
-            }
+          // Prefer palette-best candidate for this archetype (available when other slots are filled)
+          const bestCode = perChipBestCode.get(a.id);
+          if (bestCode) {
+            primaryMat = withImage.find(m => m.technicalCode === bestCode) ?? withImage[0];
+          }
+          // Fallback: no palette context yet — use popularity sort
+          if (!primaryMat && withImage.length > 0) {
+            primaryMat = archetypeMats.reduce((best, m) => {
+              const descM    = getDescriptorScore(m.technicalCode, otherMaterialCodes ?? []);
+              const descBest = getDescriptorScore(best.technicalCode, otherMaterialCodes ?? []);
+              if (descM !== descBest) return descM > descBest ? m : best;
+              return getPairCountByCode(m.technicalCode) > getPairCountByCode(best.technicalCode) ? m : best;
+            });
           }
           resolvedCode = primaryMat?.technicalCode;
           if (filterEmptyArchetypes && graphLoaded && !resolvedCode && role !== "accent") {
@@ -237,7 +240,7 @@ export default function MaterialSlotPicker({
         const order = getArchetypesByRole(role);
         return order.findIndex(x => x.id === a.archetype.id) - order.findIndex(x => x.id === b.archetype.id);
       });
-  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes, plainChipRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slot, selections, otherMaterialCodes, selectedMaterialCode, getRecommendedCodes, graphMaterials, filterEmptyArchetypes, perChipBestCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Effective active archetype ───────────────────────────────────────────
   const effectiveActiveId = useMemo(() => {
@@ -343,68 +346,19 @@ export default function MaterialSlotPicker({
     return null;
   }, [gridCenterCode, graphMaterials, effectiveActiveId, selectedMaterialCode, allRankedCodes, gridPool, otherMaterialCodes]);
 
-  // 3×3 grid cells
-  const materialGrid = useMemo((): GridCell[] => {
-    if (!effectiveGridCenter || gridPool.length === 0) return [];
-    const pool = gridPool.filter(m => m.technicalCode !== effectiveGridCenter.technicalCode);
-    return buildMaterialGrid(effectiveGridCenter, pool, allRankedCodes);
-  }, [effectiveGridCenter, gridPool, allRankedCodes]);
 
-  // True when the hero material is the system's top-ranked pick in the current pool
-  const isHeroTopPick = useMemo((): boolean => {
-    if (!effectiveGridCenter || gridPool.length === 0 || allRankedCodes.length === 0) return false;
-    const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
-    const topInPool = gridPool
-      .filter(m => rankIndex.has(m.technicalCode))
-      .sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!)[0];
-    return topInPool?.technicalCode === effectiveGridCenter.technicalCode;
-  }, [effectiveGridCenter, gridPool, allRankedCodes]);
 
   // Non-center cells for the alternatives strip, sorted by palette rank
-  const alternativeCells = useMemo((): GridCell[] => {
-    const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
-    return materialGrid
-      .filter(c => !(c.row === 1 && c.col === 1) && c.material !== null)
-      .sort((a, b) => {
-        const ra = a.material ? (rankIndex.get(a.material.technicalCode) ?? 999) : 999;
-        const rb = b.material ? (rankIndex.get(b.material.technicalCode) ?? 999) : 999;
-        return ra - rb;
-      });
-  }, [materialGrid, allRankedCodes]);
-
   // Best palette-ranked code per archetype (used for chip image + click target)
   const bestCodeByArchetypeId = useMemo((): Map<string, string> => {
-    if (!slot || !graphMaterials?.length || allRankedCodes.length === 0) return new Map();
-    const role = SLOT_KEY_TO_ROLE[slot];
-    const rankIndex = new Map(allRankedCodes.map((c, i) => [c, i]));
     const map = new Map<string, string>();
     for (const { archetype, resolvedCode } of availableWithImages) {
-      if (isPlainFrontChip(archetype.id, role)) {
-        // Plain front chips: use per-chip rankings (not allRankedCodes, which is active-chip only).
-        const chipRanked = plainChipRankedCodes.get(archetype.id);
-        if (chipRanked && chipRanked.length > 0) {
-          const chipRankIndex = new Map(chipRanked.map((c, i) => [c, i]));
-          const candidates = graphMaterials!.filter(m =>
-            m.texture === 'plain' && m.role.includes(role) && !!m.imageUrl && chipRankIndex.has(m.technicalCode)
-          );
-          if (candidates.length > 0) {
-            candidates.sort((a, b) => chipRankIndex.get(a.technicalCode)! - chipRankIndex.get(b.technicalCode)!);
-            map.set(archetype.id, candidates[0].technicalCode);
-            continue;
-          }
-        }
-        if (resolvedCode) map.set(archetype.id, resolvedCode);
-        continue;
-      }
-      const candidates = graphMaterials.filter(m =>
-        m.archetypeId === archetype.id && m.role.includes(role) && !!m.imageUrl && rankIndex.has(m.technicalCode)
-      );
-      if (candidates.length === 0) continue;
-      candidates.sort((a, b) => rankIndex.get(a.technicalCode)! - rankIndex.get(b.technicalCode)!);
-      map.set(archetype.id, candidates[0].technicalCode);
+      const best = perChipBestCode.get(archetype.id);
+      if (best) { map.set(archetype.id, best); continue; }
+      if (resolvedCode) map.set(archetype.id, resolvedCode);
     }
     return map;
-  }, [slot, graphMaterials, allRankedCodes, availableWithImages, plainChipRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [availableWithImages, perChipBestCode]);
 
 // ─── Inline row data ──────────────────────────────────────────────────────
 
@@ -557,13 +511,13 @@ export default function MaterialSlotPicker({
     if (!slot || !effectiveActiveId || !getClusteredRankedCodes) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     return getClusteredRankedCodes(otherMaterialCodes ?? [], role, effectiveActiveId);
-  }, [slot, effectiveActiveId, getClusteredRankedCodes, otherMaterialCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slot, effectiveActiveId, otherMaterialCodes, getClusteredRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every direction in the archetype's taxonomy gets a slot, even if no candidate maps to it.
   // Empty slots render as placeholders so the model stays legible (user can see the full set
   // of directions and which ones have no match in the current pool/state).
   const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry | null]> => {
-    if (!effectiveActiveId || !getClusteredRankedCodes) return [];
+    if (!effectiveActiveId) return [];
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
     const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
@@ -580,13 +534,32 @@ export default function MaterialSlotPicker({
     ]);
   }, [clusteredRankedV2, effectiveActiveId]);
 
-  // Direction tag of the hero material — surfaced below the hero name so the user
-  // can see which direction the current pick represents.
-  const heroDirection = useMemo((): DirectionId | null => {
-    if (!getClusteredRankedCodes || !effectiveGridCenter || clusteredRankedV2.length === 0) return null;
-    const entry = clusteredRankedV2.find(c => c.code === effectiveGridCenter.technicalCode);
-    return entry?.direction ?? null;
-  }, [effectiveGridCenter, clusteredRankedV2]);
+
+  // Top 8 alternatives from the active direction (selected item stays and shows checkmark)
+  const directionTopItems = useMemo((): RowItem[] => {
+    if (!activeDirection || !slot) return [];
+    const seen = new Set<string>();
+    const items: RowItem[] = [];
+    for (const e of clusteredRankedV2) {
+      if (e.direction !== activeDirection) continue;
+      if (seen.has(e.code)) continue;
+      seen.add(e.code);
+      const mat = getMaterialByCode(e.code);
+      if (!mat?.imageUrl) continue;
+      items.push({
+        code: e.code,
+        image: mat.imageUrl,
+        name: mat.name?.[lang] ?? e.code,
+        materialName: mat.name?.[lang] ?? e.code,
+        isSelected: e.code === selectedMaterialCode,
+        isRecommended: false,
+        matchesAll: false,
+        archetypeId: effectiveActiveId ?? '',
+      });
+      if (items.length >= 8) break;
+    }
+    return items;
+  }, [activeDirection, clusteredRankedV2, selectedMaterialCode, slot, lang, effectiveActiveId]);
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
@@ -640,11 +613,6 @@ export default function MaterialSlotPicker({
     if (slot) onSelect(slot, item.archetypeId, item.code);
   };
 
-  const handleGridCellClick = (cell: GridCell) => {
-    if (!cell.material || !slot || !effectiveActiveId) return;
-    setGridCenterCode(cell.material.technicalCode);
-    onSelect(slot, effectiveActiveId, cell.material.technicalCode);
-  };
 
   // ─── Cluster helpers ──────────────────────────────────────────────────────
 
@@ -717,8 +685,6 @@ export default function MaterialSlotPicker({
   const REC_SWATCH_RADIUS = 20;
   const SWATCH_SIZE = 64;
   const SWATCH_RADIUS = 16;
-  const HERO_SIZE = 172;
-  const HERO_RADIUS = 20;
   const ALT_SWATCH_SIZE = 60;
   const ALT_SWATCH_RADIUS = 12;
 
@@ -863,48 +829,65 @@ export default function MaterialSlotPicker({
           <>
 
           {/* Archetype chips — one per archetype, showing best palette suggestion */}
+          <div className="px-4 pt-3 pb-1 flex-shrink-0">
+            <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
+              {t("surface.bestMatch")}
+            </span>
+          </div>
           <div
-            className="flex gap-2.5 px-4 pt-3 pb-3 overflow-x-auto flex-shrink-0"
+            className="flex gap-2.5 px-4 pb-3 overflow-x-auto flex-shrink-0"
             style={{ scrollbarWidth: "none" } as React.CSSProperties}
           >
-            {availableWithImages.map(({ archetype, displayImage, resolvedCode, isRecommended }) => {
-              const isActive = archetype.id === effectiveActiveId;
+            {availableWithImages.map(({ archetype, displayImage, resolvedCode }) => {
+              const isActive = archetype.id === activeArchetypeId;
+              const isChosen = !!selectedMaterialCode && !!slot && selections[slot] === archetype.id;
               // Prefer palette-ranked best; fall back to availableWithImages resolvedCode
               const bestCode = bestCodeByArchetypeId.get(archetype.id) ?? resolvedCode;
-              const chipImage = bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage;
-              const showResetHint = isActive && !!selectedMaterialCode && !!bestCode && bestCode !== selectedMaterialCode;
+              // Chip shows the chosen texture when one exists, otherwise the top-ranked recommendation
+              const chipImage = isChosen
+                ? (getMaterialByCode(selectedMaterialCode!)?.imageUrl ?? displayImage)
+                : (bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage);
+              const showResetHint = isChosen && isActive && !!bestCode && bestCode !== selectedMaterialCode;
               return (
                 <button
                   key={`chip-${archetype.id}`}
                   onClick={() => {
                     setActiveArchetypeId(archetype.id);
+                    setActiveDirection(null);
                     setGridCenterCode(bestCode ?? null);
-                    setMaterialSectionVisible(true);
-                    if (slot && bestCode) onSelect(slot, archetype.id, bestCode);
+                    // Pick best on first tap; reset to best on second tap when a custom choice exists
+                    if (slot && bestCode && (!isChosen || showResetHint)) onSelect(slot, archetype.id, bestCode);
                   }}
                   className="flex flex-col items-center gap-1 flex-shrink-0"
-                  style={{ opacity: isActive || isRecommended ? 1 : 0.45, transition: "opacity 0.15s" }}
                 >
                   <div
-                    className="relative w-[52px] h-[52px] overflow-hidden"
+                    className="relative w-[68px] h-[68px] overflow-hidden"
                     style={{
-                      borderRadius: 11,
-                      border: isActive ? "2px solid #647d75" : "2px solid transparent",
+                      borderRadius: 14,
+                      border: isActive || isChosen ? "2px solid #647d75" : "2px solid transparent",
                       transition: "border-color 0.15s",
                     }}
                   >
                     <img src={chipImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
+                    {isChosen && !showResetHint && (
+                      <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                        <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                      </div>
+                    )}
                     {showResetHint && (
-                      <div className="absolute flex items-center justify-center" style={{ bottom: 3, right: 3, width: 14, height: 14, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.45)" }}>
-                        <RotateCcw className="w-2 h-2 text-white" strokeWidth={2.5} />
+                      <div
+                        className="absolute flex items-center justify-center pointer-events-none"
+                        style={{ bottom: 3, right: 3, width: 18, height: 18, borderRadius: 5, backgroundColor: "rgba(0,0,0,0.50)" }}
+                      >
+                        <RotateCcw className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
                       </div>
                     )}
                   </div>
                   <span
                     className="text-[10px] whitespace-nowrap leading-none"
                     style={{
-                      color: isActive ? "#1a1a1a" : "#9ca3af",
-                      fontWeight: isActive ? 500 : 400,
+                      color: isActive || isChosen ? "#1a1a1a" : "#9ca3af",
+                      fontWeight: isActive || isChosen ? 500 : 400,
                     }}
                   >
                     {archetype.label[lang]}
@@ -914,82 +897,102 @@ export default function MaterialSlotPicker({
             })}
           </div>
 
-          {materialSectionVisible && (
+          {/* Direction groups — shown only after user explicitly clicks a chip */}
+          {activeArchetypeId && (
           <div style={{ animation: "msPickerFadeIn 0.2s ease both", backgroundColor: "#ffffff" }}>
             <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
           <SwatchDivider />
 
-          {/* Hero recommendation card — centered */}
-          {effectiveGridCenter ? (
-            <div className="flex flex-col items-center px-4 pt-5 pb-3 flex-shrink-0">
-              <button
-                onClick={() => {
-                  if (slot && effectiveActiveId) onSelect(slot, effectiveActiveId, effectiveGridCenter.technicalCode);
-                }}
-                className="relative flex-shrink-0 active:scale-95"
-                style={{
-                  width: HERO_SIZE,
-                  height: HERO_SIZE,
-                  borderRadius: HERO_RADIUS,
-                  overflow: "hidden",
-                  transition: "transform 0.1s",
-                }}
-              >
-                <img src={effectiveGridCenter.imageUrl!} alt="" className="w-full h-full object-cover" />
-                {/* "Best match" badge — overlaid on image, only when system-derived */}
-                {isHeroTopPick && (
-                  <div
-                    className="absolute flex items-center gap-1"
-                    style={{
-                      top: 10, right: 10,
-                      backgroundColor: "rgba(0, 0, 0, 0.35)",
-                      borderRadius: 20,
-                      paddingLeft: 7, paddingRight: 8, paddingTop: 4, paddingBottom: 4,
-                    }}
-                  >
-                    <Sparkles className="w-2.5 h-2.5 text-white flex-shrink-0" strokeWidth={2} />
-                    <span className="text-[9px] font-medium text-white leading-none">{t("surface.bestMatch")}</span>
-                  </div>
-                )}
-                {/* V/VV compatibility badge — top-left */}
-                {(() => {
-                  const others = otherMaterialCodes ?? [];
-                  if (others.length === 0) return null;
-                  const heroVV = isCompatibleWithEvery?.(effectiveGridCenter.technicalCode, others) ?? false;
-                  const heroV  = !heroVV && (isCompatibleWithOthers?.(effectiveGridCenter.technicalCode, others) ?? false);
-                  if (!heroVV && !heroV) return null;
+          <div className="px-4 pt-3 pb-1 flex-shrink-0">
+            <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
+              {t("surface.otherOptionsPrefix")}{activeArchetypeLabel}{t("surface.otherOptionsSuffix")}
+            </span>
+          </div>
+
+          {/* Direction swatches — one per direction in the archetype taxonomy */}
+          {directionGroups.length > 0 ? (
+            <div
+              className="flex gap-2.5 px-4 pt-4 pb-4 overflow-x-auto flex-shrink-0"
+              style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+            >
+              {directionGroups.map(([direction, entry]) => {
+                const camel = direction.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+                const label = t(`surface.direction.${camel}`);
+                const mat = entry ? getMaterialByCode(entry.code) : null;
+                const hasMatch = !!mat?.imageUrl;
+                const isSelected = hasMatch && mat!.technicalCode === selectedMaterialCode;
+
+                if (!hasMatch) {
                   return (
-                    <div className="absolute flex items-center justify-center" style={{ top: 8, left: 8, width: 16, height: 16 }}>
-                      {heroVV
-                        ? <CheckCheck className="w-3 h-3 text-white" strokeWidth={2.5} />
-                        : <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-                      }
+                    <div
+                      key={`dir-${direction}`}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                      style={{ width: SWATCH_SIZE }}
+                      title="No candidate in the current pool maps to this direction"
+                    >
+                      <div
+                        className="flex-shrink-0"
+                        style={{
+                          width: SWATCH_SIZE,
+                          height: SWATCH_SIZE,
+                          borderRadius: SWATCH_RADIUS,
+                          backgroundColor: '#f0ede9',
+                          border: '1px dashed #d8d4cf',
+                        }}
+                      />
+                      <span
+                        className="text-[10px] text-center leading-tight"
+                        style={{ color: 'rgba(0,0,0,0.30)', maxWidth: SWATCH_SIZE + 12 }}
+                      >
+                        {label}
+                      </span>
                     </div>
                   );
-                })()}
-                {/* Selection indicator */}
-                {effectiveGridCenter.technicalCode === selectedMaterialCode && (
-                  <div className="absolute flex items-center justify-center" style={{ bottom: 8, right: 8, width: 20, height: 20, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                    <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-                  </div>
-                )}
-              </button>
-              {/* Material name */}
-              {(effectiveGridCenter.name?.[lang] ?? effectiveGridCenter.technicalCode) && (
-                <span className="text-[12px] text-center mt-2 truncate" style={{ color: "rgba(0,0,0,0.45)", maxWidth: HERO_SIZE }}>
-                  {effectiveGridCenter.name?.[lang] ?? effectiveGridCenter.technicalCode}
-                </span>
-              )}
-              {/* Direction tag — which v2 direction this hero represents */}
-              {heroDirection && (() => {
-                const camel = heroDirection.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+                }
+
                 return (
-                  <span className="text-[10px] tracking-[0.06em] uppercase mt-1" style={{ color: '#647d75' }}>
-                    {t(`surface.direction.${camel}`)}
-                  </span>
+                  <button
+                    key={`dir-${direction}`}
+                    onClick={() => {
+                      setActiveDirection(direction);
+                      setActiveScoringDirection(direction);
+                      if (slot && effectiveActiveId && entry) onSelect(slot, effectiveActiveId, entry.code);
+                    }}
+                    className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                    style={{ width: SWATCH_SIZE }}
+                  >
+                    <div
+                      className="relative flex-shrink-0 active:scale-95"
+                      style={{
+                        width: SWATCH_SIZE,
+                        height: SWATCH_SIZE,
+                        borderRadius: SWATCH_RADIUS,
+                        overflow: 'hidden',
+                        border: isSelected ? '2px solid #647d75' : '2px solid transparent',
+                        transition: 'border-color 0.15s, transform 0.1s',
+                      }}
+                    >
+                      <img src={mat!.imageUrl!} alt="" className="w-full h-full object-cover" />
+                      {isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      className="text-[10px] text-center leading-tight"
+                      style={{
+                        color: isSelected ? '#647d75' : 'rgba(0,0,0,0.55)',
+                        fontWeight: isSelected ? 500 : 400,
+                        maxWidth: SWATCH_SIZE + 12,
+                      }}
+                    >
+                      {label}
+                    </span>
+                  </button>
                 );
-              })()}
+              })}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center py-8">
@@ -997,142 +1000,41 @@ export default function MaterialSlotPicker({
             </div>
           )}
 
-          {/* Alternatives strip — centered */}
-          {effectiveGridCenter && alternativeCells.length > 0 && (
-            <div
-              className="flex justify-center gap-2 px-4 pb-5 overflow-x-auto flex-shrink-0"
-              style={{ scrollbarWidth: "none" } as React.CSSProperties}
-            >
-              {alternativeCells.map(({ row, col, material: mat }) => {
-                if (!mat) return null;
-                const isSelected = mat.technicalCode === selectedMaterialCode;
-                const others = otherMaterialCodes ?? [];
-                const isVV = others.length > 0 && (isCompatibleWithEvery?.(mat.technicalCode, others) ?? false);
-                const isV  = others.length > 0 && !isVV && (isCompatibleWithOthers?.(mat.technicalCode, others) ?? false);
-                return (
+          {/* Direction alternatives strip — top 8 from the active direction */}
+          {activeDirection && directionTopItems.length > 0 && (
+            <>
+              <SwatchDivider />
+              <div className="px-4 pt-4 pb-1 flex-shrink-0">
+                <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
+                  {t("surface.similarShades")}
+                </span>
+              </div>
+              <div
+                className="flex gap-2 px-4 pb-5 pt-2 overflow-x-auto flex-shrink-0"
+                style={{ scrollbarWidth: "none" } as React.CSSProperties}
+              >
+                {directionTopItems.map(item => (
                   <button
-                    key={`alt-${row}-${col}`}
-                    onClick={() => handleGridCellClick({ row, col, material: mat })}
+                    key={`dtop-${item.code}`}
+                    onClick={() => { if (slot && effectiveActiveId) onSelect(slot, effectiveActiveId, item.code); }}
                     className="relative flex-shrink-0 active:scale-95"
                     style={{
                       width: ALT_SWATCH_SIZE,
                       height: ALT_SWATCH_SIZE,
                       borderRadius: ALT_SWATCH_RADIUS,
                       overflow: "hidden",
-                      border: isSelected ? "2px solid #647d75" : "2px solid transparent",
+                      border: item.isSelected ? "2px solid #647d75" : "2px solid transparent",
                       transition: "border-color 0.15s, transform 0.1s",
                     }}
                   >
-                    <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
-                    {isSelected && (
-                      <div className="absolute flex items-center justify-center" style={{ bottom: 3, right: 3, width: 13, height: 13, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                    <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    {item.isSelected && (
+                      <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
                         <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
                       </div>
                     )}
-                    {(isVV || isV) && (
-                      <div className="absolute flex items-center justify-center" style={{ top: 3, left: 3, width: 13, height: 13 }}>
-                        {isVV
-                          ? <CheckCheck className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
-                          : <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
-                        }
-                      </div>
-                    )}
                   </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Explore similar — one swatch per direction (best v2 candidate). Stable across picks
-              within the same slot: candidate scores don't depend on the active slot's own pick,
-              so the direction list only changes when other slots or the chip archetype change. */}
-          {directionGroups.length > 0 && (
-            <>
-              <SwatchDivider />
-              <div className="px-4 pt-4 pb-2 flex-shrink-0">
-                <p className="text-[11px] font-medium tracking-[0.06em] uppercase" style={{ color: '#9ca3af' }}>
-                  {t('surface.exploreSimilar')}
-                </p>
-              </div>
-              <div
-                className="flex gap-2.5 px-4 pb-4 overflow-x-auto flex-shrink-0"
-                style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-              >
-                {directionGroups.map(([direction, entry]) => {
-                  const camel = direction.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-                  const label = t(`surface.direction.${camel}`);
-                  const mat = entry ? getMaterialByCode(entry.code) : null;
-                  const hasMatch = !!mat?.imageUrl;
-                  const isSelected = hasMatch && mat!.technicalCode === selectedMaterialCode;
-
-                  if (!hasMatch) {
-                    return (
-                      <div
-                        key={`dir-${direction}`}
-                        className="flex flex-col items-center gap-1.5 flex-shrink-0"
-                        style={{ width: SWATCH_SIZE }}
-                        title="No candidate in the current pool maps to this direction"
-                      >
-                        <div
-                          className="flex-shrink-0"
-                          style={{
-                            width: SWATCH_SIZE,
-                            height: SWATCH_SIZE,
-                            borderRadius: SWATCH_RADIUS,
-                            backgroundColor: '#f0ede9',
-                            border: '1px dashed #d8d4cf',
-                          }}
-                        />
-                        <span
-                          className="text-[10px] text-center leading-tight"
-                          style={{ color: 'rgba(0,0,0,0.30)', maxWidth: SWATCH_SIZE + 12 }}
-                        >
-                          {label}
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={`dir-${direction}`}
-                      onClick={() => {
-                        if (slot && effectiveActiveId && entry) onSelect(slot, effectiveActiveId, entry.code);
-                      }}
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0"
-                      style={{ width: SWATCH_SIZE }}
-                    >
-                      <div
-                        className="relative flex-shrink-0 active:scale-95"
-                        style={{
-                          width: SWATCH_SIZE,
-                          height: SWATCH_SIZE,
-                          borderRadius: SWATCH_RADIUS,
-                          overflow: 'hidden',
-                          border: isSelected ? '2px solid #647d75' : '2px solid transparent',
-                          transition: 'border-color 0.15s, transform 0.1s',
-                        }}
-                      >
-                        <img src={mat!.imageUrl!} alt="" className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
-                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                          </div>
-                        )}
-                      </div>
-                      <span
-                        className="text-[10px] text-center leading-tight"
-                        style={{
-                          color: isSelected ? '#647d75' : 'rgba(0,0,0,0.55)',
-                          fontWeight: isSelected ? 500 : 400,
-                          maxWidth: SWATCH_SIZE + 12,
-                        }}
-                      >
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
+                ))}
               </div>
             </>
           )}

@@ -5,7 +5,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
-import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getAxisErrorsForCode, getIdealTargetsForCode } from "@/hooks/useGraphMaterials";
+import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getV2DebugForCode, getPairScoreForCode } from "@/hooks/useGraphMaterials";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
 
@@ -452,51 +452,40 @@ export default function KonceptasView({
                 </button>
               )}
               {SHOW_COLOUR_SCORES && mat && (() => {
-                // Use the archetype chip that was active when this material was placed.
-                // archetypeId = slotSelections[piece.slot] — fixed per selection, not per-candidate.
-                const PLAIN_FRONT_CHIP_IDS = new Set(['plain']);
-                const overlayChipId = (mat.texture === 'plain' && slotRole === 'front' && PLAIN_FRONT_CHIP_IDS.has(archetypeId ?? ''))
-                  ? archetypeId
+                const overlayChipId = (mat.texture === 'plain' && slotRole === 'front' && archetypeId === 'plain')
+                  ? 'plain'
                   : null;
                 const rankList = otherCodes.length > 0 ? getAllRankedCodes(otherCodes, slotRole, overlayChipId) : [];
                 const rankIdx = rankList.indexOf(overrideCode);
                 const rank = rankIdx >= 0 ? rankIdx + 1 : null;
-                const axisErrs = otherCodes.length > 0
-                  ? getAxisErrorsForCode(overrideCode, otherCodes, slotRole, overlayChipId)
+                const dbg = otherCodes.length > 0
+                  ? getV2DebugForCode(overrideCode, otherCodes, slotRole, overlayChipId)
                   : null;
-                const ideals = otherCodes.length > 0
-                  ? getIdealTargetsForCode(overrideCode, otherCodes, slotRole, overlayChipId)
-                  : null;
+                const pairScore = otherCodes.length > 0 ? getPairScoreForCode(overrideCode, otherCodes) : 0;
                 return (
                   <div
                     className="absolute bottom-0 inset-x-0 flex flex-col items-start px-1 pb-0.5 pointer-events-none"
                     style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.65))" }}
                   >
-                    {/* Row 1: actual values */}
                     <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
                       {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{Math.round(mat.chroma * Math.sin(Math.PI * mat.lightness / 100))}
                     </span>
                     <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
                       H{mat.hue_angle ?? "—"} P{mat.pattern}
                     </span>
-                    {ideals && (
-                      <span className="text-yellow-300/80 font-mono leading-none text-[6px] lg:text-[10px]">
-                        →L{ideals.idealL} W{ideals.idealW} C{ideals.idealC} P{ideals.idealP} hRef{ideals.hRef ?? "—"}±{ideals.idealHArc}°
-                      </span>
+                    {dbg && (
+                      <>
+                        <span className="text-yellow-300/80 font-mono leading-none text-[6px] lg:text-[10px]">
+                          h:{dbg.harmonyScore.toFixed(4)} {dbg.directionId ?? "—"}:{dbg.directionScore.toFixed(2)} pair:{pairScore.toFixed(2)}
+                        </span>
+                        <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
+                          {dbg.refAvg ? `rL:${Math.round(dbg.refAvg.L)} rW:${dbg.refAvg.W.toFixed(2)} rC:${Math.round(dbg.refAvg.C)}${dbg.refAvg.hue != null ? ` rH:${Math.round(dbg.refAvg.hue)}` : ""}` : `dir:${dbg.directionId ?? "—"}@${dbg.directionScore.toFixed(2)}`}
+                        </span>
+                        <span className="text-white/60 font-mono leading-none text-[6px] lg:text-[10px]">
+                          eL:{dbg.axisErrors.L?.toFixed(2)} eW:{dbg.axisErrors.W?.toFixed(2)} eC:{dbg.axisErrors.C?.toFixed(2)} eP:{dbg.axisErrors.P?.toFixed(2)}{dbg.axisErrors.H != null ? ` eH:${dbg.axisErrors.H.toFixed(2)}` : ""}
+                        </span>
+                      </>
                     )}
-                    {axisErrs && (() => {
-                      const [eL, eW, eH, eC, eT, eP] = axisErrs.map(e => e.toFixed(2));
-                      return (
-                        <>
-                          <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
-                            eL:{eL} eW:{eW} eH:{eH}
-                          </span>
-                          <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
-                            eC:{eC} eT:{eT} eP:{eP}
-                          </span>
-                        </>
-                      );
-                    })()}
                   </div>
                 );
               })()}
