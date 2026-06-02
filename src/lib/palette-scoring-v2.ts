@@ -751,7 +751,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     },
     natural_stone: {
       P: { weight: 1, idealDelta: +0.15 },
-      L: { weight: 0.5, idealDelta: 0, mode: 'balance' },
+      L: { weight: 0, idealDelta: 0, mode: 'balance' },
       W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
       C: { weight: 0, idealDelta: 0 },
       H: { weight: 1.5, idealDeg: 0},

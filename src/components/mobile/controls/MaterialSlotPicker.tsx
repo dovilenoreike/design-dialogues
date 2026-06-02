@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, PALETTE_WEIGHT, setActiveScoringDirection } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -162,8 +162,8 @@ export default function MaterialSlotPicker({
         .sort((a, b) => {
           const paletteA = a.harmonyScore;
           const paletteB = b.harmonyScore;
-          return (paletteB * PALETTE_WEIGHT + b.pairScore * (1 - PALETTE_WEIGHT)) -
-                 (paletteA * PALETTE_WEIGHT + a.pairScore * (1 - PALETTE_WEIGHT));
+          return (paletteB * GENERAL_PALETTE_WEIGHT + b.pairScore * (1 - GENERAL_PALETTE_WEIGHT)) -
+                 (paletteA * GENERAL_PALETTE_WEIGHT + a.pairScore * (1 - GENERAL_PALETTE_WEIGHT));
         })[0];
       map.set(id, best?.code ?? null);
     }

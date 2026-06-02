@@ -352,9 +352,13 @@ export function resolveCodeForShowroom(code: string, showroomId: string): string
   return synonym?.technicalCode ?? code;
 }
 
-// Blend weight: palette quality (harmony + direction + coherence) vs curated pair compatibility.
-// Raise to trust colour scoring more; lower to lean on designer-approved pairings.
+// Blend weight for direction-internal ranking (Row 2 direction reps, Row 3 similar shades).
+// High because you're already scoped to a direction — harmony is the right signal there.
 export const PALETTE_WEIGHT = 0.97;
+
+// Blend weight for general / chip-level ranking where pair compatibility matters more.
+// Lower so designer-approved pairings pull strongly against abstract harmony quirks.
+export const GENERAL_PALETTE_WEIGHT = 0.75;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -463,8 +467,8 @@ export function useGraphMaterials() {
       const pB = paletteScoreV2(b, otherCodes, byCode, role, chipArchetypeId);
       const cA = maxPairW > 0 ? weightedScore(a.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
       const cB = maxPairW > 0 ? weightedScore(b.technicalCode, otherCodes, pairWeights) / maxPairW : 0;
-      const sA = pA * PALETTE_WEIGHT + cA * (1 - PALETTE_WEIGHT);
-      const sB = pB * PALETTE_WEIGHT + cB * (1 - PALETTE_WEIGHT);
+      const sA = pA * GENERAL_PALETTE_WEIGHT + cA * (1 - GENERAL_PALETTE_WEIGHT);
+      const sB = pB * GENERAL_PALETTE_WEIGHT + cB * (1 - GENERAL_PALETTE_WEIGHT);
       return sB - sA;
     }).map((m) => m.technicalCode);
   }
@@ -500,7 +504,16 @@ export function useGraphMaterials() {
       const topRef = pool.reduce((best, m) =>
         (pairCountByCode.get(m.technicalCode) ?? 0) > (pairCountByCode.get(best.technicalCode) ?? 0) ? m : best
       );
-      return rankClusteredCandidates(pool, [topRef.technicalCode], byCode, role, chipArchetypeId);
+      const raw = rankClusteredCandidates(pool, [topRef.technicalCode], byCode, role, chipArchetypeId);
+      // Without palette context, pair count is the best proxy for "works with many things".
+      // Give it significant weight so first-open options reflect real-world compatibility.
+      const maxPairs = Math.max(...raw.map(e => pairCountByCode.get(e.code) ?? 0), 1);
+      return raw
+        .map(e => ({ ...e, pairScore: (pairCountByCode.get(e.code) ?? 0) / maxPairs }))
+        .sort((a, b) =>
+          (b.score * (1 - GENERAL_PALETTE_WEIGHT) + b.pairScore * GENERAL_PALETTE_WEIGHT) -
+          (a.score * (1 - GENERAL_PALETTE_WEIGHT) + a.pairScore * GENERAL_PALETTE_WEIGHT)
+        );
     }
     const raw = rankClusteredCandidates(pool, otherCodes, byCode, role, chipArchetypeId);
     // Blend in pair compatibility using the same PALETTE_WEIGHT constant as getAllRankedCodes.
