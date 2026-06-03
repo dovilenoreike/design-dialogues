@@ -5,8 +5,9 @@ import { getMaterialByCode } from "@/hooks/useGraphMaterials";
 import { surfaces } from "@/data/rooms/surfaces";
 import { Flame } from "lucide-react";
 
-export const LOG_PROMPTS_TO_CONSOLE = false; // set true to log generation prompts/models and material loading to console
-export const SHOW_COLOUR_SCORES = true;     // set true to overlay L/W/C/H/P scores on concept squares
+const IS_DEV = process.env.NODE_ENV === 'development';
+export const LOG_PROMPTS_TO_CONSOLE = IS_DEV;
+export const SHOW_COLOUR_SCORES = IS_DEV;
 
 export interface MaterialImageWithMeta {
   base64: string;
