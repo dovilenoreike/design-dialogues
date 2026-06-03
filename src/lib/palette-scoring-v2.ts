@@ -716,17 +716,17 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 
   plain: {
     light_neutral: {
-      L: { weight: 1, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
-      W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
-      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.20 },
-      H: { weight: 1, idealDeg: 5, trajectoryK: 15  },
+      L: { weight: 1.5, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
+      W: { weight: 0.8, idealDelta: -0.1, trajectoryK: -0.15 },
+      C: { weight: 0.8, idealDelta: -0.2, trajectoryK: -0.20 },
+      H: { weight: 1.2, idealDeg: 5, trajectoryK: 15  },
       minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
-      L: { weight: 1, idealDelta: -0.2, refK: +0.5 },
+      L: { weight: 1.2, idealDelta: -0.2, refK: +0.5 },
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
       C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20 },
-      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
+      H: { weight: 1.2, idealDeg: 5, trajectoryK: 10  },
       minAbsC: 1,  // preventing complete white
     },
     dark_neutral: {
@@ -784,7 +784,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
   wood: {
     tonal_match: {
       L: { weight: 1, idealDelta: 0},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.7, idealDeg: 0 , trajectoryK: 10 },  // hue should be very close to ref, but small shifts are ok and often natural (e.g. adding a warmer red to a cool palette can still read as a tonal match)
     },
@@ -792,14 +792,14 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 1, idealDelta: 0.2, refK: 0.1},
       // Trajectory: lighter wood is naturally slightly cooler (k_LW<0) and less saturated (k_LC<0).
       // A candidate moving off this natural path (warmer+more-saturated when lighter) is penalised.
-      W: { weight: 1, idealDelta: 0, trajectoryK: -0.2 },
+      W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
     },
     darker_echo: {
       L: { weight: 1, idealDelta: -0.2, refK: -0.1},
       // Same k coefficients — symmetric: darker wood naturally slightly warmer and richer.
-      W: { weight: 1, idealDelta: 0, trajectoryK: -0.2 },
+      W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
     },
