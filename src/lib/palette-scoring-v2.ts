@@ -682,6 +682,8 @@ interface AxisConfig {
   trajectoryK?:        number;   // trajectory coupling: idealDelta shifts by k × primaryAxisDelta
                                  // encodes natural material co-variation (e.g. lighter wood → slightly cooler)
                                  // ignored when mode='balance'. primaryAxis set on DirectionConfig.
+  trajectoryAbs?:      boolean;  // when true, uses |primaryAxisDelta| so both lighter AND darker
+                                 // candidates shift in the same direction (V-shape on W/C)
   refK?:               number;   // dynamic idealDelta from reference lightness (L axis only):
                                  //   positive k → (1 - ref.L/100) × k  (light climb: larger Δ from dark refs)
                                  //   negative k → (ref.L/100) × k      (dark drop:   larger Δ from light refs)
@@ -712,24 +714,24 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
   plain: {
     light_neutral: {
       L: { weight: 1, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.30 },
+      W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
+      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.20 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
       blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
-      L: { weight: 1, idealDelta: -0.3, refK: +0.5 },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.30 },
+      L: { weight: 1, idealDelta: -0.2, refK: +0.5 },
+      W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
+      C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
       blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
     dark_neutral: {
       L: { weight: 1.5, idealDelta: 0, refK: -0.6, wrongDirMultiplier: 2.5 },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.2, idealDelta: 0, trajectoryK: -0.30 },
+      W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15, trajectoryAbs: true },
+      C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
       blend: { harm: 0, dir: 1 },
       minAbsC: 5,  // preventing complete white
@@ -814,7 +816,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 1, idealDelta: 0.35, absDeviation: true },  // ideal = ±30 lightness steps from ref, either lighter or darker is fine — it's about contrast, not direction
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 15 },
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.15  },
-      C: { weight: 0.4, idealDelta: 0, trajectoryK: -0.20 },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
       blend: { harm: 0.5, dir: 0.5 },
     },
   },
@@ -893,7 +895,8 @@ function computeDirectionScore(
                        primaryAxis === 'C' ? signedDeltaC : signedDeltaL;
   function withTrajectory(cfg: AxisConfig | undefined): AxisConfig | undefined {
     if (!cfg?.trajectoryK || cfg.mode) return cfg;
-    return { ...cfg, idealDelta: cfg.idealDelta + cfg.trajectoryK * primaryDelta };
+    const delta = cfg.trajectoryAbs ? Math.abs(primaryDelta) : primaryDelta;
+    return { ...cfg, idealDelta: cfg.idealDelta + cfg.trajectoryK * delta };
   }
 
   // Dynamic L idealDelta: when refK is set, scale the ideal target by how far the reference
