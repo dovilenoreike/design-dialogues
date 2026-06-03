@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Check, Trash2, X, Search, RotateCcw } from "lucide-react";
+import { Check, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
   Sheet,
@@ -894,7 +894,6 @@ export default function MaterialSlotPicker({
               const chipImage = isChosen
                 ? (getMaterialByCode(selectedMaterialCode!)?.imageUrl ?? displayImage)
                 : (bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage);
-              const showResetHint = isChosen && isActive && !!bestCode && bestCode !== selectedMaterialCode;
               return (
                 <button
                   key={`chip-${archetype.id}`}
@@ -902,8 +901,7 @@ export default function MaterialSlotPicker({
                     setActiveArchetypeId(archetype.id);
                     setActiveDirection(null);
                     setGridCenterCode(bestCode ?? null);
-                    // Pick best on first tap; reset to best on second tap when a custom choice exists
-                    if (slot && bestCode && (!isChosen || showResetHint)) onSelect(slot, archetype.id, bestCode);
+                    if (slot && bestCode && !isChosen) onSelect(slot, archetype.id, bestCode);
                   }}
                   className="flex flex-col items-center gap-1 flex-shrink-0"
                 >
@@ -916,17 +914,9 @@ export default function MaterialSlotPicker({
                     }}
                   >
                     <img src={chipImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
-                    {isChosen && !showResetHint && (
+                    {isChosen && (
                       <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
                         <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                      </div>
-                    )}
-                    {showResetHint && (
-                      <div
-                        className="absolute flex items-center justify-center pointer-events-none"
-                        style={{ bottom: 3, right: 3, width: 18, height: 18, borderRadius: 5, backgroundColor: "rgba(0,0,0,0.50)" }}
-                      >
-                        <RotateCcw className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
                       </div>
                     )}
                   </div>

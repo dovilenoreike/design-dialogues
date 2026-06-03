@@ -295,6 +295,8 @@ export default function DesignView() {
         if (!matId) continue;
         const graphMat = graphMaterials.find((m) => m.technicalCode === matId);
         let archetypeId: string | null = graphMat?.archetypeId ?? null;
+        // Plain fronts have archetypeId=null by design — route them to the 'plain' chip.
+        if (!archetypeId && graphMat?.texture === 'plain' && graphMat?.role?.includes('front')) archetypeId = 'plain';
         if (!archetypeId && !next[slotKey] && matId) archetypeId = matId;
         if (archetypeId && next[slotKey] !== archetypeId) {
           next[slotKey] = archetypeId;
@@ -882,7 +884,7 @@ export default function DesignView() {
           )}
 
           {/* Palette hint — mobile only (desktop shows it in the right panel) */}
-          {paletteHint && !activeSlot && (
+          {paletteHint && !activeSlot && subTab !== "specs" && (
             <div className="lg:hidden flex flex-col items-center gap-1 pt-5 pb-1 px-4 text-center">
               <span
                 className="text-[13px] font-medium tracking-[0.08em] uppercase"

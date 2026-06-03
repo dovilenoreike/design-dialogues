@@ -640,8 +640,7 @@ export function computeV2Debug(
         if (!config) continue;
         const errs: Record<string, number> = {};
         const s = computeDirectionScore(candidate, ref, config, errs);
-        const blended = blendDirectionWithHarmony(s, hScore, config, dir);
-        if (blended > bestBlended) { bestBlended = blended; dirId = dir; dirScore = s; axisErrors = errs; }
+        if (s > bestBlended) { bestBlended = s; dirId = dir; dirScore = s; axisErrors = errs; }
       }
     }
   }
@@ -696,7 +695,6 @@ interface DirectionConfig {
   C?:    AxisConfig;
   P?:    AxisConfig;
   H?:    { weight: number; idealDeg: number; trajectoryK?: number; mode?: 'balance'; maxDeg?: number };  // trajectoryK: idealDeg grows by k×|primaryDelta| — further in L → larger expected hue arc
-  blend: { harm: number; dir: number };
   minAbsC?: number;       // hard gate: material must have chroma ≥ this to be eligible for the direction
   minL?: number;          // hard gate: material must have lightness ≥ this (e.g. light_neutral only accepts L≥65)
   maxL?: number;          // hard gate: material must have lightness ≤ this (e.g. dark_neutral only accepts L≤50)
@@ -705,11 +703,10 @@ interface DirectionConfig {
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
 
-  // Single-direction archetypes — harmony does all the ranking; direction is just a label.
-  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 0}, blend: { harm: 0.5, dir: 0.5 } } },
-  gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
-  silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
-  bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
+  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 0 } } },
+  gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
+  silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
+  bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
 
   plain: {
     light_neutral: {
@@ -717,7 +714,6 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
       C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.20 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
-      blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
@@ -725,7 +721,6 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
       C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
-      blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
     dark_neutral: {
@@ -733,28 +728,24 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15, trajectoryAbs: true },
       C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
-      blend: { harm: 0, dir: 1 },
       minAbsC: 5,  // preventing complete white
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
       C: { weight: 1, idealDelta: +0 },
       H: { weight: 1.5, idealDeg: +30 },
-      blend: { harm: 0.0, dir: 1 },
       minAbsC: 10,  // must have visible colour — chroma < 15 is a near-neutral, not a pastel
     },
     rich_colour: {
       C: { weight: 0.6, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
       H: { weight: 1.5, idealDeg: +30 },
       L: { weight: 0, idealDelta: 0 },
-      blend: { harm: 0, dir: 1 },
       minAbsC: 20,  // must be clearly saturated
     },
     muted: {
       C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
       W: { weight: 0.5, idealDelta: -0.05, trajectoryK: -0.15 },
       H: { weight: 1.5, idealDeg: 10, trajectoryK: 0.15  },
-      blend: { harm: 0, dir: 1 },
       minAbsC: 15,  // preventing complete white
     },
   },
@@ -763,27 +754,24 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     // Pattern is the primary axis; harmony score handles the tonal/lightness fit.
     quiet_stone: {
       P: { weight: 1.0, idealDelta: 0, oneSided: 'below', wrongDirMultiplier: 2.0 },
-      L: { weight: 0.1, idealDelta: 0, mode: 'balance'},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      L: { weight: 0.1, idealDelta: 0, },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
-      blend: { harm: 0.5, dir: 0.5 },
     },
     natural_stone: {
-      P: { weight: 1, idealDelta: +0.15 },
-      L: { weight: 0.3, idealDelta: 0, mode: 'balance' },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      P: { weight: 1, idealDelta: +0.2 },
+      L: { weight: 0.3, idealDelta: 0, },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
-      blend: { harm: 0.5, dir: 0.5 },
     },
     bold_movement: {
-      P: { weight: 1.0, idealDelta: +0.30, oneSided: 'above', wrongDirMultiplier: 2.0 },
-      L: { weight: 0.1, idealDelta: 0, mode: 'balance' },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      P: { weight: 1.0, idealDelta: +0.40, oneSided: 'above', wrongDirMultiplier: 2.0 },
+      L: { weight: 0.1, idealDelta: 0},
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true   },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
-      blend: { harm: 0.50, dir: 0.50 },
     },
   },
 
@@ -793,7 +781,6 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 1.2, idealDelta: 0, trajectoryK: -0.15  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
       H: { weight: 1.7, idealDeg: 0 , trajectoryK: 15 },
-      blend: { harm: 0.15, dir: 0.85 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
     },
     lighter_echo: {
       L: { weight: 1, idealDelta: 0.2, refK: 0.1},
@@ -802,7 +789,6 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 15 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
-      blend: { harm: 0.50, dir: 0.50 },
     },
     darker_echo: {
       L: { weight: 1, idealDelta: -0.2, refK: -0.1},
@@ -810,21 +796,15 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 15  },
-      blend: { harm: 0.50, dir: 0.50 },
     },
     soft_contrast: {
       L: { weight: 1, idealDelta: 0.35, absDeviation: true },  // ideal = ±30 lightness steps from ref, either lighter or darker is fine — it's about contrast, not direction
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 15 },
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.15  },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
-      blend: { harm: 0.5, dir: 0.5 },
     },
   },
 };
-
-// Minimum direction weight for tonal_match: harmony weight rises as direction score falls,
-// but direction always contributes at least this fraction.
-const TONAL_MATCH_MIN_DIR_WEIGHT = 0.15;
 
 // Scale for per-axis error power: errors below this are softened, above are amplified.
 // Inflection point at err=DIR_ERROR_SCALE — adjust to taste (lower = more aggressive).
@@ -948,20 +928,6 @@ function computeDirectionScore(
   return 1 / (1 + errSum / weightSum);  // power already applied per-axis; no outer exponent
 }
 
-function blendDirectionWithHarmony(
-  dirScore: number,
-  harmScore: number,
-  config: DirectionConfig,
-  direction: DirectionId,
-): number {
-  if (direction === 'tonal_match') {
-    // Adaptive: harmony weight rises as direction score falls, keeping a minimum dir floor.
-    const harmWeight = (1 - dirScore) * (1 - TONAL_MATCH_MIN_DIR_WEIGHT);
-    return (1 - harmWeight) * dirScore + harmWeight * harmScore;
-  }
-  return config.blend.harm * harmScore + config.blend.dir * dirScore;
-}
-
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
  *  Each candidate with a known archetype appears once per direction in that archetype's family.
@@ -1005,8 +971,7 @@ export function rankClusteredCandidates(
         if (config.minL    !== undefined && material.lightness < config.minL) continue;
         if (config.maxL    !== undefined && material.lightness > config.maxL) continue;
         const dirScore   = computeDirectionScore(material, ref, config);
-        const blended    = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
-        const finalScore = pw > 0 ? blended * (1 - pw) + pairScore * pw : blended;
+        const finalScore = pw > 0 ? dirScore * (1 - pw) + pairScore * pw : dirScore;
         entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: dirScore, direction: dir, clusterKey, archetype });
       }
     } else {

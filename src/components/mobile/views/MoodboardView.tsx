@@ -379,6 +379,8 @@ export default function MoodboardView() {
         const graphMat = graphMaterials.find((m) => m.technicalCode === matId);
         let archetypeId: string | null = graphMat?.archetypeId ?? null;
         if (!archetypeId && getArchetypeById(matId, SLOT_KEY_TO_ROLE[slotKey])) archetypeId = matId;
+        // Plain fronts have archetypeId=null by design — route them to the 'plain' chip.
+        if (!archetypeId && graphMat?.texture === 'plain' && graphMat?.role?.includes('front')) archetypeId = 'plain';
         // Fallback: if we still can't derive an archetype ID but the slot is currently empty,
         // use matId so the slot is marked as filled (icons, X, isFirstPick all depend on this)
         if (!archetypeId && !next[slotKey] && matId) archetypeId = matId;
