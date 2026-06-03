@@ -544,11 +544,16 @@ export default function MaterialSlotPicker({
   // Only computed when the parent passes getClusteredRankedCodes (v2 engine path).
   // Pass effectiveActiveId unconditionally so the hook scopes the pool by archetype
   // (otherwise stone floor materials leak into the wood floor chip, etc.).
+  // After scoring, filter to the showroom pool: getClusteredRankedCodes scores against
+  // the full _cached.graphMaterials, but graphMaterials prop is already showroom-filtered.
   const clusteredRankedV2 = useMemo((): RankedClusteredEntry[] => {
     if (!slot || !effectiveActiveId || !getClusteredRankedCodes) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
-    return getClusteredRankedCodes(otherMaterialCodes ?? [], role, effectiveActiveId);
-  }, [slot, effectiveActiveId, otherMaterialCodes, getClusteredRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
+    const entries = getClusteredRankedCodes(otherMaterialCodes ?? [], role, effectiveActiveId);
+    if (!graphMaterials?.length) return entries;
+    const allowed = new Set(graphMaterials.map(m => m.technicalCode));
+    return entries.filter(e => allowed.has(e.code));
+  }, [slot, effectiveActiveId, otherMaterialCodes, getClusteredRankedCodes, graphMaterials]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry]> => {
     if (!effectiveActiveId) return [];
@@ -576,13 +581,16 @@ export default function MaterialSlotPicker({
   }, [clusteredRankedV2, effectiveActiveId]);
 
 
+  // When there's only one direction, auto-activate it so alternatives show without clicking.
+  const effectiveDirection = activeDirection ?? (directionGroups.length === 1 ? directionGroups[0][0] : null);
+
   // Top 8 alternatives from the active direction (selected item stays and shows checkmark)
   const directionTopItems = useMemo((): RowItem[] => {
-    if (!activeDirection || !slot) return [];
+    if (!effectiveDirection || !slot) return [];
     const seen = new Set<string>();
     const items: RowItem[] = [];
     for (const e of clusteredRankedV2) {
-      if (e.direction !== activeDirection) continue;
+      if (e.direction !== effectiveDirection) continue;
       if (seen.has(e.code)) continue;
       seen.add(e.code);
       const mat = getMaterialByCode(e.code);
@@ -600,7 +608,7 @@ export default function MaterialSlotPicker({
       if (items.length >= 8) break;
     }
     return items;
-  }, [activeDirection, clusteredRankedV2, selectedMaterialCode, slot, lang, effectiveActiveId]);
+  }, [effectiveDirection, clusteredRankedV2, selectedMaterialCode, slot, lang, effectiveActiveId]);
 
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
@@ -813,7 +821,8 @@ export default function MaterialSlotPicker({
         ) : (
           <>
 
-          {/* Archetype chips — one per archetype, showing best palette suggestion */}
+          {/* Archetype chips — hidden when only one archetype is available (directions shown directly) */}
+          {availableWithImages.length > 1 && (
           <div
             className="flex gap-2.5 px-4 pb-3 overflow-x-auto flex-shrink-0"
             style={{ scrollbarWidth: "none" } as React.CSSProperties}
@@ -866,22 +875,26 @@ export default function MaterialSlotPicker({
               );
             })}
           </div>
+          )}
 
-          {/* Direction groups — shown only after user explicitly clicks a chip */}
-          {activeArchetypeId && (
+          {/* Direction groups — shown immediately when one archetype, or after chip click when multiple */}
+          {(activeArchetypeId || availableWithImages.length === 1) && (
           <div style={{ animation: "msPickerFadeIn 0.2s ease both", backgroundColor: "#ffffff" }}>
             <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
           <SwatchDivider />
 
+          {availableWithImages.length > 1 && (
           <div className="px-4 pt-3 pb-1 flex-shrink-0">
             <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
               {t("surface.otherOptionsPrefix")}{activeArchetypeLabel}{t("surface.otherOptionsSuffix")}
             </span>
           </div>
+          )}
 
-          {/* Direction swatches — one per direction in the archetype taxonomy */}
-          {directionGroups.length > 0 ? (
+          {/* Direction swatches — one per direction in the archetype taxonomy.
+              Hidden when there is only one direction (alternatives show directly instead). */}
+          {directionGroups.length > 1 ? (
             <div
               className="flex gap-2.5 px-4 pt-4 pb-4 overflow-x-auto flex-shrink-0"
               style={{ scrollbarWidth: 'none' } as React.CSSProperties}
@@ -964,14 +977,14 @@ export default function MaterialSlotPicker({
                 );
               })}
             </div>
-          ) : (
+          ) : directionGroups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center py-8">
               <p className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>{t("surface.searchNoResults")}</p>
             </div>
-          )}
+          ) : null}
 
-          {/* Direction alternatives strip — top 8 from the active direction */}
-          {activeDirection && directionTopItems.length > 0 && (
+          {/* Direction alternatives strip — top 8 from the active/auto direction */}
+          {effectiveDirection && directionTopItems.length > 0 && (
             <>
               <SwatchDivider />
               <div className="px-4 pt-4 pb-1 flex-shrink-0">

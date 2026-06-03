@@ -24,7 +24,7 @@ function computeActivity(m: GraphMaterial): number {
 }
 
 const ROLE_VISUAL_MASS: Record<string, number> = {
-  floor: 0.35, front: 0.30, worktop: 0.10, backsplash: 0.05,
+  floor: 0.30, front: 0.30, worktop: 0.30, backsplash: 0.05,
 };
 
 const ROLE_ANCHOR_WEIGHT: Record<string, number> = {
@@ -196,7 +196,7 @@ const RELATIONSHIPS: Record<string, Relationship> = {
   'floor::front':         { axisWeights: { L: 1.0, W: 0.6, H: 0.4, C: 0.3 } },
   // Worktop mediates between fronts. Chroma matters more here (worktop materials carry colour).
   //'front::worktop':       { axisWeights: { L: 0.7, W: 0.5, H: 0.5, C: 0.6 }, bridge: true }, our current worktops are actually backsplashes
-  'front::worktop':      { axisWeights: { L: 0.6, W: 0.5, H: 0.5, C: 0.5 } },
+  'front::worktop':      { axisWeights: { L: 0.6, W: 0.5, H: 0.6, C: 0.5 } },
   // Floor↔worktop is a looser pair — both horizontal surfaces, hue continuity nice but not vital.
   //'floor::worktop':       { axisWeights: { L: 0.6, W: 0.4, H: 0.5, C: 0.4 } },
   'floor::worktop':       { axisWeights: { L: 0.6, W: 0.2, H: 0.5, C: 0.4 } },
@@ -719,7 +719,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 1, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
       C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.20 },
-      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
+      H: { weight: 1, idealDeg: 5, trajectoryK: 15  },
       minAbsC: 1,  // preventing complete white
     },
     medium_neutral: {
