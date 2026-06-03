@@ -656,7 +656,8 @@ export interface RankedClusteredEntry {
   code: string;
   score: number;
   harmonyScore: number;
-  pairScore: number;   // 0–1 normalised pair compatibility; populated by getClusteredRankedCodes, default 0
+  pairScore: number;        // 0–1 normalised pair compatibility; populated by getClusteredRankedCodes, default 0
+  directionScore: number;   // raw direction-fit score before blending with harmony (0–1)
   direction: DirectionId | null;
   clusterKey: string;
   archetype: string | null;
@@ -681,6 +682,10 @@ interface AxisConfig {
   trajectoryK?:        number;   // trajectory coupling: idealDelta shifts by k × primaryAxisDelta
                                  // encodes natural material co-variation (e.g. lighter wood → slightly cooler)
                                  // ignored when mode='balance'. primaryAxis set on DirectionConfig.
+  refK?:               number;   // dynamic idealDelta from reference lightness (L axis only):
+                                 //   positive k → (1 - ref.L/100) × k  (light climb: larger Δ from dark refs)
+                                 //   negative k → (ref.L/100) × k      (dark drop:   larger Δ from light refs)
+                                 // overrides idealDelta when set; wrongDirMultiplier still applies
 }
 
 interface DirectionConfig {
@@ -699,38 +704,35 @@ interface DirectionConfig {
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
 
   // Single-direction archetypes — harmony does all the ranking; direction is just a label.
-  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
+  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 5, trajectoryK: 10  }, blend: { harm: 0.5, dir: 0.5 } } },
   gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
   silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
   bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
 
   plain: {
     light_neutral: {
-      L: { weight: 1.5, idealDelta: +0.2, rangeBonus: +0.10, wrongDirMultiplier: 2.5 },
+      L: { weight: 1, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.30 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
-      //C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
       blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
-      minL: 65
     },
     medium_neutral: {
-      L: { weight: 1.5, idealDelta: +0.10 },
+      L: { weight: 1, idealDelta: -0.3, refK: +0.5 },
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.30 },
+      C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.30 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
       blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
     dark_neutral: {
-      L: { weight: 1.5, idealDelta: -0.2, rangeBonus: -0.15, wrongDirMultiplier: 2.5 },
+      L: { weight: 1.5, idealDelta: 0, refK: -0.6, wrongDirMultiplier: 2.5 },
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      C: { weight: 0.2, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
       blend: { harm: 0, dir: 1 },
       minAbsC: 5,  // preventing complete white
-      maxL: 50
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
@@ -894,7 +896,15 @@ function computeDirectionScore(
     return { ...cfg, idealDelta: cfg.idealDelta + cfg.trajectoryK * primaryDelta };
   }
 
-  scoreLinearAxis(config.L,                   signedDeltaL, lRangeNorm, 'L');
+  // Dynamic L idealDelta: when refK is set, scale the ideal target by how far the reference
+  // is from the target extreme so the direction stays reachable regardless of ref lightness.
+  let lConfig = config.L;
+  if (lConfig?.refK != null && !lConfig.mode) {
+    const k = lConfig.refK;
+    const dynamicIdeal = lConfig.idealDelta + (k >= 0 ? k * (1 - ref.L / 100) : k * (ref.L / 100));
+    lConfig = { ...lConfig, idealDelta: dynamicIdeal };
+  }
+  scoreLinearAxis(lConfig,                     signedDeltaL, lRangeNorm, 'L');
   scoreLinearAxis(withTrajectory(config.W),    signedDeltaW, 0,          'W');
   scoreLinearAxis(withTrajectory(config.C),    signedDeltaC, cRangeNorm, 'C');
   scoreLinearAxis(config.P, (candidate.pattern - ref.pattern) / 100, 0, 'P');
@@ -994,11 +1004,11 @@ export function rankClusteredCandidates(
         const dirScore   = computeDirectionScore(material, ref, config);
         const blended    = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
         const finalScore = pw > 0 ? blended * (1 - pw) + pairScore * pw : blended;
-        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, direction: dir, clusterKey, archetype });
+        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: dirScore, direction: dir, clusterKey, archetype });
       }
     } else {
       const finalScore = pw > 0 ? harmScore * (1 - pw) + pairScore * pw : harmScore;
-      entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, direction: null, clusterKey, archetype });
+      entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: 0, direction: null, clusterKey, archetype });
     }
   }
 

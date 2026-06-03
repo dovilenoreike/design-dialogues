@@ -66,6 +66,9 @@ function isPlainFrontChip(archetypeId: string | null | undefined, role: string):
   return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
 }
 
+/** Hide a direction swatch when its best candidate's raw direction-fit score is below this. */
+const DIRECTION_SCORE_THRESHOLD = 0;
+
 // ─── Row item types (module-level so cluster helpers can reference them) ──────
 
 type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; matchesAll: boolean; archetypeId: string };
@@ -550,10 +553,7 @@ export default function MaterialSlotPicker({
     return getClusteredRankedCodes(otherMaterialCodes ?? [], role, effectiveActiveId);
   }, [slot, effectiveActiveId, otherMaterialCodes, getClusteredRankedCodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Every direction in the archetype's taxonomy gets a slot, even if no candidate maps to it.
-  // Empty slots render as placeholders so the model stays legible (user can see the full set
-  // of directions and which ones have no match in the current pool/state).
-  const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry | null]> => {
+  const directionGroups = useMemo((): Array<[DirectionId, RankedClusteredEntry]> => {
     if (!effectiveActiveId) return [];
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
@@ -566,9 +566,19 @@ export default function MaterialSlotPicker({
         usedCodes.add(c.code);
       }
     }
-    return order.map((d): [DirectionId, RankedClusteredEntry | null] => [
-      d, topByDirection.get(d) ?? null,
-    ]);
+    // Keep only directions whose best candidate meets the score threshold.
+    const pairs = order
+      .map((d): [DirectionId, RankedClusteredEntry | null] => [d, topByDirection.get(d) ?? null])
+      .filter((p): p is [DirectionId, RankedClusteredEntry] =>
+        p[1] !== null && p[1].directionScore >= DIRECTION_SCORE_THRESHOLD
+      );
+    // Wood: sort by representative material lightness so swatches read light → dark.
+    if (effectiveActiveId === 'wood') {
+      pairs.sort(([, a], [, b]) =>
+        (getMaterialByCode(b.code)?.lightness ?? 50) - (getMaterialByCode(a.code)?.lightness ?? 50)
+      );
+    }
+    return pairs;
   }, [clusteredRankedV2, effectiveActiveId]);
 
 
