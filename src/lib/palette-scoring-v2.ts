@@ -704,7 +704,7 @@ interface DirectionConfig {
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
 
   // Single-direction archetypes — harmony does all the ranking; direction is just a label.
-  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 5, trajectoryK: 10  }, blend: { harm: 0.5, dir: 0.5 } } },
+  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 0}, blend: { harm: 0.5, dir: 0.5 } } },
   gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
   silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
   bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, blend: { harm: 0.85, dir: 0.15 } } },
@@ -787,33 +787,33 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 
   wood: {
     tonal_match: {
-      L: { weight: 0.8, idealDelta: 0 },
+      L: { weight: 0.8, idealDelta: 0},
       W: { weight: 1.2, idealDelta: 0, trajectoryK: -0.15  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
-      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 0.15 },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
+      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 15 },
       blend: { harm: 0.15, dir: 0.85 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
     },
     lighter_echo: {
-      L: { weight: 1, idealDelta: +0.20, wrongDirMultiplier: 10.0 },
+      L: { weight: 1, idealDelta: 0.2, refK: 0.1},
       // Trajectory: lighter wood is naturally slightly cooler (k_LW<0) and less saturated (k_LC<0).
       // A candidate moving off this natural path (warmer+more-saturated when lighter) is penalised.
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 0.15 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 15 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
       blend: { harm: 0.50, dir: 0.50 },
     },
     darker_echo: {
-      L: { weight: 1, idealDelta: -0.20, wrongDirMultiplier: 10.0 },
+      L: { weight: 1, idealDelta: -0.2, refK: -0.1},
       // Same k coefficients — symmetric: darker wood naturally slightly warmer and richer.
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 0.15  },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 15  },
       blend: { harm: 0.50, dir: 0.50 },
     },
     soft_contrast: {
-      L: { weight: 1, idealDelta: 0.3, absDeviation: true },
-      H: { weight: 1.5, idealDeg: 3 },
-      W: { weight: 1.5, idealDelta: 0, trajectoryK: -0.15  },
+      L: { weight: 1, idealDelta: 0.35, absDeviation: true },  // ideal = ±30 lightness steps from ref, either lighter or darker is fine — it's about contrast, not direction
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 15 },
+      W: { weight: 1, idealDelta: 0, trajectoryK: -0.15  },
       C: { weight: 0.4, idealDelta: 0, trajectoryK: -0.20 },
       blend: { harm: 0.5, dir: 0.5 },
     },
