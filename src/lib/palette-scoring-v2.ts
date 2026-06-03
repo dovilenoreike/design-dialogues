@@ -382,7 +382,7 @@ export type DirectionId =
   | 'metal';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
-  wood:     ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  wood:     ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast'],
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   metallic: ['metal'],
@@ -391,12 +391,20 @@ export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
   bronze:   ['metal'],
 };
 
+// Default direction shown on the archetype chip before any materials are placed.
+// Encodes intuitive interior logic: floors trend lighter, fronts darker, worktops tonal.
+export const CANONICAL_DIRECTION: Partial<Record<string, Partial<Record<string, DirectionId>>>> = {
+  wood:  { floor: 'lighter_echo', front: 'darker_echo', worktop: 'tonal_match' },
+  stone: { floor: 'natural_stone', worktop: 'natural_stone' },
+  plain: { front: 'light_neutral', worktop: 'medium_neutral' },
+};
+
 // Claiming priority: which direction gets exclusive ownership of a material when it scores
 // well across multiple directions. Separate from UI display order (DIRECTIONS_BY_ARCHETYPE).
 // tonal_match claims wood first — it's the most specific match and should not be "stolen"
 // by a lighter/darker slot just because it also happens to be a good echo.
 const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
-  wood:     ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast', 'temperature_shift'],
+  wood:     ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast'],
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   metallic: ['metal'],
@@ -670,6 +678,9 @@ interface AxisConfig {
                                           //   'below' — being below idealDelta is free (more-neutral-is-better)
   rangeBonus?:         number;   // added to idealDelta proportional to palette range on this axis:
                                  //   effective_idealDelta = idealDelta + rangeBonus × clamp01(range / scale)
+  trajectoryK?:        number;   // trajectory coupling: idealDelta shifts by k × primaryAxisDelta
+                                 // encodes natural material co-variation (e.g. lighter wood → slightly cooler)
+                                 // ignored when mode='balance'. primaryAxis set on DirectionConfig.
 }
 
 interface DirectionConfig {
@@ -677,9 +688,12 @@ interface DirectionConfig {
   W?:    AxisConfig;
   C?:    AxisConfig;
   P?:    AxisConfig;
-  H?:    { weight: number; idealDeg: number; mode?: 'balance'; maxDeg?: number };  // mode='balance' → ideal is complement (180°); maxDeg clamps computed ideal
+  H?:    { weight: number; idealDeg: number; trajectoryK?: number; mode?: 'balance'; maxDeg?: number };  // trajectoryK: idealDeg grows by k×|primaryDelta| — further in L → larger expected hue arc
   blend: { harm: number; dir: number };
   minAbsC?: number;       // hard gate: material must have chroma ≥ this to be eligible for the direction
+  minL?: number;          // hard gate: material must have lightness ≥ this (e.g. light_neutral only accepts L≥65)
+  maxL?: number;          // hard gate: material must have lightness ≤ this (e.g. dark_neutral only accepts L≤50)
+  primaryAxis?: 'L' | 'W' | 'C';  // axis that drives trajectoryK coupling on secondary axes (default 'L')
 }
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
@@ -692,50 +706,52 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 
   plain: {
     light_neutral: {
-      L: { weight: 1, idealDelta: +0.3, rangeBonus: +0.10, wrongDirMultiplier: 2.5 },
-      C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 3, mode: 'balance' },  // small hue shift is fine, but no strong colour — balance around neutral
-      W: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.45, dir: 0.55 },
+      L: { weight: 1.5, idealDelta: +0.2, rangeBonus: +0.10, wrongDirMultiplier: 2.5 },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
+      //C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
+      blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
+      minL: 65
     },
     medium_neutral: {
-      L: { weight: 1, idealDelta: +0.10 },
-      C: { weight: 1, idealDelta: -0.05, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
-      H: { weight: 1.2, idealDeg: 3 },  // tight hue match — like tonal_match; hue deviation means colour, not neutral
-      W: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.55, dir: 0.45 },
+      L: { weight: 1.5, idealDelta: +0.10 },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
+      blend: { harm: 0, dir: 1 },
       minAbsC: 1,  // preventing complete white
     },
-    muted: {
-      L: { weight: 0.8, idealDelta: 0 },
-      C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 10 },
-      W: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.55, dir: 0.45 },
-      minAbsC: 7,  // preventing complete white
-    },
     dark_neutral: {
-      L: { weight: 1.4, idealDelta: -0.15, rangeBonus: -0.15, wrongDirMultiplier: 2.5 },
-      C: { weight: 1.2, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
-      H: { weight: 0.6, idealDeg: 3 },
-      W: { weight: 0.2, idealDelta: 0 },
-      blend: { harm: 0.45, dir: 0.55 },
+      L: { weight: 1.5, idealDelta: -0.2, rangeBonus: -0.15, wrongDirMultiplier: 2.5 },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
+      blend: { harm: 0, dir: 1 },
       minAbsC: 5,  // preventing complete white
+      maxL: 50
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
       C: { weight: 1, idealDelta: +0 },
       H: { weight: 1.5, idealDeg: +30 },
-      blend: { harm: 0.50, dir: 0.50 },
+      blend: { harm: 0.0, dir: 1 },
       minAbsC: 10,  // must have visible colour — chroma < 15 is a near-neutral, not a pastel
     },
     rich_colour: {
-      C: { weight: 1.5, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
+      C: { weight: 0.6, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
       H: { weight: 1.5, idealDeg: +30 },
-      L: { weight: 0.4, idealDelta: 0 },
-      blend: { harm: 0.40, dir: 0.60 },
+      L: { weight: 0, idealDelta: 0 },
+      blend: { harm: 0, dir: 1 },
       minAbsC: 20,  // must be clearly saturated
+    },
+    muted: {
+      C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
+      W: { weight: 0.5, idealDelta: -0.05, trajectoryK: -0.15 },
+      H: { weight: 1.5, idealDeg: 10, trajectoryK: 0.15  },
+      blend: { harm: 0, dir: 1 },
+      minAbsC: 15,  // preventing complete white
     },
   },
 
@@ -743,65 +759,61 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     // Pattern is the primary axis; harmony score handles the tonal/lightness fit.
     quiet_stone: {
       P: { weight: 1.0, idealDelta: 0, oneSided: 'below', wrongDirMultiplier: 2.0 },
-      L: { weight: 0, idealDelta: 0, mode: 'balance'},
-      W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
-      C: { weight: 0, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 0},  // some hue variation is fine, but no strong colour — balance around neutral and clamp ideal to small hue shift
+      L: { weight: 0.1, idealDelta: 0, mode: 'balance'},
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
       blend: { harm: 0.5, dir: 0.5 },
     },
     natural_stone: {
       P: { weight: 1, idealDelta: +0.15 },
-      L: { weight: 0, idealDelta: 0, mode: 'balance' },
-      W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
-      C: { weight: 0, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 0},
+      L: { weight: 0.3, idealDelta: 0, mode: 'balance' },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
       blend: { harm: 0.5, dir: 0.5 },
     },
     bold_movement: {
       P: { weight: 1.0, idealDelta: +0.30, oneSided: 'above', wrongDirMultiplier: 2.0 },
-      L: { weight: 0, idealDelta: 0, mode: 'balance' },
-      W: { weight: 0.5, idealDelta: 0, mode: 'balance' },
-      C: { weight: 0, idealDelta: 0 },
-      H: { weight: 1.5, idealDeg: 0,}, 
+      L: { weight: 0.1, idealDelta: 0, mode: 'balance' },
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
       blend: { harm: 0.50, dir: 0.50 },
     },
   },
 
   wood: {
     tonal_match: {
-      L: { weight: 1.2, idealDelta: 0 },
-      W: { weight: 1.2, idealDelta: 0, mode: 'balance', maxDelta: 0.05 },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
-      C: { weight: 0.6, idealDelta: 0, mode: 'balance', maxDelta: 0.05 },
-      H: { weight: 1.7, idealDeg: 0 },
-      blend: { harm: 0.85, dir: 0.15 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
+      L: { weight: 0.8, idealDelta: 0 },
+      W: { weight: 1.2, idealDelta: 0, trajectoryK: -0.15  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
+      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 0.15 },
+      blend: { harm: 0.15, dir: 0.85 },  // nominal — actual blend is adaptive, see blendDirectionWithHarmony
     },
     lighter_echo: {
-      L: { weight: 0.8, idealDelta: +0.2, wrongDirMultiplier: 10.0 },
-      W: { weight: 0.8, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
-      C: { weight: 0.2, idealDelta: 0,  mode: 'balance', maxDelta: 0.10 },
-      H: { weight: 1.5, idealDeg: 3 },
+      L: { weight: 1, idealDelta: +0.20, wrongDirMultiplier: 10.0 },
+      // Trajectory: lighter wood is naturally slightly cooler (k_LW<0) and less saturated (k_LC<0).
+      // A candidate moving off this natural path (warmer+more-saturated when lighter) is penalised.
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 0.15 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
       blend: { harm: 0.50, dir: 0.50 },
     },
     darker_echo: {
-      L: { weight: 0.8, idealDelta: -0.15, wrongDirMultiplier: 10.0 },
-      W: { weight: 0.8, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
-      C: { weight: 0.2, idealDelta: 0, mode: 'balance', maxDelta: 0.10 },
-      H: { weight: 1.5, idealDeg: 3 },
+      L: { weight: 1, idealDelta: -0.20, wrongDirMultiplier: 10.0 },
+      // Same k coefficients — symmetric: darker wood naturally slightly warmer and richer.
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.15 },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.20 },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 0.15  },
       blend: { harm: 0.50, dir: 0.50 },
     },
     soft_contrast: {
-      L: { weight: 0.7, idealDelta: 0.3, absDeviation: true },
+      L: { weight: 1, idealDelta: 0.3, absDeviation: true },
       H: { weight: 1.5, idealDeg: 3 },
-      W: { weight: 1.5, idealDelta: 0, mode: 'balance', maxDelta: 0.2 },
-      C: { weight: 0.4, idealDelta: 0, mode: 'balance', maxDelta: 0.2 },
-      blend: { harm: 0.55, dir: 0.45 },
-    },
-    temperature_shift: {
-      W: { weight: 1.5, idealDelta: 0.30, absDeviation: true },
-      H: { weight: 1.0, idealDeg: 20 },
-      L: { weight: 0.5, idealDelta: 0 },
-      C: { weight: 0.3, idealDelta: 0 },
-      blend: { harm: 0.50, dir: 0.50 },
+      W: { weight: 1.5, idealDelta: 0, trajectoryK: -0.15  },
+      C: { weight: 0.4, idealDelta: 0, trajectoryK: -0.20 },
+      blend: { harm: 0.5, dir: 0.5 },
     },
   },
 };
@@ -867,17 +879,36 @@ function computeDirectionScore(
   const lRangeNorm = clamp01(ref.L_range / L_RANGE_SCALE);
   const cRangeNorm = clamp01(ref.C_range / C_RANGE_SCALE);
 
-  scoreLinearAxis(config.L, (candidate.lightness - ref.L) / 100, lRangeNorm, 'L');
-  scoreLinearAxis(config.W, (candidate.warmth    - ref.W) / 2,   0,          'W');
-  scoreLinearAxis(config.C, (candidate.chroma    - ref.C) / 100, cRangeNorm, 'C');
-  scoreLinearAxis(config.P, (candidate.pattern   - ref.pattern) / 100, 0,    'P');
+  const signedDeltaL = (candidate.lightness - ref.L) / 100;
+  const signedDeltaW = (candidate.warmth    - ref.W) / 2;
+  const signedDeltaC = (candidate.chroma    - ref.C) / 100;
+
+  // Trajectory coupling: shift the ideal target for secondary axes based on how far the primary
+  // axis moved, encoding natural material co-variation (e.g. lighter wood → slightly cooler).
+  // Only applies to axes with trajectoryK set and no balance mode.
+  const primaryAxis = config.primaryAxis ?? 'L';
+  const primaryDelta = primaryAxis === 'W' ? signedDeltaW :
+                       primaryAxis === 'C' ? signedDeltaC : signedDeltaL;
+  function withTrajectory(cfg: AxisConfig | undefined): AxisConfig | undefined {
+    if (!cfg?.trajectoryK || cfg.mode) return cfg;
+    return { ...cfg, idealDelta: cfg.idealDelta + cfg.trajectoryK * primaryDelta };
+  }
+
+  scoreLinearAxis(config.L,                   signedDeltaL, lRangeNorm, 'L');
+  scoreLinearAxis(withTrajectory(config.W),    signedDeltaW, 0,          'W');
+  scoreLinearAxis(withTrajectory(config.C),    signedDeltaC, cRangeNorm, 'C');
+  scoreLinearAxis(config.P, (candidate.pattern - ref.pattern) / 100, 0, 'P');
 
   if (config.H) {
-    const { weight, idealDeg, mode: hMode } = config.H;
+    const { weight, idealDeg, trajectoryK: hTrajectoryK, mode: hMode } = config.H;
     // balance: low raw hue range → add up to 30° variety; wide range (≥60°) → match dominant hue
     let effectiveIdealDeg = hMode === 'balance' ? 30 * (1 - clamp01(ref.H_range / 60)) : idealDeg;
     if (hMode === 'balance' && config.H!.maxDeg != null) {
       effectiveIdealDeg = Math.min(config.H!.maxDeg, effectiveIdealDeg);
+    }
+    // Trajectory: further from reference in L → larger expected hue arc (symmetric, hence |primaryDelta|)
+    if (hTrajectoryK && !hMode) {
+      effectiveIdealDeg += hTrajectoryK * Math.abs(primaryDelta);
     }
     if (ref.hue != null && candidate.hue_angle == null) {
       // Achromatic candidate against a chromatic reference — penalise proportionally
@@ -921,13 +952,19 @@ function blendDirectionWithHarmony(
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
  *  Each candidate with a known archetype appears once per direction in that archetype's family.
- *  Non-directional materials (metallics, accents) appear once with direction = null. */
+ *  Non-directional materials (metallics, accents) appear once with direction = null.
+ *
+ *  pairScores / pairWeight: when provided, pair compatibility is blended into each entry's
+ *  score BEFORE the claiming/non-claiming sort. Paired materials float to the top of their
+ *  correct direction without crossing the claiming boundary into the wrong direction. */
 export function rankClusteredCandidates(
   candidates: GraphMaterial[],
   placedCodes: string[],
   byCode: Map<string, GraphMaterial>,
   candidateRole: string,
   chipArchetypeId?: string | null,
+  pairScores?: Map<string, number>,  // code → 0–1 direct pair score (pre-computed by caller)
+  pairWeight?: number,               // fraction of final score from pairing (e.g. 0.02)
 ): RankedClusteredEntry[] {
   const placed = placedCodes
     .map((c) => byCode.get(c))
@@ -935,10 +972,12 @@ export function rankClusteredCandidates(
   const state = computePaletteState(placed);
 
   const entries: RankedClusteredEntry[] = [];
+  const pw = pairWeight ?? 0;
 
   for (const material of candidates) {
     const harmScore  = harmonyScore(material, placed, state, candidateRole, chipArchetypeId);
     const clusterKey = `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`;
+    const pairScore  = pairScores?.get(material.technicalCode) ?? 0;
 
     const archetype        = archetypeForDirections(material, chipArchetypeId);
     const directions       = archetype ? DIRECTIONS_BY_ARCHETYPE[archetype] : null;
@@ -950,12 +989,16 @@ export function rankClusteredCandidates(
         const config = archetypeConfigs[dir];
         if (!config) continue;
         if (config.minAbsC !== undefined && material.chroma < config.minAbsC) continue;
-        const dirScore  = computeDirectionScore(material, ref, config);
-        const finalScore = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
-        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore: 0, direction: dir, clusterKey, archetype });
+        if (config.minL    !== undefined && material.lightness < config.minL) continue;
+        if (config.maxL    !== undefined && material.lightness > config.maxL) continue;
+        const dirScore   = computeDirectionScore(material, ref, config);
+        const blended    = blendDirectionWithHarmony(dirScore, harmScore, config, dir);
+        const finalScore = pw > 0 ? blended * (1 - pw) + pairScore * pw : blended;
+        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, direction: dir, clusterKey, archetype });
       }
     } else {
-      entries.push({ code: material.technicalCode, score: harmScore, harmonyScore: harmScore, pairScore: 0, direction: null, clusterKey, archetype });
+      const finalScore = pw > 0 ? harmScore * (1 - pw) + pairScore * pw : harmScore;
+      entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, direction: null, clusterKey, archetype });
     }
   }
 

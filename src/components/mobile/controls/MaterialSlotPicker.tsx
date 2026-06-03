@@ -9,13 +9,13 @@ import {
 } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection, getV2DebugForCode } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 import { buildMaterialGrid, type GridCell } from "@/lib/material-grid";
-import { DIRECTIONS_BY_ARCHETYPE, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
+import { DIRECTIONS_BY_ARCHETYPE, CANONICAL_DIRECTION, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,11 +141,11 @@ export default function MaterialSlotPicker({
   // For every archetype chip: which material is the palette's top pick right now?
   // Only runs when otherMaterialCodes is non-empty — no palette context → no palette score.
   const perChipBestCode = useMemo((): Map<string, string | null> => {
-    if (!slot || !getClusteredRankedCodes || !graphMaterials?.length || !otherMaterialCodes?.length) return new Map();
+    if (!slot || !getClusteredRankedCodes || !graphMaterials?.length) return new Map();
     const role = SLOT_KEY_TO_ROLE[slot];
     const map = new Map<string, string | null>();
     for (const { id } of getArchetypesByRole(role)) {
-      const entries = getClusteredRankedCodes(otherMaterialCodes, role, id);
+      const entries = getClusteredRankedCodes(otherMaterialCodes ?? [], role, id);
       // One representative per direction (best by finalScore, same logic as directionGroups)
       const topByDirection = new Map<string, RankedClusteredEntry>();
       const usedCodes = new Set<string>();
@@ -156,14 +156,51 @@ export default function MaterialSlotPicker({
           usedCodes.add(e.code);
         }
       }
-      // Among direction reps with images, promote the one with the best harmony score
-      const best = [...topByDirection.values()]
-        .filter(e => !!getMaterialByCode(e.code)?.imageUrl)
-        .sort((a, b) => {
-          const paletteA = a.harmonyScore;
-          const paletteB = b.harmonyScore;
-          return (paletteB * GENERAL_PALETTE_WEIGHT + b.pairScore * (1 - GENERAL_PALETTE_WEIGHT)) -
-                 (paletteA * GENERAL_PALETTE_WEIGHT + a.pairScore * (1 - GENERAL_PALETTE_WEIGHT));
+      const dirReps = [...topByDirection.values()].filter(e => !!getMaterialByCode(e.code)?.imageUrl);
+
+      // Determine which directions are already occupied by placed same-archetype materials.
+      // Placed codes are excluded from the scoring pool — score each directly to find its direction.
+      const samePlaced = (otherMaterialCodes ?? []).filter(code => {
+        const mat = getMaterialByCode(code);
+        if (!mat || !mat.role.includes(role)) return false;
+        return isPlainFrontChip(id, role) ? mat.texture === 'plain' : mat.archetypeId === id;
+      });
+      const occupiedDirections = new Set<DirectionId>();
+      for (const placedCode of samePlaced) {
+        const ctx = (otherMaterialCodes ?? []).filter(c => c !== placedCode);
+        if (ctx.length === 0) continue;
+        const debug = getV2DebugForCode(placedCode, ctx, role, id);
+        if (debug?.directionId) occupiedDirections.add(debug.directionId);
+      }
+
+      // Pick first unoccupied direction: canonical first, then rest of DIRECTIONS_BY_ARCHETYPE order.
+      const canonicalDir = CANONICAL_DIRECTION[id]?.[role];
+      const directionOrder = DIRECTIONS_BY_ARCHETYPE[id] ?? [];
+      const orderedDirs: DirectionId[] = canonicalDir
+        ? [canonicalDir, ...directionOrder.filter(d => d !== canonicalDir)]
+        : directionOrder;
+
+      let picked = false;
+      for (const dir of orderedDirs) {
+        if (occupiedDirections.has(dir)) continue;
+        const rep = topByDirection.get(dir);
+        if (rep && getMaterialByCode(rep.code)?.imageUrl) {
+          map.set(id, rep.code);
+          picked = true;
+          break;
+        }
+      }
+      if (picked) continue;
+
+      // Fallback: no canonical direction or all directions occupied — pick best by harmony + pairing.
+      const maxPairCount = Math.max(...dirReps.map(e => getPairCountByCode(e.code)), 1);
+      const best = dirReps.sort((a, b) => {
+          const generalA = getPairCountByCode(a.code) / maxPairCount;
+          const generalB = getPairCountByCode(b.code) / maxPairCount;
+          const pairA = 0.5 * a.pairScore + 0.5 * generalA;
+          const pairB = 0.5 * b.pairScore + 0.5 * generalB;
+          return (b.harmonyScore * GENERAL_PALETTE_WEIGHT + pairB * (1 - GENERAL_PALETTE_WEIGHT)) -
+                 (a.harmonyScore * GENERAL_PALETTE_WEIGHT + pairA * (1 - GENERAL_PALETTE_WEIGHT));
         })[0];
       map.set(id, best?.code ?? null);
     }

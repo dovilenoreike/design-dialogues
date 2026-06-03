@@ -18,7 +18,9 @@
       "Bash(cwebp public/placeholders/floor.jpg -o public/placeholders/floor.webp)",
       "Bash(cwebp public/placeholders/mainFronts.jpg -o public/placeholders/mainFronts.webp)",
       "Bash(cwebp public/placeholders/additionalFronts.jpg -o public/placeholders/additionalFronts.webp)",
-      "Bash(cwebp public/placeholders/worktop.jpg -o public/placeholders/worktops.webp)"
+      "Bash(cwebp public/placeholders/worktop.jpg -o public/placeholders/worktops.webp)",
+      "Bash(sed -i '' \"s/env\\\\['VITE_SUPABASE_URL'\\\\]!, env\\\\['VITE_SUPABASE_PUBLISHABLE_KEY'\\\\]!/env['VITE_SUPABASE_URL'] ?? env['SUPABASE_URL'] ?? '', env['VITE_SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_SERVICE_ROLE_KEY'] ?? ''/\" scripts/find-topref.ts)",
+      "Bash(npx tsx *)"
     ]
   }
 }
