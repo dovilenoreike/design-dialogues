@@ -416,12 +416,14 @@ const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
 // Resolve which direction family applies. Prefer the explicit chip routing
 // from the picker; fall back to the material's own archetype, then texture.
 function archetypeForDirections(c: GraphMaterial, chipArchetypeId?: string | null): string | null {
-  if (chipArchetypeId && DIRECTIONS_BY_ARCHETYPE[chipArchetypeId]) return chipArchetypeId;
-  if (c.archetypeId && DIRECTIONS_BY_ARCHETYPE[c.archetypeId]) return c.archetypeId;
-  if (c.texture === 'plain') return 'plain';
-  if (c.texture === 'wood') return 'wood';
-  if (c.texture === 'stone' || c.texture === 'concrete') return 'stone';
-  return null;
+  const known = (id: string) => DIRECTIONS_BY_ARCHETYPE[id] && DIRECTION_CONFIGS[id];
+  if (chipArchetypeId && known(chipArchetypeId)) return chipArchetypeId;
+  if (c.archetypeId  && known(c.archetypeId))   return c.archetypeId;
+  const fromTexture = c.texture === 'plain' ? 'plain'
+                    : c.texture === 'wood'  ? 'wood'
+                    : (c.texture === 'stone' || c.texture === 'concrete') ? 'stone'
+                    : null;
+  return fromTexture && known(fromTexture) ? fromTexture : null;
 }
 
 /** Reference point for relative direction tagging.
@@ -522,9 +524,7 @@ export function directionForCandidate(
   if (!ref) return null;
 
   const dL = (candidate.lightness - ref.L) / 100;
-  const _dW = candidate.warmth - ref.W;
   const dC = (candidate.chroma - ref.C) / 100;
-  const _dP = (candidate.pattern - ref.pattern);
 
   if (archetype === 'plain') {
     if (dC > 0.25) return 'rich_colour';
@@ -634,13 +634,13 @@ export function computeV2Debug(
       dirId = targetDirection as DirectionId;
       axisErrors = errs;
     } else {
-      let bestBlended = -1;
+      let bestDirScore = -1;
       for (const dir of directions) {
         const config = archetypeCfgs[dir];
         if (!config) continue;
         const errs: Record<string, number> = {};
         const s = computeDirectionScore(candidate, ref, config, errs);
-        if (s > bestBlended) { bestBlended = s; dirId = dir; dirScore = s; axisErrors = errs; }
+        if (s > bestDirScore) { bestDirScore = s; dirId = dir; dirScore = s; axisErrors = errs; }
       }
     }
   }
@@ -701,12 +701,18 @@ interface DirectionConfig {
   primaryAxis?: 'L' | 'W' | 'C';  // axis that drives trajectoryK coupling on secondary axes (default 'L')
 }
 
+const METAL_DIRECTION_CONFIG: DirectionConfig = {
+  L: { weight: 0.4, idealDelta: 0 },
+  W: { weight: 0.4, idealDelta: 0 },
+  H: { weight: 1,   idealDeg:   0 },
+};
+
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
 
-  metallic: { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 }, H: { weight: 1, idealDeg: 0 } } },
-  gold:     { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
-  silver:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
-  bronze:   { metal: { L: { weight: 0.4, idealDelta: 0 }, W: { weight: 0.4, idealDelta: 0 } } },
+  metallic: { metal: METAL_DIRECTION_CONFIG },
+  gold:     { metal: METAL_DIRECTION_CONFIG },
+  silver:   { metal: METAL_DIRECTION_CONFIG },
+  bronze:   { metal: METAL_DIRECTION_CONFIG },
 
   plain: {
     light_neutral: {
@@ -780,7 +786,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 1, idealDelta: 0},
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 20 },  // hue should be very close to ref, but small shifts are ok and often natural (e.g. adding a warmer red to a cool palette can still read as a tonal match)
+      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 10 },  // hue should be very close to ref, but small shifts are ok and often natural (e.g. adding a warmer red to a cool palette can still read as a tonal match)
     },
     lighter_echo: {
       L: { weight: 1, idealDelta: 0.2, refK: 0.1},
@@ -788,20 +794,20 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       // A candidate moving off this natural path (warmer+more-saturated when lighter) is penalised.
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.2 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 20 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
     },
     darker_echo: {
       L: { weight: 1, idealDelta: -0.2, refK: -0.1},
       // Same k coefficients — symmetric: darker wood naturally slightly warmer and richer.
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.2 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 20  },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
     },
     soft_contrast: {
       L: { weight: 1, idealDelta: 0.35, absDeviation: true },  // ideal = ±30 lightness steps from ref, either lighter or darker is fine — it's about contrast, not direction
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.2  },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 20 },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
     },
   },
 };
@@ -874,7 +880,7 @@ function computeDirectionScore(
   const primaryDelta = primaryAxis === 'W' ? signedDeltaW :
                        primaryAxis === 'C' ? signedDeltaC : signedDeltaL;
   function withTrajectory(cfg: AxisConfig | undefined): AxisConfig | undefined {
-    if (!cfg?.trajectoryK || cfg.mode) return cfg;
+    if (cfg?.trajectoryK == null || cfg.mode) return cfg;
     const delta = cfg.trajectoryAbs ? Math.abs(primaryDelta) : primaryDelta;
     return { ...cfg, idealDelta: cfg.idealDelta + cfg.trajectoryK * delta };
   }
@@ -954,6 +960,8 @@ export function rankClusteredCandidates(
   const pw = pairWeight ?? 0;
 
   for (const material of candidates) {
+    // harmonyScore: used as final score for undirected materials (no archetype config), and
+    // kept on the entry for picker tiebreaker sorting. Not blended into directed scores.
     const harmScore  = harmonyScore(material, placed, state, candidateRole, chipArchetypeId);
     const clusterKey = `${lBand(material.lightness)}|${hueFamily(material)}|${material.texture}`;
     const pairScore  = pairScores?.get(material.technicalCode) ?? 0;

@@ -66,9 +66,6 @@ function isPlainFrontChip(archetypeId: string | null | undefined, role: string):
   return role === 'front' && PLAIN_FRONT_ARCHETYPE_IDS.has(archetypeId ?? '');
 }
 
-/** Hide a direction swatch when its best candidate's raw direction-fit score is below this. */
-const DIRECTION_SCORE_THRESHOLD = 0;
-
 // ─── Row item types (module-level so cluster helpers can reference them) ──────
 
 type RowItem  = { code: string; image: string; name: string; materialName: string; isSelected: boolean; isRecommended: boolean; matchesAll: boolean; archetypeId: string };
@@ -566,12 +563,9 @@ export default function MaterialSlotPicker({
         usedCodes.add(c.code);
       }
     }
-    // Keep only directions whose best candidate meets the score threshold.
     const pairs = order
       .map((d): [DirectionId, RankedClusteredEntry | null] => [d, topByDirection.get(d) ?? null])
-      .filter((p): p is [DirectionId, RankedClusteredEntry] =>
-        p[1] !== null && p[1].directionScore >= DIRECTION_SCORE_THRESHOLD
-      );
+      .filter((p): p is [DirectionId, RankedClusteredEntry] => p[1] !== null);
     // Wood: sort by representative material lightness so swatches read light → dark.
     if (effectiveActiveId === 'wood') {
       pairs.sort(([, a], [, b]) =>
@@ -643,24 +637,6 @@ export default function MaterialSlotPicker({
     setTimeout(onClose, 200);
   };
 
-  // ─── Inline-mode handlers ─────────────────────────────────────────────────
-  const handleRecommendedClick = (item: RowItem) => {
-    if (!slot) return;
-    setActiveArchetypeId(item.archetypeId);
-    onSelect(slot, item.archetypeId, item.code);
-  };
-
-  const handleRow1Click = (item: RowItem) => {
-    setActiveArchetypeId(item.archetypeId);
-    if (!slot) return;
-    onSelect(slot, item.archetypeId, item.code);
-  };
-
-  const handleRow3Click = (item: RowItem) => {
-    if (slot) onSelect(slot, item.archetypeId, item.code);
-  };
-
-
   // ─── Cluster helpers ──────────────────────────────────────────────────────
 
   const archetypeClusters = useMemo(
@@ -680,41 +656,6 @@ export default function MaterialSlotPicker({
     setExpandedClusterKey(null);
   }, [archetypeClusters]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function renderClusterRow(clusters: ClusterCell[]): React.ReactNode {
-    return clusters.map((cluster) => {
-      const rep = cluster.representative;
-      const hasSiblings = cluster.siblings.length > 0;
-      const clusterKey = rep.code;
-      const isExpanded = expandedClusterKey === clusterKey;
-      // A sibling is selected — show border to indicate this cluster has a pick, but no check mark
-      const siblingSelected = cluster.siblings.some(s => s.isSelected);
-
-      return (
-        <div key={`cl-${clusterKey}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-          <SwatchButton
-            onClick={() => {
-              handleRow3Click(rep);
-              if (hasSiblings) setExpandedClusterKey(prev => prev === clusterKey ? null : clusterKey);
-            }}
-            isActive={rep.isSelected || (isExpanded && !siblingSelected)}
-          >
-            <img src={rep.image} alt="" className="w-full h-full object-cover" />
-            {SHOW_COLOUR_SCORES && <RankBadge code={rep.code} />}
-
-            {rep.isSelected && (
-              <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
-                <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-              </div>
-            )}
-            {siblingSelected && !rep.isSelected && (
-              <div className="absolute" style={{ bottom: 5, right: 5, width: 6, height: 6, borderRadius: "50%", backgroundColor: "#647d75" }} />
-            )}
-          </SwatchButton>
-        </div>
-      );
-    });
-  }
-
   const RankBadge = ({ code }: { code: string }) => {
     const rank = paletteRankByCode.get(code);
     if (!rank) return null;
@@ -727,9 +668,6 @@ export default function MaterialSlotPicker({
 
   // ─── Inline render ────────────────────────────────────────────────────────
 
-  // Swatch sizes: recommended section is larger to signal priority
-  const REC_SWATCH_SIZE = 80;
-  const REC_SWATCH_RADIUS = 20;
   const SWATCH_SIZE = 64;
   const SWATCH_RADIUS = 16;
   const ALT_SWATCH_SIZE = 60;
@@ -876,11 +814,6 @@ export default function MaterialSlotPicker({
           <>
 
           {/* Archetype chips — one per archetype, showing best palette suggestion */}
-          <div className="px-4 pt-3 pb-1 flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
-              {t("surface.bestMatch")}
-            </span>
-          </div>
           <div
             className="flex gap-2.5 px-4 pb-3 overflow-x-auto flex-shrink-0"
             style={{ scrollbarWidth: "none" } as React.CSSProperties}
