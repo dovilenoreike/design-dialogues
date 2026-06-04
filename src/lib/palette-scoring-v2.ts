@@ -811,15 +811,15 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     },
     darker_echo: {
       L: { weight: 1.1, idealDelta: -0.2, refK: -0.1},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.3 },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
-      minScore: 0.95,
+      minScore: 0.94,
     },
     soft_contrast: {
       L: { weight: 1.1, idealDelta: 0.35, absDeviation: true },
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2  },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
+      W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.2  },
+      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
       minScore: 0.95,  // very permissive direction — almost always valid if contrast materials exist
     },
