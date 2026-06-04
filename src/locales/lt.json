@@ -196,7 +196,7 @@
     "cabinetFurniture": "Korpusiniai baldai",
     "wardrobes": "Spinta",
     "allVariants": "Visi variantai",
-    "otherOptionsPrefix": "Kiti ",
+    "otherOptionsPrefix": "Derantys ",
     "otherOptionsSuffix": " variantai",
     "similarShades": "Panašūs atspalviai",
     "searchByCode": "Ieškoti pagal kodą…",
@@ -218,7 +218,14 @@
       "quietStone": "Rami faktūra",
       "naturalStone": "Natūrali faktūra",
       "boldMovement": "Ryški faktūra",
-      "metal": "Metalas"
+      "metal": "Metalas",
+      "browse": "Naršyti"
+    },
+    "browse": {
+      "light": "Šviesiau",
+      "dark": "Tamsiau",
+      "warm": "Šilčiau",
+      "cool": "Šalčiau"
     }
   },
   "specs": {

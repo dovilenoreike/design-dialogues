@@ -196,7 +196,7 @@
     "cabinetFurniture": "Cabinet Furniture",
     "wardrobes": "Wardrobes",
     "allVariants": "All options",
-    "otherOptionsPrefix": "Other ",
+    "otherOptionsPrefix": "Matching ",
     "otherOptionsSuffix": " options",
     "similarShades": "Similar shades",
     "searchByCode": "Search by code…",
@@ -218,7 +218,14 @@
       "quietStone": "Quiet stone",
       "naturalStone": "Natural stone",
       "boldMovement": "Bold movement",
-      "metal": "Metal"
+      "metal": "Metal",
+      "browse": "Browse"
+    },
+    "browse": {
+      "light": "Lighter",
+      "dark": "Darker",
+      "warm": "Warm",
+      "cool": "Cool"
     }
   },
   "specs": {

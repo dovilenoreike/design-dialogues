@@ -118,6 +118,8 @@ export default function MaterialSlotPicker({
   const [gridCenterCode, setGridCenterCode] = useState<string | null>(null);
   // Which direction swatch was last clicked — drives the alternatives strip
   const [activeDirection, setActiveDirection] = useState<DirectionId | null>(null);
+  // Neutral browse mode — bypasses direction scoring, shows all archetype materials by lightness
+  const [browseAll, setBrowseAll] = useState(false);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -129,6 +131,7 @@ export default function MaterialSlotPicker({
     setGridCenterCode(null);
     setActiveDirection(null);
     setActiveScoringDirection(null);
+    setBrowseAll(false);
   }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset grid center when selection is cleared (flatlay reset) so the center
@@ -637,6 +640,62 @@ export default function MaterialSlotPicker({
     return items;
   }, [effectiveDirection, clusteredRankedV2, selectedMaterialCode, slot, lang, effectiveActiveId]);
 
+  // Browse-all mode: auto-activates when no directions qualify; user can also trigger manually.
+  // Shows a 3×3 grid centered on the current/best material, with 8 neighbors spread across L/W space.
+  const effectiveBrowse = browseAll || directionGroups.length === 0;
+
+  const BROWSE_DELTA_L = 22;
+  const BROWSE_DELTA_W = 0.18;
+  // [row][col] → [deltaL, deltaW]
+  // Rows: top=warmer (+W), middle=neutral, bottom=cooler (-W)
+  // Cols: left=lighter (+L), middle=same, right=darker (-L)
+  const BROWSE_OFFSETS: [number, number][][] = [
+    [[+BROWSE_DELTA_L, +BROWSE_DELTA_W], [0, +BROWSE_DELTA_W], [-BROWSE_DELTA_L, +BROWSE_DELTA_W]],
+    [[+BROWSE_DELTA_L, 0              ], [0, 0              ], [-BROWSE_DELTA_L, 0              ]],
+    [[+BROWSE_DELTA_L, -BROWSE_DELTA_W], [0, -BROWSE_DELTA_W], [-BROWSE_DELTA_L, -BROWSE_DELTA_W]],
+  ];
+
+  const browseGridCells = useMemo((): (SupabaseMaterial | null)[][] => {
+    const center = effectiveGridCenter;
+    if (!center || gridPool.length === 0) return [];
+    const available = new Set(gridPool.map(m => m.technicalCode));
+
+    // Neighbors must be on the correct side of center on each constrained axis.
+    // dL > 0 → candidate must be lighter; dL < 0 → must be darker; dL = 0 → unconstrained.
+    // Same for dW. Returns null if no qualifying material exists (shows placeholder).
+    const closest = (targetL: number, targetW: number, dL: number, dW: number): SupabaseMaterial | null => {
+      let best: SupabaseMaterial | null = null;
+      let bestDist = Infinity;
+      const cW = center.warmth ?? 0;
+      for (const m of gridPool) {
+        if (!available.has(m.technicalCode)) continue;
+        if (dL > 0 && m.lightness <= center.lightness) continue;
+        if (dL < 0 && m.lightness >= center.lightness) continue;
+        if (dW > 0 && (m.warmth ?? 0) <= cW) continue;
+        if (dW < 0 && (m.warmth ?? 0) >= cW) continue;
+        const d = Math.abs(m.lightness - targetL) / 40 + Math.abs((m.warmth ?? 0) - targetW) / 0.20;
+        if (d < bestDist) { bestDist = d; best = m; }
+      }
+      return best;
+    };
+
+    const result: (SupabaseMaterial | null)[][] = [[null,null,null],[null,null,null],[null,null,null]];
+    result[1][1] = center;
+    available.delete(center.technicalCode);
+
+    // Edges before corners so the most constrained directions claim their best match first
+    const scanOrder: [number, number][] = [[0,1],[1,0],[1,2],[2,1],[0,0],[0,2],[2,0],[2,2]];
+    for (const [r, c] of scanOrder) {
+      const [dL, dW] = BROWSE_OFFSETS[r][c];
+      const m = closest(center.lightness + dL, (center.warmth ?? 0) + dW, dL, dW);
+      result[r][c] = m;
+      if (m) available.delete(m.technicalCode);
+    }
+    return result;
+  }, [effectiveGridCenter, gridPool]);
+
+  const hasBrowseGrid = !!effectiveGridCenter && gridPool.length > 0;
+
   // Search results — code substring match within the current slot's role
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -907,7 +966,7 @@ export default function MaterialSlotPicker({
           {/* Direction groups — shown immediately when one archetype, or after chip click when multiple */}
           {(activeArchetypeId || availableWithImages.length === 1) && (
           <div style={{ animation: "msPickerFadeIn 0.2s ease both", backgroundColor: "#ffffff" }}>
-            <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+            <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } } @keyframes cellPopIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }`}</style>
 
           <SwatchDivider />
 
@@ -919,9 +978,8 @@ export default function MaterialSlotPicker({
           </div>
           )}
 
-          {/* Direction swatches — one per direction in the archetype taxonomy.
-              Hidden when there is only one direction (alternatives show directly instead). */}
-          {directionGroups.length > 1 ? (
+          {/* Direction swatches — one per direction, plus a Browse tab for neutral exploration. */}
+          {(directionGroups.length > 0 || hasBrowseGrid) ? (
             <div
               className="flex gap-2.5 px-4 pt-4 pb-4 overflow-x-auto flex-shrink-0"
               style={{ scrollbarWidth: 'none' } as React.CSSProperties}
@@ -967,6 +1025,7 @@ export default function MaterialSlotPicker({
                     onClick={() => {
                       setActiveDirection(direction);
                       setActiveScoringDirection(direction);
+                      setBrowseAll(false);
                       if (slot && effectiveActiveId && entry) onSelect(slot, effectiveActiveId, entry.code);
                     }}
                     className="flex flex-col items-center gap-1.5 flex-shrink-0"
@@ -1003,15 +1062,120 @@ export default function MaterialSlotPicker({
                   </button>
                 );
               })}
+              {/* Browse tab — always last; bypasses direction scoring, shows full 3×3 grid */}
+              {hasBrowseGrid && (
+                <button
+                  onClick={() => { setBrowseAll(true); setActiveDirection(null); setActiveScoringDirection(null); setGridCenterCode(null); }}
+                  className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                  style={{ width: SWATCH_SIZE }}
+                >
+                  <div
+                    className="flex-shrink-0 flex items-center justify-center"
+                    style={{
+                      width: SWATCH_SIZE,
+                      height: SWATCH_SIZE,
+                      borderRadius: SWATCH_RADIUS,
+                      backgroundColor: '#f0ede9',
+                      border: effectiveBrowse ? '2px solid #647d75' : '2px solid transparent',
+                      transition: 'border-color 0.15s',
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <rect x="1" y="1" width="6" height="6" rx="1.5" fill={effectiveBrowse ? '#647d75' : 'rgba(0,0,0,0.25)'} />
+                      <rect x="11" y="1" width="6" height="6" rx="1.5" fill={effectiveBrowse ? '#647d75' : 'rgba(0,0,0,0.25)'} />
+                      <rect x="1" y="11" width="6" height="6" rx="1.5" fill={effectiveBrowse ? '#647d75' : 'rgba(0,0,0,0.25)'} />
+                      <rect x="11" y="11" width="6" height="6" rx="1.5" fill={effectiveBrowse ? '#647d75' : 'rgba(0,0,0,0.25)'} />
+                    </svg>
+                  </div>
+                  <span
+                    className="text-[10px] text-center leading-tight"
+                    style={{
+                      color: effectiveBrowse ? '#647d75' : 'rgba(0,0,0,0.55)',
+                      fontWeight: effectiveBrowse ? 500 : 400,
+                      maxWidth: SWATCH_SIZE + 12,
+                    }}
+                  >
+                    {t('surface.direction.browse')}
+                  </span>
+                </button>
+              )}
             </div>
-          ) : directionGroups.length === 0 ? (
+          ) : (
             <div className="flex-1 flex items-center justify-center py-8">
               <p className="text-xs" style={{ color: "rgba(0,0,0,0.35)" }}>{t("surface.searchNoResults")}</p>
             </div>
-          ) : null}
+          )}
 
-          {/* Direction alternatives strip — top 8 from the active/auto direction */}
-          {effectiveDirection && directionTopItems.length > 0 && (
+          {/* Browse 3×3 grid — center = current/best material, 8 neighbors spread in L/W space */}
+          {effectiveBrowse && hasBrowseGrid && (
+            <>
+              <SwatchDivider />
+              <div className="pt-2 pb-4 flex-shrink-0 flex justify-center">
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                >
+                  {/* Column headers */}
+                  <div style={{ display: 'flex', gap: 6, paddingLeft: 20 }}>
+                    {[t('surface.browse.light'), '', t('surface.browse.dark')].map((label, c) => (
+                      <div key={c} style={{ width: SWATCH_SIZE, flexShrink: 0, textAlign: c === 2 ? 'right' : 'left' }}>
+                        <span className="text-[9px] uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.30)' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Data rows */}
+                  {browseGridCells.map((rowCells, r) => (
+                    <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 14, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="text-[8px] uppercase tracking-wide" style={{
+                          color: 'rgba(0,0,0,0.30)',
+                          writingMode: 'vertical-lr' as const,
+                          transform: 'rotate(180deg)',
+                          lineHeight: 1,
+                        }}>
+                          {r === 0 ? t('surface.browse.warm') : r === 2 ? t('surface.browse.cool') : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {rowCells.map((mat, c) => {
+                          const isCenter = r === 1 && c === 1;
+                          const isSelected = mat?.technicalCode === selectedMaterialCode;
+                          const dist = Math.max(Math.abs(r - 1), Math.abs(c - 1));
+                          const cellStyle = {
+                            width: SWATCH_SIZE, height: SWATCH_SIZE, flexShrink: 0,
+                            borderRadius: SWATCH_RADIUS, overflow: 'hidden' as const,
+                            border: isSelected ? '2px solid #647d75' : isCenter ? '2px solid rgba(0,0,0,0.15)' : '2px solid transparent',
+                            transition: 'border-color 0.15s, transform 0.1s',
+                            animation: `cellPopIn 0.22s ease-out ${dist * 60}ms both`,
+                          };
+                          return mat ? (
+                            <button key={c} onClick={() => {
+                              if (slot && effectiveActiveId) {
+                                setGridCenterCode(mat.technicalCode);
+                                onSelect(slot, effectiveActiveId, mat.technicalCode);
+                              }
+                            }}
+                              className="relative active:scale-95" style={cellStyle}>
+                              <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                              {isSelected && (
+                                <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                                  <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                                </div>
+                              )}
+                            </button>
+                          ) : (
+                            <div key={c} style={{ ...cellStyle, backgroundColor: '#f5f4f2', border: '1px dashed #d8d4cf' }} />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Direction alternatives strip — top items from the active direction */}
+          {!effectiveBrowse && effectiveDirection && directionTopItems.length > 0 && (
             <>
               <SwatchDivider />
               <div className="px-4 pt-4 pb-1 flex-shrink-0">

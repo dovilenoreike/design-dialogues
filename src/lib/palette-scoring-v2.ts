@@ -729,9 +729,9 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     },
     medium_neutral: {
       L: { weight: 1.2, idealDelta: -0.2, refK: +0.5 },
-      W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
-      C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20 },
-      H: { weight: 1.2, idealDeg: 0, trajectoryK: 20  },
+      W: { weight: 0.8, idealDelta: -0.10, trajectoryK: -0.15 },
+      C: { weight: 0.6, idealDelta: -0.15, trajectoryK: -0.2 },
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 20  },
       minAbsC: 1,
       minScore: 0.22,
     },
