@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Check, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
@@ -120,6 +120,7 @@ export default function MaterialSlotPicker({
   const [activeDirection, setActiveDirection] = useState<DirectionId | null>(null);
   // Neutral browse mode — bypasses direction scoring, shows all archetype materials by lightness
   const [browseAll, setBrowseAll] = useState(false);
+  const browseGridRef = useRef<HTMLDivElement>(null);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -139,6 +140,14 @@ export default function MaterialSlotPicker({
   useEffect(() => {
     if (!selectedMaterialCode) setGridCenterCode(null);
   }, [selectedMaterialCode]);
+
+  // Scroll browse grid into view when it opens — on mobile the grid renders below
+  // the tab strip and the user won't see it without scrolling.
+  useEffect(() => {
+    if (browseAll && browseGridRef.current) {
+      setTimeout(() => browseGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    }
+  }, [browseAll]);
 
   // ─── Per-chip palette-best candidate ─────────────────────────────────────
   // For every archetype chip: which material is the palette's top pick right now?
@@ -1110,7 +1119,7 @@ export default function MaterialSlotPicker({
           {effectiveBrowse && hasBrowseGrid && (
             <>
               <SwatchDivider />
-              <div className="pt-2 pb-4 flex-shrink-0 flex justify-center">
+              <div ref={browseGridRef} className="pt-2 pb-4 flex-shrink-0 flex justify-center">
                 <div
                   style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
                 >
@@ -1251,6 +1260,7 @@ export default function MaterialSlotPicker({
         side="bottom"
         className="p-0 rounded-t-2xl overflow-hidden sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2 [&>button.absolute]:hidden"
         aria-describedby={undefined}
+        onSwipeClose={onClose}
       >
         {/* Accessible title (screen-reader only) */}
         <SheetTitle className="sr-only">{slot ? t(`surface.${slot}`) : ""}</SheetTitle>

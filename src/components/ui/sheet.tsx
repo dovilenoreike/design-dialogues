@@ -49,21 +49,88 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  /** Called when user swipes a bottom sheet down past the dismiss threshold. */
+  onSwipeClose?: () => void;
+}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, onSwipeClose, ...props }, forwardedRef) => {
+    const nodeRef = React.useRef<HTMLDivElement | null>(null);
+
+    // Merge forwarded ref with internal ref so we can attach touch listeners
+    const setRef = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        nodeRef.current = node;
+        if (typeof forwardedRef === "function") forwardedRef(node);
+        else if (forwardedRef) (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      },
+      [forwardedRef],
+    );
+
+    React.useEffect(() => {
+      if (side !== "bottom" || !onSwipeClose) return;
+      const el = nodeRef.current;
+      if (!el) return;
+
+      const drag = { startY: 0, active: false };
+
+      function onTouchStart(e: TouchEvent) {
+        const rect = el!.getBoundingClientRect();
+        // Only start drag when touch begins in the top ~72px (handle pill + header row)
+        if (e.touches[0].clientY - rect.top > 72) return;
+        drag.startY = e.touches[0].clientY;
+        drag.active = true;
+      }
+
+      function onTouchMove(e: TouchEvent) {
+        if (!drag.active) return;
+        const dy = Math.max(0, e.touches[0].clientY - drag.startY);
+        e.preventDefault(); // requires non-passive listener
+        el!.style.transform = `translateY(${dy}px)`;
+      }
+
+      function onTouchEnd(e: TouchEvent) {
+        if (!drag.active) return;
+        const dy = Math.max(0, e.changedTouches[0].clientY - drag.startY);
+        drag.active = false;
+        if (dy > 80) {
+          onSwipeClose();
+        } else {
+          el!.style.transition = "transform 0.2s ease";
+          el!.style.transform = "";
+          setTimeout(() => { if (el) el.style.transition = ""; }, 200);
+        }
+      }
+
+      el.addEventListener("touchstart", onTouchStart);
+      el.addEventListener("touchmove", onTouchMove, { passive: false });
+      el.addEventListener("touchend", onTouchEnd);
+
+      return () => {
+        el.removeEventListener("touchstart", onTouchStart);
+        el.removeEventListener("touchmove", onTouchMove);
+        el.removeEventListener("touchend", onTouchEnd);
+      };
+    }, [side, onSwipeClose]);
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={setRef}
+          className={cn(sheetVariants({ side }), className)}
+          {...props}
+        >
+          {children}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
