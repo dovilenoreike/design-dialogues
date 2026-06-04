@@ -20,7 +20,12 @@
       "Bash(cwebp public/placeholders/additionalFronts.jpg -o public/placeholders/additionalFronts.webp)",
       "Bash(cwebp public/placeholders/worktop.jpg -o public/placeholders/worktops.webp)",
       "Bash(sed -i '' \"s/env\\\\['VITE_SUPABASE_URL'\\\\]!, env\\\\['VITE_SUPABASE_PUBLISHABLE_KEY'\\\\]!/env['VITE_SUPABASE_URL'] ?? env['SUPABASE_URL'] ?? '', env['VITE_SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_SERVICE_ROLE_KEY'] ?? ''/\" scripts/find-topref.ts)",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(supabase --version)",
+      "Bash(curl -s 'https://nimrggpqcvgpgdmcermb.supabase.co/rest/v1/materials?select=technical_code,name,role,lightness,warmth,image_url&technical_code=in.\\(kronospan-k2739-cannolo-cremona-oak,kronospan-k695-sraw-primavera-oak,sm-art-s204-warwick-soho,kronospan-k749-babylon-slate\\)' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbXJnZ3BxY3ZncGdkbWNlcm1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyMjczOSwiZXhwIjoyMDg0NDk4NzM5fQ.R0lYIIJXLEoyjBbhT5wrwMIf3fQNRnkZ_ibqGuKC_GM' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbXJnZ3BxY3ZncGdkbWNlcm1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyMjczOSwiZXhwIjoyMDg0NDk4NzM5fQ.R0lYIIJXLEoyjBbhT5wrwMIf3fQNRnkZ_ibqGuKC_GM')",
+      "Bash(python3 -m json.tool)",
+      "Bash(SUPABASE_URL=https://nimrggpqcvgpgdmcermb.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbXJnZ3BxY3ZncGdkbWNlcm1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyMjczOSwiZXhwIjoyMDg0NDk4NzM5fQ.R0lYIIJXLEoyjBbhT5wrwMIf3fQNRnkZ_ibqGuKC_GM npx tsx scripts/process-material.ts --apply)",
+      "Bash(SUPABASE_URL=https://nimrggpqcvgpgdmcermb.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbXJnZ3BxY3ZncGdkbWNlcm1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODkyMjczOSwiZXhwIjoyMDg0NDk4NzM5fQ.R0lYIIJXLEoyjBbhT5wrwMIf3fQNRnkZ_ibqGuKC_GM npx tsx scripts/process-material.ts --image src/assets/new-materials/update/aspecta_bolsena.jpg --apply)"
     ]
   }
 }

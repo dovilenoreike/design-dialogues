@@ -15,7 +15,7 @@ import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 import { buildMaterialGrid, type GridCell } from "@/lib/material-grid";
-import { DIRECTIONS_BY_ARCHETYPE, CANONICAL_DIRECTION, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
+import { DIRECTIONS_BY_ARCHETYPE, CANONICAL_DIRECTION, directionMinScore, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -559,18 +559,29 @@ export default function MaterialSlotPicker({
     if (!effectiveActiveId) return [];
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
+
+    // Best directionScore seen per direction (for threshold check)
+    const maxScoreByDirection = new Map<DirectionId, number>();
     const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
     const usedCodes = new Set<string>();
     for (const c of clusteredRankedV2) {
       if (!c.direction) continue;
+      const prev = maxScoreByDirection.get(c.direction) ?? 0;
+      if (c.directionScore > prev) maxScoreByDirection.set(c.direction, c.directionScore);
       if (!topByDirection.has(c.direction) && !usedCodes.has(c.code)) {
         topByDirection.set(c.direction, c);
         usedCodes.add(c.code);
       }
     }
+
     const pairs = order
       .map((d): [DirectionId, RankedClusteredEntry | null] => [d, topByDirection.get(d) ?? null])
-      .filter((p): p is [DirectionId, RankedClusteredEntry] => p[1] !== null);
+      .filter((p): p is [DirectionId, RankedClusteredEntry] => {
+        if (p[1] === null) return false;
+        const threshold = directionMinScore(effectiveActiveId, p[0]);
+        return threshold === 0 || (maxScoreByDirection.get(p[0]) ?? 0) >= threshold;
+      });
+
     // Wood: sort by representative material lightness so swatches read light → dark.
     if (effectiveActiveId === 'wood') {
       pairs.sort(([, a], [, b]) =>

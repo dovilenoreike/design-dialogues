@@ -699,12 +699,16 @@ interface DirectionConfig {
   minL?: number;          // hard gate: material must have lightness ≥ this (e.g. light_neutral only accepts L≥65)
   maxL?: number;          // hard gate: material must have lightness ≤ this (e.g. dark_neutral only accepts L≤50)
   primaryAxis?: 'L' | 'W' | 'C';  // axis that drives trajectoryK coupling on secondary axes (default 'L')
+  minScore?: number;      // soft gate: direction tab is hidden when no candidate reaches this directionScore.
+                          //   Precise directions (tonal_match, bold_movement) need higher thresholds;
+                          //   exploratory directions (soft_contrast, lighter_echo) tolerate lower scores.
 }
 
 const METAL_DIRECTION_CONFIG: DirectionConfig = {
   L: { weight: 0.4, idealDelta: 0 },
   W: { weight: 0.4, idealDelta: 0 },
   H: { weight: 1,   idealDeg:   0 },
+  minScore: 0.30,
 };
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
@@ -719,40 +723,46 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       L: { weight: 1.5, idealDelta: 0, refK: +0.6, wrongDirMultiplier: 2.5 },
       W: { weight: 0.8, idealDelta: -0.1, trajectoryK: -0.15 },
       C: { weight: 0.8, idealDelta: -0.2, trajectoryK: -0.20 },
-      H: { weight: 1.2, idealDeg: 5, trajectoryK: 15  },
-      minAbsC: 1,  // preventing complete white
+      H: { weight: 1.2, idealDeg: 0, trajectoryK: 20  },
+      minAbsC: 1,
+      minScore: 0.22,
     },
     medium_neutral: {
       L: { weight: 1.2, idealDelta: -0.2, refK: +0.5 },
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15 },
       C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20 },
-      H: { weight: 1.2, idealDeg: 5, trajectoryK: 10  },
-      minAbsC: 1,  // preventing complete white
+      H: { weight: 1.2, idealDeg: 0, trajectoryK: 20  },
+      minAbsC: 1,
+      minScore: 0.22,
     },
     dark_neutral: {
       L: { weight: 1.5, idealDelta: 0, refK: -0.6, wrongDirMultiplier: 2.5 },
       W: { weight: 0.8, idealDelta: -0.05, trajectoryK: -0.15, trajectoryAbs: true },
       C: { weight: 0.2, idealDelta: -0.10, trajectoryK: -0.20, trajectoryAbs: true },
-      H: { weight: 1, idealDeg: 5, trajectoryK: 10  },
-      minAbsC: 5,  // preventing complete white
+      H: { weight: 1, idealDeg: 0, trajectoryK: 20  },
+      minAbsC: 5,
+      minScore: 0.22,
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
       C: { weight: 1, idealDelta: +0 },
       H: { weight: 1.5, idealDeg: +30 },
-      minAbsC: 10,  // must have visible colour — chroma < 15 is a near-neutral, not a pastel
+      minAbsC: 10,
+      minScore: 0.28,  // direction only makes sense with visibly coloured candidates
     },
     rich_colour: {
       C: { weight: 0.6, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
       H: { weight: 1.5, idealDeg: +30 },
       L: { weight: 0, idealDelta: 0 },
-      minAbsC: 20,  // must be clearly saturated
+      minAbsC: 20,
+      minScore: 0.28,  // same — only meaningful if saturated materials exist
     },
     muted: {
       C: { weight: 1.4, idealDelta: -0.10, rangeBonus: -0.05, wrongDirMultiplier: 1.5 },
       W: { weight: 0.5, idealDelta: -0.05, trajectoryK: -0.15 },
       H: { weight: 1.5, idealDeg: 10, trajectoryK: 0.15  },
-      minAbsC: 15,  // preventing complete white
+      minAbsC: 15,
+      minScore: 0.22,
     },
   },
 
@@ -764,6 +774,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
       C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
+      minScore: 0.22,
     },
     natural_stone: {
       P: { weight: 1, idealDelta: +0.2 },
@@ -771,6 +782,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
       C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
+      minScore: 0.20,
     },
     bold_movement: {
       P: { weight: 1.0, idealDelta: +0.40, oneSided: 'above', wrongDirMultiplier: 2.0 },
@@ -778,43 +790,41 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3, trajectoryAbs: true },
       C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30, trajectoryAbs: true   },
       H: { weight: 1, idealDeg: 0, trajectoryK: 15  },
+      minScore: 0.30,  // requires high-pattern stone — if none in pool, tab is meaningless
     },
   },
 
   wood: {
     tonal_match: {
-      L: { weight: 1, idealDelta: 0},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3  },  // small warmth shifts are fine, but no strong cool/warm — balance around palette mean
+      L: { weight: 1.2, idealDelta: 0},
+      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3  },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 10 },  // hue should be very close to ref, but small shifts are ok and often natural (e.g. adding a warmer red to a cool palette can still read as a tonal match)
+      H: { weight: 1.7, idealDeg: 0 , trajectoryK: 10 },
+      minScore: 0.97,  // "tonal match" label is only credible if best candidate actually scores well
     },
     lighter_echo: {
       L: { weight: 1, idealDelta: 0.2, refK: 0.1},
-      // Trajectory: lighter wood is naturally slightly cooler (k_LW<0) and less saturated (k_LC<0).
-      // A candidate moving off this natural path (warmer+more-saturated when lighter) is penalised.
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },  // lighter wood can be slightly warmer or cooler, but warmer shift is more common/natural — small positive k_HL
+      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
+      minScore: 0.22,  // exploratory — just needs something lighter in the pool
     },
     darker_echo: {
       L: { weight: 1, idealDelta: -0.2, refK: -0.1},
-      // Same k coefficients — symmetric: darker wood naturally slightly warmer and richer.
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
+      minScore: 0.22,
     },
     soft_contrast: {
-      L: { weight: 1, idealDelta: 0.35, absDeviation: true },  // ideal = ±30 lightness steps from ref, either lighter or darker is fine — it's about contrast, not direction
+      L: { weight: 1, idealDelta: 0.35, absDeviation: true },
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.2  },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
+      minScore: 0.18,  // very permissive direction — almost always valid if contrast materials exist
     },
   },
 };
-
-// Scale for per-axis error power: errors below this are softened, above are amplified.
-// Inflection point at err=DIR_ERROR_SCALE — adjust to taste (lower = more aggressive).
-const DIR_ERROR_SCALE = 0.20;
 
 function computeDirectionScore(
   candidate: GraphMaterial,
@@ -822,7 +832,10 @@ function computeDirectionScore(
   config: DirectionConfig,
   axisErrs?: Record<string, number>,
 ): number {
-  let errSum = 0, weightSum = 0;
+  // RMS aggregation: score = 1 / (1 + sqrt(Σ(err_i × weight_i)²) / weightSum)
+  // A single large weighted error dominates — axes with higher weight are decisive,
+  // and many small errors on low-weight axes can't gang up to outweigh one large one.
+  let squaredSum = 0, weightSum = 0;
 
   // Resolve balance idealDelta: push toward complement when palette has low range on that axis,
   // nudge toward average when palette is already diverse (range is high).
@@ -830,9 +843,9 @@ function computeDirectionScore(
   const wContrast = clamp01(ref.W_range / W_RANGE_SCALE);
   const cContrast = clamp01(ref.C_range / C_RANGE_SCALE);
   const balanceIdealDelta = {
-    L: (50 - ref.L)      / 100 * (1 - lContrast),  // low L_range → push toward complement; high → neutral
-    W: (0  - ref.W)      / 2   * (1 - wContrast),  // low W_range → push toward cool/warm; high → neutral
-    C: (0  - ref.C)      / 100 * (1 - cContrast),  // low C_range → push muted/saturated; high → neutral
+    L: (50 - ref.L)      / 100 * (1 - lContrast),
+    W: (0  - ref.W)      / 2   * (1 - wContrast),
+    C: (0  - ref.C)      / 100 * (1 - cContrast),
     P: (0  - ref.pattern)/ 100,
   };
 
@@ -841,7 +854,6 @@ function computeDirectionScore(
     const { weight, wrongDirMultiplier, absDeviation, oneSided, rangeBonus } = cfg;
     let err: number;
     if (cfg.mode === 'balance' && cfg.maxDelta != null) {
-      // Free zone: [idealDelta, idealDelta + maxDelta * balanceDir]. No penalty inside; error = distance to nearest edge outside.
       const balanceDir = Math.sign(balanceIdealDelta[axis]);
       const zoneMin = Math.min(cfg.idealDelta, cfg.idealDelta + balanceDir * cfg.maxDelta);
       const zoneMax = Math.max(cfg.idealDelta, cfg.idealDelta + balanceDir * cfg.maxDelta);
@@ -861,9 +873,8 @@ function computeDirectionScore(
       }
     }
     if (axisErrs) axisErrs[axis] = err;
-    // Apply power per-axis: small errors softened, large errors amplified
-    errSum    += Math.pow(err / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
-    weightSum += weight;
+    squaredSum += (err * weight) ** 2;
+    weightSum  += weight;
   }
 
   const lRangeNorm = clamp01(ref.L_range / L_RANGE_SCALE);
@@ -910,13 +921,11 @@ function computeDirectionScore(
       effectiveIdealDeg += hTrajectoryK * Math.abs(primaryDelta);
     }
     if (ref.hue != null && candidate.hue_angle == null) {
-      // Achromatic candidate against a chromatic reference — penalise proportionally
-      // to reference visual chroma (same convention as harmonyScore's achromatic penalty).
       const refVisualC = clamp01((ref.C / 100) * colourSalience(ref.L) * 2);
       const achroErr = ACHROMATIC_HUE_PENALTY * refVisualC;
       if (axisErrs) axisErrs['H'] = achroErr;
-      errSum    += Math.pow(achroErr / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
-      weightSum += weight;
+      squaredSum += (achroErr * weight) ** 2;
+      weightSum  += weight;
     } else {
       let hArc = 0;
       if (ref.hue != null && candidate.hue_angle != null) {
@@ -925,15 +934,21 @@ function computeDirectionScore(
       }
       const hErr = Math.abs(hArc - effectiveIdealDeg / 90);
       if (axisErrs) axisErrs['H'] = hErr;
-      errSum    += Math.pow(hErr / DIR_ERROR_SCALE, 1.5) * weight * DIR_ERROR_SCALE;
-      weightSum += weight;
+      squaredSum += (hErr * weight) ** 2;
+      weightSum  += weight;
     }
   }
 
   if (weightSum === 0) return 0.5;
-  return 1 / (1 + errSum / weightSum);  // power already applied per-axis; no outer exponent
+  return 1 / (1 + Math.sqrt(squaredSum) / weightSum);
 }
 
+
+/** Minimum directionScore for a direction tab to be visible.
+ *  Returns 0 if the direction has no configured threshold (always visible). */
+export function directionMinScore(archetypeId: string, dir: DirectionId): number {
+  return DIRECTION_CONFIGS[archetypeId]?.[dir]?.minScore ?? 0;
+}
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
  *  Each candidate with a known archetype appears once per direction in that archetype's family.
