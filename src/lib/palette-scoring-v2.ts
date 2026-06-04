@@ -403,7 +403,7 @@ export const CANONICAL_DIRECTION: Partial<Record<string, Partial<Record<string, 
 // well across multiple directions. Separate from UI display order (DIRECTIONS_BY_ARCHETYPE).
 // tonal_match claims wood first — it's the most specific match and should not be "stolen"
 // by a lighter/darker slot just because it also happens to be a good echo.
-const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
+export const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
   wood:     ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast'],
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
@@ -796,7 +796,7 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 
   wood: {
     tonal_match: {
-      L: { weight: 1.2, idealDelta: 0},
+      L: { weight: 1, idealDelta: 0},
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.3  },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.7, idealDeg: 0 , trajectoryK: 10 },
@@ -807,14 +807,14 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
-      minScore: 0.22,  // exploratory — just needs something lighter in the pool
+      minScore: 0.94,  // exploratory — just needs something lighter in the pool
     },
     darker_echo: {
       L: { weight: 1, idealDelta: -0.2, refK: -0.1},
       W: { weight: 1, idealDelta: 0, trajectoryK: -0.3 },
       C: { weight: 1, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
-      minScore: 0.22,
+      minScore: 0.94,
     },
     soft_contrast: {
       L: { weight: 1, idealDelta: 0.35, absDeviation: true },

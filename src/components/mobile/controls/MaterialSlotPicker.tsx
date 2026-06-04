@@ -15,7 +15,7 @@ import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
 import MaterialRequestDialog from "./MaterialRequestDialog";
 import { buildMaterialGrid, type GridCell } from "@/lib/material-grid";
-import { DIRECTIONS_BY_ARCHETYPE, CANONICAL_DIRECTION, directionMinScore, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
+import { DIRECTIONS_BY_ARCHETYPE, CLAIMING_PRIORITY, CANONICAL_DIRECTION, directionMinScore, type DirectionId, type RankedClusteredEntry } from "@/lib/palette-scoring-v2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -560,27 +560,43 @@ export default function MaterialSlotPicker({
     const order = DIRECTIONS_BY_ARCHETYPE[effectiveActiveId] ?? [];
     if (order.length === 0) return [];
 
-    // Best directionScore seen per direction (for threshold check)
+    // Pass 1: find best directionScore per direction and collect all candidates per direction.
+    // Don't claim usedCodes yet — directions that don't pass the threshold shouldn't block candidates.
     const maxScoreByDirection = new Map<DirectionId, number>();
-    const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
-    const usedCodes = new Set<string>();
+    const candidatesByDirection = new Map<DirectionId, RankedClusteredEntry[]>();
     for (const c of clusteredRankedV2) {
       if (!c.direction) continue;
       const prev = maxScoreByDirection.get(c.direction) ?? 0;
       if (c.directionScore > prev) maxScoreByDirection.set(c.direction, c.directionScore);
-      if (!topByDirection.has(c.direction) && !usedCodes.has(c.code)) {
-        topByDirection.set(c.direction, c);
-        usedCodes.add(c.code);
+      if (!candidatesByDirection.has(c.direction)) candidatesByDirection.set(c.direction, []);
+      candidatesByDirection.get(c.direction)!.push(c);
+    }
+
+    // Pass 2: keep only directions that pass the threshold.
+    const passingSet = new Set(order.filter(d => {
+      const threshold = directionMinScore(effectiveActiveId, d);
+      return threshold === 0 || (maxScoreByDirection.get(d) ?? 0) >= threshold;
+    }));
+
+    // Claim in CLAIMING_PRIORITY order so tonal_match (most specific) gets first pick,
+    // not lighter_echo just because it appears first in the display order.
+    const claimingOrder = (CLAIMING_PRIORITY[effectiveActiveId] ?? order) as DirectionId[];
+    const usedCodes = new Set<string>();
+    const topByDirection = new Map<DirectionId, RankedClusteredEntry>();
+    for (const d of claimingOrder) {
+      if (!passingSet.has(d)) continue;
+      for (const c of candidatesByDirection.get(d) ?? []) {
+        if (!usedCodes.has(c.code)) {
+          topByDirection.set(d, c);
+          usedCodes.add(c.code);
+          break;
+        }
       }
     }
 
     const pairs = order
-      .map((d): [DirectionId, RankedClusteredEntry | null] => [d, topByDirection.get(d) ?? null])
-      .filter((p): p is [DirectionId, RankedClusteredEntry] => {
-        if (p[1] === null) return false;
-        const threshold = directionMinScore(effectiveActiveId, p[0]);
-        return threshold === 0 || (maxScoreByDirection.get(p[0]) ?? 0) >= threshold;
-      });
+      .filter(d => passingSet.has(d) && topByDirection.has(d))
+      .map((d): [DirectionId, RankedClusteredEntry] => [d, topByDirection.get(d)!]);
 
     // Wood: sort by representative material lightness so swatches read light → dark.
     if (effectiveActiveId === 'wood') {
