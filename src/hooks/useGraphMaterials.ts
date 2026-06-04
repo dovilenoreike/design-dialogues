@@ -354,7 +354,7 @@ export function resolveCodeForShowroom(code: string, showroomId: string): string
 
 // Direction-internal ranking: harmony + direction score is the signal.
 // Direct pairing with placed codes is a small tiebreaker only.
-export const PALETTE_WEIGHT = 0.97;
+export const PALETTE_WEIGHT = 0.985;
 
 // General ranking (getAllRankedCodes, perChipBestCode): both overall versatility
 // (pairCountByCode) and direct pairings with placed codes are counted.
