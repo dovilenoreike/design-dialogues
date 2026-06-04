@@ -22,7 +22,9 @@
       "Bash(sed -i '' \"s/env\\\\['VITE_SUPABASE_URL'\\\\]!, env\\\\['VITE_SUPABASE_PUBLISHABLE_KEY'\\\\]!/env['VITE_SUPABASE_URL'] ?? env['SUPABASE_URL'] ?? '', env['VITE_SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_SERVICE_ROLE_KEY'] ?? ''/\" scripts/find-topref.ts)",
       "Bash(npx tsx *)",
       "Bash(supabase --version)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(head -1306 \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues/src/components/mobile/controls/MaterialSlotPicker.tsx\")",
+      "Read(//tmp/**)"
     ]
   }
 }

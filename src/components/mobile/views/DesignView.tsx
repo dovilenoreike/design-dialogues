@@ -672,7 +672,7 @@ export default function DesignView() {
       {/* LEFT (desktop) / TOP (mobile): sub-tab content — clicking here closes the picker */}
       <div
         ref={flatlayRef}
-        className={`${activeSlot ? "h-[180px] overflow-hidden flex-shrink-0 cursor-pointer relative" : "flex-1 min-h-0 overflow-y-auto"} lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto lg:cursor-auto lg:h-auto`}
+        className={`${activeSlot && !isMobile ? "h-[180px] overflow-hidden flex-shrink-0 cursor-pointer relative" : "flex-1 min-h-0 overflow-y-auto"} lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto lg:cursor-auto lg:h-auto`}
         onClick={() => setActiveSlot(null)}
       >
         {/* Bottom fade to indicate the peek is clipped — mobile only, when picker is open */}
@@ -904,17 +904,17 @@ export default function DesignView() {
         </div>
       </div>
 
-      {/* RIGHT (desktop) / BOTTOM (mobile): shared inline picker */}
+      {/* RIGHT (desktop) / BOTTOM (mobile inline): shared picker panel */}
       <div
         ref={pickerRef}
-        className={`${activeSlot ? "flex-1 min-h-0 overflow-hidden" : "h-auto mt-3 border-t"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l bg-neutral-50`}
+        className={`${activeSlot && !isMobile ? "flex-1 min-h-0 overflow-hidden" : !activeSlot ? "h-auto mt-3 border-t" : "hidden"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l lg:flex bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
         onClick={(e) => e.stopPropagation()}
       >
         {activeSlot ? (
           <MaterialSlotPicker
             slot={activeSlot}
-            inline={true}
+            inline={!isMobile}
             selections={slotSelections}
             onSelect={handleSlotSelect}
             onClose={() => setActiveSlot(null)}

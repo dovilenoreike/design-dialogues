@@ -2,11 +2,10 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Check, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
 import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection, getV2DebugForCode } from "@/hooks/useGraphMaterials";
@@ -121,6 +120,9 @@ export default function MaterialSlotPicker({
   // Neutral browse mode — bypasses direction scoring, shows all archetype materials by lightness
   const [browseAll, setBrowseAll] = useState(false);
   const browseGridRef = useRef<HTMLDivElement>(null);
+  const inlineDragHandleRef = useRef<HTMLDivElement>(null);
+  const inlineDragStartY = useRef(0);
+  const inlineDragging = useRef(false);
 
   // Reset internal state when slot changes
   useEffect(() => {
@@ -805,12 +807,11 @@ export default function MaterialSlotPicker({
     <div className="mx-4 flex-shrink-0" style={{ height: "0.5px", backgroundColor: "#e8e4e0" }} />
   );
 
-  if (inline) {
-    if (!slot) return null;
+  if (inline && !slot) return null;
 
-    return (
-      <>
-      <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
+  // pickerBody is shared between inline (div wrapper) and Drawer wrapper
+  const pickerBody = (
+    <>
         {/* Header: slot title + search icon + optional reset button */}
         <div
           className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0"
@@ -1241,188 +1242,64 @@ export default function MaterialSlotPicker({
 
         </div>
 
-      </div>
-
       <MaterialRequestDialog
         isOpen={showRequestDialog}
         onClose={() => setShowRequestDialog(false)}
         slotLabel={slot ? t(`surface.${slot}`) : ""}
       />
-      </>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
+        <div
+          ref={inlineDragHandleRef}
+          style={{ touchAction: "none", padding: "8px 0 4px", flexShrink: 0, cursor: "grab" }}
+          onPointerDown={(e) => {
+            inlineDragStartY.current = e.clientY;
+            inlineDragging.current = true;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            const panel = inlineDragHandleRef.current?.parentElement as HTMLElement | null;
+            if (panel) panel.style.transition = "none";
+          }}
+          onPointerMove={(e) => {
+            if (!inlineDragging.current) return;
+            const dy = Math.max(0, e.clientY - inlineDragStartY.current);
+            const panel = inlineDragHandleRef.current?.parentElement as HTMLElement | null;
+            if (panel) panel.style.opacity = String(Math.max(0.25, 1 - dy / 160));
+          }}
+          onPointerUp={(e) => {
+            if (!inlineDragging.current) return;
+            inlineDragging.current = false;
+            const dy = e.clientY - inlineDragStartY.current;
+            const panel = inlineDragHandleRef.current?.parentElement as HTMLElement | null;
+            if (dy > 60) {
+              onClose();
+            } else if (panel) {
+              panel.style.transition = "opacity 0.15s";
+              panel.style.opacity = "";
+              setTimeout(() => { if (panel) panel.style.transition = ""; }, 150);
+            }
+          }}
+        >
+          <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "#e0dbd5", margin: "0 auto" }} />
+        </div>
+        {pickerBody}
+      </div>
     );
   }
 
-  // ─── Modal (Sheet) render — unchanged ─────────────────────────────────────
+  // ─── Modal (Drawer) render ─────────────────────────────────────────────────
   return (
-    <Sheet open={slot !== null} onOpenChange={(open) => !open && onClose()}>
-      {/* [&>button.absolute]:hidden suppresses the SheetContent built-in X button */}
-      <SheetContent
-        side="bottom"
-        className="p-0 rounded-t-2xl overflow-hidden sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2 [&>button.absolute]:hidden"
+    <Drawer open={slot !== null} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
+      <DrawerContent
+        className="p-0 overflow-hidden h-[62vh] sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2"
         aria-describedby={undefined}
-        onSwipeClose={onClose}
       >
-        {/* Accessible title (screen-reader only) */}
-        <SheetTitle className="sr-only">{slot ? t(`surface.${slot}`) : ""}</SheetTitle>
-
-        {/* Drag handle */}
-        <div className="w-9 h-1 rounded-full mx-auto mt-2.5" style={{ backgroundColor: "#e0dbd5" }} />
-
-        {/* Header: slot title + close button */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <span className="text-[17px] font-medium" style={{ color: "#1a1a1a" }}>
-            {slot ? t(`surface.${slot}`) : ""}
-          </span>
-          <SheetClose asChild>
-            <button
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#f5f2ef", color: "#6b7280" }}
-            >
-              <X className="w-3.5 h-3.5" strokeWidth={2} />
-            </button>
-          </SheetClose>
-        </div>
-
-        {/* "Material type" label */}
-        <p className="text-[11px] font-medium tracking-[0.06em] uppercase px-4 mt-0.5 mb-2" style={{ color: "#9ca3af" }}>
-          {t("surface.materialType")}
-        </p>
-
-        {/* Archetype chips — horizontal scroll */}
-        <div
-          className="flex gap-2.5 px-4 pb-1 overflow-x-auto"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
-        >
-          {availableWithImages.map(({ archetype, displayImage, resolvedCode, isRecommended }) => {
-            const isActive = !isFirstPick && archetype.id === effectiveActiveId;
-            const hasSelection = selectedId === archetype.id;
-            return (
-              <button
-                key={`chip-${archetype.role}-${archetype.id}`}
-                onClick={() => handleArchetypeClick(archetype.id, resolvedCode)}
-                className="flex flex-col items-center gap-1.5 flex-shrink-0"
-                style={{ opacity: (hasSelection || isActive || isRecommended) ? 1 : 0.45, transition: "opacity 0.15s" }}
-              >
-                <div
-                  className="w-[52px] h-[52px] rounded-xl overflow-hidden relative flex-shrink-0"
-                  style={{
-                    border: (hasSelection || isActive) ? "2px solid #647d75" : "2px solid transparent",
-                    transition: "border-color 0.15s",
-                  }}
-                >
-                  <img src={displayImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
-                  {isRecommended && (
-                    <div className="absolute top-1 inset-x-1 flex justify-center">
-                      <span className="text-[8px] font-medium text-white rounded-full px-1.5 py-0.5 leading-none truncate" style={{ backgroundColor: "rgba(0,0,0,0.72)" }}>
-                        {t("surface.matchingMaterials")}
-                      </span>
-                    </div>
-                  )}
-                  {hasSelection && (
-                    <div
-                      className="absolute bottom-1 right-1 w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: "#647d75" }}
-                    >
-                      <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                    </div>
-                  )}
-                </div>
-                <span
-                  className="text-[11px] whitespace-nowrap leading-none"
-                  style={{
-                    color: (hasSelection || isActive) ? "#1a1a1a" : "#9ca3af",
-                    fontWeight: (hasSelection || isActive) ? 500 : 400,
-                    transition: "color 0.15s",
-                  }}
-                >
-                  {archetype.label[lang]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Variants row — only when changing an existing selection */}
-        {!isFirstPick && activeVariants.length > 0 && (
-          <>
-            <div className="flex items-center justify-between px-4 mt-3.5 mb-2">
-              <span className="text-[11px] font-medium tracking-[0.06em] uppercase" style={{ color: "#9ca3af" }}>
-                {activeArchetypeLabel}
-              </span>
-              <span
-                className="text-[10px] rounded-full px-2 py-0.5"
-                style={{ backgroundColor: "#f3f4f6", color: "#9ca3af" }}
-              >
-                {activeVariants.length}
-              </span>
-            </div>
-
-            <div
-              className="flex gap-2.5 px-4 pb-1 overflow-x-auto"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
-            >
-              {activeVariants.map((v) => (
-                <button
-                  key={v.code}
-                  onClick={() => handleVariantSelect(v.code)}
-                  className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px]"
-                >
-                  <div
-                    className="w-[72px] h-[72px] rounded-[14px] overflow-hidden relative flex-shrink-0"
-                    style={{
-                      border: v.isSelected ? "2px solid #647d75" : "2px solid transparent",
-                      transition: "border-color 0.15s",
-                    }}
-                  >
-                    <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
-                    {v.isRecommended && (
-                      <div className="absolute top-1 inset-x-1 flex justify-center">
-                        <span className="text-[8px] font-medium rounded-full px-1.5 py-0.5 leading-none truncate" style={v.matchesAll ? { backgroundColor: "rgba(0,0,0,0.72)", color: "#ffffff" } : { backgroundColor: "rgba(255,255,255,0.82)", color: "rgba(0,0,0,0.6)" }}>
-                          {t("surface.matchingMaterials")}
-                        </span>
-                      </div>
-                    )}
-                    {v.isSelected && (
-                      <div
-                        className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: "#647d75" }}
-                      >
-                        <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className="text-[11px] w-full text-center truncate leading-tight"
-                    style={{
-                      color: v.isSelected ? "#1a1a1a" : "#9ca3af",
-                      fontWeight: v.isSelected ? 500 : 400,
-                    }}
-                  >
-                    {v.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Remove material button */}
-        {selectedId && onClear && slot && (
-          <button
-            onClick={() => { onClear(slot); onClose(); }}
-            className="mx-4 mt-3.5 mb-4 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl w-[calc(100%-32px)] text-[13px]"
-            style={{
-              border: "0.5px solid #e8e4e0",
-              color: "#9ca3af",
-            }}
-          >
-            <Trash2 className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
-            {t("surface.remove")}
-          </button>
-        )}
-
-        {!(selectedId && onClear && slot) && <div className="pb-4" />}
-      </SheetContent>
-    </Sheet>
+        <DrawerTitle className="sr-only">{slot ? t(`surface.${slot}`) : ""}</DrawerTitle>
+        {pickerBody}
+      </DrawerContent>
+    </Drawer>
   );
 }
