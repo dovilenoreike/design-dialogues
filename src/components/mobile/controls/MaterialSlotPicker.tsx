@@ -586,9 +586,20 @@ export default function MaterialSlotPicker({
       candidatesByDirection.get(c.direction)!.push(c);
     }
 
+    // Does any OTHER placed material share this direction archetype?
+    // e.g. picking first wood when only stone/plain placed → hasSameArchetypeRef = false
+    const hasSameArchetypeRef = (otherMaterialCodes ?? []).some(code => {
+      const mat = graphMaterials?.find(m => m.technicalCode === code);
+      if (!mat) return false;
+      if (effectiveActiveId === 'wood')  return mat.texture === 'wood';
+      if (effectiveActiveId === 'stone') return mat.texture === 'stone' || mat.texture === 'concrete';
+      if (effectiveActiveId === 'plain') return mat.texture === 'plain';
+      return mat.archetypeId === effectiveActiveId;
+    });
+
     // Pass 2: keep only directions that pass the threshold.
     const passingSet = new Set(order.filter(d => {
-      const threshold = directionMinScore(effectiveActiveId, d);
+      const threshold = directionMinScore(effectiveActiveId, d, hasSameArchetypeRef);
       return threshold === 0 || (maxScoreByDirection.get(d) ?? 0) >= threshold;
     }));
 
@@ -980,13 +991,11 @@ export default function MaterialSlotPicker({
 
           <SwatchDivider />
 
-          {availableWithImages.length > 1 && (
           <div className="px-4 pt-3 pb-1 flex-shrink-0">
             <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
               {t("surface.otherOptionsPrefix")}{activeArchetypeLabel}{t("surface.otherOptionsSuffix")}
             </span>
           </div>
-          )}
 
           {/* Direction swatches — one per direction, plus a Browse tab for neutral exploration. */}
           {(directionGroups.length > 0 || hasBrowseGrid) ? (

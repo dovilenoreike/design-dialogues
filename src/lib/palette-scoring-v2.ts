@@ -945,9 +945,23 @@ function computeDirectionScore(
 
 
 /** Minimum directionScore for a direction tab to be visible.
- *  Returns 0 if the direction has no configured threshold (always visible). */
-export function directionMinScore(archetypeId: string, dir: DirectionId): number {
-  return DIRECTION_CONFIGS[archetypeId]?.[dir]?.minScore ?? 0;
+ *  Returns 0 if the direction has no configured threshold (always visible).
+ *
+ *  hasSameArchetypeRef: false when no placed material shares this archetype (e.g. picking the
+ *  first wood when only stone/plain are placed). In that case the direction ref is the palette
+ *  average — a weaker signal — so tonal_match is relaxed to avoid hiding valid options. */
+export function directionMinScore(
+  archetypeId: string,
+  dir: DirectionId,
+  hasSameArchetypeRef = true,
+): number {
+  const base = DIRECTION_CONFIGS[archetypeId]?.[dir]?.minScore ?? 0;
+  if (!hasSameArchetypeRef && dir === 'tonal_match') {
+    // Scoring wood-against-stone-average naturally yields lower scores than wood-against-wood.
+    // Cap at 0.75 so medium-quality options aren't hidden when no same-archetype ref exists.
+    return Math.min(base, 0.75);
+  }
+  return base;
 }
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
