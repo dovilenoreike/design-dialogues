@@ -364,7 +364,7 @@ export default function KonceptasView({
                   <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                 </button>
               )}
-              {(showVerified || (showWoodWarning && !showNudge) || (showBusyPatternWarning && !showNudge)) && (
+              {showVerified && (
                 <div className="absolute top-1 left-1 flex items-center gap-0.5" style={{ zIndex: 1 }}>
                   {showVerified && (
                     <HybridTooltip
@@ -381,36 +381,6 @@ export default function KonceptasView({
                           ? <CheckCheck className="w-3.5 h-3.5" style={{ color: '#ffffff', opacity: 0.65 }} strokeWidth={2} />
                           : <Check className="w-3 h-3" style={{ color: '#ffffff', opacity: 0.5 }} strokeWidth={2} />
                         }
-                      </button>
-                    </HybridTooltip>
-                  )}
-                  {showWoodWarning && !showNudge && (
-                    <HybridTooltip
-                      side="bottom"
-                      content={
-                        <div className="max-w-[180px]">
-                          <p className="font-medium text-xs">{t("moodboard.infoWoodWarningTitle")}</p>
-                          <p className="text-xs opacity-75 mt-0.5">{t("moodboard.infoWoodWarningDesc")}</p>
-                        </div>
-                      }
-                    >
-                      <button onClick={(e) => e.stopPropagation()} className="flex items-center">
-                        <AlertTriangle className="w-3 h-3" style={{ color: '#ca8a04', opacity: 0.85 }} strokeWidth={2} />
-                      </button>
-                    </HybridTooltip>
-                  )}
-                  {showBusyPatternWarning && !showNudge && (
-                    <HybridTooltip
-                      side="bottom"
-                      content={
-                        <div className="max-w-[180px]">
-                          <p className="font-medium text-xs">{t("moodboard.infoBusyPatternWarningTitle")}</p>
-                          <p className="text-xs opacity-75 mt-0.5">{t("moodboard.infoBusyPatternWarningDesc")}</p>
-                        </div>
-                      }
-                    >
-                      <button onClick={(e) => e.stopPropagation()} className="flex items-center">
-                        <AlertTriangle className="w-3 h-3" style={{ color: '#ca8a04', opacity: 0.85 }} strokeWidth={2} />
                       </button>
                     </HybridTooltip>
                   )}
