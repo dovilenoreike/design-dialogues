@@ -1431,5 +1431,11 @@
       "label": "Medienos tonų neatitikimas",
       "desc": "Dvi ar daugiau medinių medžiagų su pastebiamai skirtingu šilumos tonu. Patikrinkite, ar jos gerai dera kartu su fiziniais pavyzdžiais."
     }
+  },
+  "collection": {
+    "saveChangesTitle": "Išsaugoti pakeitimus?",
+    "saveChangesDesc": "Pakeitėte šią kolekciją. Išsaugoti ją prieš tęsiant?",
+    "saveToCollection": "Išsaugoti į kolekciją",
+    "discard": "Atmesti"
   }
 }

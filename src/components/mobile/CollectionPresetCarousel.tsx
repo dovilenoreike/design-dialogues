@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { ChevronLeft, ChevronRight, Heart, Pencil } from "lucide-react";
 import { useCollectionPresets } from "@/hooks/useCollectionPresets";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -11,7 +11,7 @@ interface CollectionPresetCarouselProps {
   /** Room category from design state, e.g. "Kitchen", "Living Room" */
   roomCategory: string | null;
   /** Called when a preset is selected — replaces materialOverrides with preset materials */
-  onApplyPreset: (materials: Record<string, string>, imageUrl: string | null, designer: string | null) => void;
+  onApplyPreset: (materials: Record<string, string>, imageUrl: string | null, designer: string | null, isUserCollectionRestore?: boolean) => void;
   /** Whether the user already has materials set (prevents auto-applying on mount) */
   hasExistingMaterials: boolean;
   /** When true the user has changed materials — show "Your collection" instead of preset name */
@@ -23,7 +23,19 @@ interface CollectionPresetCarouselProps {
   variant?: "overlay" | "header";
   /** User-saved palettes — prepended to the carousel with a heart badge */
   savedPalettes?: SavedPalette[];
+  /** Auto-snapshot of the user's own work, captured before their first curated-preset swap */
+  userCollectionSnapshot?: Record<string, string> | null;
 }
+
+type CarouselItem = {
+  id: string;
+  name: { en: string; lt: string };
+  image_url: string | null;
+  materials: Record<string, string>;
+  isSaved: boolean;
+  isUserCollection: boolean;
+  designer?: string | null;
+};
 
 export default function CollectionPresetCarousel({
   roomCategory,
@@ -32,6 +44,7 @@ export default function CollectionPresetCarousel({
   isModified = false,
   variant = "overlay",
   savedPalettes = [],
+  userCollectionSnapshot = null,
 }: CollectionPresetCarouselProps) {
   const { language } = useLanguage();
   const { activeShowroom } = useShowroom();
@@ -68,25 +81,33 @@ export default function CollectionPresetCarousel({
     );
   }, [presets, activeShowroom, graphLoading]);
 
+  // Merge: "Your collection" snapshot first (when present), then saved palettes, then curated presets
+  const allItems = useMemo((): CarouselItem[] => {
+    const userCollItem: CarouselItem[] = userCollectionSnapshot
+      ? [{ id: '__user__', name: { en: 'Your collection', lt: 'Tavo derinys' }, image_url: null, materials: userCollectionSnapshot, isSaved: false, isUserCollection: true }]
+      : [];
+    return [
+      ...userCollItem,
+      ...savedPalettes.map((p): CarouselItem => ({ id: p.id, name: { en: 'My palette', lt: 'Mano derinys' }, image_url: null, materials: p.materials, isSaved: true, isUserCollection: false })),
+      ...filteredPresets.map((p): CarouselItem => ({ id: p.id, name: p.name, image_url: p.image_url ?? null, materials: p.materials, isSaved: false, isUserCollection: false, designer: p.designer ?? null })),
+    ];
+  }, [userCollectionSnapshot, savedPalettes, filteredPresets]);
+
   const applyAt = (next: number) => {
+    if (!allItems[next]) return;
     setIndex(next);
     try { localStorage.setItem(indexKey, String(next)); } catch {}
-    // allItems isn't available here yet (defined below), so we recalculate inline
-    const items = [
-      ...savedPalettes.map((p) => ({ materials: p.materials, image_url: null as string | null, designer: null as string | null })),
-      ...filteredPresets.map((p) => ({ ...p, designer: p.designer ?? null })),
-    ];
-    if (!items[next]) return;
+    const item = allItems[next];
     // Remap any material codes to their showroom synonym where applicable
     const materials = activeShowroom
       ? Object.fromEntries(
-          Object.entries(items[next].materials).map(([slot, code]) => [
+          Object.entries(item.materials).map(([slot, code]) => [
             slot,
             resolveCodeForShowroom(code, activeShowroom.id),
           ])
         )
-      : items[next].materials;
-    onApplyPreset(materials, items[next].image_url ?? null, items[next].designer);
+      : item.materials;
+    onApplyPreset(materials, item.image_url ?? null, item.designer ?? null, item.isUserCollection);
   };
 
   // Auto-apply the first preset when presets load and user has no materials yet.
@@ -94,17 +115,17 @@ export default function CollectionPresetCarousel({
   // Skip if the user explicitly reset — they want an empty state across reloads.
   useEffect(() => {
     const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
-    if (!loading && !graphLoading && filteredPresets.length > 0 && !hasExistingMaterials && !userExplicitlyReset) {
+    if (!loading && !graphLoading && allItems.length > 0 && !hasExistingMaterials && !userExplicitlyReset) {
       applyAt(0);
     }
   }, [loading, graphLoading, filteredPresets]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Clamp index if filteredPresets shrinks (e.g. after graph loads and filters apply)
+  // Clamp index if allItems shrinks (e.g. after graph loads and filters apply)
   useEffect(() => {
-    if (filteredPresets.length > 0 && index >= filteredPresets.length) {
+    if (allItems.length > 0 && index >= allItems.length) {
       setIndex(0);
     }
-  }, [filteredPresets.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allItems.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset index when category changes
   useEffect(() => {
@@ -116,24 +137,34 @@ export default function CollectionPresetCarousel({
     }
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Merge: saved palettes first, then curated presets
-  const allItems = useMemo(() => [
-    ...savedPalettes.map((p) => ({
-      id: p.id,
-      name: { en: "My palette", lt: "Mano derinys" },
-      image_url: null as string | null,
-      materials: p.materials,
-      isSaved: true,
-    })),
-    ...filteredPresets.map((p) => ({ ...p, isSaved: false })),
-  ], [savedPalettes, filteredPresets]);
+  // Shift index when "Your collection" item appears or disappears (inserted at position 0)
+  const prevSnapshotRef = useRef(userCollectionSnapshot);
+  useEffect(() => {
+    const wasNull = prevSnapshotRef.current == null;
+    const isNow = userCollectionSnapshot != null;
+    if (wasNull && isNow) {
+      setIndex(i => {
+        const next = i + 1;
+        try { localStorage.setItem(indexKey, String(next)); } catch {}
+        return next;
+      });
+    }
+    if (!wasNull && !isNow) {
+      setIndex(i => {
+        const next = Math.max(0, i - 1);
+        try { localStorage.setItem(indexKey, String(next)); } catch {}
+        return next;
+      });
+    }
+    prevSnapshotRef.current = userCollectionSnapshot;
+  }, [userCollectionSnapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Hide while loading, or while graph is still loading in showroom mode (can't filter yet)
   if (loading || (activeShowroom && graphLoading) || allItems.length === 0) return null;
 
-  const preset = allItems[Math.min(index, allItems.length - 1)];
-  const presetName = (language === "lt" ? preset.name?.lt : preset.name?.en) ?? preset.id;
-  const name = isModified && !preset.isSaved
+  const item = allItems[Math.min(index, allItems.length - 1)];
+  const presetName = (language === "lt" ? item.name?.lt : item.name?.en) ?? item.id;
+  const name = isModified && !item.isSaved && !item.isUserCollection
     ? (language === "lt" ? "Tavo derinys" : "Your collection")
     : presetName;
 
@@ -152,7 +183,8 @@ export default function CollectionPresetCarousel({
           <ChevronLeft className="w-4 h-4 text-foreground/60" strokeWidth={1.5} />
         </button>
         <span className="w-40 flex items-center justify-center gap-1 text-[12px] font-medium tracking-[0.04em] text-foreground/70 select-none uppercase truncate">
-          {preset.isSaved && <Heart className="w-3 h-3 flex-shrink-0" style={{ color: "#647d75" }} fill="#647d75" strokeWidth={0} />}
+          {item.isUserCollection && <Pencil className="w-3 h-3 flex-shrink-0" style={{ color: "#647d75" }} strokeWidth={1.5} />}
+          {item.isSaved && <Heart className="w-3 h-3 flex-shrink-0" style={{ color: "#647d75" }} fill="#647d75" strokeWidth={0} />}
           {name}
         </span>
         <button
@@ -179,7 +211,8 @@ export default function CollectionPresetCarousel({
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
         <span className="flex items-center gap-1 text-sm font-medium text-white select-none [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">
-          {preset.isSaved && <Heart className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" strokeWidth={0} />}
+          {item.isUserCollection && <Pencil className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />}
+          {item.isSaved && <Heart className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" strokeWidth={0} />}
           {name}
         </span>
         <button

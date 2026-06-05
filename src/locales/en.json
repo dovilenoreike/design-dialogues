@@ -1430,5 +1430,11 @@
       "label": "Wood tone mismatch",
       "desc": "Two or more wood materials with noticeably different warmth tones. Check they sit well together on a physical sample board."
     }
+  },
+  "collection": {
+    "saveChangesTitle": "Save your changes?",
+    "saveChangesDesc": "You've edited this collection. Save it to your palette before continuing?",
+    "saveToCollection": "Save to my collection",
+    "discard": "Discard"
   }
 }

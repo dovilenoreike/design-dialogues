@@ -94,6 +94,13 @@ export default function DesignView() {
   const [pendingOptionalSlot, setPendingOptionalSlot] = useState<SlotKey | null>(null);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
   const [activePresetDesigner, setActivePresetDesigner] = useState<string | null>(null);
+  type PendingPreset = { materials: Record<string, string>; imageUrl: string | null; designer: string | null; isUserCollectionRestore: boolean };
+  const [pendingPreset, setPendingPreset] = useState<PendingPreset | null>(null);
+  // True after the user taps a material slot; reset to false on every carousel navigation.
+  // Used to gate the "save before navigating" dialog — only show when user actively changed something.
+  const userMadePicksRef = useRef(false);
+  // True when the active carousel item is "Your collection" — navigating away should silently update the snapshot, never prompt.
+  const isOnUserCollectionRef = useRef(false);
 
   // Tracks slots the user has explicitly picked (via picker or collection apply).
   // Never populated by the materialOverrides sync effect — this is the authoritative
@@ -152,7 +159,11 @@ export default function DesignView() {
   );
   const [collectionSlots, setCollectionSlots] = useState<Set<string>>(new Set());
   const [wasReset, setWasReset] = useState(false);
+  const [userCollectionSnapshot, setUserCollectionSnapshot] = useState<Record<string, string> | null>(() => {
+    try { const r = localStorage.getItem("user-collection-snapshot"); return r ? JSON.parse(r) : null; } catch { return null; }
+  });
   const presetIsActive = !!presetImageUrl;
+  const isModified = wasReset || (!presetIsActive && Object.keys(materialOverrides).length > 0);
 
   // Persist preset image URL whenever it changes
   useEffect(() => {
@@ -380,6 +391,7 @@ export default function DesignView() {
 
   const handleSlotSelect = useCallback(
     (slotKey: SlotKey, archetypeId: string, resolvedCode?: string) => {
+      userMadePicksRef.current = true;
       setSlotSelections((prev) => {
         trackEvent(AnalyticsEvents.MOODBOARD_MATERIAL_SELECTED, {
           slot: slotKey,
@@ -448,10 +460,12 @@ export default function DesignView() {
     setCollectionSlots(new Set());
     setUserPickedSlots(new Set());
     setWasReset(true);
+    setUserCollectionSnapshot(null);
     try {
       localStorage.removeItem("preset-image-url");
       localStorage.removeItem("preset-materials-snapshot");
       localStorage.removeItem("user-picked-slots");
+      localStorage.removeItem("user-collection-snapshot");
       localStorage.setItem("materials-reset", "1");
     } catch {}
   }, [setMaterialOverrides, slotSurfaces]);
@@ -666,6 +680,43 @@ export default function DesignView() {
     });
   }, [allSlotsFilled, activeSlots, materialOverrides, isCompatibleWithOthers]);
 
+  const applyPreset = useCallback((materials: Record<string, string>, imageUrl: string | null, designer: string | null, isUserCollectionRestore: boolean) => {
+    userMadePicksRef.current = false;
+    isOnUserCollectionRef.current = isUserCollectionRestore;
+    if (!isUserCollectionRestore && isModified && !userCollectionSnapshot && Object.keys(materialOverrides).length > 0) {
+      setUserCollectionSnapshot(materialOverrides);
+      try { localStorage.setItem("user-collection-snapshot", JSON.stringify(materialOverrides)); } catch {}
+    }
+    setMaterialOverrides(materials);
+    setActivePresetDesigner(designer && designer !== "dizaino_dialogai" ? designer : null);
+    const defaultPkToSlot: Record<string, SlotKey> = Object.fromEntries(
+      (Object.entries(DEFAULT_SLOT_SURFACES) as [SlotKey, string[]][])
+        .flatMap(([slot, pks]) => pks.map((pk) => [pk, slot]))
+    );
+    const coveredSlots = new Set(
+      Object.keys(materials)
+        .map((pk) => defaultPkToSlot[pk])
+        .filter((s): s is SlotKey => !!s)
+    );
+    setEnabledOptionalSlots(new Set(OPTIONAL_SLOTS.filter(s => coveredSlots.has(s))));
+    setSlotSurfaces(prev => {
+      const next = { ...prev };
+      for (const slot of coveredSlots) next[slot] = DEFAULT_SLOT_SURFACES[slot];
+      return next;
+    });
+    setCollectionSlots(coveredSlots);
+    setPresetImageUrl(imageUrl);
+    presetMaterialsRef.current = materials;
+    setUserPickedSlots(new Set([...coveredSlots] as SlotKey[]));
+    setWasReset(false);
+    try {
+      if (imageUrl) localStorage.setItem("preset-image-url", imageUrl);
+      else localStorage.removeItem("preset-image-url");
+      localStorage.setItem("preset-materials-snapshot", JSON.stringify(materials));
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModified, userCollectionSnapshot, materialOverrides]);
+
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden lg:flex-row">
 
@@ -681,46 +732,27 @@ export default function DesignView() {
           <div className={activeSlot ? "hidden lg:block" : ""}>
           <CollectionPresetCarousel
             roomCategory={design.selectedCategory}
-            onApplyPreset={(materials, imageUrl, designer) => {
-              setMaterialOverrides(materials);
-              setActivePresetDesigner(designer && designer !== "dizaino_dialogai" ? designer : null);
-
-              // Derive covered slots via DEFAULT_SLOT_SURFACES (not user-modified slotSurfaces)
-              const defaultPkToSlot: Record<string, SlotKey> = Object.fromEntries(
-                (Object.entries(DEFAULT_SLOT_SURFACES) as [SlotKey, string[]][])
-                  .flatMap(([slot, pks]) => pks.map((pk) => [pk, slot]))
-              );
-              const coveredSlots = new Set(
-                Object.keys(materials)
-                  .map((pk) => defaultPkToSlot[pk])
-                  .filter((s): s is SlotKey => !!s)
-              );
-
-              // Re-enable every optional slot the collection covers (even if user had removed it)
-              setEnabledOptionalSlots(new Set(OPTIONAL_SLOTS.filter(s => coveredSlots.has(s))));
-
-              // Reset surface assignments to defaults so palette key mapping stays clean
-              setSlotSurfaces(prev => {
-                const next = { ...prev };
-                for (const slot of coveredSlots) next[slot] = DEFAULT_SLOT_SURFACES[slot];
-                return next;
-              });
-
-              setCollectionSlots(coveredSlots);
-              setPresetImageUrl(imageUrl);
-              presetMaterialsRef.current = materials;
-              setUserPickedSlots(new Set([...coveredSlots] as SlotKey[]));
-              setWasReset(false);
-              try {
-                if (imageUrl) localStorage.setItem("preset-image-url", imageUrl);
-                else localStorage.removeItem("preset-image-url");
-                localStorage.setItem("preset-materials-snapshot", JSON.stringify(materials));
-              } catch {}
+            onApplyPreset={(materials, imageUrl, designer, isUserCollectionRestore = false) => {
+              if (isOnUserCollectionRef.current && !isUserCollectionRestore) {
+                // Navigating away from "Your collection" — silently save edits to snapshot then navigate
+                if (userMadePicksRef.current && Object.keys(materialOverrides).length > 0) {
+                  setUserCollectionSnapshot(materialOverrides);
+                  try { localStorage.setItem("user-collection-snapshot", JSON.stringify(materialOverrides)); } catch {}
+                }
+                applyPreset(materials, imageUrl, designer, isUserCollectionRestore);
+                return;
+              }
+              if (userMadePicksRef.current && !isUserCollectionRestore) {
+                setPendingPreset({ materials, imageUrl, designer, isUserCollectionRestore });
+                return;
+              }
+              applyPreset(materials, imageUrl, designer, isUserCollectionRestore);
             }}
             hasExistingMaterials={Object.keys(materialOverrides).length > 0}
-            isModified={wasReset || (!presetIsActive && Object.keys(materialOverrides).length > 0)}
+            isModified={isModified}
             variant="header"
             savedPalettes={savedPalettes}
+            userCollectionSnapshot={userCollectionSnapshot}
           />
           </div>{/* end carousel hide wrapper */}
 
@@ -1063,6 +1095,44 @@ export default function DesignView() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Save-before-navigating dialog */}
+      <Dialog open={!!pendingPreset} onOpenChange={(open) => { if (!open) setPendingPreset(null); }}>
+        <DialogContent className="max-w-xs rounded-2xl px-6 py-6">
+          <DialogHeader>
+            <DialogTitle className="text-[14px] font-semibold">
+              {t("collection.saveChangesTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-[13px] leading-snug mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>
+            {t("collection.saveChangesDesc")}
+          </p>
+          <div className="flex flex-col gap-2 mt-4">
+            <button
+              onClick={() => {
+                savePalette(materialOverrides, design.selectedCategory, activeShowroom?.id ?? null);
+                if (pendingPreset) applyPreset(pendingPreset.materials, pendingPreset.imageUrl, pendingPreset.designer, pendingPreset.isUserCollectionRestore);
+                setPendingPreset(null);
+              }}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-[13px] font-medium"
+              style={{ backgroundColor: "#647d75", color: "#fff" }}
+            >
+              <Heart className="w-3.5 h-3.5" fill="currentColor" strokeWidth={0} />
+              {t("collection.saveToCollection")}
+            </button>
+            <button
+              onClick={() => {
+                if (pendingPreset) applyPreset(pendingPreset.materials, pendingPreset.imageUrl, pendingPreset.designer, pendingPreset.isUserCollectionRestore);
+                setPendingPreset(null);
+              }}
+              className="w-full py-2.5 rounded-full text-[13px]"
+              style={{ color: "rgba(0,0,0,0.45)" }}
+            >
+              {t("collection.discard")}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
