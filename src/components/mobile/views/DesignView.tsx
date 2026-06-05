@@ -922,6 +922,15 @@ export default function DesignView() {
             filterEmptyArchetypes={!graphLoading}
             isCompatibleWithOthers={isCompatibleWithOthers}
             isCompatibleWithEvery={isCompatibleWithEvery}
+            surfaceSummary={(() => {
+              const assignedPks = slotSurfaces[activeSlot] ?? [];
+              const slotRole = SLOT_KEY_TO_ROLE[activeSlot];
+              const allForRole = Object.entries(surfaces)
+                .filter(([, def]) => def.category === slotRole)
+                .map(([pk]) => pk);
+              if (allForRole.length <= 1) return undefined;
+              return assignedPks.map(pk => t(`surface.${pk}`)).join(' · ');
+            })()}
             subHeader={(() => {
               const assignedPks = slotSurfaces[activeSlot] ?? [];
               const slotRole = SLOT_KEY_TO_ROLE[activeSlot];

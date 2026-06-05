@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Check, Trash2, X, Search } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
@@ -49,6 +49,8 @@ interface MaterialSlotPickerProps {
   inline?: boolean;
   /** Optional node rendered between the inline header and the swatch content (e.g. surface type pills) */
   subHeader?: React.ReactNode;
+  /** Short summary of assigned surfaces for the mobile collapsed footer, e.g. "Fronts I · Fronts II" */
+  surfaceSummary?: string;
   /** V badge — compatible with most other selected materials */
   isCompatibleWithOthers?: (code: string, otherCodes: string[]) => boolean;
   /** VV badge — compatible with ALL other selected materials */
@@ -96,6 +98,7 @@ export default function MaterialSlotPicker({
   filterEmptyArchetypes = false,
   inline = false,
   subHeader,
+  surfaceSummary,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -104,6 +107,8 @@ export default function MaterialSlotPicker({
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Mobile progressive-disclosure step
   const [step, setStep] = useState<'archetypes' | 'directions' | 'shades' | 'browse'>('archetypes');
+  // Mobile surface config footer
+  const [surfacesOpen, setSurfacesOpen] = useState(false);
   // Code search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,6 +134,7 @@ export default function MaterialSlotPicker({
   useEffect(() => {
     setActiveArchetypeId(null);
     setStep('archetypes');
+    setSurfacesOpen(false);
     setSearchOpen(false);
     setSearchQuery("");
     setShowRequestDialog(false);
@@ -755,10 +761,19 @@ export default function MaterialSlotPicker({
     setTimeout(onClose, 200);
   };
 
+  const isAtFirstStep =
+    step === 'archetypes' ||
+    (step === 'directions' && availableWithImages.length <= 1) ||
+    (step === 'shades' && availableWithImages.length <= 1 && directionGroups.length <= 1);
+
   const goBack = () => {
     if (step === 'browse') { setStep('shades'); return; }
-    if (step === 'shades') { setStep('directions'); return; }
-    if (step === 'directions') { setStep('archetypes'); return; }
+    if (step === 'shades') {
+      if (directionGroups.length > 1) { setStep('directions'); return; }
+      if (availableWithImages.length > 1) { setStep('archetypes'); return; }
+      onClose(); return;
+    }
+    if (step === 'directions' && availableWithImages.length > 1) { setStep('archetypes'); return; }
     onClose();
   };
 
@@ -768,9 +783,22 @@ export default function MaterialSlotPicker({
     const single = availableWithImages[0];
     const bestCode = bestCodeByArchetypeId.get(single.archetype.id) ?? single.resolvedCode;
     setActiveArchetypeId(single.archetype.id);
-    if (slot && bestCode) onSelect(slot, single.archetype.id, bestCode);
+    if (slot && bestCode && !selectedMaterialCode) onSelect(slot, single.archetype.id, bestCode);
     setStep('directions');
   }, [inline, step, availableWithImages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-advance to shades when only one direction exists
+  useEffect(() => {
+    if (inline || step !== 'directions' || !effectiveActiveId) return;
+    if ((graphMaterials?.length ?? 0) === 0) return;
+    if (directionGroups.length === 1) {
+      const [dir, entry] = directionGroups[0];
+      setActiveDirection(dir);
+      setActiveScoringDirection(dir);
+      if (slot && effectiveActiveId && entry && !selectedMaterialCode) onSelect(slot, effectiveActiveId, entry.code);
+      setStep('shades');
+    }
+  }, [inline, step, effectiveActiveId, directionGroups.length, graphMaterials?.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-advance to browse when no directions qualify for the active archetype
   useEffect(() => {
@@ -1407,7 +1435,7 @@ export default function MaterialSlotPicker({
           >
             <ArrowLeft size={13} strokeWidth={1.8} />
             <span className="text-[13px]">
-              {effectiveStep === 'archetypes' ? t('surface.close') : t('surface.back')}
+              {isAtFirstStep ? t('surface.close') : t('surface.back')}
             </span>
           </button>
           <span className="text-[13px] font-medium flex-1 text-center truncate" style={{ color: '#1a1a1a' }}>
@@ -1436,9 +1464,6 @@ export default function MaterialSlotPicker({
           </div>
         </div>
         </div>{/* end swipe zone */}
-
-        {/* Surface type pills */}
-        {subHeader}
 
         {/* Search input — shown when search is open, replaces step content */}
         {searchOpen && (
@@ -1707,6 +1732,25 @@ export default function MaterialSlotPicker({
           )}
 
         </div>}
+
+        {/* Surface config footer — collapsed by default, expands on tap */}
+        {subHeader && surfaceSummary && (
+          <div style={{ borderTop: '0.5px solid #e8e4e0' }}>
+            {surfacesOpen && (
+              <div className="px-2 pt-2 pb-1">
+                {subHeader}
+              </div>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setSurfacesOpen(v => !v); }}
+              className="flex items-center gap-1.5 w-full px-4 py-2.5 active:opacity-60 transition-opacity"
+              style={{ color: 'rgba(0,0,0,0.38)' }}
+            >
+              <Pencil className="w-3 h-3 flex-shrink-0" strokeWidth={1.6} />
+              <span className="text-[11px] truncate">{surfaceSummary}</span>
+            </button>
+          </div>
+        )}
       </div>
     </>,
     document.body
