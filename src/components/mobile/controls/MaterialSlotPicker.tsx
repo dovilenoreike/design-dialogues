@@ -1461,6 +1461,16 @@ export default function MaterialSlotPicker({
                 <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
               </button>
             )}
+            {!searchOpen && (
+              <button
+                onClick={onClose}
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#f5f2ef" }}
+                aria-label="Close picker"
+              >
+                <X className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+              </button>
+            )}
           </div>
         </div>
         </div>{/* end swipe zone */}
