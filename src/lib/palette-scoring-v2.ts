@@ -807,21 +807,21 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
       W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2 },
       C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
-      minScore: 0.95,  // exploratory — just needs something lighter in the pool
+      minScore: 0.93,  // exploratory — just needs something lighter in the pool
     },
     darker_echo: {
       L: { weight: 1.1, idealDelta: -0.15, refK: -0.1},
       W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.2 },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
-      minScore: 0.94,
+      minScore: 0.93,
     },
     soft_contrast: {
       L: { weight: 1.1, idealDelta: 0.35, absDeviation: true },
       W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.2  },
       C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
       H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
-      minScore: 0.95,  // very permissive direction — almost always valid if contrast materials exist
+      minScore: 0.9,  // very permissive direction — almost always valid if contrast materials exist
     },
   },
 };
