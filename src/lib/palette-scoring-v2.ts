@@ -745,10 +745,10 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     },
     pastel: {
       L: { weight: 1, idealDelta: +0.20 },
-      C: { weight: 1, idealDelta: +0 },
+      C: { weight: 1, idealDelta: -0.10 },
       H: { weight: 1.5, idealDeg: +30 },
       minAbsC: 10,
-      minScore: 0.28,  // direction only makes sense with visibly coloured candidates
+      minScore: 0.999,  // direction only makes sense with visibly coloured candidates
     },
     rich_colour: {
       C: { weight: 0.6, idealDelta: +0.10, wrongDirMultiplier: 2.0 },
