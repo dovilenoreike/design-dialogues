@@ -17,12 +17,8 @@ export const archetypes: Archetype[] = [
   { id: "plain",    role: "worktop", label: { en: "Plain", lt: "Lygūs"   }, value: "#d8d6d0" },
   { id: "metallic", role: "worktop", label: { en: "Metal", lt: "Metalas" }, value: "#b0b4bc" },
 
-  // ── Accent (5) ────────────────────────────────────────────────────────────
-  { id: "gold",   role: "accent", label: { en: "Gold",   lt: "Auksiniai"   }, value: "#c8a84c" },
-  { id: "silver", role: "accent", label: { en: "Silver", lt: "Sidabriniai" }, value: "#c0c4cc" },
-  { id: "bronze", role: "accent", label: { en: "Bronze", lt: "Bronziniai"  }, value: "#8c7055" },
-  { id: "black",  role: "accent", label: { en: "Black",  lt: "Juodi"       }, value: "#1a1a1a" },
-  { id: "colour", role: "accent", label: { en: "Colour", lt: "Spalvoti"    }, value: "#5c1a1a" },
+  // ── Accent (1) ────────────────────────────────────────────────────────────
+  { id: "metallic", role: "accent", label: { en: "Metallic", lt: "Metaliniai" }, value: "#c0c4cc" },
 ];
 
 export function getArchetypeById(id: string, role?: MaterialRole): Archetype | undefined {

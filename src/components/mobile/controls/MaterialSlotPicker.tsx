@@ -246,7 +246,9 @@ export default function MaterialSlotPicker({
     return getArchetypesByRole(role)
       .map((a) => {
         const archetypeMats = mats.filter((m) =>
-          (isPlainFrontChip(a.id, role) ? m.texture === 'plain' : m.archetypeId === a.id) && m.role.includes(role)
+          (isPlainFrontChip(a.id, role) ? m.texture === 'plain' :
+           a.id === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+           m.archetypeId === a.id) && m.role.includes(role)
         );
         const recommendedMat = archetypeMats.find((m) => recommendedCodes.has(m.technicalCode));
 
@@ -364,7 +366,9 @@ export default function MaterialSlotPicker({
     if (!slot || !effectiveActiveId || !graphMaterials?.length) return [];
     const role = SLOT_KEY_TO_ROLE[slot];
     return graphMaterials.filter(m =>
-      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' : m.archetypeId === effectiveActiveId)
+      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' :
+       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+       m.archetypeId === effectiveActiveId)
       && m.role.includes(role) && !!m.imageUrl
     );
   }, [slot, effectiveActiveId, graphMaterials]);
@@ -373,7 +377,10 @@ export default function MaterialSlotPicker({
   const effectiveGridCenter = useMemo((): SupabaseMaterial | null => {
     const role = slot ? SLOT_KEY_TO_ROLE[slot] : '';
     const plainChip = isPlainFrontChip(effectiveActiveId, role);
-    const inChip = (m: SupabaseMaterial) => plainChip ? m.texture === 'plain' : m.archetypeId === effectiveActiveId;
+    const inChip = (m: SupabaseMaterial) =>
+      plainChip ? m.texture === 'plain' :
+      effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+      m.archetypeId === effectiveActiveId;
     // User-navigated center
     if (gridCenterCode) {
       const m = graphMaterials?.find(m => m.technicalCode === gridCenterCode);
@@ -537,7 +544,9 @@ export default function MaterialSlotPicker({
     const role = SLOT_KEY_TO_ROLE[slot];
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
     const candidates = filteredMaterials.filter(m =>
-      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' : m.archetypeId === effectiveActiveId) &&
+      (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' :
+       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+       m.archetypeId === effectiveActiveId) &&
       m.role.includes(role) &&
       m.imageUrl &&
       m.technicalCode !== row1Code &&
@@ -742,11 +751,6 @@ export default function MaterialSlotPicker({
 
   // ─── Modal-mode handlers ──────────────────────────────────────────────────
   const handleArchetypeClick = (archetypeId: string, resolvedCode?: string) => {
-    if (slot && SLOT_KEY_TO_ROLE[slot] === "accent") {
-      onSelect(slot, archetypeId, archetypeId);
-      setTimeout(onClose, 200);
-      return;
-    }
     if (isFirstPick) {
       onSelect(slot!, archetypeId, resolvedCode);
       setTimeout(onClose, 200);

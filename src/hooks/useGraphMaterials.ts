@@ -491,6 +491,8 @@ export function useGraphMaterials() {
       if (chipArchetypeId) {
         if (chipArchetypeId === 'plain') {
           if (m.texture !== 'plain') return false;
+        } else if (chipArchetypeId === 'metallic') {
+          if (m.texture !== 'metal') return false;
         } else if (m.archetypeId !== chipArchetypeId) {
           return false;
         }

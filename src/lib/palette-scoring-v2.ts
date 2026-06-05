@@ -386,9 +386,6 @@ export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   metallic: ['metal'],
-  gold:     ['metal'],
-  silver:   ['metal'],
-  bronze:   ['metal'],
 };
 
 // Default direction shown on the archetype chip before any materials are placed.
@@ -408,9 +405,6 @@ export const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
   metallic: ['metal'],
-  gold:     ['metal'],
-  silver:   ['metal'],
-  bronze:   ['metal'],
 };
 
 // Resolve which direction family applies. Prefer the explicit chip routing
@@ -422,6 +416,7 @@ function archetypeForDirections(c: GraphMaterial, chipArchetypeId?: string | nul
   const fromTexture = c.texture === 'plain' ? 'plain'
                     : c.texture === 'wood'  ? 'wood'
                     : (c.texture === 'stone' || c.texture === 'concrete') ? 'stone'
+                    : c.texture === 'metal' ? 'metallic'
                     : null;
   return fromTexture && known(fromTexture) ? fromTexture : null;
 }
@@ -705,7 +700,7 @@ interface DirectionConfig {
 }
 
 const METAL_DIRECTION_CONFIG: DirectionConfig = {
-  L: { weight: 0.4, idealDelta: 0 },
+  L: { weight: 0.2, idealDelta: 0 },
   W: { weight: 0.4, idealDelta: 0 },
   H: { weight: 1,   idealDeg:   0 },
   minScore: 0.30,
