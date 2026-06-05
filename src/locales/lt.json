@@ -202,6 +202,9 @@
     "searchByCode": "Ieškoti pagal kodą…",
     "searchNoResults": "Medžiagų šiuo kodu nerasta.",
     "bestMatch": "Top",
+    "browseAll": "Naršyti visus",
+    "back": "Atgal",
+    "close": "Uždaryti",
     "exploreSimilar": "Panašūs atspalviai",
     "direction": {
       "tonalMatch": "Atitikmuo",

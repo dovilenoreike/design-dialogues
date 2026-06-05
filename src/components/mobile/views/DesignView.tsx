@@ -675,14 +675,7 @@ export default function DesignView() {
         className={`${activeSlot && !isMobile ? "h-[180px] overflow-hidden flex-shrink-0 cursor-pointer relative" : "flex-1 min-h-0 overflow-y-auto"} lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-y-auto lg:cursor-auto lg:h-auto`}
         onClick={() => setActiveSlot(null)}
       >
-        {/* Bottom fade to indicate the peek is clipped — mobile only, when picker is open */}
-        {activeSlot && (
-          <div
-            className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none lg:hidden"
-            style={{ background: "linear-gradient(to bottom, transparent, rgba(249,248,247,0.92))" }}
-          />
-        )}
-        <div className={`px-4 ${activeSlot ? "pt-1" : "pt-3"} pb-4 lg:px-8 lg:py-6`}>
+        <div className={`px-4 ${activeSlot ? "pt-1" : "pt-3"} lg:px-8 lg:py-6`} style={{ paddingBottom: activeSlot && isMobile ? '160px' : undefined }}>
 
           {/* Collection carousel — hidden during peek (picker open on mobile) */}
           <div className={activeSlot ? "hidden lg:block" : ""}>

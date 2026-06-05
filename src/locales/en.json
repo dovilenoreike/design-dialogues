@@ -202,6 +202,9 @@
     "searchByCode": "Search by code…",
     "searchNoResults": "No materials found for this code.",
     "bestMatch": "Best match",
+    "browseAll": "Browse all",
+    "back": "Back",
+    "close": "Close",
     "exploreSimilar": "Explore similar",
     "direction": {
       "tonalMatch": "Match",

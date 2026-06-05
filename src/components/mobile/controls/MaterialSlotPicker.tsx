@@ -1,11 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Check, Trash2, X, Search } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ArrowLeft, Check, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
 import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection, getV2DebugForCode } from "@/hooks/useGraphMaterials";
@@ -106,6 +102,8 @@ export default function MaterialSlotPicker({
 
   // Which archetype chip is expanded (user-driven)
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
+  // Mobile progressive-disclosure step
+  const [step, setStep] = useState<'archetypes' | 'directions' | 'shades' | 'browse'>('archetypes');
   // Code search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,10 +121,14 @@ export default function MaterialSlotPicker({
   const inlineDragHandleRef = useRef<HTMLDivElement>(null);
   const inlineDragStartY = useRef(0);
   const inlineDragging = useRef(false);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const mobileDragStartY = useRef(0);
+  const mobileDragging = useRef(false);
 
   // Reset internal state when slot changes
   useEffect(() => {
     setActiveArchetypeId(null);
+    setStep('archetypes');
     setSearchOpen(false);
     setSearchQuery("");
     setShowRequestDialog(false);
@@ -753,6 +755,30 @@ export default function MaterialSlotPicker({
     setTimeout(onClose, 200);
   };
 
+  const goBack = () => {
+    if (step === 'browse') { setStep('shades'); return; }
+    if (step === 'shades') { setStep('directions'); return; }
+    if (step === 'directions') { setStep('archetypes'); return; }
+    onClose();
+  };
+
+  // Auto-advance past archetypes step when only one archetype exists
+  useEffect(() => {
+    if (inline || step !== 'archetypes' || availableWithImages.length !== 1) return;
+    const single = availableWithImages[0];
+    const bestCode = bestCodeByArchetypeId.get(single.archetype.id) ?? single.resolvedCode;
+    setActiveArchetypeId(single.archetype.id);
+    if (slot && bestCode) onSelect(slot, single.archetype.id, bestCode);
+    setStep('directions');
+  }, [inline, step, availableWithImages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-advance to browse when no directions qualify for the active archetype
+  useEffect(() => {
+    if (inline || step !== 'directions' || !effectiveActiveId) return;
+    if ((graphMaterials?.length ?? 0) === 0) return;
+    if (directionGroups.length === 0 && hasBrowseGrid) { setBrowseAll(true); setStep('browse'); }
+  }, [inline, step, effectiveActiveId, directionGroups.length, hasBrowseGrid, graphMaterials?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Cluster helpers ──────────────────────────────────────────────────────
 
   const archetypeClusters = useMemo(
@@ -820,7 +846,7 @@ export default function MaterialSlotPicker({
 
   if (inline && !slot) return null;
 
-  // pickerBody is shared between inline (div wrapper) and Drawer wrapper
+  // pickerBody — desktop inline panel only (mobile uses the portal-based progressive panel below)
   const pickerBody = (
     <>
         {/* Header: slot title + search icon + optional reset button */}
@@ -1299,16 +1325,390 @@ export default function MaterialSlotPicker({
     );
   }
 
-  // ─── Modal (Drawer) render ─────────────────────────────────────────────────
-  return (
-    <Drawer open={slot !== null} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
-      <DrawerContent
-        className="p-0 overflow-hidden h-[62vh] sm:max-w-md sm:right-auto sm:left-1/2 sm:-translate-x-1/2"
-        aria-describedby={undefined}
+  // ─── Mobile progressive-disclosure panel (portal) ────────────────────────
+  if (!slot) return null;
+
+  // Derive effective step — skip archetypes if only one choice, skip directions if none qualify
+  const effectiveStep = (() => {
+    if (step === 'archetypes' && availableWithImages.length === 1) return 'directions' as const;
+    if (step === 'directions' && (graphMaterials?.length ?? 0) > 0 && directionGroups.length === 0 && hasBrowseGrid) return 'browse' as const;
+    return step;
+  })();
+
+  return createPortal(
+    <>
+      <MaterialRequestDialog
+        isOpen={showRequestDialog}
+        onClose={() => setShowRequestDialog(false)}
+        slotLabel={t(`surface.${slot}`)}
+      />
+      <div
+        ref={mobilePanelRef}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white"
+        style={{
+          borderRadius: '12px 12px 0 0',
+          boxShadow: '0 -2px 20px rgba(0,0,0,0.10)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <DrawerTitle className="sr-only">{slot ? t(`surface.${slot}`) : ""}</DrawerTitle>
-        {pickerBody}
-      </DrawerContent>
-    </Drawer>
+        <style>{`@keyframes msPickerFadeIn { from { opacity: 0 } to { opacity: 1 } } @keyframes cellPopIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }`}</style>
+
+        {/* Swipe zone: handle pill + nav row combined — large touch target for dismiss gesture */}
+        <div
+          style={{ touchAction: 'none', userSelect: 'none' }}
+          onPointerDown={(e) => {
+            mobileDragStartY.current = e.clientY;
+            mobileDragging.current = true;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            const panel = mobilePanelRef.current;
+            if (panel) panel.style.transition = 'none';
+          }}
+          onPointerMove={(e) => {
+            if (!mobileDragging.current) return;
+            const dy = Math.max(0, e.clientY - mobileDragStartY.current);
+            const panel = mobilePanelRef.current;
+            if (panel) {
+              panel.style.transform = `translateY(${dy}px)`;
+              panel.style.opacity = String(Math.max(0.25, 1 - dy / 200));
+            }
+          }}
+          onPointerUp={(e) => {
+            if (!mobileDragging.current) return;
+            mobileDragging.current = false;
+            const dy = e.clientY - mobileDragStartY.current;
+            const panel = mobilePanelRef.current;
+            if (dy > 80) {
+              onClose();
+            } else if (panel) {
+              panel.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+              panel.style.transform = '';
+              panel.style.opacity = '';
+              setTimeout(() => { if (panel) panel.style.transition = ''; }, 200);
+            }
+          }}
+          onPointerCancel={() => {
+            mobileDragging.current = false;
+            const panel = mobilePanelRef.current;
+            if (panel) { panel.style.transition = 'transform 0.2s ease, opacity 0.2s ease'; panel.style.transform = ''; panel.style.opacity = ''; setTimeout(() => { if (panel) panel.style.transition = ''; }, 200); }
+          }}
+        >
+          {/* Drag handle pill */}
+          <div className="flex justify-center pt-2 pb-0">
+            <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#e0dbd5' }} />
+          </div>
+
+          {/* Nav row */}
+          <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: '0.5px solid #e8e4e0' }}>
+          <button
+            onClick={goBack}
+            className="flex items-center gap-1.5 active:opacity-60 transition-opacity"
+            style={{ color: 'rgba(0,0,0,0.5)' }}
+          >
+            <ArrowLeft size={13} strokeWidth={1.8} />
+            <span className="text-[13px]">
+              {effectiveStep === 'archetypes' ? t('surface.close') : t('surface.back')}
+            </span>
+          </button>
+          <span className="text-[13px] font-medium flex-1 text-center truncate" style={{ color: '#1a1a1a' }}>
+            {t(`surface.${slot}`)}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); setSearchOpen(!searchOpen); setSearchQuery(""); }}
+              className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+              style={{ backgroundColor: searchOpen ? "#647d75" : "#f5f2ef" }}
+            >
+              {searchOpen
+                ? <X className="w-3 h-3 text-white" strokeWidth={2.5} />
+                : <Search className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+              }
+            </button>
+            {!searchOpen && selections[slot] && onClear && (
+              <button
+                onClick={() => onClear(slot)}
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#f5f2ef", color: "#9ca3af" }}
+              >
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+              </button>
+            )}
+          </div>
+        </div>
+        </div>{/* end swipe zone */}
+
+        {/* Surface type pills */}
+        {subHeader}
+
+        {/* Search input — shown when search is open, replaces step content */}
+        {searchOpen && (
+          <div className="px-4 pt-3 pb-1">
+            <input
+              autoFocus
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              placeholder={t("surface.searchByCode")}
+              className="w-full bg-transparent text-[13px] outline-none"
+              style={{ color: "#1a1a1a" }}
+            />
+          </div>
+        )}
+        {searchOpen && (
+          searchResults.length > 0 && searchQuery.trim() ? (
+            <div className="flex flex-wrap gap-2.5 px-4 pt-2 pb-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
+              {searchResults.map((mat) => {
+                const isSelected = mat.technicalCode === selectedMaterialCode;
+                return (
+                  <div key={mat.technicalCode} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                    <button
+                      onClick={() => { onSelect(slot, mat.archetypeId ?? mat.technicalCode, mat.technicalCode); }}
+                      className="relative active:scale-95"
+                      style={{ width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS, overflow: 'hidden', border: isSelected ? '2px solid #647d75' : '2px solid transparent' }}
+                    >
+                      <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                      {isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </button>
+                    <span className="text-[9px] text-center w-full truncate font-mono" style={{ color: isSelected ? '#647d75' : '#9ca3af' }}>
+                      {mat.technicalCode}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : searchQuery.trim() ? (
+            <div className="flex items-center justify-center py-6">
+              <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t("surface.searchNoResults")}</p>
+            </div>
+          ) : null
+        )}
+
+        {/* Step content */}
+        {!searchOpen && <div key={effectiveStep} style={{ animation: 'msPickerFadeIn 0.15s ease both' }}>
+
+          {/* STEP: archetypes */}
+          {effectiveStep === 'archetypes' && (
+            <div className="flex gap-2.5 px-4 py-4 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+              {availableWithImages.map(({ archetype, displayImage, resolvedCode }) => {
+                const bestCode = bestCodeByArchetypeId.get(archetype.id) ?? resolvedCode;
+                const isChosen = !!selectedMaterialCode && selections[slot] === archetype.id;
+                const isActive = archetype.id === activeArchetypeId;
+                const chipImage = isChosen
+                  ? (getMaterialByCode(selectedMaterialCode!)?.imageUrl ?? displayImage)
+                  : (bestCode ? (getMaterialByCode(bestCode)?.imageUrl ?? displayImage) : displayImage);
+                return (
+                  <button
+                    key={`mchip-${archetype.id}`}
+                    onClick={() => {
+                      if (SLOT_KEY_TO_ROLE[slot] === 'accent') {
+                        onSelect(slot, archetype.id, archetype.id);
+                        setTimeout(onClose, 200);
+                        return;
+                      }
+                      const code = bestCode;
+                      setActiveArchetypeId(archetype.id);
+                      setActiveDirection(null);
+                      setGridCenterCode(code ?? null);
+                      if (code) onSelect(slot, archetype.id, code);
+                      setStep('directions');
+                    }}
+                    className="flex flex-col items-center gap-1 flex-shrink-0"
+                  >
+                    <div
+                      className="relative overflow-hidden"
+                      style={{
+                        width: SWATCH_SIZE + 4, height: SWATCH_SIZE + 4, borderRadius: SWATCH_RADIUS,
+                        border: isActive || isChosen ? '2px solid #647d75' : '2px solid transparent',
+                        transition: 'border-color 0.15s',
+                      }}
+                    >
+                      <img src={chipImage} alt={archetype.label[lang]} className="w-full h-full object-cover" />
+                      {isChosen && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] whitespace-nowrap" style={{ color: isActive || isChosen ? '#1a1a1a' : '#9ca3af', fontWeight: isActive || isChosen ? 500 : 400 }}>
+                      {archetype.label[lang]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* STEP: directions */}
+          {effectiveStep === 'directions' && (
+            directionGroups.length > 0 ? (
+              <div className="flex gap-2.5 px-4 py-4 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+                {directionGroups.map(([direction, entry]) => {
+                  const camel = direction.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase());
+                  const label = t(`surface.direction.${camel}`);
+                  const mat = entry ? getMaterialByCode(entry.code) : null;
+                  const hasMatch = !!mat?.imageUrl;
+                  const isSelected = hasMatch && mat!.technicalCode === selectedMaterialCode;
+                  if (!hasMatch) {
+                    return (
+                      <div key={`mdir-${direction}`} className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                        <div style={{ width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS, backgroundColor: '#f0ede9', border: '1px dashed #d8d4cf' }} />
+                        <span className="text-[10px] text-center leading-tight" style={{ color: 'rgba(0,0,0,0.30)', maxWidth: SWATCH_SIZE + 12 }}>{label}</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <button
+                      key={`mdir-${direction}`}
+                      onClick={() => {
+                        setActiveDirection(direction);
+                        setActiveScoringDirection(direction);
+                        setBrowseAll(false);
+                        if (effectiveActiveId && entry) onSelect(slot, effectiveActiveId, entry.code);
+                        setStep('shades');
+                      }}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                      style={{ width: SWATCH_SIZE }}
+                    >
+                      <div
+                        className="relative active:scale-95"
+                        style={{ width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS, overflow: 'hidden', border: isSelected ? '2px solid #647d75' : '2px solid transparent', transition: 'border-color 0.15s, transform 0.1s' }}
+                      >
+                        <img src={mat!.imageUrl!} alt="" className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-center leading-tight" style={{ color: isSelected ? '#647d75' : 'rgba(0,0,0,0.55)', fontWeight: isSelected ? 500 : 400, maxWidth: SWATCH_SIZE + 12 }}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t('surface.searchNoResults')}</p>
+              </div>
+            )
+          )}
+
+          {/* STEP: shades (Similar shades + Browse all link) */}
+          {effectiveStep === 'shades' && (
+            <>
+              {directionTopItems.length > 0 ? (
+                <div className="flex gap-2 px-4 pt-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+                  {directionTopItems.map((item, index) => (
+                    <div key={`mshade-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: ALT_SWATCH_SIZE }}>
+                      <button
+                        onClick={() => { if (effectiveActiveId) onSelect(slot, effectiveActiveId, item.code); }}
+                        className="relative active:scale-95 flex-shrink-0"
+                        style={{
+                          width: ALT_SWATCH_SIZE, height: ALT_SWATCH_SIZE, borderRadius: ALT_SWATCH_RADIUS,
+                          overflow: 'hidden',
+                          border: item.isSelected ? '2px solid #647d75' : index === 0 ? '2px solid rgba(100,125,117,0.35)' : '2px solid transparent',
+                          transition: 'border-color 0.15s, transform 0.1s',
+                        }}
+                      >
+                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        {item.isSelected && (
+                          <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                            <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                          </div>
+                        )}
+                      </button>
+                      {index === 0 && (
+                        <span className="text-[9px] font-medium leading-none" style={{ color: '#647d75' }}>
+                          {t('surface.bestMatch')}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-6">
+                  <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t('surface.searchNoResults')}</p>
+                </div>
+              )}
+              <div className="flex justify-center pb-4 pt-1">
+                <button
+                  onClick={() => { setBrowseAll(true); setStep('browse'); }}
+                  className="text-[11px] underline underline-offset-2"
+                  style={{ color: 'rgba(0,0,0,0.38)' }}
+                >
+                  {t('surface.browseAll')}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* STEP: browse (3×3 grid) */}
+          {effectiveStep === 'browse' && (
+            hasBrowseGrid ? (
+              <div className="overflow-y-auto pt-2 pb-4 flex justify-center" style={{ maxHeight: 'calc(72vh - 90px)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, paddingLeft: 20 }}>
+                    {[t('surface.browse.light'), '', t('surface.browse.dark')].map((label, c) => (
+                      <div key={c} style={{ width: SWATCH_SIZE, flexShrink: 0, textAlign: c === 2 ? 'right' : 'left' }}>
+                        <span className="text-[9px] uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.30)' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {browseGridCells.map((rowCells, r) => (
+                    <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 14, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="text-[8px] uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.30)', writingMode: 'vertical-lr' as const, transform: 'rotate(180deg)', lineHeight: 1 }}>
+                          {r === 0 ? t('surface.browse.warm') : r === 2 ? t('surface.browse.cool') : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {rowCells.map((mat, c) => {
+                          const isCenter = r === 1 && c === 1;
+                          const isSelected = mat?.technicalCode === selectedMaterialCode;
+                          const dist = Math.max(Math.abs(r - 1), Math.abs(c - 1));
+                          const cellStyle = {
+                            width: SWATCH_SIZE, height: SWATCH_SIZE, flexShrink: 0,
+                            borderRadius: SWATCH_RADIUS, overflow: 'hidden' as const,
+                            border: isSelected ? '2px solid #647d75' : isCenter ? '2px solid rgba(0,0,0,0.15)' : '2px solid transparent',
+                            transition: 'border-color 0.15s, transform 0.1s',
+                            animation: `cellPopIn 0.22s ease-out ${dist * 60}ms both`,
+                          };
+                          return mat ? (
+                            <button key={c} onClick={() => {
+                              if (effectiveActiveId) { setGridCenterCode(mat.technicalCode); onSelect(slot, effectiveActiveId, mat.technicalCode); }
+                            }} className="relative active:scale-95" style={cellStyle}>
+                              <img src={mat.imageUrl!} alt="" className="w-full h-full object-cover" />
+                              {isSelected && (
+                                <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                                  <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                                </div>
+                              )}
+                            </button>
+                          ) : (
+                            <div key={c} style={{ ...cellStyle, backgroundColor: '#f5f4f2', border: '1px dashed #d8d4cf' }} />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t('surface.searchNoResults')}</p>
+              </div>
+            )
+          )}
+
+        </div>}
+      </div>
+    </>,
+    document.body
   );
 }
