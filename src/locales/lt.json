@@ -1,5 +1,7 @@
 {
   "nav": {
+    "budget": "Biudžetas",
+    "plan": "Planas",
     "howItWorks": "Kaip tai veikia",
     "mission": "Misija",
     "partner": "Bendradarbiaukite",
@@ -56,7 +58,11 @@
     "design": "Dizainas",
     "specs": "Specifikacijos",
     "budget": "Biudžetas",
-    "plan": "Planas"
+    "plan": "Planas",
+    "project": "Projektas",
+    "konceptas": "Konceptas",
+    "vizualas": "Vizualas",
+    "specs": "Specifikacijos"
   },
   "tab": {
     "vizualas": "Vizualas",

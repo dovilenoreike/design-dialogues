@@ -21,7 +21,7 @@ interface SpecsViewProps {
 
 export default function SpecsView({ designer, allNonAccentsVerified = true, onRequestReview }: SpecsViewProps) {
   const navigate = useNavigate();
-  const { design, materialOverrides, excludedSlots, selectedTier } = useDesign();
+  const { design, materialOverrides, excludedSlots, selectedTier, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
   const { graphMaterials, graphLoading } = useGraphMaterials();
 
@@ -229,6 +229,16 @@ export default function SpecsView({ designer, allNonAccentsVerified = true, onRe
                   onOpenProfile={() => setIsDesignerProfileOpen(true)}
                 />
               )}
+
+              <div className="flex justify-center pt-4 pb-6">
+                <button
+                  onClick={() => { setActiveTab("budget"); navigate("/budget"); }}
+                  className="text-[11px] underline underline-offset-2"
+                  style={{ color: "rgba(0,0,0,0.38)" }}
+                >
+                  {t("nav.budget")} →
+                </button>
+              </div>
             </>
           )}
         </div>

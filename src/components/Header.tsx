@@ -117,13 +117,26 @@ const Header = () => {
     }
   };
 
-  const DESKTOP_TABS: BottomTab[] = ["design", "budget", "plan"];
+  const DESKTOP_TABS = [
+    { id: "konceptas", label: t("tabs.konceptas"), path: "/design" },
+    { id: "vizualas", label: t("tabs.vizualas"), path: "/design/visual" },
+    { id: "specs", label: t("tabs.specs"), path: "/design/specs" },
+  ];
+
+  const activeDesktopTab = (() => {
+    if (location.pathname === "/design/visual") return "vizualas";
+    if (location.pathname === "/design/specs") return "specs";
+    if (location.pathname.startsWith("/design")) return "konceptas";
+    return null;
+  })();
 
   const NAV_ITEMS = [
     { label: t("nav.howItWorks"), href: "/how-it-works" },
     ...(!isShowroomMode && !isProviderMode ? [
       { label: t("nav.mission"), href: "/mission" },
       { label: t("nav.partner"), href: "/partner" },
+      { label: t("nav.budget"), href: "/budget", tab: "budget" as const },
+      { label: t("nav.plan"), href: "/plan", tab: "plan" as const },
     ] : []),
   ];
 
@@ -171,7 +184,10 @@ const Header = () => {
                     <Link
                       key={item.href}
                       to={item.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        if ('tab' in item && item.tab) setActiveTab?.(item.tab);
+                        setIsOpen(false);
+                      }}
                       className="font-serif text-lg text-foreground hover:text-primary transition-colors"
                     >
                       {item.label}
@@ -312,15 +328,15 @@ const Header = () => {
               ) : designContext ? (
                 DESKTOP_TABS.map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => designContext.setActiveTab(tab)}
+                    key={tab.id}
+                    onClick={() => { designContext.setActiveTab("design"); navigate(tab.path); }}
                     className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                      designContext.activeTab === tab
+                      activeDesktopTab === tab.id
                         ? "text-foreground bg-muted font-medium"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
-                    {t(`tabs.${tab}`)}
+                    {tab.label}
                   </button>
                 ))
               ) : (
@@ -355,7 +371,10 @@ const Header = () => {
                         <Link
                           key={item.href}
                           to={item.href}
-                          onClick={() => setAboutOpen(false)}
+                          onClick={() => {
+                            if ('tab' in item && item.tab) setActiveTab?.(item.tab);
+                            setAboutOpen(false);
+                          }}
                           className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                         >
                           {item.label}

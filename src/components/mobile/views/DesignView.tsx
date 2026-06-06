@@ -819,25 +819,6 @@ export default function DesignView() {
             </div>
           </div>
 
-          {/* Sub-tab switcher — hidden during peek */}
-          <div
-            className={`${activeSlot ? "hidden lg:flex" : "flex"} mb-3 rounded-full p-[3px]`}
-            style={{ backgroundColor: "rgba(0,0,0,0.06)" }}
-          >
-            {(["konceptas", "vizualas", "specs"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => handleSubTabChange(tab)}
-                className={`flex-1 text-[12px] font-medium tracking-[0.02em] py-1.5 rounded-full transition-all ${
-                  subTab === tab
-                    ? "bg-white text-foreground shadow-sm"
-                    : "text-foreground/50"
-                }`}
-              >
-                {t(`tab.${tab}`)}
-              </button>
-            ))}
-          </div>
 
           {/* Sub-tab content */}
           {subTab === "specs" ? (

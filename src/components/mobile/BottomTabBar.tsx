@@ -1,34 +1,52 @@
-import { Image, Calculator, Calendar } from "lucide-react";
-import { useDesign, BottomTab } from "@/contexts/DesignContext";
+import { Palette, Image, List } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface TabItem {
-  id: BottomTab;
+type NavTab = "konceptas" | "vizualas" | "specs";
+
+interface NavTabItem {
+  id: NavTab;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  path: string;
 }
 
-const tabs: TabItem[] = [
-  { id: "design", icon: Image },
-  { id: "budget", icon: Calculator },
-  { id: "plan", icon: Calendar },
+const navTabs: NavTabItem[] = [
+  { id: "konceptas", icon: Palette, path: "/design" },
+  { id: "vizualas", icon: Image, path: "/design/visual" },
+  { id: "specs", icon: List, path: "/design/specs" },
 ];
 
 export default function BottomTabBar() {
   const { activeTab, setActiveTab } = useDesign();
   const { t } = useLanguage();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const activeNavTab: NavTab | null = (() => {
+    if (activeTab === "budget" || activeTab === "plan") return null;
+    if (location.pathname === "/design/visual") return "vizualas";
+    if (location.pathname === "/design/specs") return "specs";
+    return "konceptas";
+  })();
+
+  const handleTabClick = (tab: NavTabItem) => {
+    setActiveTab("design");
+    navigate(tab.path);
+  };
 
   return (
     <nav className="flex-shrink-0 bg-background border-t border-border pb-safe md:hidden">
       <div className="w-full max-w-2xl mx-auto">
         <div className="flex items-center justify-around h-14">
-          {tabs.map((tab) => {
+          {navTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeNavTab === tab.id;
 
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab)}
                 className={`flex flex-col items-center justify-center flex-1 h-full min-h-[44px] transition-colors ${
                   isActive
                     ? "text-foreground"

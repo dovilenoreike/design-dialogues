@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Compass, Paintbrush, Sofa, Wrench, Zap, User, Baby, Minus, Plus, Check, Info } from "lucide-react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useDesign, Tier } from "@/contexts/DesignContext";
@@ -133,8 +134,9 @@ const ArchitecturalSlider = ({
 };
 
 export default function BudgetView() {
-  const { formData, setFormData, selectedTier, setSelectedTier, setLayoutAuditAdults, setLayoutAuditChildren } = useDesign();
+  const { formData, setFormData, selectedTier, setSelectedTier, setLayoutAuditAdults, setLayoutAuditChildren, setActiveTab } = useDesign();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const haptic = useHaptic();
   const { toast, dismiss } = useToast();
 
@@ -596,6 +598,16 @@ export default function BudgetView() {
             >
               {t("budget.foundInaccuracies")} →
             </button>
+
+            <div className="flex justify-center pt-4 pb-2">
+              <button
+                onClick={() => { setActiveTab("plan"); navigate("/plan"); }}
+                className="text-[11px] underline underline-offset-2"
+                style={{ color: "rgba(0,0,0,0.38)" }}
+              >
+                {t("nav.plan")} →
+              </button>
+            </div>
           </div>
 
         </div>
