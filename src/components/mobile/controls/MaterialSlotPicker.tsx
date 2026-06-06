@@ -107,6 +107,8 @@ export default function MaterialSlotPicker({
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Mobile progressive-disclosure step
   const [step, setStep] = useState<'recommended' | 'archetypes' | 'directions' | 'shades' | 'browse'>('archetypes');
+  // Set to true when user explicitly navigates away from the recommended step — prevents auto-snap looping
+  const [recommendedDismissed, setRecommendedDismissed] = useState(false);
   // Mobile surface config footer
   const [surfacesOpen, setSurfacesOpen] = useState(false);
   // Code search
@@ -143,6 +145,7 @@ export default function MaterialSlotPicker({
     setActiveDirection(null);
     setActiveScoringDirection(null);
     setBrowseAll(false);
+    setRecommendedDismissed(false);
   }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset grid center when selection is cleared (flatlay reset) so the center
@@ -826,9 +829,9 @@ export default function MaterialSlotPicker({
 
   // Snap to recommended step once compatibility data loads (slot reset leaves step at 'archetypes')
   useEffect(() => {
-    if (inline || step !== 'archetypes' || activeArchetypeId || goesTogetherItems.length === 0) return;
+    if (inline || step !== 'archetypes' || activeArchetypeId || goesTogetherItems.length === 0 || recommendedDismissed) return;
     setStep('recommended');
-  }, [goesTogetherItems.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [goesTogetherItems.length, step, recommendedDismissed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Cluster helpers ──────────────────────────────────────────────────────
 
@@ -1588,7 +1591,7 @@ export default function MaterialSlotPicker({
               </div>
               <div className="flex justify-center pb-4 pt-1">
                 <button
-                  onClick={() => setStep('archetypes')}
+                  onClick={() => { setRecommendedDismissed(true); setStep('archetypes'); }}
                   className="text-[11px] underline underline-offset-2"
                   style={{ color: 'rgba(0,0,0,0.38)' }}
                 >
