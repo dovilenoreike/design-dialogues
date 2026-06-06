@@ -1008,8 +1008,52 @@ export default function MaterialSlotPicker({
         ) : (
           <>
 
+          {/* Goes together — VV matches, shown when other slots are filled */}
+          {goesTogetherItems.length > 0 && (
+            <>
+              <div
+                className="flex gap-2 px-4 pb-3 overflow-x-auto flex-shrink-0"
+                style={{ scrollbarWidth: "none" } as React.CSSProperties}
+              >
+                {goesTogetherItems.map((item) => (
+                  <div key={`grec-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                    <SwatchButton
+                      onClick={() => { if (slot) onSelect(slot, item.archetypeId, item.code); }}
+                      isActive={item.isSelected}
+                    >
+                      <img src={item.image} alt="" className="w-full h-full object-cover" />
+                      <span
+                        className="absolute text-[7px] font-medium text-white leading-none"
+                        style={{
+                          top: 4, left: 3, right: 3,
+                          backgroundColor: 'rgba(0,0,0,0.60)',
+                          borderRadius: 99, padding: '2px 3px',
+                          textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {t('surface.matchingMaterials')}
+                      </span>
+                      {item.isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#647d75" }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </SwatchButton>
+                  </div>
+                ))}
+              </div>
+              <SwatchDivider />
+            </>
+          )}
+
           {/* Archetype chips — hidden when only one archetype is available (directions shown directly) */}
           {availableWithImages.length > 1 && (
+          <>
+          <div className="px-4 pb-1 flex-shrink-0">
+            <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
+              {t("surface.browseAll")}
+            </span>
+          </div>
           <div
             className="flex gap-2.5 px-4 pb-3 overflow-x-auto flex-shrink-0"
             style={{ scrollbarWidth: "none" } as React.CSSProperties}
@@ -1062,7 +1106,7 @@ export default function MaterialSlotPicker({
               );
             })}
           </div>
-          )}
+          </>)}
 
           {/* Direction groups — shown immediately when one archetype, or after chip click when multiple */}
           {(activeArchetypeId || availableWithImages.length === 1) && (
