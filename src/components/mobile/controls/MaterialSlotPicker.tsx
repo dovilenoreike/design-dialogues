@@ -106,7 +106,7 @@ export default function MaterialSlotPicker({
   // Which archetype chip is expanded (user-driven)
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(null);
   // Mobile progressive-disclosure step
-  const [step, setStep] = useState<'archetypes' | 'directions' | 'shades' | 'browse'>('archetypes');
+  const [step, setStep] = useState<'recommended' | 'archetypes' | 'directions' | 'shades' | 'browse'>('archetypes');
   // Mobile surface config footer
   const [surfacesOpen, setSurfacesOpen] = useState(false);
   // Code search
@@ -475,6 +475,19 @@ export default function MaterialSlotPicker({
     });
   }, [recommendedItems, clusterIdByCode]);
 
+  // "Goes together" row: VV matches only (compatible with every other placed material), one per cluster
+  const goesTogetherItems = useMemo((): RowItem[] => {
+    const seen = new Set<string>();
+    return recommendedItems
+      .filter(item => item.matchesAll)
+      .filter(item => {
+        const key = clusterIdByCode.get(item.code) ?? item.code;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }, [recommendedItems, clusterIdByCode]);
+
   // Only the shown representatives are excluded from the flat row —
   // siblings remain available there for expansion
   const recommendedCodes = useMemo(() => new Set(clusteredRecommendedItems.map(r => r.code)), [clusteredRecommendedItems]);
@@ -766,7 +779,8 @@ export default function MaterialSlotPicker({
   };
 
   const isAtFirstStep =
-    step === 'archetypes' ||
+    step === 'recommended' ||
+    (step === 'archetypes' && goesTogetherItems.length === 0) ||
     (step === 'directions' && availableWithImages.length <= 1) ||
     (step === 'shades' && availableWithImages.length <= 1 && directionGroups.length <= 1);
 
@@ -778,6 +792,7 @@ export default function MaterialSlotPicker({
       onClose(); return;
     }
     if (step === 'directions' && availableWithImages.length > 1) { setStep('archetypes'); return; }
+    if (step === 'archetypes' && goesTogetherItems.length > 0) { setStep('recommended'); return; }
     onClose();
   };
 
@@ -785,9 +800,7 @@ export default function MaterialSlotPicker({
   useEffect(() => {
     if (inline || step !== 'archetypes' || availableWithImages.length !== 1) return;
     const single = availableWithImages[0];
-    const bestCode = bestCodeByArchetypeId.get(single.archetype.id) ?? single.resolvedCode;
     setActiveArchetypeId(single.archetype.id);
-    if (slot && bestCode && !selectedMaterialCode) onSelect(slot, single.archetype.id, bestCode);
     setStep('directions');
   }, [inline, step, availableWithImages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -810,6 +823,12 @@ export default function MaterialSlotPicker({
     if ((graphMaterials?.length ?? 0) === 0) return;
     if (directionGroups.length === 0 && hasBrowseGrid) { setBrowseAll(true); setStep('browse'); }
   }, [inline, step, effectiveActiveId, directionGroups.length, hasBrowseGrid, graphMaterials?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Snap to recommended step once compatibility data loads (slot reset leaves step at 'archetypes')
+  useEffect(() => {
+    if (inline || step !== 'archetypes' || activeArchetypeId || goesTogetherItems.length === 0) return;
+    setStep('recommended');
+  }, [goesTogetherItems.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Cluster helpers ──────────────────────────────────────────────────────
 
@@ -1529,6 +1548,55 @@ export default function MaterialSlotPicker({
 
         {/* Step content */}
         {!searchOpen && <div key={effectiveStep} style={{ animation: 'msPickerFadeIn 0.15s ease both' }}>
+
+          {/* STEP: recommended ("Goes together") */}
+          {effectiveStep === 'recommended' && (
+            <>
+              <div className="flex gap-2 px-4 pt-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+                {goesTogetherItems.map((item) => (
+                  <div key={`grec-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                    <button
+                      onClick={() => onSelect(slot, item.archetypeId, item.code)}
+                      className="relative active:scale-95 flex-shrink-0"
+                      style={{
+                        width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS,
+                        overflow: 'hidden',
+                        border: item.isSelected ? '2px solid #647d75' : '2px solid transparent',
+                        transition: 'border-color 0.15s, transform 0.1s',
+                      }}
+                    >
+                      <img src={item.image} alt="" className="w-full h-full object-cover" />
+                      <span
+                        className="absolute text-[7px] font-medium text-white leading-none"
+                        style={{
+                          top: 4, left: 3, right: 3,
+                          backgroundColor: 'rgba(0,0,0,0.60)',
+                          borderRadius: 99, padding: '2px 3px',
+                          textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {t('surface.matchingMaterials')}
+                      </span>
+                      {item.isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-center pb-4 pt-1">
+                <button
+                  onClick={() => setStep('archetypes')}
+                  className="text-[11px] underline underline-offset-2"
+                  style={{ color: 'rgba(0,0,0,0.38)' }}
+                >
+                  {t('surface.browseAll')}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* STEP: archetypes */}
           {effectiveStep === 'archetypes' && (
