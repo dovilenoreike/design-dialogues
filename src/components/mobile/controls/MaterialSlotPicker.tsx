@@ -1639,7 +1639,7 @@ export default function MaterialSlotPicker({
                   className="text-[11px] underline underline-offset-2"
                   style={{ color: 'rgba(0,0,0,0.38)' }}
                 >
-                  {t('surface.browseAll')}
+                  {t('surface.moreOptions')}
                 </button>
               </div>
             </>
@@ -1664,11 +1664,15 @@ export default function MaterialSlotPicker({
                         setTimeout(onClose, 200);
                         return;
                       }
-                      const code = bestCode;
                       setActiveArchetypeId(archetype.id);
                       setActiveDirection(null);
-                      setGridCenterCode(code ?? null);
-                      if (code) onSelect(slot, archetype.id, code);
+                      if (isChosen) {
+                        // Re-entering the already-chosen archetype — preserve the user's selection
+                        setGridCenterCode(null);
+                      } else {
+                        setGridCenterCode(bestCode ?? null);
+                        if (bestCode) onSelect(slot, archetype.id, bestCode);
+                      }
                       setStep('directions');
                     }}
                     className="flex flex-col items-center gap-1 flex-shrink-0"
