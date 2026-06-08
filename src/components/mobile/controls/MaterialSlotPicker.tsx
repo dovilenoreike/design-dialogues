@@ -1597,8 +1597,15 @@ export default function MaterialSlotPicker({
               })}
             </div>
           ) : searchQuery.trim() ? (
-            <div className="flex items-center justify-center py-6">
+            <div className="flex flex-col items-center gap-2 py-6">
               <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t("surface.searchNoResults")}</p>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRequestDialog(true); }}
+                className="text-[11px] underline underline-offset-2"
+                style={{ color: 'rgba(0,0,0,0.35)' }}
+              >
+                {t("materialRequest.link")}
+              </button>
             </div>
           ) : null
         )}
@@ -1818,7 +1825,8 @@ export default function MaterialSlotPicker({
 
           {/* STEP: browse (3×3 grid) */}
           {effectiveStep === 'browse' && (
-            hasBrowseGrid ? (
+            <>
+            {hasBrowseGrid ? (
               <div className="overflow-y-auto pt-2 pb-4 flex justify-center" style={{ maxHeight: 'calc(72vh - 90px)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', gap: 6, paddingLeft: 20 }}>
@@ -1871,7 +1879,17 @@ export default function MaterialSlotPicker({
               <div className="flex items-center justify-center py-8">
                 <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{t('surface.searchNoResults')}</p>
               </div>
-            )
+            )}
+            <div className="flex justify-center pb-4 pt-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRequestDialog(true); }}
+                className="text-[11px] underline underline-offset-2"
+                style={{ color: 'rgba(0,0,0,0.35)' }}
+              >
+                {t("materialRequest.link")}
+              </button>
+            </div>
+            </>
           )}
 
         </div>}
