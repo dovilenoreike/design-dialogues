@@ -3,7 +3,7 @@
  * Groups related state for cleaner component structure
  */
 
-export type UploadType = "photo" | "sketch" | "floorplan";
+export type UploadType = "photo" | "sketch" | "floorplan" | "empty_room";
 
 const DEFAULT_STYLE = "scandinavian-minimalism";
 const DEFAULT_ROOM = "Kitchen";

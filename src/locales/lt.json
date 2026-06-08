@@ -626,6 +626,8 @@
       "sketchTip": "AI patikslins Jūsų ranka pieštą piešinį į foto-realistinę vizualizaciją.",
       "photo": "3D NUOTRAUKA",
       "photoTip": "3d modelio arba esamos erdvės nuotrauka. Apdailos medžiagų perpiešimas.",
+      "emptyRoom": "TUŠČIAS KAMBARYS",
+      "emptyRoomTip": "AI sukurs įrengtą virtuvę Jūsų erdvėje.",
       "accuracy": "tikslumas"
     },
     "uploadDialog": {

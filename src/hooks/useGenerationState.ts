@@ -444,9 +444,7 @@ export function useGenerationState({
 
       const hasOverrides = Object.keys(materialOverrides).length > 0;
       const isGeminiPath = (uploadType === "photo" || uploadType === "sketch") && hasOverrides;
-      const geminiModel = uploadType === "photo" || uploadType === "sketch"
-        ? API_CONFIG.imageGeneration.modelAccurate
-        : API_CONFIG.imageGeneration.modelCreative;
+      const { models } = API_CONFIG.imageGeneration;
 
       let generatedImageData: string;
 
@@ -504,17 +502,69 @@ Assume: standard 2.4m ceiling height, neutral white walls.
 ${materialSection}
 Output a clean, minimalist, well-lit render suitable for interior material selection.`;
 
-        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative); console.log("[gen] prompt:\n", designPrompt); }
+        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", models.floorplan); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
             materialImages: dedupedMaterials,
             designPrompt,
-            model: API_CONFIG.imageGeneration.modelCreative,
+            model: models.floorplan,
           },
         });
         const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
         if (error) throw new Error(errorBody?.error || error.message || "Failed to generate render");
+        generatedImageData = data?.generatedImage;
+        if (!generatedImageData) throw new Error("No image returned from render service");
+      } else if (uploadType === "empty_room") {
+        const erExplicitKeys = new Set(Object.keys(materialOverrides));
+        const erExplicitFrontCount = Object.keys(materialOverrides)
+          .filter(k => surfaces[k]?.category === "front").length;
+        const materialImagesWithMeta = hasOverrides
+          ? await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots, erExplicitKeys)
+          : [];
+
+        type ErDedupEntry = MaterialImageWithMeta & { surfaces: string[]; categories: string[]; explicitSurfaces: string[] };
+        const erDedupMap: Record<string, ErDedupEntry> = {};
+        for (const m of materialImagesWithMeta) {
+          if (erDedupMap[m.matId]) {
+            erDedupMap[m.matId].surfaces.push(m.purpose);
+            erDedupMap[m.matId].categories.push(m.category);
+            if (m.isExplicit) erDedupMap[m.matId].explicitSurfaces.push(m.purpose);
+          } else {
+            erDedupMap[m.matId] = { ...m, surfaces: [m.purpose], categories: [m.category], explicitSurfaces: m.isExplicit ? [m.purpose] : [] };
+          }
+        }
+        const erDedupedMaterials = Object.values(erDedupMap);
+
+        const erMatInstr = erDedupedMaterials
+          .map((m, i) => {
+            const texture = m.texturePrompt;
+            const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, erExplicitFrontCount);
+            const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            return isSingle
+              ? `- Image ${i + 2} (${texture}): apply to ${label}.`
+              : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
+          })
+          .join("\n");
+
+        const erMaterialSection = erDedupedMaterials.length > 0
+          ? `\n\nApply the following materials and finishes:\n${erMatInstr}\n\nApply provided textures exactly as in the samples — do not yellow, grey, or alter them.`
+          : "";
+
+        const designPrompt = `Image 1 is a photo of an empty, unfurnished room. Use it as reference for room dimensions, ceiling height, window positions, and natural lighting direction. Design and furnish it as a complete, realistic kitchen interior — add cabinets, worktops, appliances, and any relevant furnishings.${erMaterialSection}\n\nKeep all cabinet fronts flat — do not add filler objects or decorative props.\n\nProduce a photorealistic result with professional photography quality.`;
+
+        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", models.empty_room); console.log("[gen] prompt:\n", designPrompt); }
+        const { data, error } = await supabase.functions.invoke("generate-material-edit", {
+          body: {
+            imageBase64,
+            materialImages: erDedupedMaterials,
+            designPrompt,
+            quality: API_CONFIG.imageGeneration.quality,
+            model: models.empty_room,
+          },
+        });
+        const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
+        if (error) throw new Error(errorBody?.error || error.message || "Failed to generate kitchen render");
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from render service");
       } else if (isGeminiPath) {
@@ -554,14 +604,14 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         }
 
 
-        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", geminiModel); console.log("[gen] prompt:\n", designPrompt); }
+        if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", models[uploadType as 'photo' | 'sketch']); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
           body: {
             imageBase64,
             materialImages: dedupedMaterials,
             designPrompt,
             quality: API_CONFIG.imageGeneration.quality,
-            model: geminiModel,
+            model: models[uploadType as 'photo' | 'sketch'],
           },
         });
         const errorBody = error ? await (error as any).context?.json?.().catch(() => null) : null;
@@ -569,7 +619,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
         generatedImageData = data?.generatedImage;
         if (!generatedImageData) throw new Error("No image returned from material edit service");
       } else {
-        if (LOG_PROMPTS_TO_CONSOLE) console.log("[gen] model:", API_CONFIG.imageGeneration.modelCreative, "(generate-interior)");
+        if (LOG_PROMPTS_TO_CONSOLE) console.log("[gen] model:", models.noUpload, "(generate-interior)");
         const { data, error } = await supabase.functions.invoke("generate-interior", {
           body: {
             imageBase64,
@@ -577,7 +627,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
             materialPrompt: null,
             freestyleDescription: design.freestyleDescription.trim() || null,
             quality: API_CONFIG.imageGeneration.quality,
-            model: API_CONFIG.imageGeneration.modelCreative,
+            model: models.noUpload,
           },
         });
 
@@ -799,7 +849,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
           imageBase64,
           materialImages: clayDedupedMaterials,
           designPrompt,
-          model: API_CONFIG.imageGeneration.modelCreative,
+          model: API_CONFIG.imageGeneration.models.floorplan,
         },
       });
 

@@ -625,6 +625,8 @@
       "sketchTip": "AI will refine your drawing into a detailed image.",
       "photo": "PHOTO",
       "photoTip": "Finish materials redrawn. Note: AI may slightly change space proportions.",
+      "emptyRoom": "EMPTY ROOM",
+      "emptyRoomTip": "AI will design and furnish a complete kitchen in your space.",
       "accuracy": "accuracy"
     },
     "uploadDialog": {

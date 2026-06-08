@@ -17,8 +17,13 @@ export const API_CONFIG = {
    * Image generation settings
    */
   imageGeneration: {
-    modelCreative: "gpt-image-2", // "gemini-2.5-flash-image" floorplans, sketches — create interior using material refs
-    modelAccurate: "gemini-3.1-flash-image-preview",   // photos — preserve layout, replace textures only
+    models: {
+      photo:      "gemini-3.1-flash-image-preview",
+      empty_room: "gpt-image-2",
+      sketch:     "gpt-image-2",
+      floorplan:  "gpt-image-2",
+      noUpload:   "gpt-image-2",
+    },
     size: "512x512" as const,
     quality: "low",
   },

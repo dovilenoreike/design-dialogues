@@ -3,7 +3,7 @@ import {
   DrawerContent,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { LayoutGrid, PenLine, Camera } from "lucide-react";
+import { PenLine, Camera, DoorOpen } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { UploadType } from "@/types/design-state";
 
@@ -30,21 +30,20 @@ export default function UploadMenuSheet({
       colors: ["#647d75"],
     },
     {
+      icon: DoorOpen,
+      label: t("mobile.uploadMenu.emptyRoom"),
+      tip: t("mobile.uploadMenu.emptyRoomTip"),
+      type: "empty_room",
+      accuracy: "65–90%",
+      colors: ["#ca8a04", "#647d75"],
+    },
+    {
       icon: PenLine,
       label: t("mobile.uploadMenu.sketch"),
       tip: t("mobile.uploadMenu.sketchTip"),
       type: "sketch",
       accuracy: "60–95%",
       colors: ["#ca8a04", "#647d75"],
-    },
-    {
-      icon: LayoutGrid,
-      label: t("mobile.uploadMenu.2dPlan"),
-      tip: t("mobile.uploadMenu.2dPlanTip"),
-      type: "floorplan",
-      comingSoon: false,
-      accuracy: "50–80%",
-      colors: ["#ca8a04"],
     },
   ];
 
