@@ -154,6 +154,18 @@ export function getCompatibilityScore(code: string, otherCodes: string[]): numbe
   return weightedScore(code, otherCodes, _cached.pairWeights);
 }
 
+/** Designer-curated pair score: only counts pairs that have an approved_by value.
+ *  Use as primary sort key for "goes together" to surface handpicked matches above algorithmic ones. */
+export function getDesignerCompatibilityScore(code: string, otherCodes: string[]): number {
+  if (!_cached || otherCodes.length === 0) return 0;
+  const { pairWeights, pairApprovedBy } = _cached;
+  return otherCodes.reduce((sum, sel) => {
+    const key = pairKey(code, sel);
+    if (!pairApprovedBy.has(key)) return sum;
+    return sum + (pairWeights.get(key) ?? 0);
+  }, 0);
+}
+
 /** Context-aware descriptor similarity score for a material against the current selection.
  *  Higher = more similar descriptors. Uses the v2 formula (lightness, warmth, chroma). */
 export function getDescriptorScore(code: string, otherCodes: string[]): number {

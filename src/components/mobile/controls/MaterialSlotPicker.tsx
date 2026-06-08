@@ -4,7 +4,7 @@ import { ArrowLeft, Check, Pencil, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
-import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection, getV2DebugForCode } from "@/hooks/useGraphMaterials";
+import { getMaterialByCode, getPairCountByCode, getCompatibilityScore, getDesignerCompatibilityScore, matchesAllOtherCodes, wouldTriggerWoodWarning, wouldTriggerBusyPatternWarning, getDescriptorScore, GENERAL_PALETTE_WEIGHT, setActiveScoringDirection, getV2DebugForCode } from "@/hooks/useGraphMaterials";
 import type { MaterialRole } from "@/types/material-types";
 import type { Archetype } from "@/data/archetypes/types";
 import type { SupabaseMaterial } from "@/hooks/useGraphMaterials";
@@ -479,6 +479,7 @@ export default function MaterialSlotPicker({
   }, [recommendedItems, clusterIdByCode]);
 
   // "Goes together" row: VV matches only (compatible with every other placed material), one per cluster
+  // Sorted by pair weight so designer-curated matches surface above algorithmic "ok" ones.
   const goesTogetherItems = useMemo((): RowItem[] => {
     const seen = new Set<string>();
     return recommendedItems
@@ -488,8 +489,17 @@ export default function MaterialSlotPicker({
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
+      })
+      .sort((a, b) => {
+        const others = otherMaterialCodes ?? [];
+        const dA = getDesignerCompatibilityScore(a.code, others);
+        const dB = getDesignerCompatibilityScore(b.code, others);
+        if (dA !== dB) return dB - dA;
+        // Auto score as a very low-weight tiebreaker
+        return getCompatibilityScore(b.code, others) * 0.05 -
+               getCompatibilityScore(a.code, others) * 0.05;
       });
-  }, [recommendedItems, clusterIdByCode]);
+  }, [recommendedItems, clusterIdByCode, otherMaterialCodes]);
 
   // Only the shown representatives are excluded from the flat row —
   // siblings remain available there for expansion
