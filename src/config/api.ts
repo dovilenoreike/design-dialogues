@@ -19,8 +19,8 @@ export const API_CONFIG = {
   imageGeneration: {
     models: {
       photo:      "gemini-3.1-flash-image-preview",
-      empty_room: "gpt-image-2",
-      sketch:     "gpt-image-2",
+      empty_room: "gemini-3.1-flash-image-preview",
+      sketch:     "gemini-3.1-flash-image-preview",
       floorplan:  "gpt-image-2",
       noUpload:   "gpt-image-2",
     },

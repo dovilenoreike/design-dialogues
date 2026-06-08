@@ -551,7 +551,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
           ? `\n\nApply the following materials and finishes:\n${erMatInstr}\n\nApply provided textures exactly as in the samples — do not yellow, grey, or alter them.`
           : "";
 
-        const designPrompt = `Image 1 is a photo of an empty, unfurnished room. Use it as reference for room dimensions, ceiling height, window positions, and natural lighting direction. Design and furnish it as a complete, realistic kitchen interior — add cabinets, worktops, appliances, and any relevant furnishings.${erMaterialSection}\n\nKeep all cabinet fronts flat — do not add filler objects or decorative props.\n\nProduce a photorealistic result with professional photography quality.`;
+        const designPrompt = `Image 1 is a photo of an empty room. Furnish this room as a kitchen. DO NOT change room architecture.${erMaterialSection}\n\n Wall-off white. Keep cabinet fronts flat— do not add filler objects or decorative props.\n\nProduce a photorealistic result with professional photography quality.`;
 
         if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", models.empty_room); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
