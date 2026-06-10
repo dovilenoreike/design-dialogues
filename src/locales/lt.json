@@ -1416,9 +1416,12 @@
     "clearFilter": "Išvalyti filtrą"
   },
   "paletteHint": {
+    "yourPalette": "Jūsų paletė",
+    "placeholderTitle": "Paletės įvertinimas",
+    "placeholder": "Pasirinkite kelias tekstūras ir čia pamatysite įvertinimą.",
     "minimal": {
       "label": "Minimalistinis derinys",
-      "desc": "Santūri, vientisa paletė. Jaukumo suteikite per apšvietimą ar akcentus."
+      "desc": "Santūri paletė. Jaukumo suteikite per apšvietimą ar akcentus."
     },
     "balanced": {
       "label": "Harmoningas derinys",
@@ -1426,7 +1429,7 @@
     },
     "highContrast": {
       "label": "Kontrastastingas derinys",
-      "desc": "Ryškus kontrastas be vizualiai jungiančių medžiagų. Įsitikinkite, kad tai sąmoningas sprendimas."
+      "desc": "Ryškus kontrastas be vizualiai jungiančių medžiagų."
     },
     "mixed": {
       "label": "Mišrus derinys",
@@ -1434,11 +1437,11 @@
     },
     "busyPatterns": {
       "label": "Sodri tekstūra",
-      "desc": "Dvi ar daugiau medžiagų su ryškiais raštais, kurios dar nebuvo peržiūrėtos kartu. Verta patikrinti su fiziniais pavyzdžiais."
+      "desc": "Dvi ar daugiau medžiagų su ryškiais raštais, kurios dar nebuvo peržiūrėtos kartu."
     },
     "warmthClash": {
       "label": "Medienos tonų neatitikimas",
-      "desc": "Dvi ar daugiau medinių medžiagų su pastebiamai skirtingu šilumos tonu. Patikrinkite, ar jos gerai dera kartu su fiziniais pavyzdžiais."
+      "desc": "Dvi ar daugiau medinių medžiagų su pastebiamai skirtingu šilumos tonu."
     }
   },
   "collection": {

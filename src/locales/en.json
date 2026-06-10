@@ -1415,6 +1415,9 @@
     "clearFilter": "Clear filter"
   },
   "paletteHint": {
+    "yourPalette": "Your palette",
+    "placeholderTitle": "Palette feedback",
+    "placeholder": "Choose a few textures and you'll see it here.",
     "minimal": {
       "label": "Minimal",
       "desc": "Cohesive, restrained palette. Add depth through lighting or large-scale accents."

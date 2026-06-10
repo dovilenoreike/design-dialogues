@@ -5,6 +5,7 @@ import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
+import { type PaletteHint } from "@/lib/palette-hint";
 import { useGraphMaterials, getMaterialByCode, getCachedImageUrl, getV2DebugForCode, getPairScoreForCode } from "@/hooks/useGraphMaterials";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { HybridTooltip } from "@/components/ui/hybrid-tooltip";
@@ -157,6 +158,7 @@ interface KonceptasViewProps {
   requiredMissing: SlotKey | null;
   allNonAccentsVerified: boolean;
   onRequestReview: () => void;
+  paletteHint?: PaletteHint | null;
   t: (key: string) => string;
   language: string;
 }
@@ -177,6 +179,7 @@ export default function KonceptasView({
   requiredMissing,
   allNonAccentsVerified,
   onRequestReview,
+  paletteHint,
   t,
   language,
 }: KonceptasViewProps) {
@@ -222,6 +225,35 @@ export default function KonceptasView({
       >
         {/* Background */}
         <div className="absolute rounded-2xl bg-neutral-50" style={{ top: "8px", left: "8px", right: "8px", bottom: "10%" }} />
+
+        {/* Palette hint — rendered before pieces so pieces always paint on top */}
+        {!paletteHint && (
+          <div
+            className="absolute left-0 right-0 px-5 pointer-events-none"
+            style={{ bottom: 'calc(10% + 10px)' }}
+          >
+            <p className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.28)' }}>
+              {t('paletteHint.placeholderTitle')}
+            </p>
+            <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(0,0,0,0.22)' }}>
+              {t('paletteHint.placeholder')}
+            </p>
+          </div>
+        )}
+        {paletteHint && (
+          <div
+            key={paletteHint.key}
+            className="absolute left-0 right-0 px-5 pointer-events-none"
+            style={{ bottom: 'calc(10% + 10px)', animation: 'fadeIn 0.35s ease both' }}
+          >
+            <p className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.50)' }}>
+              {t(`paletteHint.${paletteHint.key}.label`)}
+            </p>
+            <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
+              {t(`paletteHint.${paletteHint.key}.desc`)}
+            </p>
+          </div>
+        )}
 
         {/* Pieces wrapper — shifted up relative to the background */}
         <div className="absolute inset-0" style={{ transform: "translateY(-5%)" }}>
@@ -503,29 +535,6 @@ export default function KonceptasView({
 
         </div>{/* end pieces wrapper */}
 
-        {/* Visualize + review buttons — sits just below the piece arrangement */}
-        <div className="absolute inset-x-0 flex justify-center gap-2 bottom-[8%] md:bottom-[12%]">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!requiredMissing) {
-                onVisualize();
-              } else {
-                setActiveSlot(requiredMissing);
-                onScrollToPicker();
-                toast(t("mobile.stage.selectMaterialsFirst"));
-              }
-            }}
-            className="h-8 px-3 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform"
-            style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
-          >
-            <Sparkles className="w-3 h-3 text-white" strokeWidth={1.5} />
-            <span className="text-[11px] font-medium text-white tracking-[0.03em] whitespace-nowrap">
-              {t("moodboard.visualize")}
-            </span>
-          </button>
-        </div>
-
         {/* First-time hint overlay */}
         <div
           className={`absolute inset-x-0 bottom-4 flex justify-center pointer-events-none transition-opacity duration-300 ${showHint && filledCount === 0 ? "opacity-100" : "opacity-0"}`}
@@ -541,6 +550,29 @@ export default function KonceptasView({
           </div>
         </div>
 
+      </div>
+
+      {/* Visualize button */}
+      <div className="flex justify-center -mt-3 pt-1 pb-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!requiredMissing) {
+              onVisualize();
+            } else {
+              setActiveSlot(requiredMissing);
+              onScrollToPicker();
+              toast(t("mobile.stage.selectMaterialsFirst"));
+            }
+          }}
+          className="h-8 px-3 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
+        >
+          <Sparkles className="w-3 h-3 text-white" strokeWidth={1.5} />
+          <span className="text-[11px] font-medium text-white tracking-[0.03em] whitespace-nowrap">
+            {t("moodboard.visualize")}
+          </span>
+        </button>
       </div>
 
     </div>

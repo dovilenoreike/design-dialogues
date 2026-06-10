@@ -853,6 +853,16 @@ export default function DesignView() {
                   })}
                 />
               </div>
+              {paletteHint && (
+                <div key={paletteHint.key} className="px-4 pt-3 pb-1" style={{ animation: 'fadeIn 0.35s ease both' }}>
+                  <p className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.58)' }}>
+                    {t('paletteHint.yourPalette')} · {t(`paletteHint.${paletteHint.key}.label`)}
+                  </p>
+                  <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(0,0,0,0.40)' }}>
+                    {t(`paletteHint.${paletteHint.key}.desc`)}
+                  </p>
+                </div>
+              )}
               <div className="mt-14">
                 <PostVizFeedbackPrompt />
               </div>
@@ -873,28 +883,12 @@ export default function DesignView() {
               requiredMissing={requiredMissing}
               allNonAccentsVerified={allNonAccentsVerified}
               onRequestReview={() => setShowReviewSheet(true)}
+              paletteHint={paletteHint}
               t={t}
               language={language}
             />
           )}
 
-          {/* Palette hint — mobile only (desktop shows it in the right panel) */}
-          {paletteHint && !activeSlot && subTab !== "specs" && (
-            <div className="lg:hidden flex flex-col items-center gap-1 pt-5 pb-1 px-4 text-center">
-              <span
-                className="text-[13px] font-medium tracking-[0.08em] uppercase"
-                style={{ color: "rgba(0,0,0,0.7)" }}
-              >
-                {t(`paletteHint.${paletteHint.key}.label`)}
-              </span>
-              <span
-                className="text-[13px] leading-snug"
-                style={{ color: "rgba(0,0,0,0.55)", maxWidth: "26rem" }}
-              >
-                {t(`paletteHint.${paletteHint.key}.desc`)}
-              </span>
-            </div>
-          )}
 
         </div>
       </div>
