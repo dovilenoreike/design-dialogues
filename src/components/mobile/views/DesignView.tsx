@@ -853,17 +853,6 @@ export default function DesignView() {
                   })}
                 />
               </div>
-              {!allNonAccentsVerified && (
-                <div className="flex justify-center mt-[40px] pb-1">
-                  <button
-                    onClick={() => setShowReviewSheet(true)}
-                    className="text-[11px] font-medium underline underline-offset-2 active:scale-95 transition-transform"
-                    style={{ color: "rgba(0,0,0,0.45)" }}
-                  >
-                    {t("moodboard.requestReview")}
-                  </button>
-                </div>
-              )}
               <div className="mt-14">
                 <PostVizFeedbackPrompt />
               </div>
