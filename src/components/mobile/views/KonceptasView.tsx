@@ -553,7 +553,7 @@ export default function KonceptasView({
       </div>
 
       {/* Visualize button */}
-      <div className="flex justify-center -mt-3 pt-1 pb-1">
+      <div className="flex justify-center -mt-6 pt-1 pb-1">
         <button
           onClick={(e) => {
             e.stopPropagation();
