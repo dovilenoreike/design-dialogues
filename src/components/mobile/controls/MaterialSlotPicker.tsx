@@ -1542,14 +1542,24 @@ export default function MaterialSlotPicker({
               </button>
             )}
             {!searchOpen && (
-              <button
-                onClick={onClose}
-                className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "#f5f2ef" }}
-                aria-label="Close picker"
-              >
-                <X className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
-              </button>
+              selections[slot] ? (
+                <button
+                  onClick={onClose}
+                  className="flex items-center justify-center h-[26px] px-3 rounded-full text-[12px] font-medium"
+                  style={{ backgroundColor: "#647d75", color: "#fff" }}
+                >
+                  {t('surface.done')}
+                </button>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "#f5f2ef" }}
+                  aria-label="Close picker"
+                >
+                  <X className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+                </button>
+              )
             )}
           </div>
         </div>
@@ -1686,11 +1696,14 @@ export default function MaterialSlotPicker({
                       if (isChosen) {
                         // Re-entering the already-chosen archetype — preserve the user's selection
                         setGridCenterCode(null);
+                        setStep('directions');
                       } else {
                         setGridCenterCode(bestCode ?? null);
                         if (bestCode) onSelect(slot, archetype.id, bestCode);
+                        // Brief pause so the chip's check mark renders before the step transitions,
+                        // giving users a visible moment of "this was applied"
+                        setTimeout(() => setStep('directions'), 350);
                       }
-                      setStep('directions');
                     }}
                     className="flex flex-col items-center gap-1 flex-shrink-0"
                   >
