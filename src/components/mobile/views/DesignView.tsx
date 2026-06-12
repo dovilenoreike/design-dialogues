@@ -22,6 +22,7 @@ import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOth
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
 import { computePaletteHint } from "@/lib/palette-hint";
 import { surfaces } from "@/data/rooms/surfaces";
+import { evaluatePaletteHarmony } from "@/lib/palette-scoring-v2";
 
 // Static role → primary palette key, used only for the ?material= URL param (runs once on mount)
 const ROLE_TO_PRIMARY_PK: Record<string, { slot: SlotKey; paletteKey: string }> = {
@@ -164,6 +165,18 @@ export default function DesignView() {
   });
   const presetIsActive = !!presetImageUrl;
   const isModified = wasReset || (!presetIsActive && Object.keys(materialOverrides).length > 0);
+
+  const ghsEval = useMemo(() => {
+    const slots: SlotKey[] = ['floor', 'mainFronts', 'worktops'];
+    const mats = slots
+      .map(k => {
+        const pk = slotSurfaces[k]?.[0] ?? SLOT_TO_PALETTE_KEY[k];
+        const code = pk ? materialOverrides[pk] : undefined;
+        return code ? getMaterialByCode(code) : undefined;
+      })
+      .filter((m): m is NonNullable<typeof m> => !!m);
+    return mats.length >= 2 ? evaluatePaletteHarmony(mats) : null;
+  }, [materialOverrides, slotSurfaces]);
 
   // Persist preset image URL whenever it changes
   useEffect(() => {
@@ -867,7 +880,17 @@ export default function DesignView() {
                 <PostVizFeedbackPrompt />
               </div>
             </div>
-          ) : (
+          ) : (<>
+            {ghsEval && (
+              <div className="hidden lg:flex items-center gap-3 mb-2 px-1">
+                <span className="font-mono text-[11px] font-semibold" style={{ color: ghsEval.tier === 'excellent' ? '#647d75' : ghsEval.tier === 'passable' ? '#ca8a04' : '#9a3412' }}>
+                  GHS {ghsEval.ghs} · {ghsEval.tier}
+                </span>
+                <span className="font-mono text-[10px] text-black/40">
+                  L:{ghsEval.penalties.L.toFixed(2)} H:{ghsEval.penalties.H.toFixed(2)} W:{ghsEval.penalties.W.toFixed(2)} C:{ghsEval.penalties.C.toFixed(2)} P:{ghsEval.penalties.P.toFixed(2)}
+                </span>
+              </div>
+            )}
             <KonceptasView
               slotSelections={slotSelections}
               slotSurfaces={slotSurfaces}
@@ -887,7 +910,7 @@ export default function DesignView() {
               t={t}
               language={language}
             />
-          )}
+          </>)}
 
 
         </div>
@@ -1097,6 +1120,7 @@ export default function DesignView() {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

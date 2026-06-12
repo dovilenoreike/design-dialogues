@@ -356,6 +356,101 @@ export function harmonyScore(
   return 1 / (1 + Math.pow(avgErr, SCORE_ERROR_POWER));
 }
 
+// ─── Grand Harmony Score (evaluative — complete palette) ────────────────────
+// Separate from harmonyScore (which is generative/candidate-selection).
+// Evaluates a finished three-material palette on lightness topology,
+// undertone coherence, and chroma hierarchy.
+
+export const DEAD_CENTER       = 7;   // ΔL value that gets maximum dead-zone penalty
+export const DEAD_SIGMA        = 32;  // 2σ² denominator; controls Gaussian sharpness
+export const CHROMA_THRESHOLD  = 20;  // C above which a non-hero material "fights"
+export const PATTERN_THRESHOLD = 40;  // pattern score above which a material is "bold"
+
+export interface PaletteHarmonyEval {
+  ghs: number;
+  tier: 'excellent' | 'passable' | 'clash';
+  penalties: { L: number; H: number; W: number; C: number; P: number };
+}
+
+export function evaluatePaletteHarmony(placed: GraphMaterial[]): PaletteHarmonyEval {
+  const materials = placed.filter(m => ['floor', 'front', 'worktop'].includes(m.role[0]));
+  if (materials.length < 2) return { ghs: 100, tier: 'excellent', penalties: { L: 0, H: 0, W: 0, C: 0, P: 0 } };
+
+  // ── P_L: lightness dead-zone penalty ────────────────────────────────────
+  let rawPL = 0;
+  let pairCount = 0;
+  for (let i = 0; i < materials.length; i++) {
+    for (let j = i + 1; j < materials.length; j++) {
+      const dL = Math.abs(materials[i].lightness - materials[j].lightness);
+      rawPL += Math.exp(-Math.pow(dL - DEAD_CENTER, 2) / DEAD_SIGMA);
+      pairCount++;
+    }
+  }
+  const P_L = pairCount > 0 ? rawPL / pairCount : 0;  // 0–1
+
+  // ── P_U: undertone penalty (hue spread + warmth std) ────────────────────
+  const state = computePaletteState(materials);
+  const H_spread = state.H_spread;  // circular variance 0–1, neutrals already down-weighted
+
+  const wValues = materials.map(m => m.warmth);
+  const wMean = wValues.reduce((s, v) => s + v, 0) / wValues.length;
+  const W_std = Math.sqrt(wValues.reduce((s, v) => s + Math.pow(v - wMean, 2), 0) / wValues.length);
+
+  const P_U = 1.5 * H_spread + 1.0 * W_std;  // H: 0–1, W: 0–~0.82; sum ~0–2.32
+
+  // ── P_C: chroma harmony — crowding + adaptive variance ─────────────────
+  // Crowding: hero gets a free pass; non-heroes penalised for exceeding the threshold.
+  const chromaValues = materials.map(m => m.chroma);
+  const chromaHeroIdx = chromaValues.indexOf(Math.max(...chromaValues));
+  let rawPCCrowd = 0;
+  if (chromaValues.filter(c => c > CHROMA_THRESHOLD).length >= 2) {
+    for (let i = 0; i < chromaValues.length; i++) {
+      if (i === chromaHeroIdx) continue;
+      rawPCCrowd += Math.max(0, chromaValues[i] - CHROMA_THRESHOLD);
+    }
+  }
+  const P_C_crowd = rawPCCrowd / 100;  // 0–~1.2
+
+  // Adaptive variance: dark rooms need chroma spread for definition;
+  // bright rooms need constrained chroma to avoid clashing colour casts.
+  // σ_target slides from 14 (very dark) down to 2 (very bright); floored at 2.
+  const C_avg_simple = chromaValues.reduce((s, v) => s + v, 0) / chromaValues.length;
+  const C_ssd = chromaValues.reduce((s, v) => s + Math.pow(v - C_avg_simple, 2), 0) / Math.max(1, chromaValues.length - 1);
+  const sigma_C = Math.sqrt(C_ssd);
+  const sigma_target = Math.max(14 - 0.10 * state.L_avg, 2);
+  const P_C_var = clamp01(Math.pow(sigma_C - sigma_target, 2) / 200);
+
+  const P_C = 0.70 * clamp01(P_C_crowd) + 0.30 * P_C_var;
+
+  // ── P_P: pattern crowding — same logic as P_C ───────────────────────────
+  // One bold-pattern material is the visual hero. Two or more fight for attention.
+  const patternValues = materials.map(m => m.pattern);
+  const patternHeroIdx = patternValues.indexOf(Math.max(...patternValues));
+  let rawPP = 0;
+  if (patternValues.filter(p => p > PATTERN_THRESHOLD).length >= 2) {
+    for (let i = 0; i < patternValues.length; i++) {
+      if (i === patternHeroIdx) continue;
+      rawPP += Math.max(0, patternValues[i] - PATTERN_THRESHOLD);
+    }
+  }
+  const P_P = rawPP / 100;  // 0–~1.2
+
+  // ── GHS — weights sum to 1.0 ─────────────────────────────────────────────
+  const P_U_norm = clamp01(P_U / 2.32);
+  const rawGHS = 100 - (
+    0.40 * P_L              * 100 +
+    0.30 * P_U_norm         * 100 +
+    0.15 * clamp01(P_C)     * 100 +
+    0.15 * clamp01(P_P)     * 100
+  );
+  const ghs = Math.round(clamp01(rawGHS / 100) * 100);
+
+  const tier: PaletteHarmonyEval['tier'] =
+    ghs >= 85 ? 'excellent' : ghs >= 60 ? 'passable' : 'clash';
+
+  return { ghs, tier, penalties: { L: P_L, H: H_spread, W: W_std, C: clamp01(P_C), P: clamp01(P_P) } };
+}
+
 // ─── Drop-in palette score (v1.scoreCandidate replacement) ───────────────────
 /** Same signature shape and 0–1 range as v1 scoreCandidate. */
 export function paletteScoreV2(
@@ -697,6 +792,7 @@ interface DirectionConfig {
   minScore?: number;      // soft gate: direction tab is hidden when no candidate reaches this directionScore.
                           //   Precise directions (tonal_match, bold_movement) need higher thresholds;
                           //   exploratory directions (soft_contrast, lighter_echo) tolerate lower scores.
+  harmonyWeight?: number; // 0–1: fraction of final directed score from harmonyScore (0 = dir only). Tune per archetype/direction.
 }
 
 const METAL_DIRECTION_CONFIG: DirectionConfig = {
@@ -1003,7 +1099,9 @@ export function rankClusteredCandidates(
         if (config.minL    !== undefined && material.lightness < config.minL) continue;
         if (config.maxL    !== undefined && material.lightness > config.maxL) continue;
         const dirScore   = computeDirectionScore(material, ref, config);
-        const finalScore = pw > 0 ? dirScore * (1 - pw) + pairScore * pw : dirScore;
+        const hw         = config.harmonyWeight ?? 0;
+        const blended    = hw > 0 ? dirScore * (1 - hw) + harmScore * hw : dirScore;
+        const finalScore = pw > 0 ? blended * (1 - pw) + pairScore * pw : blended;
         entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: dirScore, direction: dir, clusterKey, archetype });
       }
     } else {
