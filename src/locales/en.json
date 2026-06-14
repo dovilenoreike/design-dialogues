@@ -469,6 +469,13 @@
     "postVizQuestion": "Does this match what you had in mind?",
     "postVizShare": "Share thoughts"
   },
+  "vizWhatsNext": {
+    "title": "What's next",
+    "budgetTitle": "Budget estimate",
+    "budgetDesc": "Get approximate costs for your renovation",
+    "planTitle": "Project timeline",
+    "planDesc": "Plan your renovation from start to move-in"
+  },
   "feedback": {
     "button": "Feedback",
     "mobileButton": "Send Feedback",

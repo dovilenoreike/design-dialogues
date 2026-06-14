@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
-import { ArrowLeft, Camera, Heart, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
+import { ArrowLeft, Camera, ChevronRight, Heart, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
@@ -866,19 +866,26 @@ export default function DesignView() {
                   })}
                 />
               </div>
-              {paletteHint && (
-                <div key={paletteHint.key} className="px-4 pt-3 pb-1" style={{ animation: 'fadeIn 0.35s ease both' }}>
-                  <p className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.58)' }}>
-                    {t('paletteHint.yourPalette')} · {t(`paletteHint.${paletteHint.key}.label`)}
-                  </p>
-                  <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(0,0,0,0.40)' }}>
-                    {t(`paletteHint.${paletteHint.key}.desc`)}
-                  </p>
-                </div>
-              )}
               <div className="mt-14">
                 <PostVizFeedbackPrompt />
               </div>
+              {(presetImageUrl || generation.generatedImages[design.selectedCategory || "Kitchen"]) && (
+                <div className="px-4 pt-4 pb-6">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
+                    {t("vizWhatsNext.title")}
+                  </p>
+                  <button
+                    onClick={() => { setActiveTab("budget"); navigate("/budget"); }}
+                    className="w-full flex items-center justify-between py-3"
+                  >
+                    <div className="text-left">
+                      <p className="text-xs font-medium text-foreground">{t("vizWhatsNext.budgetTitle")}</p>
+                      <p className="text-[11px] text-muted-foreground">{t("vizWhatsNext.budgetDesc")}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (<>
             {ghsEval && (

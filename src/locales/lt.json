@@ -470,6 +470,13 @@
     "postVizQuestion": "Ar tai atitinka jūsų lūkesčius?",
     "postVizShare": "Pasidalinti"
   },
+  "vizWhatsNext": {
+    "title": "Kas toliau",
+    "budgetTitle": "Biudžeto įvertinimas",
+    "budgetDesc": "Sužinokite apytikslę renovacijos kainą",
+    "planTitle": "Projekto planas",
+    "planDesc": "Suplanuokite renovaciją nuo pradžios iki įkurtuvių"
+  },
   "feedback": {
     "button": "Atsiliepimas",
     "mobileButton": "Siųsti Atsiliepimą",

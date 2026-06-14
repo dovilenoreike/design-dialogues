@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Sparkles, MessageSquare } from "lucide-react";
+import { ChevronRight, MessageSquare, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDesign } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -230,13 +230,19 @@ export default function SpecsView({ designer, allNonAccentsVerified = true, onRe
                 />
               )}
 
-              <div className="flex justify-center pt-4 pb-6">
+              <div className="pt-4 pb-6">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
+                  {t("vizWhatsNext.title")}
+                </p>
                 <button
                   onClick={() => { setActiveTab("budget"); navigate("/budget"); }}
-                  className="text-[11px] underline underline-offset-2"
-                  style={{ color: "rgba(0,0,0,0.38)" }}
+                  className="w-full flex items-center justify-between py-3"
                 >
-                  {t("nav.budget")} →
+                  <div className="text-left">
+                    <p className="text-xs font-medium text-foreground">{t("vizWhatsNext.budgetTitle")}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("vizWhatsNext.budgetDesc")}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </button>
               </div>
             </>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, Paintbrush, Sofa, Wrench, Zap, User, Baby, Minus, Plus, Check, Info } from "lucide-react";
+import { ChevronRight, Compass, Paintbrush, Sofa, Wrench, Zap, User, Baby, Minus, Plus, Check, Info } from "lucide-react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useDesign, Tier } from "@/contexts/DesignContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -599,13 +599,19 @@ export default function BudgetView() {
               {t("budget.foundInaccuracies")} →
             </button>
 
-            <div className="flex justify-center pt-4 pb-2">
+            <div className="pt-4 pb-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
+                {t("vizWhatsNext.title")}
+              </p>
               <button
                 onClick={() => { setActiveTab("plan"); navigate("/plan"); }}
-                className="text-[11px] underline underline-offset-2"
-                style={{ color: "rgba(0,0,0,0.38)" }}
+                className="w-full flex items-center justify-between py-3"
               >
-                {t("nav.plan")} →
+                <div className="text-left">
+                  <p className="text-xs font-medium text-foreground">{t("vizWhatsNext.planTitle")}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("vizWhatsNext.planDesc")}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               </button>
             </div>
           </div>
