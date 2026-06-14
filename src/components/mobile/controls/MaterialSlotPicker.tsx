@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Check, Pencil, Trash2, X, Search } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Pencil, Trash2, X, Search } from "lucide-react";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getArchetypesByRole } from "@/data/archetypes";
@@ -1625,51 +1625,58 @@ export default function MaterialSlotPicker({
 
           {/* STEP: recommended ("Goes together") */}
           {effectiveStep === 'recommended' && (
-            <>
-              <div className="flex gap-2 px-4 pt-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
-                {goesTogetherItems.map((item) => (
-                  <div key={`grec-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
-                    <button
-                      onClick={() => onSelect(slot, item.archetypeId, item.code)}
-                      className="relative active:scale-95 flex-shrink-0"
+            <div className="flex gap-2 px-4 pt-4 pb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' } as React.CSSProperties}>
+              {goesTogetherItems.map((item) => (
+                <div key={`grec-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: SWATCH_SIZE }}>
+                  <button
+                    onClick={() => onSelect(slot, item.archetypeId, item.code)}
+                    className="relative active:scale-95 flex-shrink-0"
+                    style={{
+                      width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS,
+                      overflow: 'hidden',
+                      border: item.isSelected ? '2px solid #647d75' : '2px solid transparent',
+                      transition: 'border-color 0.15s, transform 0.1s',
+                    }}
+                  >
+                    <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    <span
+                      className="absolute text-[7px] font-medium text-white leading-none"
                       style={{
-                        width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS,
-                        overflow: 'hidden',
-                        border: item.isSelected ? '2px solid #647d75' : '2px solid transparent',
-                        transition: 'border-color 0.15s, transform 0.1s',
+                        top: 4, left: 3, right: 3,
+                        backgroundColor: 'rgba(0,0,0,0.60)',
+                        borderRadius: 99, padding: '2px 3px',
+                        textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
                     >
-                      <img src={item.image} alt="" className="w-full h-full object-cover" />
-                      <span
-                        className="absolute text-[7px] font-medium text-white leading-none"
-                        style={{
-                          top: 4, left: 3, right: 3,
-                          backgroundColor: 'rgba(0,0,0,0.60)',
-                          borderRadius: 99, padding: '2px 3px',
-                          textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {t('surface.matchingMaterials')}
-                      </span>
-                      {item.isSelected && (
-                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
-                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-center pb-4 pt-1">
-                <button
-                  onClick={() => { setRecommendedDismissed(true); setStep('archetypes'); }}
-                  className="text-[11px] underline underline-offset-2"
-                  style={{ color: 'rgba(0,0,0,0.38)' }}
+                      {t('surface.matchingMaterials')}
+                    </span>
+                    {item.isSelected && (
+                      <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                        <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              ))}
+              {/* More options chip — always visible at end of row */}
+              <button
+                onClick={() => { setRecommendedDismissed(true); setStep('archetypes'); }}
+                className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                style={{ width: SWATCH_SIZE }}
+              >
+                <div
+                  className="flex-shrink-0 flex items-center justify-center"
+                  style={{
+                    width: SWATCH_SIZE, height: SWATCH_SIZE, borderRadius: SWATCH_RADIUS,
+                    backgroundColor: '#f0ede9',
+                    border: '2px solid transparent',
+                    transition: 'border-color 0.15s',
+                  }}
                 >
-                  {t('surface.moreOptions')}
-                </button>
-              </div>
-            </>
+                  <ChevronRight className="w-5 h-5" style={{ color: 'rgba(0,0,0,0.25)' }} strokeWidth={1.5} />
+                </div>
+              </button>
+            </div>
           )}
 
           {/* STEP: archetypes */}
