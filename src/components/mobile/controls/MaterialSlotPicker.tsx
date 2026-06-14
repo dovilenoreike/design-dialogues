@@ -940,6 +940,15 @@ export default function MaterialSlotPicker({
               {t(`surface.${slot}`)}
             </span>
           )}
+          {!searchOpen && onClearAll && Object.values(selections).some(v => v !== null) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onClearAll(); onClose(); }}
+              className="text-[11px] underline underline-offset-2 whitespace-nowrap"
+              style={{ color: 'rgba(0,0,0,0.35)' }}
+            >
+              {t('surface.clearAllSlots')}
+            </button>
+          )}
           <div className="flex items-center gap-1.5">
             {/* Search toggle */}
             <button
@@ -1061,11 +1070,13 @@ export default function MaterialSlotPicker({
           {/* Archetype chips — hidden when only one archetype is available (directions shown directly) */}
           {availableWithImages.length > 1 && (
           <>
-          <div className="px-4 pb-1 flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
-              {t("surface.browseAll")}
-            </span>
-          </div>
+          {goesTogetherItems.length > 0 && (
+            <div className="px-4 pb-1 flex-shrink-0">
+              <span className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.35)", fontWeight: 500 }}>
+                {t("surface.moreOptions")}
+              </span>
+            </div>
+          )}
           <div
             className="flex gap-2.5 px-4 pb-3 overflow-x-auto flex-shrink-0"
             style={{ scrollbarWidth: "none" } as React.CSSProperties}
