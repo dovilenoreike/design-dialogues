@@ -55,6 +55,7 @@ interface MaterialSlotPickerProps {
   isCompatibleWithOthers?: (code: string, otherCodes: string[]) => boolean;
   /** VV badge — compatible with ALL other selected materials */
   isCompatibleWithEvery?: (code: string, otherCodes: string[]) => boolean;
+  onClearAll?: () => void;
 }
 
 const PLAIN_FRONT_ARCHETYPE_IDS = new Set(['plain']);
@@ -99,6 +100,7 @@ export default function MaterialSlotPicker({
   inline = false,
   subHeader,
   surfaceSummary,
+  onClearAll,
 }: MaterialSlotPickerProps) {
   const { t, language } = useLanguage();
   const lang = language as "en" | "lt";
@@ -1913,6 +1915,19 @@ export default function MaterialSlotPicker({
           )}
 
         </div>}
+
+        {/* Clear all surfaces — only when something is selected */}
+        {onClearAll && Object.values(selections).some(v => v !== null) && (
+          <div className="flex justify-center pt-1 pb-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onClearAll(); onClose(); }}
+              className="text-[11px] underline underline-offset-2"
+              style={{ color: 'rgba(0,0,0,0.35)' }}
+            >
+              {t('surface.clearAllSlots')}
+            </button>
+          </div>
+        )}
 
         {/* Surface config footer — collapsed by default, expands on tap */}
         {subHeader && surfaceSummary && (

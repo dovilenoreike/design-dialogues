@@ -931,6 +931,7 @@ export default function DesignView() {
             onSelect={handleSlotSelect}
             onClose={() => setActiveSlot(null)}
             onClear={handleSlotClear}
+            onClearAll={isMobile ? handleClearAll : undefined}
             otherMaterialCodes={otherMaterialCodesForPicker}
             sameRoleMaterialCodes={sameRoleCodesForPicker}
             selectedMaterialCode={activeSlotMaterialCode}
