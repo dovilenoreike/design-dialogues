@@ -92,7 +92,10 @@ const Header = () => {
     if (!shareSession) return;
     const shareId = await shareSession();
     if (shareId) {
-      const shareUrl = `${window.location.origin}/share/${shareId}`;
+      const params = new URLSearchParams();
+      if (activeShowroom) params.set("showroom", activeShowroom.id);
+      if (activeProvider) params.set("provider", activeProvider.id);
+      const shareUrl = `${window.location.origin}/share/${shareId}${params.size ? `?${params}` : ""}`;
 
       // Try native share API on mobile first
       if (navigator.share) {

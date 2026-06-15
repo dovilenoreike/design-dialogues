@@ -683,8 +683,8 @@
     "visualizationGenerated": "Visualization created!"
   },
   "share": {
-    "title": "My Design",
-    "text": "Check out my interior design",
+    "title": "Interior Planner",
+    "text": "Sharing my interior design ideas",
     "copied": "Link copied to clipboard!",
     "loading": "Loading shared design...",
     "notFound": "Design not found or expired",
