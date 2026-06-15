@@ -1,9 +1,10 @@
 import { ReactNode, useState } from "react";
 import Header from "@/components/Header";
 import BottomTabBar from "./BottomTabBar";
-import EarlyAccessBanner, { EARLY_ACCESS_BANNER_KEY } from "@/components/EarlyAccessBanner";
+import EarlyAccessBanner from "@/components/EarlyAccessBanner";
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import FeedbackDialog from "@/components/FeedbackDialog";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
 interface AppShellProps {
   children: ReactNode;
@@ -28,6 +29,7 @@ export default function AppShell({ children }: AppShellProps) {
 
       <FloatingFeedbackButton onClick={() => setFeedbackOpen(true)} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <CookieConsentBanner />
     </div>
   );
 }

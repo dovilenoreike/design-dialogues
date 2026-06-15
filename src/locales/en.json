@@ -463,6 +463,11 @@
   "design": {
     "changeMaterials": "Edit concept"
   },
+  "cookies": {
+    "bannerText": "We use cookies to improve your experience.",
+    "acceptAll": "Accept all",
+    "decline": "Decline"
+  },
   "earlyAccess": {
     "bannerText": "You're shaping this early — your feedback goes straight to what gets built next.",
     "bannerDismiss": "Dismiss",

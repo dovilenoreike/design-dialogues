@@ -464,6 +464,11 @@
   "design": {
     "changeMaterials": "Keisti konceptą"
   },
+  "cookies": {
+    "bannerText": "Naudojame slapukus, kad pagerintume jūsų patirtį.",
+    "acceptAll": "Sutikti su visais",
+    "decline": "Atsisakyti"
+  },
   "earlyAccess": {
     "bannerText": "Jūs esate ankstyvi naudotojai — jūsų atsiliepimas tiesiogiai lemia, kas tobulinama toliau.",
     "bannerDismiss": "Uždaryti",
