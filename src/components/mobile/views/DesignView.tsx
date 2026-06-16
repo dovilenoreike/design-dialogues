@@ -13,6 +13,7 @@ import Stage from "../Stage";
 import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows, PhotoInfoRows } from "./KonceptasView";
 import SpecsView from "./SpecsView";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
+import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -888,7 +889,7 @@ export default function DesignView() {
               )}
             </div>
           ) : (<>
-            {ghsEval && (
+            {SHOW_COLOUR_SCORES && ghsEval && (
               <div className="hidden lg:flex items-center gap-3 mb-2 px-1">
                 <span className="font-mono text-[11px] font-semibold" style={{ color: ghsEval.tier === 'excellent' ? '#647d75' : ghsEval.tier === 'passable' ? '#ca8a04' : '#9a3412' }}>
                   GHS {ghsEval.ghs} · {ghsEval.tier}
