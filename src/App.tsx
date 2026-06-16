@@ -11,7 +11,7 @@ import { CreditsProvider } from "@/contexts/CreditsContext";
 import { CityProvider } from "@/contexts/CityContext";
 import { ShowroomProvider } from "@/contexts/ShowroomContext";
 import { ProviderProvider } from "@/contexts/ProviderContext";
-import { ConsentProvider, useConsent } from "@/contexts/ConsentContext";
+import { ConsentProvider } from "@/contexts/ConsentContext";
 import { AppErrorBoundary } from "@/components/ErrorBoundary";
 import { trackPageView } from "@/lib/analytics";
 import Index from "./pages/Index";
@@ -32,16 +32,6 @@ function PageViewTracker() {
   return null;
 }
 
-function ConditionalAnalytics() {
-  const { consentGiven } = useConsent();
-  if (consentGiven !== true) return null;
-  return (
-    <>
-      <Analytics />
-      <SpeedInsights />
-    </>
-  );
-}
 
 const queryClient = new QueryClient();
 
@@ -77,7 +67,8 @@ const App = () => (
                     </ProviderProvider>
                   </ShowroomProvider>
                 </BrowserRouter>
-                <ConditionalAnalytics />
+                <Analytics />
+                <SpeedInsights />
               </TooltipProvider>
             </CityProvider>
           </CreditsProvider>
