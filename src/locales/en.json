@@ -478,6 +478,8 @@
     "title": "What's next",
     "budgetTitle": "Budget estimate",
     "budgetDesc": "Get approximate costs for your renovation",
+    "specsTitle": "Material specs",
+    "specsDesc": "See full details and sourcing for your palette",
     "planTitle": "Project timeline",
     "planDesc": "Plan your renovation from start to move-in"
   },

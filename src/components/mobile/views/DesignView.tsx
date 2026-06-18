@@ -876,6 +876,17 @@ export default function DesignView() {
                     {t("vizWhatsNext.title")}
                   </p>
                   <button
+                    onClick={() => handleSubTabChange("specs")}
+                    className="w-full flex items-center justify-between py-3"
+                  >
+                    <div className="text-left">
+                      <p className="text-xs font-medium text-foreground">{t("vizWhatsNext.specsTitle")}</p>
+                      <p className="text-[11px] text-muted-foreground">{t("vizWhatsNext.specsDesc")}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  </button>
+                  <div style={{ height: "0.5px", backgroundColor: "rgba(0,0,0,0.06)" }} />
+                  <button
                     onClick={() => { setActiveTab("budget"); navigate("/budget"); }}
                     className="w-full flex items-center justify-between py-3"
                   >
