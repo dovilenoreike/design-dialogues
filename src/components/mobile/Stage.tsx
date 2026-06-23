@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useEffect, useState, useRef } from "react";
-import { Sparkles, Loader2, Camera, X, Download, Coins } from "lucide-react";
+import { Sparkles, Loader2, Camera, X, Download, Coins, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import UploadMenuSheet from "./UploadMenuSheet";
 import { useDesign, ControlMode } from "@/contexts/DesignContext";
@@ -162,6 +162,7 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
 
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const [showNoCreditsBanner, setShowNoCreditsBanner] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [creditRequestState, setCreditRequestState] = useState<'idle' | 'form' | 'submitting' | 'success' | 'error'>('idle');
   const [creditRequestEmail, setCreditRequestEmail] = useState('');
   const [creditRequestFeedback, setCreditRequestFeedback] = useState('');
@@ -305,13 +306,22 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
       {hasUserImage && (
         <div className="absolute inset-x-0 top-4 px-3">
           {generatedImage && !isGenerating && (
-            <button
-              onClick={handleSaveImage}
-              className="absolute top-0 right-12 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
-              style={{ border: '0.5px solid rgba(255,255,255,0.15)' }}
-            >
-              <Download className="w-3.5 h-3.5" strokeWidth={2} />
-            </button>
+            <>
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="absolute top-0 right-[84px] w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
+                style={{ border: '0.5px solid rgba(255,255,255,0.15)' }}
+              >
+                <Maximize2 className="w-3.5 h-3.5" strokeWidth={2} />
+              </button>
+              <button
+                onClick={handleSaveImage}
+                className="absolute top-0 right-12 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
+                style={{ border: '0.5px solid rgba(255,255,255,0.15)' }}
+              >
+                <Download className="w-3.5 h-3.5" strokeWidth={2} />
+              </button>
+            </>
           )}
           {!isGenerating && (
             <button
@@ -557,6 +567,32 @@ export default function Stage({ onOpenSelector, onSwatchTap, onGoToMaterials, on
                 {t("credits.dismiss")}
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen image viewer */}
+      {isFullscreen && generatedImage && (
+        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-black/60 backdrop-blur-xl rounded-full text-white active:scale-95 transition-transform"
+          >
+            <X className="w-5 h-5" strokeWidth={2} />
+          </button>
+          <img
+            src={generatedImage}
+            alt="Generated visualization"
+            className="w-full h-full object-contain"
+          />
+          <div className="absolute bottom-10 inset-x-0 flex justify-center">
+            <button
+              onClick={handleSaveImage}
+              className="flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-medium text-sm shadow-lg active:scale-[0.98] transition-transform"
+            >
+              <Download className="w-4 h-4" strokeWidth={2} />
+              Save Image
+            </button>
           </div>
         </div>
       )}

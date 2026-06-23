@@ -185,38 +185,39 @@ export function useGenerationState({
     loadGeneration();
   }, [user, isSharedSession, design.selectedCategory, design.selectedStyle, design.freestyleDescription]);
 
-  // Save/download generated image - mobile compatible
+  // Save/download generated image — uses Web Share API on mobile (opens native share sheet
+  // where user can "Save Image" to Photos), falls back to <a download> on desktop.
   const handleSaveImage = useCallback(async () => {
     const currentRoom = design.selectedCategory || "Kitchen";
     const currentGeneratedImage = generation.generatedImages[currentRoom];
     if (!currentGeneratedImage) return;
 
-    const filename = `${design.selectedCategory}-${design.selectedStyle || 'custom'}-visualization.png`;
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `${(design.selectedCategory || 'design').toLowerCase()}-visualization-${date}.png`;
 
     try {
       const response = await fetch(currentGeneratedImage);
       const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const file = new File([blob], filename, { type: 'image/png' });
 
-      if (isIOS) {
-        window.open(blobUrl, '_blank');
-        toast.info("Long-press the image to save it to your device", { position: "top-center" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        // Native share sheet provides its own feedback — no toast needed
       } else {
+        const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success("Image saved!", { position: "top-center" });
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        toast.success("Image downloaded", { position: "top-center" });
       }
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return; // user cancelled share sheet
       console.error("Failed to save image:", error);
-      window.open(currentGeneratedImage, '_blank');
-      toast.info("Image opened in new tab - save from there", { position: "top-center" });
+      toast.error("Couldn't save image", { position: "top-center" });
     }
   }, [generation.generatedImages, design.selectedCategory, design.selectedStyle]);
 
