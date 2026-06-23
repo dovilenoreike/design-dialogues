@@ -485,15 +485,15 @@ export function useGenerationState({
         } else if (dedupedMaterials.length > 0) {
           const matInstr = dedupedMaterials
             .map((m, i) => {
-              const texture = m.texturePrompt;
               const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, fpExplicitFrontCount);
               const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+              const tex = m.texturePrompt ? ` (${m.texturePrompt})` : "";
               return isSingle
-                ? `- Image ${i + 2} (${texture}): apply to ${label}.`
-                : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
+                ? `- Image ${i + 2}${tex}: apply to ${label}.`
+                : `- Image ${i + 2}${tex}: apply this SAME texture to ALL of these surfaces: ${label}.`;
             })
             .join("\n");
-          materialSection = `\nImages 2..${dedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
+          materialSection = `\nImages 2..${dedupedMaterials.length + 1} are texture/material samples. The texture sample images are the definitive visual reference — match exactly what is shown in each image, do not approximate from material names.\n${matInstr}`;
         }
 
         const designPrompt = `Image 1 is a 2D room floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).
@@ -539,20 +539,20 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
 
         const erMatInstr = erDedupedMaterials
           .map((m, i) => {
-            const texture = m.texturePrompt;
             const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, erExplicitFrontCount);
             const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            const tex = m.texturePrompt ? ` (${m.texturePrompt})` : "";
             return isSingle
-              ? `- Image ${i + 2} (${texture}): apply to ${label}.`
-              : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
+              ? `- Image ${i + 2}${tex}: is the EXACT SURFACE TEXTURE for  ${label}.`
+              : `- Image ${i + 2}${tex}: is the EXACT SURFACE TEXTURE for ALL of these surfaces: ${label}.`;
           })
           .join("\n");
 
         const erMaterialSection = erDedupedMaterials.length > 0
-          ? `\n\nApply the following materials and finishes:\n${erMatInstr}\n\nApply provided textures exactly as in the samples — do not yellow, grey, or alter them.`
+          ? `\n\nApply the following materials:\n${erMatInstr}\n\nApply each material exactly as it appears in its reference image — preserve its specific color temperature, lightness, grain direction, pattern repeat, and surface finish.`
           : "";
 
-        const designPrompt = `Image 1 is a photo of an empty room. Furnish this room as a kitchen. DO NOT change room architecture.${erMaterialSection}\n\n Wall-off white. Keep cabinet fronts flat— do not add filler objects or decorative props.\n\nProduce a photorealistic result with professional photography quality.`;
+        const designPrompt = `Add kitchen with the specified materials to the image of an empty room. Image 1 is a photo of an empty room. DO NOT change room architecture.${erMaterialSection}\n\n Wall-off white. Keep cabinet fronts flat— do not add filler objects or decorative props.\n\nProduce a photorealistic result with professional photography quality.`;
 
         if (LOG_PROMPTS_TO_CONSOLE) { console.log("[gen] model:", models.empty_room); console.log("[gen] prompt:\n", designPrompt); }
         const { data, error } = await supabase.functions.invoke("generate-material-edit", {
@@ -571,6 +571,7 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       } else if (isGeminiPath) {
         const geminiExplicitKeys = new Set(Object.keys(materialOverrides));
         const geminiExplicitFrontCount = Object.keys(materialOverrides).filter(k => surfaces[k]?.category === "front").length;
+
         const materialImagesWithMeta = await loadMaterialImagesWithOverrides(effectiveOverrides, excludedSlots, geminiExplicitKeys);
 
         // Deduplicate by material ID, tracking all surfaces each material covers
@@ -589,19 +590,23 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
 
         const matInstr = dedupedMaterials
           .map((m, i) => {
-            const texture = m.texturePrompt;
             const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, geminiExplicitFrontCount);
             const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            const tex = m.texturePrompt ? ` (${m.texturePrompt})` : "";
             return isSingle
-              ? `- Image ${i + 2} (${texture}): apply to ${label}.`
-              : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
+              ? `- Image ${i + 2}${tex}: is the EXACT SURFACE TEXTURE for ${label}.`
+              : `- Image ${i + 2}${tex}: is the EXACT SURFACE TEXTURE for ALL of these surfaces: ${label}.`;
           })
           .join("\n");
+
+        const imageFidelityPreamble = `The texture sample images are the definitive visual reference for each material. Match exactly what is shown — color temperature, lightness, grain direction, pattern scale, surface sheen — do not approximate from material names or general knowledge.`;
+        const imageFidelityClosing = `Apply each material exactly as it appears in its reference image — preserve its specific color temperature, lightness, grain direction, pattern repeat, and surface finish.`;
+
         let designPrompt: string;
         if (uploadType === "sketch") {
-          designPrompt = `Image 1 is a rough sketch or concept drawing of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\nApply the following materials and finishes:\n${matInstr}\n\nApply the provided textures exactly accurate as in the texture samples, without turning yellow, grey or changing the textures. Style the rest of item as a designer. Produce a realistic interior render with professional photography quality.`;
+          designPrompt = `Convert the sketch to the kitchen visualisation with specific materials. Image 1 is a rough sketch or concept drawing of a kitchen. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nCreate a photorealistic interior visualization based on this sketch.\n\n${imageFidelityPreamble}\n\nApply the following materials:\n${matInstr}\n\n${imageFidelityClosing} Style the rest of items as a designer. Produce a realistic interior render with professional photography quality in natural daylight.`;
         } else {
-          designPrompt = `Image 1 is a photo of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\nONLY replace surface materials and finishes using the exact provided texture samples:\n${matInstr}\n\nApply the provided textures exactly accurate as in the texture samples, without turning yellow, grey or changing the textures. Style the rest of items as a designer. Create a photorealistic result with professional photography quality.`;
+          designPrompt = `Replace surface materials and finishes using the provided texture samples. Image 1 is a photo of a room. Images 2..${dedupedMaterials.length + 1} are texture/material samples.\n\nPRESERVE the exact room layout, architecture, furniture placement, and camera angle from Image 1. Do NOT rearrange, add, or remove any furniture or architectural elements.\n\n${imageFidelityPreamble}\n\nONLY replace surface materials and finishes using the provided texture samples:\n${matInstr}\n\n${imageFidelityClosing} Style the rest of items as a designer. Create a photorealistic result with professional photography quality in natural daylight.`;
         }
 
 
@@ -827,15 +832,15 @@ Output a clean, minimalist, well-lit render suitable for interior material selec
       } else if (clayDedupedMaterials.length > 0) {
         const matInstr = clayDedupedMaterials
           .map((m, i) => {
-            const texture = m.texturePrompt;
             const label = frontSurfaceLabel(m.categories, m.explicitSurfaces, m.surfaces, clayExplicitFrontCount);
             const isSingle = label === "Cabinets" || m.surfaces.length === 1 || (m.explicitSurfaces.length <= 1 && m.categories.every(c => c === "front"));
+            const tex = m.texturePrompt ? ` (${m.texturePrompt})` : "";
             return isSingle
-              ? `- Image ${i + 2} (${texture}): apply to ${label}.`
-              : `- Image ${i + 2} (${texture}): apply this SAME texture to ALL of these surfaces: ${label}.`;
+              ? `- Image ${i + 2}${tex}: apply to ${label}.`
+              : `- Image ${i + 2}${tex}: apply this SAME texture to ALL of these surfaces: ${label}.`;
           })
           .join("\n");
-        clayMaterialSection = `\nImages 2..${clayDedupedMaterials.length + 1} are texture/material samples. Apply the following materials:\n${matInstr}`;
+        clayMaterialSection = `\nImages 2..${clayDedupedMaterials.length + 1} are texture/material samples. The texture sample images are the definitive visual reference — match exactly what is shown in each image, do not approximate from material names.\n${matInstr}`;
       }
 
       const designPrompt = `Image 1 is a 2D room floor plan. Convert it into a single photorealistic perspective render as if standing in the kitchen looking toward the main wall (NOT A 3D MODEL render).

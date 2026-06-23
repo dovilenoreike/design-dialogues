@@ -69,11 +69,11 @@ serve(async (req) => {
       }
 
       const parts = [
+        { text: designPrompt },
         { inlineData: { mimeType: "image/png", data: stripDataPrefix(imageBase64) } },
         ...materialImages.map((mat) => ({
           inlineData: { mimeType: "image/png", data: stripDataPrefix(mat.base64) },
         })),
-        { text: designPrompt },
       ];
 
       const body = {

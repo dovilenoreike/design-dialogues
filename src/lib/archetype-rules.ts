@@ -25,7 +25,7 @@ export function deriveArchetypeId(
 ): string | null {
   // Accent role: map to moodboard archetype IDs (gold / silver / bronze / black / colour)
   if (role === 'accent') {
-    if (texture === 'metal') {
+    if (texture === 'metallic') {
       if (visualChroma(chroma, lightness) >= 15) return 'gold';  // visually warm/rich → gold
       if (warmth >= 0.1) return 'bronze';                         // warm but lower visual chroma → aged bronze
       return 'silver';                                             // neutral/cool → chrome/silver
@@ -35,7 +35,7 @@ export function deriveArchetypeId(
     return 'colour';
   }
   // Metal: any other role
-  if (texture === 'metal') return 'metallic';
+  if (texture === 'metallic') return 'metallic';
 
   // Wood: single 'wood' archetype for both floor and front; worktop handled below
   if (texture === 'wood') {
@@ -50,7 +50,7 @@ export function deriveArchetypeId(
 
   // Cabinet front — plain/textile: no archetype classification; scoring derives the spec
   // from material properties at runtime (see palette-scoring.ts derivePlainArchetypeId).
-  const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metal';
+  const isPlainLike = texture !== 'wood' && !isStoneLike && texture !== 'metallic';
   if (role === 'front' && isPlainLike) return null;
 
   // Worktop

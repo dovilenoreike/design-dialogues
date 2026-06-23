@@ -18,7 +18,7 @@ function colourSalience(lightness: number): number {
 
 // ─── Activity + composition ───────────────────────────────────────────────────
 const TEXTURE_COMPLEXITY: Record<string, number> = {
-  plain: 0, wood: 0.65, stone: 0.35, metal: 0.15,
+  plain: 0, wood: 0.65, stone: 0.35, metallic: 0.15,
 };
 
 function computeActivity(m: GraphMaterial): number {

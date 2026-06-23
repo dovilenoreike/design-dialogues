@@ -22,7 +22,7 @@ export type TextureType =
   | "marble"
   | "concrete"
   | "painted"
-  | "metal"
+  | "metallic"
   | "ceramic";
 
 export type TextureLevel =

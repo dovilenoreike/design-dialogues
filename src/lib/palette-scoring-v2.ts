@@ -15,7 +15,7 @@ function colourSalience(lightness: number): number {
 
 // ─── Activity + mass ─────────────────────────────────────────────────────────
 const TEXTURE_COMPLEXITY: Record<string, number> = {
-  plain: 0, wood: 0.65, stone: 0.35, metal: 0.15,
+  plain: 0, wood: 0.65, stone: 0.35, metallic: 0.15,
 };
 
 function computeActivity(m: GraphMaterial): number {
@@ -474,13 +474,13 @@ export type DirectionId =
   | 'light_neutral' | 'medium_neutral' | 'dark_neutral'
   | 'pastel' | 'rich_colour' | 'muted'
   | 'quiet_stone' | 'natural_stone' | 'bold_movement'
-  | 'metal';
+  | 'metallic';
 
 export const DIRECTIONS_BY_ARCHETYPE: Record<string, DirectionId[]> = {
   wood:     ['lighter_echo', 'tonal_match', 'darker_echo', 'soft_contrast'],
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
-  metallic: ['metal'],
+  metalliclic: ['metallic'],
 };
 
 // Default direction shown on the archetype chip before any materials are placed.
@@ -499,7 +499,7 @@ export const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
   wood:     ['tonal_match', 'lighter_echo', 'darker_echo', 'soft_contrast'],
   stone:    ['quiet_stone', 'natural_stone', 'bold_movement'],
   plain:    ['light_neutral', 'medium_neutral', 'dark_neutral', 'pastel', 'rich_colour', 'muted'],
-  metallic: ['metal'],
+  metalliclic: ['metallic'],
 };
 
 // Resolve which direction family applies. Prefer the explicit chip routing
@@ -511,7 +511,7 @@ function archetypeForDirections(c: GraphMaterial, chipArchetypeId?: string | nul
   const fromTexture = c.texture === 'plain' ? 'plain'
                     : c.texture === 'wood'  ? 'wood'
                     : (c.texture === 'stone' || c.texture === 'concrete') ? 'stone'
-                    : c.texture === 'metal' ? 'metallic'
+                    : c.texture === 'metallic' ? 'metalliclic'
                     : null;
   return fromTexture && known(fromTexture) ? fromTexture : null;
 }
@@ -804,10 +804,10 @@ const METAL_DIRECTION_CONFIG: DirectionConfig = {
 
 const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionConfig>>> = {
 
-  metallic: { metal: METAL_DIRECTION_CONFIG },
-  gold:     { metal: METAL_DIRECTION_CONFIG },
-  silver:   { metal: METAL_DIRECTION_CONFIG },
-  bronze:   { metal: METAL_DIRECTION_CONFIG },
+  metalliclic: { metallic: METAL_DIRECTION_CONFIG },
+  gold:     { metallic: METAL_DIRECTION_CONFIG },
+  silver:   { metallic: METAL_DIRECTION_CONFIG },
+  bronze:   { metallic: METAL_DIRECTION_CONFIG },
 
   plain: {
     light_neutral: {
@@ -1057,7 +1057,7 @@ export function directionMinScore(
 
 /** Score every candidate per direction, blend with harmony, and return sorted desc by score.
  *  Each candidate with a known archetype appears once per direction in that archetype's family.
- *  Non-directional materials (metallics, accents) appear once with direction = null.
+ *  Non-directional materials (metalliclics, accents) appear once with direction = null.
  *
  *  pairScores / pairWeight: when provided, pair compatibility is blended into each entry's
  *  score BEFORE the claiming/non-claiming sort. Paired materials float to the top of their

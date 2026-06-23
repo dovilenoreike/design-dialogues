@@ -30,6 +30,17 @@ export function useMaterialOverrides() {
     try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(materialOverrides)); } catch {}
   }, [materialOverrides]);
 
+  // If a slot gets an explicit material assigned, it is no longer excluded.
+  useEffect(() => {
+    const toUnexclude = Object.keys(materialOverrides).filter(slot => excludedSlots.has(slot));
+    if (toUnexclude.length === 0) return;
+    setExcludedSlots(prev => {
+      const next = new Set(prev);
+      toUnexclude.forEach(slot => next.delete(slot));
+      return next;
+    });
+  }, [materialOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     try { localStorage.setItem(EXCLUDED_SLOTS_KEY, JSON.stringify([...excludedSlots])); } catch {}
   }, [excludedSlots]);
