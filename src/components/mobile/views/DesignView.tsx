@@ -13,6 +13,7 @@ import PostVizFeedbackPrompt from "@/components/PostVizFeedbackPrompt";
 import Stage from "../Stage";
 import KonceptasView, { SLOT_TO_PALETTE_KEY, DEFAULT_SLOT_SURFACES, OPTIONAL_SLOTS, InfoRows, PhotoInfoRows } from "./KonceptasView";
 import SpecsView from "./SpecsView";
+import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import InspirationUploadDialog from "../controls/InspirationUploadDialog";
 import { SHOW_COLOUR_SCORES } from "@/lib/material-generation-utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -86,6 +87,8 @@ export default function DesignView() {
   const pendingOpenSlotRef = useRef<SlotKey | null>(null);
   // Visual tab: which slot is expanded for inline surface-assignment editing
   const [vizActiveSlot, setVizActiveSlot] = useState<SlotKey | null>(null);
+  // Specs tab: material selected for right-column detail view (desktop only)
+  const [specsSelectedMaterial, setSpecsSelectedMaterial] = useState<MaterialInfo | null>(null);
   const vizPanelRef = useRef<HTMLDivElement>(null);
   const vizDragStartY = useRef(0);
   const vizDragging = useRef(false);
@@ -415,6 +418,7 @@ export default function DesignView() {
       setActiveSlot(null);
     }
     setVizActiveSlot(null);
+    setSpecsSelectedMaterial(null);
   }, [subTab]);
 
   const handleSlotSelect = useCallback(
@@ -854,6 +858,7 @@ export default function DesignView() {
               designer={activePresetDesigner ?? getApprovedByDesigner(Object.values(materialOverrides))}
               allNonAccentsVerified={allNonAccentsVerified}
               onRequestReview={() => setShowReviewSheet(true)}
+              onMaterialSelect={!isMobile ? (info) => setSpecsSelectedMaterial(info) : undefined}
             />
           ) : subTab === "vizualas" ? (
             <div>
@@ -952,7 +957,7 @@ export default function DesignView() {
       {/* RIGHT (desktop) / BOTTOM (mobile inline): shared picker panel */}
       <div
         ref={pickerRef}
-        className={`${(activeSlot || vizActiveSlot) && !isMobile ? "flex-1 min-h-0 overflow-hidden" : !activeSlot && !vizActiveSlot ? "h-auto mt-3 border-t" : "hidden"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l lg:flex bg-neutral-50`}
+        className={`${(activeSlot || vizActiveSlot || specsSelectedMaterial) && !isMobile ? "flex-1 min-h-0 overflow-hidden" : !activeSlot && !vizActiveSlot && !specsSelectedMaterial ? "h-auto mt-3 border-t" : "hidden"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l lg:flex bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1132,7 +1137,14 @@ export default function DesignView() {
               </div>
             </div>
           );
-        })() : (
+        })() : !isMobile && specsSelectedMaterial && subTab === "specs" ? (
+          <MaterialSourcingSheet
+            inline
+            isOpen
+            onClose={() => setSpecsSelectedMaterial(null)}
+            material={specsSelectedMaterial}
+          />
+        ) : (
           <div className="hidden lg:flex lg:h-full items-center justify-center flex-col gap-2 select-none lg:py-0">
             {/* Desktop only: palette hint when available, otherwise arrow prompt */}
             <div className="flex flex-col items-center gap-1 text-center px-10">

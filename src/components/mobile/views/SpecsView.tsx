@@ -17,9 +17,11 @@ interface SpecsViewProps {
   designer?: string | null;
   allNonAccentsVerified?: boolean;
   onRequestReview?: () => void;
+  /** Desktop: instead of opening the sheet modal, call this with the material info */
+  onMaterialSelect?: (info: MaterialInfo) => void;
 }
 
-export default function SpecsView({ designer, allNonAccentsVerified = true, onRequestReview }: SpecsViewProps) {
+export default function SpecsView({ designer, allNonAccentsVerified = true, onRequestReview, onMaterialSelect }: SpecsViewProps) {
   const navigate = useNavigate();
   const { design, materialOverrides, excludedSlots, selectedTier, setActiveTab } = useDesign();
   const { t, language } = useLanguage();
@@ -197,14 +199,19 @@ export default function SpecsView({ designer, allNonAccentsVerified = true, onRe
                       tab: "specs",
                     });
                     const modalName = mat!.name?.[lang] || mat!.name?.en || displayName;
-                    setSelectedMaterialInfo({
+                    const info: MaterialInfo = {
                       name: modalName,
                       materialType: mat!.materialType,
                       technicalCode: mat!.technicalCode,
                       imageUrl: mat!.imageUrl || undefined,
                       showroomIds: mat!.showroomIds,
-                    });
-                    setIsSourcingSheetOpen(true);
+                    };
+                    if (onMaterialSelect) {
+                      onMaterialSelect(info);
+                    } else {
+                      setSelectedMaterialInfo(info);
+                      setIsSourcingSheetOpen(true);
+                    }
                   };
 
                   return (

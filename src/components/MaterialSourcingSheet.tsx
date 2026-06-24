@@ -47,12 +47,15 @@ interface MaterialSourcingSheetProps {
   isOpen: boolean;
   onClose: () => void;
   material: MaterialInfo | null;
+  /** Render content directly without a Dialog/Drawer wrapper (desktop right-column mode) */
+  inline?: boolean;
 }
 
 const MaterialSourcingSheet = ({
   isOpen,
   onClose,
   material,
+  inline = false,
 }: MaterialSourcingSheetProps) => {
   const { t } = useLanguage();
   const { city, setCity } = useCity();
@@ -372,6 +375,55 @@ const MaterialSourcingSheet = ({
       </div>
     </div>
   );
+
+  if (inline) {
+    return (
+      <>
+        <div className="h-full overflow-y-auto">{desktopContent}</div>
+        {contactProvider && (
+          <Dialog open={!!contactProvider} onOpenChange={(open) => !open && setContactProvider(null)}>
+            <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+              <DialogTitle className="font-serif text-xl">
+                {t("provider.contactTitle").replace("{name}", contactProvider.name)}
+              </DialogTitle>
+              {contactProvider.description && (
+                <p className="text-sm text-muted-foreground -mt-2">{contactProvider.description}</p>
+              )}
+              <div className="space-y-3 mt-1">
+                {contactProvider.phone && (
+                  <a href={`tel:${contactProvider.phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors">
+                    <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium">{contactProvider.phone}</span>
+                  </a>
+                )}
+                {contactProvider.website && (
+                  <a href={contactProvider.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors">
+                    <Globe size={16} className="text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium">{t("sourcing.visitWebsite")}</span>
+                  </a>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        {contactShowroom && (
+          <Dialog open={!!contactShowroom} onOpenChange={(open) => !open && setContactShowroom(null)}>
+            <DialogContent className="max-w-sm p-6" aria-describedby={undefined}>
+              <DialogTitle className="font-serif text-xl">{contactShowroom.name}</DialogTitle>
+              <div className="space-y-3 mt-1">
+                {contactShowroom.phone && (
+                  <a href={`tel:${contactShowroom.phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl hover:bg-muted/70 transition-colors">
+                    <Phone size={16} className="text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium">{contactShowroom.phone}</span>
+                  </a>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </>
+    );
+  }
 
   if (isMobile) {
     return (
