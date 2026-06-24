@@ -952,7 +952,7 @@ export default function DesignView() {
       {/* RIGHT (desktop) / BOTTOM (mobile inline): shared picker panel */}
       <div
         ref={pickerRef}
-        className={`${activeSlot && !isMobile ? "flex-1 min-h-0 overflow-hidden" : !activeSlot ? "h-auto mt-3 border-t" : "hidden"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l lg:flex bg-neutral-50`}
+        className={`${(activeSlot || vizActiveSlot) && !isMobile ? "flex-1 min-h-0 overflow-hidden" : !activeSlot && !vizActiveSlot ? "h-auto mt-3 border-t" : "hidden"} lg:h-full lg:flex-1 lg:min-w-0 lg:min-h-0 lg:overflow-hidden lg:mt-0 lg:border-t-0 lg:border-l lg:flex bg-neutral-50`}
         style={{ borderColor: "#e8e4e0", borderWidth: "0.5px" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1039,7 +1039,100 @@ export default function DesignView() {
               );
             })()}
           />
-        ) : (
+        ) : !isMobile && vizActiveSlot && subTab === "vizualas" ? (() => {
+          const slotRole = SLOT_KEY_TO_ROLE[vizActiveSlot];
+          const assignedPks = slotSurfaces[vizActiveSlot] ?? [];
+          const allForRole = Object.entries(surfaces).filter(([, def]) => def.category === slotRole).map(([pk]) => pk);
+          const enabledSlotKeys: SlotKey[] = ["floor", ...OPTIONAL_SLOTS.filter(s => enabledOptionalSlots.has(s))];
+          const ownedByOther = new Map<string, SlotKey>();
+          for (const s of enabledSlotKeys) {
+            if (s === vizActiveSlot) continue;
+            for (const pk of slotSurfaces[s] ?? []) ownedByOther.set(pk, s);
+          }
+          const primaryPk = slotSurfaces[vizActiveSlot]?.[0] ?? SLOT_TO_PALETTE_KEY[vizActiveSlot];
+          const matCode = primaryPk ? materialOverrides[primaryPk] : undefined;
+          const matImage = matCode ? getMaterialByCode(matCode)?.imageUrl : undefined;
+
+          return (
+            <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: "#f9f8f7" }}>
+              {/* Header — matches inline picker style */}
+              <div className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0" style={{ borderBottom: "0.5px solid #e8e4e0" }}>
+                <span className="text-[15px] font-medium flex-1" style={{ color: "#1a1a1a" }}>
+                  {t(`surface.${vizActiveSlot}`)}
+                </span>
+                <button
+                  onClick={() => setVizActiveSlot(null)}
+                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "#f5f2ef" }}
+                >
+                  <XIcon className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+                </button>
+              </div>
+
+              {/* Swatch (left) + surface pills (right) */}
+              <div className="flex gap-4 px-4 pt-5 items-start">
+                {matImage && (
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        pendingOpenSlotRef.current = vizActiveSlot;
+                        setVizActiveSlot(null);
+                        handleSubTabChange("konceptas");
+                      }}
+                      className="active:scale-95 transition-transform"
+                      style={{ width: 72, height: 72, borderRadius: 14, overflow: 'hidden', border: '2px solid transparent', display: 'block' }}
+                    >
+                      <img src={matImage} alt="" className="w-full h-full object-cover" />
+                    </button>
+                    <span className="text-[10px] text-center leading-tight" style={{ color: '#647d75', fontWeight: 500 }}>
+                      {t('surface.changeMaterial')}
+                    </span>
+                  </div>
+                )}
+                {allForRole.length > 0 && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.35)', fontWeight: 500 }}>
+                      {t('surface.assignedSurfaces')}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {allForRole.map((pk) => {
+                        const isActive = assignedPks.includes(pk);
+                        const otherSlot = ownedByOther.get(pk);
+                        const canRemove = isActive && assignedPks.length > 1;
+                        return (
+                          <button
+                            key={pk}
+                            onClick={() => {
+                              if (isActive) {
+                                if (canRemove) handleRemoveSurface(vizActiveSlot, pk);
+                              } else {
+                                handleAddSurface(vizActiveSlot, pk);
+                                if (otherSlot && (slotSurfaces[otherSlot]?.length ?? 0) <= 1) {
+                                  setEnabledOptionalSlots(prev => { const s = new Set(prev); s.delete(otherSlot); return s; });
+                                  setSlotSelections(prev => ({ ...prev, [otherSlot]: null }));
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-1 h-7 px-3 rounded-full text-[11px] font-medium active:scale-95 transition-all"
+                            style={{
+                              backgroundColor: isActive ? '#647d75' : 'rgba(0,0,0,0.04)',
+                              color: isActive ? '#ffffff' : 'rgba(0,0,0,0.45)',
+                              border: isActive ? 'none' : `0.5px dashed rgba(0,0,0,${otherSlot ? '0.12' : '0.18'})`,
+                              opacity: !isActive && otherSlot ? 0.5 : 1,
+                            }}
+                          >
+                            {t(`surface.${pk}`) || pk}
+                            {isActive && canRemove && <XIcon className="w-3 h-3 ml-0.5 opacity-50" strokeWidth={2} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })() : (
           <div className="hidden lg:flex lg:h-full items-center justify-center flex-col gap-2 select-none lg:py-0">
             {/* Desktop only: palette hint when available, otherwise arrow prompt */}
             <div className="flex flex-col items-center gap-1 text-center px-10">
@@ -1155,8 +1248,8 @@ export default function DesignView() {
         </DialogContent>
       </Dialog>
 
-      {/* Visual-tab surface-assignment panel (portal, fixed bottom) */}
-      {vizActiveSlot && subTab === "vizualas" && (() => {
+      {/* Visual-tab surface-assignment panel — mobile: fixed-bottom portal */}
+      {isMobile && vizActiveSlot && subTab === "vizualas" && (() => {
         const slotRole = SLOT_KEY_TO_ROLE[vizActiveSlot];
         const assignedPks = slotSurfaces[vizActiveSlot] ?? [];
         const allForRole = Object.entries(surfaces).filter(([, def]) => def.category === slotRole).map(([pk]) => pk);
