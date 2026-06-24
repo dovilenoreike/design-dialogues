@@ -394,9 +394,10 @@ export default function DesignView() {
 
   // Currently selected material code for the active slot
   const activeSlotMaterialCode = useMemo(() => {
-    const pk = activeSlot ? SLOT_TO_PALETTE_KEY[activeSlot] : null;
+    if (!activeSlot) return undefined;
+    const pk = slotSurfaces[activeSlot]?.[0] ?? SLOT_TO_PALETTE_KEY[activeSlot];
     return pk ? (materialOverrides[pk] ?? undefined) : undefined;
-  }, [activeSlot, materialOverrides]);
+  }, [activeSlot, materialOverrides, slotSurfaces]);
 
   // Close picker when switching sub-tabs
   useEffect(() => {
