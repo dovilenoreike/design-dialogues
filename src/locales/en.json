@@ -211,6 +211,8 @@
     "browseAll": "Browse all",
     "moreOptions": "More options",
     "clearAllSlots": "Clear all surfaces",
+    "changeMaterial": "Change material",
+    "assignedSurfaces": "Surfaces",
     "back": "Back",
     "close": "Close",
     "done": "Done",

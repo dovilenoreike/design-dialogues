@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics";
 import { ArrowLeft, Camera, ChevronRight, Heart, Info, RotateCcw, Sparkles, X as XIcon } from "lucide-react";
@@ -83,6 +84,11 @@ export default function DesignView() {
   };
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const pendingOpenSlotRef = useRef<SlotKey | null>(null);
+  // Visual tab: which slot is expanded for inline surface-assignment editing
+  const [vizActiveSlot, setVizActiveSlot] = useState<SlotKey | null>(null);
+  const vizPanelRef = useRef<HTMLDivElement>(null);
+  const vizDragStartY = useRef(0);
+  const vizDragging = useRef(false);
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
   const [enabledOptionalSlots, setEnabledOptionalSlots] = useState<Set<SlotKey>>(() => {
@@ -400,7 +406,7 @@ export default function DesignView() {
     return pk ? (materialOverrides[pk] ?? undefined) : undefined;
   }, [activeSlot, materialOverrides, slotSurfaces]);
 
-  // Close picker when switching sub-tabs (unless a slot was queued to open after navigation)
+  // Close picker / visual surface panel when switching sub-tabs
   useEffect(() => {
     if (pendingOpenSlotRef.current) {
       setActiveSlot(pendingOpenSlotRef.current);
@@ -408,6 +414,7 @@ export default function DesignView() {
     } else {
       setActiveSlot(null);
     }
+    setVizActiveSlot(null);
   }, [subTab]);
 
   const handleSlotSelect = useCallback(
@@ -854,8 +861,7 @@ export default function DesignView() {
                 <Stage
 
                   onSwatchTap={(slotKey) => {
-                    pendingOpenSlotRef.current = slotKey as SlotKey;
-                    handleSubTabChange("konceptas");
+                    setVizActiveSlot(prev => prev === slotKey ? null : slotKey as SlotKey);
                   }}
                   onGoToMaterials={() => handleSubTabChange("konceptas")}
                   onNudgeMissing={handleNudgeMissing}
@@ -874,6 +880,7 @@ export default function DesignView() {
                   })}
                 />
               </div>
+
               <div className="mt-14">
                 <PostVizFeedbackPrompt />
               </div>
@@ -1147,6 +1154,158 @@ export default function DesignView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Visual-tab surface-assignment panel (portal, fixed bottom) */}
+      {vizActiveSlot && subTab === "vizualas" && (() => {
+        const slotRole = SLOT_KEY_TO_ROLE[vizActiveSlot];
+        const assignedPks = slotSurfaces[vizActiveSlot] ?? [];
+        const allForRole = Object.entries(surfaces).filter(([, def]) => def.category === slotRole).map(([pk]) => pk);
+        const enabledSlotKeys: SlotKey[] = ["floor", ...OPTIONAL_SLOTS.filter(s => enabledOptionalSlots.has(s))];
+        const ownedByOther = new Map<string, SlotKey>();
+        for (const s of enabledSlotKeys) {
+          if (s === vizActiveSlot) continue;
+          for (const pk of slotSurfaces[s] ?? []) ownedByOther.set(pk, s);
+        }
+        const primaryPk = slotSurfaces[vizActiveSlot]?.[0] ?? SLOT_TO_PALETTE_KEY[vizActiveSlot];
+        const matCode = primaryPk ? materialOverrides[primaryPk] : undefined;
+        const matImage = matCode ? getMaterialByCode(matCode)?.imageUrl : undefined;
+
+        return createPortal(
+          <div
+            ref={vizPanelRef}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white"
+            style={{ borderRadius: '12px 12px 0 0', boxShadow: '0 -2px 20px rgba(0,0,0,0.10)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Swipe-to-dismiss zone */}
+            <div
+              style={{ touchAction: 'none', userSelect: 'none' }}
+              onPointerDown={(e) => {
+                vizDragStartY.current = e.clientY;
+                vizDragging.current = true;
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                if (vizPanelRef.current) vizPanelRef.current.style.transition = 'none';
+              }}
+              onPointerMove={(e) => {
+                if (!vizDragging.current) return;
+                const dy = Math.max(0, e.clientY - vizDragStartY.current);
+                if (vizPanelRef.current) {
+                  vizPanelRef.current.style.transform = `translateY(${dy}px)`;
+                  vizPanelRef.current.style.opacity = String(Math.max(0.25, 1 - dy / 200));
+                }
+              }}
+              onPointerUp={(e) => {
+                if (!vizDragging.current) return;
+                vizDragging.current = false;
+                const dy = e.clientY - vizDragStartY.current;
+                if (dy > 80) {
+                  setVizActiveSlot(null);
+                } else if (vizPanelRef.current) {
+                  vizPanelRef.current.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                  vizPanelRef.current.style.transform = '';
+                  vizPanelRef.current.style.opacity = '';
+                  setTimeout(() => { if (vizPanelRef.current) vizPanelRef.current.style.transition = ''; }, 200);
+                }
+              }}
+              onPointerCancel={() => {
+                vizDragging.current = false;
+                if (vizPanelRef.current) {
+                  vizPanelRef.current.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                  vizPanelRef.current.style.transform = '';
+                  vizPanelRef.current.style.opacity = '';
+                  setTimeout(() => { if (vizPanelRef.current) vizPanelRef.current.style.transition = ''; }, 200);
+                }
+              }}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-2 pb-0">
+                <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#e0dbd5' }} />
+              </div>
+              {/* Nav row */}
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: '0.5px solid #e8e4e0' }}>
+                <button
+                  onClick={() => setVizActiveSlot(null)}
+                  className="flex items-center gap-1.5 active:opacity-60 transition-opacity"
+                  style={{ color: 'rgba(0,0,0,0.5)' }}
+                >
+                  <XIcon className="w-3.5 h-3.5" strokeWidth={1.8} />
+                  <span className="text-[13px]">{t('surface.close')}</span>
+                </button>
+                <span className="text-[13px] font-medium flex-1 text-center truncate" style={{ color: '#1a1a1a' }}>
+                  {t(`surface.${vizActiveSlot}`)}
+                </span>
+                <div style={{ width: 52 }} />
+              </div>
+            </div>
+
+            {/* Swatch (left) + surface pills (right) */}
+            <div className="flex gap-4 px-4 pt-4 pb-5 items-start">
+              {/* Texture swatch — tap to change material */}
+              {matImage && (
+                <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      pendingOpenSlotRef.current = vizActiveSlot;
+                      setVizActiveSlot(null);
+                      handleSubTabChange("konceptas");
+                    }}
+                    className="active:scale-95 transition-transform"
+                    style={{ width: 72, height: 72, borderRadius: 14, overflow: 'hidden', border: '2px solid transparent', display: 'block' }}
+                  >
+                    <img src={matImage} alt="" className="w-full h-full object-cover" />
+                  </button>
+                  <span className="text-[10px] text-center leading-tight" style={{ color: '#647d75', fontWeight: 500 }}>
+                    {t('surface.changeMaterial')}
+                  </span>
+                </div>
+              )}
+
+              {/* Surface pills */}
+              {allForRole.length > 0 && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.35)', fontWeight: 500 }}>
+                    {t('surface.assignedSurfaces')}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {allForRole.map((pk) => {
+                      const isActive = assignedPks.includes(pk);
+                      const otherSlot = ownedByOther.get(pk);
+                      const canRemove = isActive && assignedPks.length > 1;
+                      return (
+                        <button
+                          key={pk}
+                          onClick={() => {
+                            if (isActive) {
+                              if (canRemove) handleRemoveSurface(vizActiveSlot, pk);
+                            } else {
+                              handleAddSurface(vizActiveSlot, pk);
+                              if (otherSlot && (slotSurfaces[otherSlot]?.length ?? 0) <= 1) {
+                                setEnabledOptionalSlots(prev => { const s = new Set(prev); s.delete(otherSlot); return s; });
+                                setSlotSelections(prev => ({ ...prev, [otherSlot]: null }));
+                              }
+                            }
+                          }}
+                          className="flex items-center gap-1 h-7 px-3 rounded-full text-[11px] font-medium active:scale-95 transition-all"
+                          style={{
+                            backgroundColor: isActive ? '#647d75' : 'rgba(0,0,0,0.04)',
+                            color: isActive ? '#ffffff' : 'rgba(0,0,0,0.45)',
+                            border: isActive ? 'none' : `0.5px dashed rgba(0,0,0,${otherSlot ? '0.12' : '0.18'})`,
+                            opacity: !isActive && otherSlot ? 0.5 : 1,
+                          }}
+                        >
+                          {t(`surface.${pk}`) || pk}
+                          {isActive && canRemove && <XIcon className="w-3 h-3 ml-0.5 opacity-50" strokeWidth={2} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
 
     </div>
   );
