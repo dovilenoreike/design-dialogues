@@ -82,6 +82,7 @@ export default function DesignView() {
     else navigate("/design");
   };
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
+  const pendingOpenSlotRef = useRef<SlotKey | null>(null);
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
   const [enabledOptionalSlots, setEnabledOptionalSlots] = useState<Set<SlotKey>>(() => {
@@ -399,9 +400,14 @@ export default function DesignView() {
     return pk ? (materialOverrides[pk] ?? undefined) : undefined;
   }, [activeSlot, materialOverrides, slotSurfaces]);
 
-  // Close picker when switching sub-tabs
+  // Close picker when switching sub-tabs (unless a slot was queued to open after navigation)
   useEffect(() => {
-    setActiveSlot(null);
+    if (pendingOpenSlotRef.current) {
+      setActiveSlot(pendingOpenSlotRef.current);
+      pendingOpenSlotRef.current = null;
+    } else {
+      setActiveSlot(null);
+    }
   }, [subTab]);
 
   const handleSlotSelect = useCallback(
@@ -848,8 +854,8 @@ export default function DesignView() {
                 <Stage
 
                   onSwatchTap={(slotKey) => {
-                    setActiveSlot(slotKey as SlotKey);
-                    scrollToPicker();
+                    pendingOpenSlotRef.current = slotKey as SlotKey;
+                    handleSubTabChange("konceptas");
                   }}
                   onGoToMaterials={() => handleSubTabChange("konceptas")}
                   onNudgeMissing={handleNudgeMissing}

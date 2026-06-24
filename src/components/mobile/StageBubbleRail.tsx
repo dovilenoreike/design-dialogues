@@ -255,7 +255,7 @@ export default function StageBubbleRail({
                 className={`w-14 h-16 rounded-xl object-cover ${isActive ? "ring-2 ring-white" : ""}`}
               />
               <span className="w-14 text-center text-[8px] font-medium tracking-[0.15em] uppercase text-foreground/60 select-none truncate">
-                {t(`surface.${representativeSlot}`) || bubble.slotLabel}
+                {bubble.slotLabel}
               </span>
             </button>
           );
