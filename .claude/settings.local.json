@@ -24,7 +24,8 @@
       "Bash(supabase --version)",
       "Bash(python3 -m json.tool)",
       "Bash(head -1306 \"/Users/dovilenoreike/Documents/dizaino dialogai/design-dialogues/src/components/mobile/controls/MaterialSlotPicker.tsx\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git add *)"
     ]
   }
 }
