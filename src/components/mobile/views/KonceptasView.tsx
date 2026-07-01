@@ -553,7 +553,7 @@ export default function KonceptasView({
       </div>
 
       {/* Visualize button */}
-      <div className="flex justify-center -mt-6 pt-1 pb-1">
+      <div className="flex justify-center -mt-6 pt-1 pb-1" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -565,7 +565,7 @@ export default function KonceptasView({
               toast(t("mobile.stage.selectMaterialsFirst"));
             }
           }}
-          className="h-8 px-3 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform"
+          className="min-h-[44px] px-4 rounded-full flex items-center gap-1.5 active:scale-95 transition-transform"
           style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
         >
           <Sparkles className="w-3 h-3 text-white" strokeWidth={1.5} />
