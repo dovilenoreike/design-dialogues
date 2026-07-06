@@ -149,6 +149,8 @@ export interface Run {
   /** Base + tall units for this leg (shown in the "Base & tall" list). */
   baseUnits: CabinetUnit[];
   wallUnits: CabinetUnit[];
+  /** Worktop material also runs up the backsplash (same length). */
+  backsplash: boolean;
 }
 
 export interface KitchenState {

@@ -4,6 +4,7 @@ import { ComponentList } from "@/components/kitchen-calculator/ComponentList";
 import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareGradeSelector";
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
 import { KitchenSetup } from "@/components/kitchen-calculator/KitchenSetup";
+import { MaterialsHeader } from "@/components/kitchen-calculator/MaterialsHeader";
 import { MissingUnitsAlert } from "@/components/kitchen-calculator/MissingUnitsAlert";
 import { TotalBar } from "@/components/kitchen-calculator/TotalBar";
 import {
@@ -210,6 +211,9 @@ const KitchenCalculator = () => {
   const handleReorderWall = (runId: string, activeId: string, overId: string) =>
     updateRun(runId, (r) => ({ ...r, wallUnits: reorderById(r.wallUnits, activeId, overId) }));
 
+  const handleBacksplashChange = (runId: string, value: boolean) =>
+    updateRun(runId, (r) => ({ ...r, backsplash: value }));
+
   const handleRemoveRun = (runId: string) => {
     setHasEdits(true);
     setState((prev) =>
@@ -309,6 +313,10 @@ const KitchenCalculator = () => {
           </p>
         </header>
 
+        <div className="mb-6">
+          <MaterialsHeader />
+        </div>
+
         <div className="flex flex-col gap-4">
           <KitchenSetup
             layout={layout}
@@ -369,6 +377,7 @@ const KitchenCalculator = () => {
               onFillWall={handleFillWall}
               onReorderBase={handleReorderBase}
               onReorderWall={handleReorderWall}
+              onBacksplashChange={handleBacksplashChange}
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}
               onIslandWidthChange={handleIslandWidthChange}

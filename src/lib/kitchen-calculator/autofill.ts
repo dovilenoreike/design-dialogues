@@ -149,7 +149,7 @@ const runId = (): string => `r${++runCounter}`;
 
 /** An empty straight run of a given wall length (for auto-fill and "Add run"). */
 export function makeRun(label: string, lengthMm: number): Run {
-  return { id: runId(), label, lengthMm, baseUnits: [], wallUnits: [] };
+  return { id: runId(), label, lengthMm, baseUnits: [], wallUnits: [], backsplash: true };
 }
 
 /** Sum of widths of the base cabinets (base category) in a unit list. */

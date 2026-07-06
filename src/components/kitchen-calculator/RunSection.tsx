@@ -10,6 +10,7 @@ import {
 } from "@/lib/kitchen-calculator";
 import { CabinetSection } from "./CabinetSection";
 import { RunLengthAlert } from "./RunLengthAlert";
+import { WorktopSection } from "./WorktopSection";
 
 const MIN_STORAGE_WIDTH = 150; // mm — don't trim a storage cabinet below this
 const WALL_FILL_MIN = 100; // mm — smallest free span worth offering to fill
@@ -32,6 +33,7 @@ interface RunSectionProps {
   onFillWall: (runId: string, spanMm: number) => void;
   onReorderBase: (runId: string, activeId: string, overId: string) => void;
   onReorderWall: (runId: string, activeId: string, overId: string) => void;
+  onBacksplashChange: (runId: string, value: boolean) => void;
 }
 
 /** One kitchen leg: header (label + length + remove), fit alert, base & wall sections with meters. */
@@ -51,6 +53,7 @@ export function RunSection({
   onFillWall,
   onReorderBase,
   onReorderWall,
+  onBacksplashChange,
 }: RunSectionProps) {
   // --- base run fit -------------------------------------------------------
   const baseSumMm = run.baseUnits.reduce((sum, u) => sum + u.width * u.quantity, 0);
@@ -170,6 +173,11 @@ export function RunSection({
           onRemove={(id) => onRemoveUnit(run.id, id)}
           onAdd={(type) => onAddBase(run.id, type)}
           onReorder={(a, o) => onReorderBase(run.id, a, o)}
+        />
+        <WorktopSection
+          lengthMm={wallSpanMm}
+          backsplash={run.backsplash}
+          onBacksplashChange={(v) => onBacksplashChange(run.id, v)}
         />
         <CabinetSection
           title="Wall units"
