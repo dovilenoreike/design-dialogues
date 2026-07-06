@@ -1,4 +1,4 @@
-import { Check, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,8 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ESSENTIAL_TYPES, UNIT_LABELS, type UnitType } from "@/lib/kitchen-calculator";
+import { UNIT_LABELS, type UnitType } from "@/lib/kitchen-calculator";
+import { EssentialBadge } from "./EssentialBadge";
 import { UnitTypeIcon } from "./UnitIcon";
+import { buildTypeGroups } from "./unitGroups";
 
 interface AddUnitMenuProps {
   label: string;
@@ -46,21 +48,13 @@ export function AddUnitMenu({ label, typeOptions, presentEssentials = [], onAdd 
     );
   }
 
-  const essentialOpts = ESSENTIAL_TYPES.filter((t) => typeOptions.includes(t));
-  const otherOpts = typeOptions.filter((t) => !ESSENTIAL_TYPES.includes(t));
+  const groups = buildTypeGroups(typeOptions);
 
   const renderItem = (t: UnitType) => (
     <DropdownMenuItem key={t} className="gap-2" onSelect={() => onAdd(t)}>
       <UnitTypeIcon type={t} size={22} className="shrink-0 text-muted-foreground" />
       <span className="flex-1">{UNIT_LABELS[t]}</span>
-      {presentEssentials.includes(t) && (
-        <span
-          className="flex items-center gap-0.5 text-[10px] font-medium"
-          style={{ color: "#647d75" }}
-        >
-          <Check className="h-3 w-3" /> in project
-        </span>
-      )}
+      <EssentialBadge type={t} present={presentEssentials.includes(t)} />
     </DropdownMenuItem>
   );
 
@@ -68,21 +62,13 @@ export function AddUnitMenu({ label, typeOptions, presentEssentials = [], onAdd 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        {essentialOpts.length > 0 ? (
-          <>
-            <DropdownMenuLabel>Main appliances</DropdownMenuLabel>
-            {essentialOpts.map(renderItem)}
-            {otherOpts.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Cabinets</DropdownMenuLabel>
-                {otherOpts.map(renderItem)}
-              </>
-            )}
-          </>
-        ) : (
-          typeOptions.map(renderItem)
-        )}
+        {groups.map((g, gi) => (
+          <div key={g.label ?? `g${gi}`}>
+            {gi > 0 && <DropdownMenuSeparator />}
+            {g.label && <DropdownMenuLabel>{g.label}</DropdownMenuLabel>}
+            {g.types.map(renderItem)}
+          </div>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

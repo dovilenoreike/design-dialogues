@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,13 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ESSENTIAL_TYPES,
-  UNIT_LABELS,
-  type CabinetUnit,
-  type UnitType,
-} from "@/lib/kitchen-calculator";
+import { UNIT_LABELS, type CabinetUnit, type UnitType } from "@/lib/kitchen-calculator";
+import { EssentialBadge } from "./EssentialBadge";
 import { UnitIcon, UnitTypeIcon } from "./UnitIcon";
+import { buildTypeGroups } from "./unitGroups";
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
 const CUSTOM = "custom";
@@ -57,30 +54,18 @@ export function UnitRow({
     setEditingWidth(false);
   };
 
-  // Surface the singleton essentials (sink/hob/fridge) in their own group so the
-  // must-have units stand out, and flag ones already placed elsewhere.
-  const essentialOpts = ESSENTIAL_TYPES.filter((t) => typeOptions.includes(t));
-  const otherOpts = typeOptions.filter((t) => !ESSENTIAL_TYPES.includes(t));
+  // Grouped picker: main appliances, then base cabinets, then tall units.
+  const groups = buildTypeGroups(typeOptions);
 
-  const renderOption = (t: UnitType) => {
-    const alreadyPlaced = presentEssentials.includes(t) && t !== unit.type;
-    return (
-      <SelectItem key={t} value={t}>
-        <span className="flex items-center gap-2">
-          <UnitTypeIcon type={t} size={22} className="shrink-0 text-muted-foreground" />
-          <span>{UNIT_LABELS[t]}</span>
-          {alreadyPlaced && (
-            <span
-              className="ml-1 flex items-center gap-0.5 text-[10px] font-medium"
-              style={{ color: "#647d75" }}
-            >
-              <Check className="h-3 w-3" /> in project
-            </span>
-          )}
-        </span>
-      </SelectItem>
-    );
-  };
+  const renderOption = (t: UnitType) => (
+    <SelectItem key={t} value={t}>
+      <span className="flex items-center gap-2">
+        <UnitTypeIcon type={t} size={22} className="shrink-0 text-muted-foreground" />
+        <span>{UNIT_LABELS[t]}</span>
+        <EssentialBadge type={t} present={presentEssentials.includes(t)} />
+      </span>
+    </SelectItem>
+  );
 
   return (
     <div className="flex items-center gap-3 py-2">
@@ -91,23 +76,13 @@ export function UnitRow({
             <SelectValue>{UNIT_LABELS[unit.type]}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {essentialOpts.length > 0 ? (
-              <>
-                <SelectGroup>
-                  <SelectLabel>Main appliances</SelectLabel>
-                  {essentialOpts.map(renderOption)}
-                </SelectGroup>
-                {otherOpts.length > 0 && (
-                  <SelectGroup>
-                    <SelectSeparator />
-                    <SelectLabel>Cabinets</SelectLabel>
-                    {otherOpts.map(renderOption)}
-                  </SelectGroup>
-                )}
-              </>
-            ) : (
-              typeOptions.map(renderOption)
-            )}
+            {groups.map((g, gi) => (
+              <SelectGroup key={g.label ?? `g${gi}`}>
+                {gi > 0 && <SelectSeparator />}
+                {g.label && <SelectLabel>{g.label}</SelectLabel>}
+                {g.types.map(renderOption)}
+              </SelectGroup>
+            ))}
           </SelectContent>
         </Select>
         {unit.isCustomWidth && (
