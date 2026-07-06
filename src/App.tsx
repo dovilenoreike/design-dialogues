@@ -19,6 +19,7 @@ import SharedSession from "./pages/SharedSession";
 import HowItWorks from "./pages/HowItWorks";
 import Mission from "./pages/Mission";
 import Partner from "./pages/Partner";
+import KitchenCalculator from "./pages/KitchenCalculator";
 import NotFound from "./pages/NotFound";
 
 // Track page views on route changes
@@ -61,6 +62,8 @@ const App = () => (
                         <Route path="/how-it-works" element={<HowItWorks />} />
                         <Route path="/mission" element={<Mission />} />
                         <Route path="/partner" element={<Partner />} />
+                        {/* Hidden/unlisted — not linked from any navigation (Phase 1 validation) */}
+                        <Route path="/kitchen-calculator" element={<KitchenCalculator />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
