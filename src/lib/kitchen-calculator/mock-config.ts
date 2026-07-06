@@ -36,15 +36,15 @@ export const defaultSettings: GlobalSettings = {
 
 export const mockMaterialConfig: MaterialConfig = {
   surfaces: {
-    bottomCabinets: 65, // €/m²
-    topCabinets: 60,
-    tallCabinets: 65,
-    worktop: 120,
+    bottomCabinets: 130, // €/m²
+    topCabinets: 120,
+    tallCabinets: 130,
+    worktop: 240,
   },
   structural: {
-    carcassBoard: 25, // €/m² (18mm melamine-faced board)
-    backPanel: 10, // €/m² (thin HDF)
-    edgeBanding: 2, // €/lm
+    carcassBoard: 50, // €/m² (18mm melamine-faced board)
+    backPanel: 20, // €/m² (thin HDF)
+    edgeBanding: 4, // €/lm
   },
 };
 
@@ -57,23 +57,23 @@ const HARDWARE_PRICES: Record<
   HardwareItem,
   { unit: "per_pair" | "per_unit" | "per_set" | "per_lm"; name: string; prices: [number, number, number] }
 > = {
-  runner: { unit: "per_pair", name: "Drawer runner", prices: [8, 18, 35] },
-  hinge: { unit: "per_pair", name: "Hinge (soft-close at grade)", prices: [3, 7, 15] },
-  handle: { unit: "per_unit", name: "Handle", prices: [4, 9, 20] },
-  fixings: { unit: "per_set", name: "Cam-lock & dowel set", prices: [2, 3, 5] },
-  shelfPin: { unit: "per_unit", name: "Shelf pin", prices: [0.2, 0.3, 0.5] },
-  binSingle: { unit: "per_unit", name: "Single waste bin", prices: [25, 45, 90] },
-  binDouble: { unit: "per_unit", name: "Double waste bin", prices: [40, 70, 140] },
-  pullOut: { unit: "per_unit", name: "Pull-out shelf", prices: [30, 60, 120] },
-  magicCorner: { unit: "per_unit", name: "Magic corner fitting", prices: [80, 140, 260] },
-  lazySusan: { unit: "per_unit", name: "Lazy susan", prices: [50, 90, 180] },
-  cutleryInsert: { unit: "per_unit", name: "Cutlery insert", prices: [10, 20, 40] },
-  drawerDividers: { unit: "per_unit", name: "Drawer dividers", prices: [8, 15, 30] },
-  sinkCutout: { unit: "per_unit", name: "Sink cutout", prices: [20, 30, 50] },
-  hobCutout: { unit: "per_unit", name: "Hob cutout", prices: [20, 30, 50] },
-  plinth: { unit: "per_lm", name: "Plinth", prices: [6, 10, 18] },
-  cornice: { unit: "per_lm", name: "Cornice / pelmet", prices: [6, 10, 18] },
-  lighting: { unit: "per_lm", name: "Under-cabinet lighting", prices: [12, 25, 45] },
+  runner: { unit: "per_pair", name: "Drawer runner", prices: [16, 36, 70] },
+  hinge: { unit: "per_pair", name: "Hinge (soft-close at grade)", prices: [6, 14, 30] },
+  handle: { unit: "per_unit", name: "Handle", prices: [8, 18, 40] },
+  fixings: { unit: "per_set", name: "Cam-lock & dowel set", prices: [4, 6, 10] },
+  shelfPin: { unit: "per_unit", name: "Shelf pin", prices: [0.4, 0.6, 1] },
+  binSingle: { unit: "per_unit", name: "Single waste bin", prices: [50, 90, 180] },
+  binDouble: { unit: "per_unit", name: "Double waste bin", prices: [80, 140, 280] },
+  pullOut: { unit: "per_unit", name: "Pull-out shelf", prices: [60, 120, 240] },
+  magicCorner: { unit: "per_unit", name: "Magic corner fitting", prices: [160, 280, 520] },
+  lazySusan: { unit: "per_unit", name: "Lazy susan", prices: [100, 180, 360] },
+  cutleryInsert: { unit: "per_unit", name: "Cutlery insert", prices: [20, 40, 80] },
+  drawerDividers: { unit: "per_unit", name: "Drawer dividers", prices: [16, 30, 60] },
+  sinkCutout: { unit: "per_unit", name: "Sink cutout", prices: [40, 60, 100] },
+  hobCutout: { unit: "per_unit", name: "Hob cutout", prices: [40, 60, 100] },
+  plinth: { unit: "per_lm", name: "Plinth", prices: [12, 20, 36] },
+  cornice: { unit: "per_lm", name: "Cornice / pelmet", prices: [12, 20, 36] },
+  lighting: { unit: "per_lm", name: "Under-cabinet lighting", prices: [24, 50, 90] },
 };
 
 const GRADE_INDEX: Record<HardwareGrade, 0 | 1 | 2> = {

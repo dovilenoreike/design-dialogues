@@ -22,6 +22,7 @@ import {
   defaultSettings,
   ESSENTIAL_TYPES,
   generateKitchen,
+  makeExtraCost,
   makeRun,
   makeUnit,
   makeWallRun,
@@ -32,6 +33,7 @@ import {
   retypeUnit,
   UNIT_LABELS,
   type CabinetUnit,
+  type ExtraCost,
   type GlobalSettings,
   type HardwareGrade,
   type KitchenLayout,
@@ -266,6 +268,33 @@ const KitchenCalculator = () => {
     );
   };
 
+  // --- additional costs ---------------------------------------------------
+
+  const mapExtra = (id: string, fn: (c: ExtraCost) => ExtraCost) => {
+    setHasEdits(true);
+    setState((prev) =>
+      prev ? { ...prev, extraCosts: prev.extraCosts.map((c) => (c.id === id ? fn(c) : c)) } : prev,
+    );
+  };
+  const handleExtraLabelChange = (id: string, label: string) =>
+    mapExtra(id, (c) => ({ ...c, label }));
+  // Typing an amount overrides an auto (%) line.
+  const handleExtraAmountChange = (id: string, amount: number) =>
+    mapExtra(id, (c) => ({ ...c, amount, auto: false }));
+  const handleExtraResetAuto = (id: string) => mapExtra(id, (c) => ({ ...c, auto: true }));
+  const handleExtraRemove = (id: string) => {
+    setHasEdits(true);
+    setState((prev) =>
+      prev ? { ...prev, extraCosts: prev.extraCosts.filter((c) => c.id !== id) } : prev,
+    );
+  };
+  const handleExtraAdd = (label = "") => {
+    setHasEdits(true);
+    setState((prev) =>
+      prev ? { ...prev, extraCosts: [...prev.extraCosts, makeExtraCost(label)] } : prev,
+    );
+  };
+
   // --- completeness (aggregate across all runs) ---------------------------
 
   const presentEssentials = state
@@ -364,6 +393,10 @@ const KitchenCalculator = () => {
             <ComponentList
               runs={state.runs}
               islandUnits={state.islandUnits}
+              extraCosts={state.extraCosts ?? []}
+              furnitureSubtotal={
+                pricing.unitsTotal + pricing.worktop + pricing.islandWorktop + pricing.extras
+              }
               presentEssentials={presentEssentials}
               onRunLengthChange={handleRunLengthChange}
               onRemoveRun={handleRemoveRun}
@@ -385,6 +418,11 @@ const KitchenCalculator = () => {
               onIslandRemove={handleIslandRemove}
               onIslandAdd={handleIslandAdd}
               onIslandReorder={handleIslandReorder}
+              onExtraLabelChange={handleExtraLabelChange}
+              onExtraAmountChange={handleExtraAmountChange}
+              onExtraResetAuto={handleExtraResetAuto}
+              onExtraRemove={handleExtraRemove}
+              onExtraAdd={handleExtraAdd}
             />
 
             <div className="mt-6">

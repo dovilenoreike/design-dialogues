@@ -1,12 +1,21 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ISLAND_TYPES, type CabinetUnit, type Run, type UnitType } from "@/lib/kitchen-calculator";
+import {
+  ISLAND_TYPES,
+  type CabinetUnit,
+  type ExtraCost,
+  type Run,
+  type UnitType,
+} from "@/lib/kitchen-calculator";
 import { CabinetSection } from "./CabinetSection";
+import { ExtraCostsSection } from "./ExtraCostsSection";
 import { RunSection } from "./RunSection";
 
 interface ComponentListProps {
   runs: Run[];
   islandUnits: CabinetUnit[];
+  extraCosts: ExtraCost[];
+  furnitureSubtotal: number;
   presentEssentials: UnitType[];
   // run-scoped unit handlers
   onRunLengthChange: (runId: string, mm: number) => void;
@@ -30,12 +39,20 @@ interface ComponentListProps {
   onIslandRemove: (unitId: string) => void;
   onIslandAdd: (type: UnitType) => void;
   onIslandReorder: (activeId: string, overId: string) => void;
+  // additional-cost handlers
+  onExtraLabelChange: (id: string, label: string) => void;
+  onExtraAmountChange: (id: string, amount: number) => void;
+  onExtraResetAuto: (id: string) => void;
+  onExtraRemove: (id: string) => void;
+  onExtraAdd: (label?: string) => void;
 }
 
 /** All runs (each a RunSection), the island section, and an add-run control. */
 export function ComponentList({
   runs,
   islandUnits,
+  extraCosts,
+  furnitureSubtotal,
   presentEssentials,
   onRunLengthChange,
   onRemoveRun,
@@ -57,6 +74,11 @@ export function ComponentList({
   onIslandRemove,
   onIslandAdd,
   onIslandReorder,
+  onExtraLabelChange,
+  onExtraAmountChange,
+  onExtraResetAuto,
+  onExtraRemove,
+  onExtraAdd,
 }: ComponentListProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -105,6 +127,16 @@ export function ComponentList({
         onRemove={onIslandRemove}
         onAdd={onIslandAdd}
         onReorder={onIslandReorder}
+      />
+
+      <ExtraCostsSection
+        costs={extraCosts}
+        furnitureSubtotal={furnitureSubtotal}
+        onLabelChange={onExtraLabelChange}
+        onAmountChange={onExtraAmountChange}
+        onResetAuto={onExtraResetAuto}
+        onRemove={onExtraRemove}
+        onAdd={onExtraAdd}
       />
     </div>
   );

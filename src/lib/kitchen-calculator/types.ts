@@ -153,12 +153,25 @@ export interface Run {
   backsplash: boolean;
 }
 
+export type ExtraRole = "delivery" | "installation" | "design" | "custom";
+
+/** A line on the quote — delivery, installation, discount, custom work… */
+export interface ExtraCost {
+  id: string;
+  label: string;
+  amount: number; // € — may be negative (e.g. a discount)
+  role?: ExtraRole;
+  /** Installation/design: amount follows a % of furniture until the maker overrides it. */
+  auto?: boolean;
+}
+
 export interface KitchenState {
   layout: KitchenLayout;
   settings: GlobalSettings;
   grade: HardwareGrade;
   runs: Run[];
   islandUnits: CabinetUnit[];
+  extraCosts: ExtraCost[];
 }
 
 // ---------------------------------------------------------------------------
@@ -187,6 +200,7 @@ export interface KitchenPricing {
   worktop: number;
   islandWorktop: number;
   extras: number;
+  additional: number; // sum of manual ExtraCost lines
   total: number;
 }
 

@@ -9,6 +9,8 @@
 
 import type {
   CabinetUnit,
+  ExtraCost,
+  ExtraRole,
   GlobalSettings,
   HardwareGrade,
   KitchenLayout,
@@ -147,6 +149,17 @@ const FRIDGE_WIDTH = 600;
 let runCounter = 0;
 const runId = (): string => `r${++runCounter}`;
 
+let extraCounter = 0;
+/** A quote line (delivery, installation, custom work…). */
+export function makeExtraCost(
+  label = "",
+  amount = 0,
+  role: ExtraRole = "custom",
+  auto = false,
+): ExtraCost {
+  return { id: `x${++extraCounter}`, label, amount, role, auto };
+}
+
 /** An empty straight run of a given wall length (for auto-fill and "Add run"). */
 export function makeRun(label: string, lengthMm: number): Run {
   return { id: runId(), label, lengthMm, baseUnits: [], wallUnits: [], backsplash: true };
@@ -214,7 +227,14 @@ export function generateKitchen(
     );
   }
 
-  return { layout, settings, grade, runs, islandUnits: [] };
+  // Default quote lines. Delivery is flat; installation/design follow a % of the
+  // furniture cost until the maker overrides them (see AUTO_EXTRA_PCT).
+  const extraCosts = [
+    makeExtraCost("Delivery", 100, "delivery"),
+    makeExtraCost("Installation", 0, "installation", true),
+    makeExtraCost("Design & technical project", 0, "design", true),
+  ];
+  return { layout, settings, grade, runs, islandUnits: [], extraCosts };
 }
 
 /** Next run label for a manually added run (continues the A/B/C… sequence). */

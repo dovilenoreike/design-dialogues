@@ -12,6 +12,8 @@ import { hardwarePrice } from "./mock-config";
 import { priceParts } from "./parts";
 import type {
   CabinetUnit,
+  ExtraCost,
+  ExtraRole,
   HardwareDB,
   HardwareGrade,
   KitchenPricing,
@@ -21,6 +23,24 @@ import type {
   UnitPricing,
 } from "./types";
 import { unitParts } from "./units";
+
+/**
+ * Auto-derived quote lines as a share of the furniture cost (mock defaults —
+ * precise per-maker rates come later). Installation 15%, design 10%.
+ */
+export const AUTO_EXTRA_PCT: Partial<Record<ExtraRole, number>> = {
+  installation: 0.15,
+  design: 0.1,
+};
+
+/** Effective € for a line: an auto installation/design follows its %, else the typed amount. */
+export function effectiveExtraAmount(cost: ExtraCost, furnitureSubtotal: number): number {
+  if (cost.auto && cost.role && AUTO_EXTRA_PCT[cost.role] !== undefined) {
+    // Rounded to the nearest €10 — these are placeholder defaults, to be refined.
+    return Math.round((furnitureSubtotal * (AUTO_EXTRA_PCT[cost.role] as number)) / 10) * 10;
+  }
+  return cost.amount;
+}
 
 const m = (mm: number): number => mm / 1000;
 const WORKTOP_DEPTH_M = 0.6; // spec: not configurable in V1
@@ -129,13 +149,21 @@ export function priceKitchen(
   const islandWorktop = islandWorktopPrice(state, ctx);
   const extras = extrasPrice(state, ctx);
 
+  // Installation/design % are taken on the furniture cost (everything but the lines themselves).
+  const furniture = unitsTotal + worktop + islandWorktop + extras;
+  const additional = (state.extraCosts ?? []).reduce(
+    (sum, c) => sum + effectiveExtraAmount(c, furniture),
+    0,
+  );
+
   return {
     units,
     unitsTotal,
     worktop,
     islandWorktop,
     extras,
-    total: unitsTotal + worktop + islandWorktop + extras,
+    additional,
+    total: unitsTotal + worktop + islandWorktop + extras + additional,
   };
 }
 
