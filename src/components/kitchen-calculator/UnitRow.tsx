@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -10,6 +12,7 @@ import {
 import { UNIT_LABELS, type CabinetUnit, type UnitType } from "@/lib/kitchen-calculator";
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
+const CUSTOM = "custom";
 
 interface UnitRowProps {
   unit: CabinetUnit;
@@ -25,6 +28,16 @@ export function UnitRow({ unit, typeOptions, onTypeChange, onWidthChange, onRemo
   const widthOptions = WIDTH_OPTIONS.includes(unit.width)
     ? WIDTH_OPTIONS
     : [...WIDTH_OPTIONS, unit.width].sort((a, b) => a - b);
+
+  // When "Custom…" is picked, the width control becomes a free-entry mm input.
+  const [editingWidth, setEditingWidth] = useState(false);
+  const [draftWidth, setDraftWidth] = useState("");
+
+  const commitWidth = () => {
+    const value = Math.round(Number(draftWidth));
+    if (Number.isFinite(value) && value > 0) onWidthChange(unit.id, value);
+    setEditingWidth(false);
+  };
 
   return (
     <div className="flex items-center gap-3 py-2">
@@ -48,18 +61,55 @@ export function UnitRow({ unit, typeOptions, onTypeChange, onWidthChange, onRemo
         )}
       </div>
 
-      <Select value={String(unit.width)} onValueChange={(v) => onWidthChange(unit.id, Number(v))}>
-        <SelectTrigger className="w-28">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {widthOptions.map((w) => (
-            <SelectItem key={w} value={String(w)}>
-              {w}mm
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {editingWidth ? (
+        <div className="flex w-28 items-center gap-1">
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="1"
+            step="10"
+            autoFocus
+            value={draftWidth}
+            onChange={(e) => setDraftWidth(e.target.value)}
+            onBlur={commitWidth}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitWidth();
+              } else if (e.key === "Escape") {
+                setEditingWidth(false);
+              }
+            }}
+            className="w-20"
+            aria-label={`${unit.name} custom width in mm`}
+          />
+          <span className="text-xs text-muted-foreground">mm</span>
+        </div>
+      ) : (
+        <Select
+          value={String(unit.width)}
+          onValueChange={(v) => {
+            if (v === CUSTOM) {
+              setDraftWidth(String(unit.width));
+              setEditingWidth(true);
+            } else {
+              onWidthChange(unit.id, Number(v));
+            }
+          }}
+        >
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {widthOptions.map((w) => (
+              <SelectItem key={w} value={String(w)}>
+                {w}mm
+              </SelectItem>
+            ))}
+            <SelectItem value={CUSTOM}>Custom…</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
 
       <Button
         variant="ghost"

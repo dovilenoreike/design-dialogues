@@ -133,14 +133,28 @@ export interface CabinetUnit {
   occupiesWorktop: boolean;
 }
 
-export interface KitchenState {
-  lengthMm: number;
-  settings: GlobalSettings;
-  grade: HardwareGrade;
-  /** Base + tall units share the "Base & Tall" list in the UI. */
+/** Kitchen shape. Islands are orthogonal (their own section), not a layout. */
+export type KitchenLayout = "line" | "l" | "u" | "galley";
+
+/**
+ * One leg of the kitchen. A Line has one run; L/galley two; U three. Corners
+ * (cornerBase/cornerWall units) live inside the run that turns into the next.
+ */
+export interface Run {
+  id: string;
+  label: string; // "Run A", "Run B", "Run C"
+  lengthMm: number; // this leg's wall length
+  /** Base + tall units for this leg (shown in the "Base & tall" list). */
   baseUnits: CabinetUnit[];
   wallUnits: CabinetUnit[];
-  islandUnits: CabinetUnit[]; // empty in Phase 1 (no island UI yet)
+}
+
+export interface KitchenState {
+  layout: KitchenLayout;
+  settings: GlobalSettings;
+  grade: HardwareGrade;
+  runs: Run[];
+  islandUnits: CabinetUnit[];
 }
 
 // ---------------------------------------------------------------------------

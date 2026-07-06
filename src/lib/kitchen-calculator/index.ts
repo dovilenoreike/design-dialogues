@@ -5,7 +5,16 @@
 
 export * from "./types";
 export { defaultSettings, mockMaterialConfig, mockHardwareDB, hardwarePrice } from "./mock-config";
-export { generateKitchen, makeUnit, makeWallRun, retypeUnit } from "./autofill";
+export {
+  generateKitchen,
+  makeUnit,
+  makeRun,
+  makeWallRun,
+  nextRunLabel,
+  retypeUnit,
+  LAYOUT_RUN_COUNT,
+  LAYOUT_CORNER_JUNCTIONS,
+} from "./autofill";
 export {
   unitParts,
   UNIT_LABELS,

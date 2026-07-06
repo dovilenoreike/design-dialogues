@@ -1,13 +1,41 @@
 /**
  * Kitchen Furniture Price Calculator — auto-fill algorithm (spec §Auto-Fill).
  *
- * Given a single kitchen length, place the default requirement units, greedily
- * fill the remaining base run with standard-width storage cabinets, and mirror
- * the base run with wall units. Pure — returns a fresh KitchenState.
+ * Given a kitchen layout and one wall length per leg, place the default
+ * requirement units (in the first run), greedily fill each run with standard-
+ * width storage cabinets, auto-place corner units at junctions, and mirror each
+ * run's base cabinets with wall units. Pure — returns a fresh KitchenState.
  */
 
-import type { CabinetUnit, GlobalSettings, HardwareGrade, KitchenState, UnitType } from "./types";
+import type {
+  CabinetUnit,
+  GlobalSettings,
+  HardwareGrade,
+  KitchenLayout,
+  KitchenState,
+  Run,
+  UnitType,
+} from "./types";
 import { UNIT_CATEGORY, UNIT_LABELS } from "./units";
+
+/** Number of runs (legs) per layout. */
+export const LAYOUT_RUN_COUNT: Record<KitchenLayout, number> = {
+  line: 1,
+  l: 2,
+  u: 3,
+  galley: 2,
+};
+
+/** Number of corner junctions per layout (galley's two runs are parallel). */
+export const LAYOUT_CORNER_JUNCTIONS: Record<KitchenLayout, number> = {
+  line: 0,
+  l: 1,
+  u: 2,
+  galley: 0,
+};
+
+const RUN_LABELS = ["Run A", "Run B", "Run C", "Run D"];
+const CORNER_WIDTH = 900; // mm, default corner cabinet footprint per leg (W₁ = W₂)
 
 const STANDARD_WIDTHS = [1000, 800, 600, 500, 400, 300]; // mm, descending
 const WALL_WIDTHS = [600]; // mm, spec mirrors base run with 600mm wall units
@@ -90,41 +118,76 @@ const SINK_WIDTH = 600;
 const HOB_OVEN_WIDTH = 600;
 const FRIDGE_WIDTH = 600;
 
-export function generateKitchen(
+let runCounter = 0;
+const runId = (): string => `r${++runCounter}`;
+
+/** An empty straight run of a given wall length (for auto-fill and "Add run"). */
+export function makeRun(label: string, lengthMm: number): Run {
+  return { id: runId(), label, lengthMm, baseUnits: [], wallUnits: [] };
+}
+
+/** Sum of widths of the base cabinets (base category) in a unit list. */
+function baseSpan(units: CabinetUnit[]): number {
+  return units.filter((u) => u.category === "base").reduce((sum, u) => sum + u.width, 0);
+}
+
+/** Auto-fill one leg: optional essentials + storage, and (if it turns) a corner. */
+function fillRun(
+  label: string,
   lengthMm: number,
+  { withEssentials, hasCorner }: { withEssentials: boolean; hasCorner: boolean },
+): Run {
+  const run = makeRun(label, lengthMm);
+
+  if (withEssentials) {
+    run.baseUnits.push(makeUnit("sink", SINK_WIDTH), makeUnit("hobOven", HOB_OVEN_WIDTH));
+  }
+
+  const used =
+    run.baseUnits.reduce((sum, u) => sum + u.width, 0) +
+    (withEssentials ? FRIDGE_WIDTH : 0) +
+    (hasCorner ? CORNER_WIDTH : 0);
+
+  for (const fill of greedyFill(lengthMm - used, STANDARD_WIDTHS)) {
+    run.baseUnits.push(makeUnit("storage", fill.width, { isCustom: fill.isCustom }));
+  }
+
+  if (withEssentials) run.baseUnits.push(makeUnit("fridge", FRIDGE_WIDTH));
+
+  // Wall units mirror the straight base cabinets; the corner gets a corner wall.
+  run.wallUnits = makeWallRun(baseSpan(run.baseUnits));
+
+  if (hasCorner) {
+    run.baseUnits.push(makeUnit("cornerBase", CORNER_WIDTH, { width2: CORNER_WIDTH }));
+    run.wallUnits.push(makeUnit("cornerWall", CORNER_WIDTH, { width2: CORNER_WIDTH }));
+  }
+
+  return run;
+}
+
+export function generateKitchen(
+  layout: KitchenLayout,
+  legLengthsMm: number[],
   settings: GlobalSettings,
   grade: HardwareGrade,
 ): KitchenState {
-  const baseUnits: CabinetUnit[] = [
-    makeUnit("sink", SINK_WIDTH),
-    makeUnit("hobOven", HOB_OVEN_WIDTH),
-  ];
+  const runCount = LAYOUT_RUN_COUNT[layout];
+  const junctions = LAYOUT_CORNER_JUNCTIONS[layout];
 
-  // Step 2: remaining base run after the requirement units (fridge is tall but
-  // occupies floor footprint in the run).
-  const remaining = lengthMm - SINK_WIDTH - HOB_OVEN_WIDTH - FRIDGE_WIDTH;
-
-  // Step 3: fill remainder with storage cabinets.
-  for (const fill of greedyFill(remaining, STANDARD_WIDTHS)) {
-    baseUnits.push(makeUnit("storage", fill.width, { isCustom: fill.isCustom }));
+  const runs: Run[] = [];
+  for (let i = 0; i < runCount; i++) {
+    runs.push(
+      fillRun(RUN_LABELS[i] ?? `Run ${i + 1}`, legLengthsMm[i] ?? 0, {
+        withEssentials: i === 0,
+        hasCorner: i < junctions, // runs 0..junctions-1 turn into the next leg
+      }),
+    );
   }
 
-  // Fridge housing sits at the end of the base & tall list.
-  baseUnits.push(makeUnit("fridge", FRIDGE_WIDTH));
+  return { layout, settings, grade, runs, islandUnits: [] };
+}
 
-  // Step 4: mirror the base-run length (base-category units only) with wall units.
-  const baseRunLm = baseUnits
-    .filter((u) => u.category === "base")
-    .reduce((sum, u) => sum + u.width, 0);
-
-  const wallUnits = makeWallRun(baseRunLm);
-
-  return {
-    lengthMm,
-    settings,
-    grade,
-    baseUnits,
-    wallUnits,
-    islandUnits: [],
-  };
+/** Next run label for a manually added run (continues the A/B/C… sequence). */
+export function nextRunLabel(count: number): string {
+  return RUN_LABELS[count] ?? `Run ${count + 1}`;
 }
