@@ -16,9 +16,7 @@ export function WorktopSection({ lengthMm, backsplash, onBacksplashChange }: Wor
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Worktop
-          </CardTitle>
+          <CardTitle className="font-serif text-base font-medium text-foreground">Worktop</CardTitle>
           <span className="text-xs font-medium tabular-nums text-muted-foreground">
             {m(lengthMm)} m
           </span>

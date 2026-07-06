@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,19 @@ export function RunSection({
   onReorderWall,
   onBacksplashChange,
 }: RunSectionProps) {
+  // --- editable run length (metres) ---------------------------------------
+  // Free-typing draft so the field can be cleared and retyped; commits live on
+  // a valid value and never snaps back mid-edit.
+  const [lengthDraft, setLengthDraft] = useState(m(run.lengthMm));
+  const lengthFocused = useRef(false);
+  useEffect(() => {
+    if (!lengthFocused.current) setLengthDraft(m(run.lengthMm));
+  }, [run.lengthMm]);
+  const commitLength = (raw: string) => {
+    const meters = Number(raw);
+    if (Number.isFinite(meters) && meters > 0) onLengthChange(run.id, Math.round(meters * 1000));
+  };
+
   // --- base run fit -------------------------------------------------------
   const baseSumMm = run.baseUnits.reduce((sum, u) => sum + u.width * u.quantity, 0);
   const runMatches = baseSumMm === run.lengthMm;
@@ -108,22 +122,32 @@ export function RunSection({
   );
 
   return (
-    <div className="rounded-lg border p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="rounded-xl border bg-muted/60 p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold">{run.label}</span>
+          <span className="font-serif text-xl">{run.label}</span>
           <div className="flex items-center gap-1.5">
             <Input
               type="number"
               inputMode="decimal"
               step="0.1"
               min="0"
-              value={m(run.lengthMm)}
+              value={lengthDraft}
+              onFocus={(e) => {
+                lengthFocused.current = true;
+                e.currentTarget.select();
+              }}
               onChange={(e) => {
+                setLengthDraft(e.target.value);
+                commitLength(e.target.value);
+              }}
+              onBlur={(e) => {
+                lengthFocused.current = false;
                 const meters = Number(e.target.value);
-                if (Number.isFinite(meters) && meters > 0) {
-                  onLengthChange(run.id, Math.round(meters * 1000));
-                }
+                if (!Number.isFinite(meters) || meters <= 0) setLengthDraft(m(run.lengthMm));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
               }}
               className="h-8 w-24"
               aria-label={`${run.label} length in metres`}
@@ -159,7 +183,7 @@ export function RunSection({
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <CabinetSection
           title="Base & tall units"
           units={run.baseUnits}

@@ -81,7 +81,7 @@ export function ComponentList({
   onExtraAdd,
 }: ComponentListProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {runs.map((run) => (
         <RunSection
           key={run.id}

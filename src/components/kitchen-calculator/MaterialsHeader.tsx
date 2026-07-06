@@ -56,10 +56,13 @@ export function MaterialsHeader() {
   };
 
   return (
-    <section className="rounded-xl border bg-card p-4">
+    <section
+      className="rounded-xl border p-4"
+      style={{ borderColor: "rgba(100,125,117,0.25)", backgroundColor: "rgba(100,125,117,0.06)" }}
+    >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold">Materials</h2>
+          <h2 className="font-serif text-lg">Materials</h2>
           <p className="text-xs text-muted-foreground">
             One material per surface — search the catalog by code, or add your own.
           </p>
@@ -80,7 +83,7 @@ export function MaterialsHeader() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="group rounded-lg border p-3 text-left transition-colors hover:border-[#647d75]"
+                  className="group rounded-lg border bg-card p-3 text-left transition-colors hover:border-[#647d75]"
                 >
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                     {label}

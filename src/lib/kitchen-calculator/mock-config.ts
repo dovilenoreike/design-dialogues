@@ -36,10 +36,10 @@ export const defaultSettings: GlobalSettings = {
 
 export const mockMaterialConfig: MaterialConfig = {
   surfaces: {
-    bottomCabinets: 130, // €/m²
-    topCabinets: 120,
-    tallCabinets: 130,
-    worktop: 240,
+    bottomCabinets: 50, // €/m²
+    topCabinets: 50,
+    tallCabinets: 50,
+    worktop: 160,
   },
   structural: {
     carcassBoard: 50, // €/m² (18mm melamine-faced board)

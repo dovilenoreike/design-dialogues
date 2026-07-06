@@ -10,9 +10,9 @@ import {
 } from "@/lib/kitchen-calculator";
 
 const SUGGESTIONS = [
-  "Delivery",
-  "Installation",
   "Design & technical project",
+  "Installation",
+  "Delivery",
   "Dismantling old kitchen",
   "Waste removal",
   "Discount",
@@ -129,7 +129,7 @@ export function ExtraCostsSection({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="font-serif text-base font-medium text-foreground">
             Additional costs
           </CardTitle>
           {costs.length > 0 && (

@@ -230,9 +230,9 @@ export function generateKitchen(
   // Default quote lines. Delivery is flat; installation/design follow a % of the
   // furniture cost until the maker overrides them (see AUTO_EXTRA_PCT).
   const extraCosts = [
-    makeExtraCost("Delivery", 100, "delivery"),
-    makeExtraCost("Installation", 0, "installation", true),
     makeExtraCost("Design & technical project", 0, "design", true),
+    makeExtraCost("Installation", 0, "installation", true),
+    makeExtraCost("Delivery", 100, "delivery"),
   ];
   return { layout, settings, grade, runs, islandUnits: [], extraCosts };
 }

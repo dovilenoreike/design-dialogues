@@ -69,9 +69,7 @@ export function CabinetSection({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {title}
-          </CardTitle>
+          <CardTitle className="font-serif text-base font-medium text-foreground">{title}</CardTitle>
           {indicator}
         </div>
       </CardHeader>

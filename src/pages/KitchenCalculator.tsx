@@ -334,9 +334,9 @@ const KitchenCalculator = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-6 py-10">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold">Kitchen price calculator</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <header className="mb-8">
+          <h1 className="font-serif text-3xl">Kitchen price calculator</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Pick a layout and enter each leg&apos;s length to generate a component list and an
             estimated total. Prices are indicative (mocked) for this preview.
           </p>
