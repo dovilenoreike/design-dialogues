@@ -14,8 +14,8 @@ interface ComponentListProps {
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
-  onAddBase: (runId: string) => void;
-  onAddWall: (runId: string) => void;
+  onAddBase: (runId: string, type: UnitType) => void;
+  onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
   onFillWall: (runId: string, spanMm: number) => void;
   onAddRun: () => void;
@@ -23,7 +23,7 @@ interface ComponentListProps {
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
   onIslandWidthChange: (unitId: string, width: number) => void;
   onIslandRemove: (unitId: string) => void;
-  onIslandAdd: () => void;
+  onIslandAdd: (type: UnitType) => void;
 }
 
 /** All runs (each a RunSection), the island section, and an add-run control. */

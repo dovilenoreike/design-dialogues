@@ -52,6 +52,14 @@ const DEFAULT_LEG_LENGTHS: Record<KitchenLayout, string[]> = {
 
 const isCustom = (width: number): boolean => !STANDARD_WIDTHS.includes(width);
 
+// Sensible starting width when adding a unit by type (corners/islands are wider).
+const ADD_WIDTHS: Partial<Record<UnitType, number>> = {
+  cornerBase: 900,
+  cornerWall: 900,
+  island: 1200,
+};
+const addWidth = (type: UnitType): number => ADD_WIDTHS[type] ?? 600;
+
 /**
  * Hidden kitchen-furniture price calculator (Phase 1).
  * Reachable only by direct URL (/kitchen-calculator) — not linked anywhere.
@@ -161,11 +169,17 @@ const KitchenCalculator = () => {
       wallUnits: r.wallUnits.filter((u) => u.id !== unitId),
     }));
 
-  const handleAddBase = (runId: string) =>
-    updateRun(runId, (r) => ({ ...r, baseUnits: [...r.baseUnits, makeUnit("storage", 600)] }));
+  const handleAddBase = (runId: string, type: UnitType) =>
+    updateRun(runId, (r) => ({
+      ...r,
+      baseUnits: [...r.baseUnits, makeUnit(type, addWidth(type))],
+    }));
 
-  const handleAddWall = (runId: string) =>
-    updateRun(runId, (r) => ({ ...r, wallUnits: [...r.wallUnits, makeUnit("wall", 600)] }));
+  const handleAddWall = (runId: string, type: UnitType) =>
+    updateRun(runId, (r) => ({
+      ...r,
+      wallUnits: [...r.wallUnits, makeUnit(type, addWidth(type))],
+    }));
 
   const handleFillGap = (runId: string, gapMm: number) =>
     updateRun(runId, (r) => ({
@@ -216,10 +230,10 @@ const KitchenCalculator = () => {
       prev ? { ...prev, islandUnits: prev.islandUnits.filter((u) => u.id !== unitId) } : prev,
     );
   };
-  const handleIslandAdd = () => {
+  const handleIslandAdd = (type: UnitType) => {
     setHasEdits(true);
     setState((prev) =>
-      prev ? { ...prev, islandUnits: [...prev.islandUnits, makeUnit("island", 1200)] } : prev,
+      prev ? { ...prev, islandUnits: [...prev.islandUnits, makeUnit(type, addWidth(type))] } : prev,
     );
   };
 
