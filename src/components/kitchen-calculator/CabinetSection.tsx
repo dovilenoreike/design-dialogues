@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CabinetUnit, UnitType } from "@/lib/kitchen-calculator";
+import { AddUnitMenu } from "./AddUnitMenu";
 import { UnitRow } from "./UnitRow";
 
 interface CabinetSectionProps {
@@ -13,10 +12,11 @@ interface CabinetSectionProps {
   emptyLabel?: string;
   indicator?: ReactNode;
   footerExtra?: ReactNode;
+  presentEssentials?: UnitType[];
   onTypeChange: (id: string, type: UnitType) => void;
   onWidthChange: (id: string, width: number) => void;
   onRemove: (id: string) => void;
-  onAdd: () => void;
+  onAdd: (type: UnitType) => void;
 }
 
 /** A titled card of cabinet rows with an add button — used for base, wall and island lists. */
@@ -28,6 +28,7 @@ export function CabinetSection({
   emptyLabel,
   indicator,
   footerExtra,
+  presentEssentials,
   onTypeChange,
   onWidthChange,
   onRemove,
@@ -50,6 +51,7 @@ export function CabinetSection({
               key={u.id}
               unit={u}
               typeOptions={typeOptions}
+              presentEssentials={presentEssentials}
               onTypeChange={onTypeChange}
               onWidthChange={onWidthChange}
               onRemove={onRemove}
@@ -60,16 +62,12 @@ export function CabinetSection({
           <p className="py-2 text-sm text-muted-foreground">{emptyLabel}</p>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onAdd}
-            className="gap-1.5"
-            style={{ color: "#647d75" }}
-          >
-            <Plus className="h-4 w-4" />
-            {addLabel}
-          </Button>
+          <AddUnitMenu
+            label={addLabel}
+            typeOptions={typeOptions}
+            presentEssentials={presentEssentials}
+            onAdd={onAdd}
+          />
           {footerExtra}
         </div>
       </CardContent>

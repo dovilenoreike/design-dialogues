@@ -22,6 +22,7 @@ export {
   BASE_TALL_TYPES,
   WALL_TYPES,
   ISLAND_TYPES,
+  ESSENTIAL_TYPES,
 } from "./units";
 export { priceKitchen, buildContext } from "./calculate";
 export { pricePart, priceParts } from "./parts";

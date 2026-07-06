@@ -7,6 +7,7 @@ import { RunSection } from "./RunSection";
 interface ComponentListProps {
   runs: Run[];
   islandUnits: CabinetUnit[];
+  presentEssentials: UnitType[];
   // run-scoped unit handlers
   onRunLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
@@ -29,6 +30,7 @@ interface ComponentListProps {
 export function ComponentList({
   runs,
   islandUnits,
+  presentEssentials,
   onRunLengthChange,
   onRemoveRun,
   onTypeChange,
@@ -51,6 +53,7 @@ export function ComponentList({
           key={run.id}
           run={run}
           removable={runs.length > 1}
+          presentEssentials={presentEssentials}
           onLengthChange={onRunLengthChange}
           onRemoveRun={onRemoveRun}
           onTypeChange={onTypeChange}

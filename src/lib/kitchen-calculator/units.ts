@@ -194,3 +194,10 @@ export const BASE_TALL_TYPES: UnitType[] = [
 ];
 export const WALL_TYPES: UnitType[] = ["wall", "cornerWall"];
 export const ISLAND_TYPES: UnitType[] = ["island"];
+
+/**
+ * The singleton "main appliance" units a kitchen normally has exactly one of.
+ * (hobOven is the combined hob/oven unit.) Surfaced separately in the picker
+ * and tracked for the missing-essentials notice.
+ */
+export const ESSENTIAL_TYPES: UnitType[] = ["sink", "hobOven", "fridge"];

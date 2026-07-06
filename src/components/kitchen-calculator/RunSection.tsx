@@ -19,13 +19,14 @@ const m = (mm: number): string => (mm / 1000).toFixed(2);
 interface RunSectionProps {
   run: Run;
   removable: boolean;
+  presentEssentials?: UnitType[];
   onLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
-  onAddBase: (runId: string) => void;
-  onAddWall: (runId: string) => void;
+  onAddBase: (runId: string, type: UnitType) => void;
+  onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
   onFillWall: (runId: string, spanMm: number) => void;
 }
@@ -34,6 +35,7 @@ interface RunSectionProps {
 export function RunSection({
   run,
   removable,
+  presentEssentials,
   onLengthChange,
   onRemoveRun,
   onTypeChange,
@@ -151,10 +153,11 @@ export function RunSection({
           typeOptions={BASE_TALL_TYPES}
           addLabel="Add unit"
           indicator={runIndicator}
+          presentEssentials={presentEssentials}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
-          onAdd={() => onAddBase(run.id)}
+          onAdd={(type) => onAddBase(run.id, type)}
         />
         <CabinetSection
           title="Wall units"
@@ -166,7 +169,7 @@ export function RunSection({
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
-          onAdd={() => onAddWall(run.id)}
+          onAdd={(type) => onAddWall(run.id, type)}
         />
       </div>
     </div>

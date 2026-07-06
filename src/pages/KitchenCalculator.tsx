@@ -18,6 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   defaultSettings,
+  ESSENTIAL_TYPES,
   generateKitchen,
   makeRun,
   makeUnit,
@@ -48,10 +49,6 @@ const DEFAULT_LEG_LENGTHS: Record<KitchenLayout, string[]> = {
   u: ["3.6", "2.4", "2.4"],
   galley: ["3.6", "3.0"],
 };
-
-// A kitchen normally needs these three. (hobOven is the combined hob/oven unit;
-// splitting it into a separate oven housing is a later phase.)
-const ESSENTIAL_TYPES: UnitType[] = ["sink", "hobOven", "fridge"];
 
 const isCustom = (width: number): boolean => !STANDARD_WIDTHS.includes(width);
 
@@ -228,11 +225,13 @@ const KitchenCalculator = () => {
 
   // --- completeness (aggregate across all runs) ---------------------------
 
+  const presentEssentials = state
+    ? ESSENTIAL_TYPES.filter((t) => state.runs.some((r) => r.baseUnits.some((u) => u.type === t)))
+    : [];
+
   const missingEssentials = state
     ? ESSENTIAL_TYPES.filter(
-        (t) =>
-          !state.runs.some((r) => r.baseUnits.some((u) => u.type === t)) &&
-          !excludedEssentials.includes(t),
+        (t) => !presentEssentials.includes(t) && !excludedEssentials.includes(t),
       )
     : [];
 
@@ -318,6 +317,7 @@ const KitchenCalculator = () => {
             <ComponentList
               runs={state.runs}
               islandUnits={state.islandUnits}
+              presentEssentials={presentEssentials}
               onRunLengthChange={handleRunLengthChange}
               onRemoveRun={handleRemoveRun}
               onTypeChange={handleTypeChange}
