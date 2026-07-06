@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,20 +27,35 @@ interface UnitRowProps {
   typeOptions: UnitType[];
   /** Essential types already placed somewhere in the kitchen (sink/hob/fridge). */
   presentEssentials?: UnitType[];
+  /** Show the drag handle (false when the section has a single unit). */
+  sortable?: boolean;
   onTypeChange: (id: string, type: UnitType) => void;
   onWidthChange: (id: string, width: number) => void;
+  onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
 }
 
-/** One component-list row: type swap + width + remove. */
+/** One component-list row: drag handle + type swap + width + ×quantity + remove. */
 export function UnitRow({
   unit,
   typeOptions,
   presentEssentials = [],
+  sortable = false,
   onTypeChange,
   onWidthChange,
+  onQuantityChange,
   onRemove,
 }: UnitRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: unit.id,
+  });
+  const rowStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : undefined,
+    zIndex: isDragging ? 10 : undefined,
+    position: "relative" as const,
+  };
   // Include the unit's own width so a custom/non-standard size stays selectable.
   const widthOptions = WIDTH_OPTIONS.includes(unit.width)
     ? WIDTH_OPTIONS
@@ -52,6 +69,23 @@ export function UnitRow({
     const value = Math.round(Number(draftWidth));
     if (Number.isFinite(value) && value > 0) onWidthChange(unit.id, value);
     setEditingWidth(false);
+  };
+
+  // Quantity: hidden at ×1 (just a "+ copies" affordance); a small number field
+  // once there's more than one. Commit on blur/Enter, clamp to ≥ 1.
+  const [qtyDraft, setQtyDraft] = useState(String(unit.quantity));
+  const [editingQty, setEditingQty] = useState(false);
+  useEffect(() => setQtyDraft(String(unit.quantity)), [unit.quantity]);
+  const showQtyField = editingQty || unit.quantity > 1;
+  const commitQty = () => {
+    const value = Math.round(Number(qtyDraft));
+    if (Number.isFinite(value) && value >= 1) {
+      onQuantityChange(unit.id, value);
+      if (value === 1) setEditingQty(false);
+    } else {
+      setQtyDraft(String(unit.quantity));
+      setEditingQty(false);
+    }
   };
 
   // Grouped picker: main appliances, then base cabinets, then tall units.
@@ -68,7 +102,20 @@ export function UnitRow({
   );
 
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div ref={setNodeRef} style={rowStyle} className="flex items-center gap-2 bg-background py-2">
+      {sortable ? (
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Reorder ${unit.name}`}
+          className="shrink-0 cursor-grab touch-none rounded p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      ) : (
+        <span className="w-6 shrink-0" aria-hidden />
+      )}
       <div className="flex flex-1 items-center gap-2">
         <UnitIcon unit={unit} size={40} className="shrink-0 text-muted-foreground" />
         <Select value={unit.type} onValueChange={(v) => onTypeChange(unit.id, v as UnitType)}>
@@ -85,11 +132,6 @@ export function UnitRow({
             ))}
           </SelectContent>
         </Select>
-        {unit.isCustomWidth && (
-          <span className="text-xs" style={{ color: "#ca8a04" }}>
-            custom: {unit.width}mm
-          </span>
-        )}
       </div>
 
       {editingWidth ? (
@@ -128,7 +170,11 @@ export function UnitRow({
             }
           }}
         >
-          <SelectTrigger className="w-28">
+          <SelectTrigger
+            className="w-28"
+            style={unit.isCustomWidth ? { color: "#ca8a04", borderColor: "#ca8a04" } : undefined}
+            title={unit.isCustomWidth ? "Custom width" : undefined}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -141,6 +187,48 @@ export function UnitRow({
           </SelectContent>
         </Select>
       )}
+
+      {/* Quantity — hidden at ×1; a compact field once a line stands for several. */}
+      <div className="flex w-20 shrink-0 items-center justify-end gap-1">
+        {showQtyField ? (
+          <>
+            <span className="text-sm text-muted-foreground">×</span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1}
+              autoFocus={editingQty}
+              value={qtyDraft}
+              onChange={(e) => setQtyDraft(e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
+              onBlur={commitQty}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                } else if (e.key === "Escape") {
+                  setQtyDraft(String(unit.quantity));
+                  setEditingQty(false);
+                }
+              }}
+              className="h-9 w-14 text-center"
+              aria-label={`${unit.name} quantity`}
+            />
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => setEditingQty(true)}
+            aria-label={`Set quantity for ${unit.name}`}
+            title="Set quantity"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
 
       <Button
         variant="ghost"

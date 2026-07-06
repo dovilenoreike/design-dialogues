@@ -129,6 +129,8 @@ export interface CabinetUnit {
   width: number; // mm (primary run width W₁ for corners)
   width2?: number; // mm (return run W₂ for corners)
   isCustomWidth?: boolean; // flagged when snapped off standard widths
+  /** Count of identical units this line represents (default 1). */
+  quantity: number;
   /** True when the unit contributes to the base-run worktop above it. */
   occupiesWorktop: boolean;
 }

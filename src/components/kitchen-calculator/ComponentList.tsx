@@ -13,17 +13,22 @@ interface ComponentListProps {
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
+  onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
   onAddBase: (runId: string, type: UnitType) => void;
   onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
   onFillWall: (runId: string, spanMm: number) => void;
+  onReorderBase: (runId: string, activeId: string, overId: string) => void;
+  onReorderWall: (runId: string, activeId: string, overId: string) => void;
   onAddRun: () => void;
   // island handlers (island is not run-scoped)
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
   onIslandWidthChange: (unitId: string, width: number) => void;
+  onIslandQuantityChange: (unitId: string, quantity: number) => void;
   onIslandRemove: (unitId: string) => void;
   onIslandAdd: (type: UnitType) => void;
+  onIslandReorder: (activeId: string, overId: string) => void;
 }
 
 /** All runs (each a RunSection), the island section, and an add-run control. */
@@ -35,16 +40,21 @@ export function ComponentList({
   onRemoveRun,
   onTypeChange,
   onWidthChange,
+  onQuantityChange,
   onRemoveUnit,
   onAddBase,
   onAddWall,
   onFillGap,
   onFillWall,
+  onReorderBase,
+  onReorderWall,
   onAddRun,
   onIslandTypeChange,
   onIslandWidthChange,
+  onIslandQuantityChange,
   onIslandRemove,
   onIslandAdd,
+  onIslandReorder,
 }: ComponentListProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -58,11 +68,14 @@ export function ComponentList({
           onRemoveRun={onRemoveRun}
           onTypeChange={onTypeChange}
           onWidthChange={onWidthChange}
+          onQuantityChange={onQuantityChange}
           onRemoveUnit={onRemoveUnit}
           onAddBase={onAddBase}
           onAddWall={onAddWall}
           onFillGap={onFillGap}
           onFillWall={onFillWall}
+          onReorderBase={onReorderBase}
+          onReorderWall={onReorderWall}
         />
       ))}
 
@@ -85,8 +98,10 @@ export function ComponentList({
         emptyLabel="No island. Add one to include it in the estimate."
         onTypeChange={onIslandTypeChange}
         onWidthChange={onIslandWidthChange}
+        onQuantityChange={onIslandQuantityChange}
         onRemove={onIslandRemove}
         onAdd={onIslandAdd}
+        onReorder={onIslandReorder}
       />
     </div>
   );

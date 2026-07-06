@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { arrayMove } from "@dnd-kit/sortable";
 import { ComponentList } from "@/components/kitchen-calculator/ComponentList";
 import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareGradeSelector";
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
@@ -162,6 +163,9 @@ const KitchenCalculator = () => {
   const handleWidthChange = (runId: string, unitId: string, width: number) =>
     mapRunUnit(runId, unitId, (u) => ({ ...u, width, isCustomWidth: isCustom(width) }));
 
+  const handleQuantityChange = (runId: string, unitId: string, quantity: number) =>
+    mapRunUnit(runId, unitId, (u) => ({ ...u, quantity: Math.max(1, Math.round(quantity)) }));
+
   const handleRemoveUnit = (runId: string, unitId: string) =>
     updateRun(runId, (r) => ({
       ...r,
@@ -192,6 +196,19 @@ const KitchenCalculator = () => {
 
   const handleRunLengthChange = (runId: string, mm: number) =>
     updateRun(runId, (r) => ({ ...r, lengthMm: mm }));
+
+  // Reorder units within a section so the list mirrors the physical run order.
+  const reorderById = (list: CabinetUnit[], activeId: string, overId: string): CabinetUnit[] => {
+    const from = list.findIndex((u) => u.id === activeId);
+    const to = list.findIndex((u) => u.id === overId);
+    return from < 0 || to < 0 || from === to ? list : arrayMove(list, from, to);
+  };
+
+  const handleReorderBase = (runId: string, activeId: string, overId: string) =>
+    updateRun(runId, (r) => ({ ...r, baseUnits: reorderById(r.baseUnits, activeId, overId) }));
+
+  const handleReorderWall = (runId: string, activeId: string, overId: string) =>
+    updateRun(runId, (r) => ({ ...r, wallUnits: reorderById(r.wallUnits, activeId, overId) }));
 
   const handleRemoveRun = (runId: string) => {
     setHasEdits(true);
@@ -224,6 +241,8 @@ const KitchenCalculator = () => {
     mapIsland(unitId, (u) => retypeUnit(u, type));
   const handleIslandWidthChange = (unitId: string, width: number) =>
     mapIsland(unitId, (u) => ({ ...u, width, isCustomWidth: isCustom(width) }));
+  const handleIslandQuantityChange = (unitId: string, quantity: number) =>
+    mapIsland(unitId, (u) => ({ ...u, quantity: Math.max(1, Math.round(quantity)) }));
   const handleIslandRemove = (unitId: string) => {
     setHasEdits(true);
     setState((prev) =>
@@ -234,6 +253,12 @@ const KitchenCalculator = () => {
     setHasEdits(true);
     setState((prev) =>
       prev ? { ...prev, islandUnits: [...prev.islandUnits, makeUnit(type, addWidth(type))] } : prev,
+    );
+  };
+  const handleIslandReorder = (activeId: string, overId: string) => {
+    setHasEdits(true);
+    setState((prev) =>
+      prev ? { ...prev, islandUnits: reorderById(prev.islandUnits, activeId, overId) } : prev,
     );
   };
 
@@ -336,16 +361,21 @@ const KitchenCalculator = () => {
               onRemoveRun={handleRemoveRun}
               onTypeChange={handleTypeChange}
               onWidthChange={handleWidthChange}
+              onQuantityChange={handleQuantityChange}
               onRemoveUnit={handleRemoveUnit}
               onAddBase={handleAddBase}
               onAddWall={handleAddWall}
               onFillGap={handleFillGap}
               onFillWall={handleFillWall}
+              onReorderBase={handleReorderBase}
+              onReorderWall={handleReorderWall}
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}
               onIslandWidthChange={handleIslandWidthChange}
+              onIslandQuantityChange={handleIslandQuantityChange}
               onIslandRemove={handleIslandRemove}
               onIslandAdd={handleIslandAdd}
+              onIslandReorder={handleIslandReorder}
             />
 
             <div className="mt-6">

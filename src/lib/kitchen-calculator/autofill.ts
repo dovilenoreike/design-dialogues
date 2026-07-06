@@ -46,6 +46,7 @@ const uid = (): string => `u${++idCounter}`;
 interface MakeOpts {
   width2?: number;
   isCustom?: boolean;
+  quantity?: number;
 }
 
 export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): CabinetUnit {
@@ -58,8 +59,31 @@ export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): Ca
     width,
     width2: opts.width2,
     isCustomWidth: opts.isCustom ?? false,
+    quantity: opts.quantity ?? 1,
     occupiesWorktop: category === "base",
   };
+}
+
+/**
+ * Merge consecutive identical units (same type/width/return/custom) into a
+ * single line whose `quantity` is their sum — so a run of six matching wall
+ * cabinets shows as one "× 6" line. Order is preserved; only adjacent matches
+ * merge, so a differing unit between two identical ones keeps them apart.
+ */
+export function collapseAdjacent(units: CabinetUnit[]): CabinetUnit[] {
+  const out: CabinetUnit[] = [];
+  for (const u of units) {
+    const last = out[out.length - 1];
+    const same =
+      last &&
+      last.type === u.type &&
+      last.width === u.width &&
+      (last.width2 ?? null) === (u.width2 ?? null) &&
+      last.isCustomWidth === u.isCustomWidth;
+    if (same) out[out.length - 1] = { ...last, quantity: last.quantity + u.quantity };
+    else out.push(u);
+  }
+  return out;
 }
 
 /**
@@ -107,10 +131,12 @@ function greedyFill(lengthMm: number, widths: number[]): Fill[] {
   return out;
 }
 
-/** Wall units filling a given span (600mm units + custom remainder). */
+/** Wall units filling a given span (600mm units + custom remainder), collapsed. */
 export function makeWallRun(spanMm: number): CabinetUnit[] {
-  return greedyFill(spanMm, WALL_WIDTHS).map((fill) =>
-    makeUnit("wall", fill.width, { isCustom: fill.isCustom }),
+  return collapseAdjacent(
+    greedyFill(spanMm, WALL_WIDTHS).map((fill) =>
+      makeUnit("wall", fill.width, { isCustom: fill.isCustom }),
+    ),
   );
 }
 
@@ -161,6 +187,10 @@ function fillRun(
     run.baseUnits.push(makeUnit("cornerBase", CORNER_WIDTH, { width2: CORNER_WIDTH }));
     run.wallUnits.push(makeUnit("cornerWall", CORNER_WIDTH, { width2: CORNER_WIDTH }));
   }
+
+  // Collapse runs of identical cabinets into single ×count lines.
+  run.baseUnits = collapseAdjacent(run.baseUnits);
+  run.wallUnits = collapseAdjacent(run.wallUnits);
 
   return run;
 }

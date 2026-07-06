@@ -24,11 +24,14 @@ interface RunSectionProps {
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
+  onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
   onAddBase: (runId: string, type: UnitType) => void;
   onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
   onFillWall: (runId: string, spanMm: number) => void;
+  onReorderBase: (runId: string, activeId: string, overId: string) => void;
+  onReorderWall: (runId: string, activeId: string, overId: string) => void;
 }
 
 /** One kitchen leg: header (label + length + remove), fit alert, base & wall sections with meters. */
@@ -40,14 +43,17 @@ export function RunSection({
   onRemoveRun,
   onTypeChange,
   onWidthChange,
+  onQuantityChange,
   onRemoveUnit,
   onAddBase,
   onAddWall,
   onFillGap,
   onFillWall,
+  onReorderBase,
+  onReorderWall,
 }: RunSectionProps) {
   // --- base run fit -------------------------------------------------------
-  const baseSumMm = run.baseUnits.reduce((sum, u) => sum + u.width, 0);
+  const baseSumMm = run.baseUnits.reduce((sum, u) => sum + u.width * u.quantity, 0);
   const runMatches = baseSumMm === run.lengthMm;
   const overflowMm = Math.max(baseSumMm - run.lengthMm, 0);
 
@@ -57,8 +63,12 @@ export function RunSection({
       (widest, u) => (!widest || u.width > widest.width ? u : widest),
       undefined,
     );
+  // Trimming shrinks a single cabinet; skip it for a ×N line to avoid overshoot.
   const canTrim =
-    overflowMm > 0 && !!widestStorage && widestStorage.width - overflowMm >= MIN_STORAGE_WIDTH;
+    overflowMm > 0 &&
+    !!widestStorage &&
+    widestStorage.quantity === 1 &&
+    widestStorage.width - overflowMm >= MIN_STORAGE_WIDTH;
 
   const runIndicator = (
     <span
@@ -72,8 +82,8 @@ export function RunSection({
   // --- wall meter ---------------------------------------------------------
   const wallSpanMm = run.baseUnits
     .filter((u) => u.category === "base")
-    .reduce((sum, u) => sum + u.width, 0);
-  const wallTotalMm = run.wallUnits.reduce((sum, u) => sum + u.width, 0);
+    .reduce((sum, u) => sum + u.width * u.quantity, 0);
+  const wallTotalMm = run.wallUnits.reduce((sum, u) => sum + u.width * u.quantity, 0);
   const wallFreeMm = wallSpanMm - wallTotalMm;
   const wallIndicator = (
     <span className="text-xs font-medium tabular-nums text-muted-foreground">
@@ -156,8 +166,10 @@ export function RunSection({
           presentEssentials={presentEssentials}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
+          onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
           onAdd={(type) => onAddBase(run.id, type)}
+          onReorder={(a, o) => onReorderBase(run.id, a, o)}
         />
         <CabinetSection
           title="Wall units"
@@ -168,8 +180,10 @@ export function RunSection({
           footerExtra={wallFillButton}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
+          onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
           onAdd={(type) => onAddWall(run.id, type)}
+          onReorder={(a, o) => onReorderWall(run.id, a, o)}
         />
       </div>
     </div>

@@ -26,7 +26,12 @@ const m = (mm: number): number => mm / 1000;
 const WORKTOP_DEPTH_M = 0.6; // spec: not configurable in V1
 
 function sumWidths(units: CabinetUnit[]): number {
-  return units.reduce((sum, u) => sum + u.width, 0);
+  return units.reduce((sum, u) => sum + u.width * u.quantity, 0);
+}
+
+/** Total count of a given unit type across a list (respecting quantity). */
+function countOfType(units: CabinetUnit[], type: CabinetUnit["type"]): number {
+  return units.filter((u) => u.type === type).reduce((sum, u) => sum + u.quantity, 0);
 }
 
 /** Base + tall units across every run. */
@@ -43,7 +48,7 @@ function priceUnit(unit: CabinetUnit, ctx: PricingContext): UnitPricing {
   return {
     id: unit.id,
     name: unit.name,
-    subtotal: priceParts(unitParts(unit, ctx.settings), ctx),
+    subtotal: priceParts(unitParts(unit, ctx.settings), ctx) * unit.quantity,
   };
 }
 
@@ -57,12 +62,8 @@ function worktopPrice(state: KitchenState, ctx: PricingContext): number {
 
   let price = baseRunLm * WORKTOP_DEPTH_M * worktop + baseRunLm * edgeBanding;
 
-  if (base.some((u) => u.type === "sink")) {
-    price += hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
-  }
-  if (base.some((u) => u.type === "hobOven")) {
-    price += hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
-  }
+  price += countOfType(base, "sink") * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
+  price += countOfType(base, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
   return price;
 }
 
