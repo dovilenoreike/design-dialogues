@@ -95,6 +95,14 @@ export default function DesignView() {
   const [showInspirationDialog, setShowInspirationDialog] = useState(false);
   const [showInfoSheet, setShowInfoSheet] = useState(false);
   const [enabledOptionalSlots, setEnabledOptionalSlots] = useState<Set<SlotKey>>(() => {
+    // Shared session: the enabled-slot set isn't part of the share payload, so
+    // derive it from the restored moodboard slots — otherwise the flatlay would
+    // render only the floor even though the materials came back.
+    if (isSharedSession && sharedMoodboardSlots) {
+      return new Set(
+        OPTIONAL_SLOTS.filter((s) => !!sharedMoodboardSlots[s])
+      );
+    }
     try {
       const saved = localStorage.getItem("enabled-optional-slots");
       if (saved !== null) return new Set(JSON.parse(saved) as SlotKey[]);
