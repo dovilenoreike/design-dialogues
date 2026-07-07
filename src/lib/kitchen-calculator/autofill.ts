@@ -7,6 +7,8 @@
  * run's base cabinets with wall units. Pure — returns a fresh KitchenState.
  */
 
+import type { ProjectAppliance } from "./appliances";
+import { defaultAppliances } from "./appliances";
 import type {
   CabinetUnit,
   ExtraCost,
@@ -41,6 +43,7 @@ const CORNER_WIDTH = 900; // mm, default corner cabinet footprint per leg (W₁ 
 
 const STANDARD_WIDTHS = [1000, 800, 600, 500, 400, 300]; // mm, descending
 const WALL_WIDTHS = [600]; // mm, spec mirrors base run with 600mm wall units
+const MAX_UNIT_WIDTH = 1000; // mm — no auto-generated cabinet exceeds this
 
 let idCounter = 0;
 const uid = (): string => `u${++idCounter}`;
@@ -49,6 +52,8 @@ interface MakeOpts {
   width2?: number;
   isCustom?: boolean;
   quantity?: number;
+  /** Override the integrated appliance (else the type's default). */
+  appliance?: string;
 }
 
 export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): CabinetUnit {
@@ -63,7 +68,7 @@ export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): Ca
     isCustomWidth: opts.isCustom ?? false,
     quantity: opts.quantity ?? 1,
     occupiesWorktop: category === "base",
-    appliance: DEFAULT_APPLIANCE[type],
+    appliance: opts.appliance ?? DEFAULT_APPLIANCE[type],
   };
 }
 
@@ -111,7 +116,12 @@ interface Fill {
   isCustom: boolean;
 }
 
-/** Greedy descending fit; leftover under the smallest width is absorbed as a custom size. */
+/**
+ * Greedy descending fit. A leftover under the smallest width is absorbed into the
+ * last cabinet — but never past MAX_UNIT_WIDTH: if absorbing would make it too
+ * wide, the combined span is split into two balanced units instead (so a 1200mm
+ * leftover becomes 2×600, not a single 1200mm cabinet).
+ */
 function greedyFill(lengthMm: number, widths: number[]): Fill[] {
   const out: Fill[] = [];
   const min = Math.min(...widths);
@@ -124,12 +134,22 @@ function greedyFill(lengthMm: number, widths: number[]): Fill[] {
   }
 
   if (remaining > 0) {
-    if (out.length > 0) {
-      const last = out[out.length - 1];
-      last.width += remaining;
-      last.isCustom = true;
-    } else {
+    if (out.length === 0) {
       out.push({ width: remaining, isCustom: true });
+    } else {
+      const last = out[out.length - 1];
+      const combined = last.width + remaining;
+      if (combined <= MAX_UNIT_WIDTH) {
+        last.width = combined;
+        last.isCustom = !widths.includes(combined);
+      } else {
+        // Balance the oversized span across two units, snapping to standard widths.
+        const first = widths.find((w) => w <= combined / 2) ?? Math.round(combined / 2);
+        const second = combined - first;
+        last.width = first;
+        last.isCustom = !widths.includes(first);
+        out.push({ width: second, isCustom: !widths.includes(second) });
+      }
     }
   }
 
@@ -148,6 +168,9 @@ export function makeWallRun(spanMm: number): CabinetUnit[] {
 const SINK_WIDTH = 600;
 const HOB_OVEN_WIDTH = 600;
 const FRIDGE_WIDTH = 600;
+const DISHWASHER_WIDTH = 600;
+const OVEN_HOUSING_WIDTH = 600;
+const HOOD_WIDTH = 600;
 
 let runCounter = 0;
 const runId = (): string => `r${++runCounter}`;
@@ -182,31 +205,51 @@ function baseSpan(units: CabinetUnit[]): number {
   return units.filter((u) => u.category === "base").reduce((sum, u) => sum + u.width, 0);
 }
 
-/** Auto-fill one leg: optional essentials + storage, and (if it turns) a corner. */
+/**
+ * Auto-fill one leg. The first run seats the kitchen's appliances: a sink is
+ * always present, and a housing unit is placed for every *declared* appliance —
+ * hob (or an oven-only tower), fridge, dishwasher and an integrated hood above
+ * the hob. Storage cabinets fill the remaining length; a corner is added if the
+ * leg turns into the next.
+ */
 function fillRun(
   label: string,
   lengthMm: number,
-  { withEssentials, hasCorner }: { withEssentials: boolean; hasCorner: boolean },
+  {
+    withEssentials,
+    hasCorner,
+    appliances,
+  }: { withEssentials: boolean; hasCorner: boolean; appliances: Set<ProjectAppliance> },
 ): Run {
   const run = makeRun(label, lengthMm);
+  const has = (a: ProjectAppliance) => withEssentials && appliances.has(a);
 
   if (withEssentials) {
-    run.baseUnits.push(makeUnit("sink", SINK_WIDTH), makeUnit("hobOven", HOB_OVEN_WIDTH));
+    // The sink is a fixture (not a declared appliance) — always in the main run.
+    run.baseUnits.push(makeUnit("sink", SINK_WIDTH));
+    if (has("dishwasher")) run.baseUnits.push(makeUnit("dishwasher", DISHWASHER_WIDTH));
+    // Hob+oven share one base unit; an oven declared without a hob is a tall tower.
+    if (has("hob")) run.baseUnits.push(makeUnit("hobOven", HOB_OVEN_WIDTH));
+    else if (has("oven")) run.baseUnits.push(makeUnit("ovenHousing", OVEN_HOUSING_WIDTH));
   }
 
+  const wantsFridge = has("fridge");
   const used =
     run.baseUnits.reduce((sum, u) => sum + u.width, 0) +
-    (withEssentials ? FRIDGE_WIDTH : 0) +
+    (wantsFridge ? FRIDGE_WIDTH : 0) +
     (hasCorner ? CORNER_WIDTH : 0);
 
   for (const fill of greedyFill(lengthMm - used, STANDARD_WIDTHS)) {
     run.baseUnits.push(makeUnit("storage", fill.width, { isCustom: fill.isCustom }));
   }
 
-  if (withEssentials) run.baseUnits.push(makeUnit("fridge", FRIDGE_WIDTH));
+  if (wantsFridge) run.baseUnits.push(makeUnit("fridge", FRIDGE_WIDTH));
 
-  // Wall units mirror the straight base cabinets; the corner gets a corner wall.
-  run.wallUnits = makeWallRun(baseSpan(run.baseUnits));
+  // Wall units mirror the straight base cabinets; an integrated hood housing takes
+  // one 600mm slot above the hob, and the corner gets a corner wall.
+  const wantsHood = has("hood");
+  run.wallUnits = makeWallRun(Math.max(baseSpan(run.baseUnits) - (wantsHood ? HOOD_WIDTH : 0), 0));
+  if (wantsHood) run.wallUnits.unshift(makeUnit("hoodHousing", HOOD_WIDTH));
 
   if (hasCorner) {
     run.baseUnits.push(makeUnit("cornerBase", CORNER_WIDTH, { width2: CORNER_WIDTH }));
@@ -225,6 +268,7 @@ export function generateKitchen(
   legLengthsMm: number[],
   settings: GlobalSettings,
   grade: HardwareGrade,
+  appliances: Set<ProjectAppliance> = defaultAppliances(),
 ): KitchenState {
   const runCount = LAYOUT_RUN_COUNT[layout];
   const junctions = LAYOUT_CORNER_JUNCTIONS[layout];
@@ -235,6 +279,7 @@ export function generateKitchen(
       fillRun(RUN_LABELS[i] ?? `Run ${i + 1}`, legLengthsMm[i] ?? 0, {
         withEssentials: i === 0,
         hasCorner: i < junctions, // runs 0..junctions-1 turn into the next leg
+        appliances,
       }),
     );
   }

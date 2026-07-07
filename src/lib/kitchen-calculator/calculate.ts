@@ -130,8 +130,10 @@ function extrasPrice(state: KitchenState, ctx: PricingContext): number {
   const lighting = wallRunLm * hp("lighting");
   const panelEndsCount = 2; // main run default
   const panelEnds = panelEndsCount * panelEndPrice(ctx);
+  // Integrated-hood integration work: one cutout + ducting per hood housing.
+  const hoodCutouts = countOfType(allWallUnits(state), "hoodHousing") * hp("hoodCutout");
 
-  return plinth + cornice + lighting + panelEnds;
+  return plinth + cornice + lighting + panelEnds + hoodCutouts;
 }
 
 // --- Public API -----------------------------------------------------------

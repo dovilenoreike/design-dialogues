@@ -12,6 +12,7 @@ import type { CabinetUnit, GlobalSettings, Part, SurfaceKey, UnitCategory, UnitT
 const DRAWER_HEIGHT = 180; // mm, spec Part 3 default
 const OVEN_RECESS = 595; // mm, spec Oven Housing default
 const CORNER_DOOR_W = 400; // mm, accessible-face door on corner units
+const HOOD_HOUSING_HEIGHT = 380; // mm, short wall cabinet concealing an integrated hood
 
 interface Dims {
   h: number;
@@ -58,6 +59,14 @@ const builders: Record<UnitType, Builder> = {
       { kind: "doorFront", w: u.width, h: doorH, surface },
     ];
     // hob cutout added to the worktop at kitchen level
+  },
+
+  dishwasher: (u, s) => {
+    const { h, surface } = dimsFor("base", s);
+    // The dishwasher is freestanding and slides into the gap — the only joinery
+    // is the decor front panel fixed to its door. No carcass, no shelf.
+    return [{ kind: "doorFront", w: u.width, h, surface }];
+    // hood/appliance integration work priced at kitchen level, not here
   },
 
   storage: (u, s) => {
@@ -138,6 +147,17 @@ const builders: Record<UnitType, Builder> = {
     ];
   },
 
+  hoodHousing: (u, s) => {
+    const { d, surface } = dimsFor("wall", s);
+    // Short wall cabinet that conceals an integrated hood behind a lift-up flap.
+    // The hood cutout (integration work) is priced at kitchen level.
+    const h = HOOD_HOUSING_HEIGHT;
+    return [
+      { kind: "shell", w: u.width, h, d },
+      { kind: "doorFront", w: u.width, h, surface },
+    ];
+  },
+
   // --- ISLAND UNITS -------------------------------------------------------
   island: (u, s) => {
     const { h, d, surface } = dimsFor("island", s);
@@ -159,12 +179,14 @@ export function unitParts(unit: CabinetUnit, settings: GlobalSettings): Part[] {
 export const UNIT_LABELS: Record<UnitType, string> = {
   sink: "Sink cabinet",
   hobOven: "Hob / oven cabinet",
+  dishwasher: "Dishwasher housing",
   storage: "Storage cabinet",
   cornerBase: "Corner base unit",
   fridge: "Fridge housing",
   ovenHousing: "Oven housing",
   larder: "Tall unit",
   wall: "Wall cabinet",
+  hoodHousing: "Hood housing",
   cornerWall: "Corner wall unit",
   island: "Island unit",
 };
@@ -176,12 +198,14 @@ export const UNIT_LABELS: Record<UnitType, string> = {
 export const DEFAULT_APPLIANCE: Record<UnitType, string> = {
   sink: "sink",
   hobOven: "hobOven",
+  dishwasher: "dishwasher",
   storage: "none",
   cornerBase: "none",
   fridge: "fridge",
   ovenHousing: "oven",
   larder: "none",
   wall: "none",
+  hoodHousing: "extractor",
   cornerWall: "none",
   island: "none",
 };
@@ -189,12 +213,14 @@ export const DEFAULT_APPLIANCE: Record<UnitType, string> = {
 export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
   sink: "base",
   hobOven: "base",
+  dishwasher: "base",
   storage: "base",
   cornerBase: "base",
   fridge: "tall",
   ovenHousing: "tall",
   larder: "tall",
   wall: "wall",
+  hoodHousing: "wall",
   cornerWall: "wall",
   island: "island",
 };
@@ -208,12 +234,13 @@ export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
 export const BASE_TALL_TYPES: UnitType[] = [
   "sink",
   "hobOven",
+  "dishwasher",
   "storage",
   "cornerBase",
   "fridge",
   "larder",
 ];
-export const WALL_TYPES: UnitType[] = ["wall", "cornerWall"];
+export const WALL_TYPES: UnitType[] = ["wall", "hoodHousing", "cornerWall"];
 export const ISLAND_TYPES: UnitType[] = ["island"];
 
 /**

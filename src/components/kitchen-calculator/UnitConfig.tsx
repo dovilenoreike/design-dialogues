@@ -59,6 +59,8 @@ const APPLIANCES: Record<UnitCategory, Option[]> = {
 // Units whose appliance is intrinsic to the type — shown as a single, fixed chip.
 const APPLIANCES_BY_TYPE: Partial<Record<UnitType, Option[]>> = {
   fridge: [{ id: "fridge", label: "Fridge / freezer" }],
+  dishwasher: [{ id: "dishwasher", label: "Dishwasher" }],
+  hoodHousing: [{ id: "extractor", label: "Hood" }],
 };
 
 // Front layouts available per unit category (ids resolve via FRONT_LABELS / FrontIcon).
@@ -67,6 +69,13 @@ const CATEGORY_FRONTS: Record<UnitCategory, string[]> = {
   island: ["doors2", "door1", "drawers2", "drawers3"],
   tall: ["doorsTall", "ovenTower"],
   wall: ["doors2", "door1", "liftUp"],
+};
+
+// Some unit types constrain their fronts regardless of category. Corner units are
+// single-door only — the interior is a magic-corner / carousel, so no drawers.
+const FRONTS_BY_TYPE: Partial<Record<UnitType, string[]>> = {
+  cornerBase: ["door1"],
+  cornerWall: ["door1"],
 };
 
 // An appliance dictates the fronts it can sit behind — e.g. a dishwasher can't
@@ -79,7 +88,8 @@ const APPLIANCE_FRONTS: Record<string, string[]> = {
   oven: ["applianceFront", "ovenTower"],
   dishwasher: ["applianceFront", "door1"],
   microwave: ["applianceFront"],
-  extractor: ["applianceFront", "doors2", "door1"],
+  // Integrated hood is concealed in a short cabinet; standalone is a visible chimney.
+  extractor: ["integrated", "standalone"],
   fridge: ["applianceFront", "doorsTall"],
 };
 
@@ -93,6 +103,8 @@ const FRONT_LABELS: Record<string, string> = {
   ovenTower: "Appliance tower",
   liftUp: "Lift-up",
   applianceFront: "Appliance front",
+  integrated: "Integrated",
+  standalone: "Standalone",
 };
 
 const APPLIANCE_LABELS: Record<string, string> = {
@@ -109,14 +121,20 @@ const APPLIANCE_LABELS: Record<string, string> = {
 /** Row-badge label for a unit's appliance ("" for none). */
 export const applianceLabel = (id: string): string => APPLIANCE_LABELS[id] ?? "";
 
-/** Valid front layouts for the current appliance (falls back to the category set). */
-export function frontsFor(appliance: string, category: UnitCategory): string[] {
+/**
+ * Valid front layouts for a unit: a per-type constraint wins (e.g. corners are
+ * door-only), then the appliance's allowed fronts, else the category set.
+ */
+export function frontsFor(appliance: string, category: UnitCategory, type?: UnitType): string[] {
+  if (type && FRONTS_BY_TYPE[type]) return FRONTS_BY_TYPE[type] as string[];
   if (appliance === "none" || !APPLIANCE_FRONTS[appliance]) return CATEGORY_FRONTS[category];
   return APPLIANCE_FRONTS[appliance];
 }
 
 // A couple of the most-used accessories, kept intentionally minimal.
 function accessoriesFor(unit: CabinetUnit): Option[] {
+  // Appliance housings have no internal accessories — the appliance fills them.
+  if (unit.type === "dishwasher" || unit.type === "hoodHousing") return [];
   if (unit.type === "cornerBase" || unit.type === "cornerWall")
     return [{ id: "carousel", label: "Corner carousel" }];
   if (unit.category === "base" || unit.category === "island")
@@ -132,13 +150,15 @@ function accessoriesFor(unit: CabinetUnit): Option[] {
 
 const DEFAULT_BY_TYPE: Partial<Record<UnitType, Partial<UnitConfigState>>> = {
   sink: { appliance: "sink", front: "doors2", shelves: 1, accessories: ["bin"] },
-  hobOven: { appliance: "hobOven", front: "combo", shelves: 0 },
+  hobOven: { appliance: "hobOven", front: "applianceFront", shelves: 0 },
+  dishwasher: { appliance: "dishwasher", front: "door1", shelves: 0 },
   storage: { appliance: "none", front: "drawers3", shelves: 0 },
   cornerBase: { appliance: "none", front: "door1", shelves: 0 },
   fridge: { appliance: "fridge", front: "doorsTall", shelves: 0 },
   ovenHousing: { appliance: "oven", front: "ovenTower", shelves: 1 },
   larder: { appliance: "none", front: "doorsTall", shelves: 4 },
   wall: { appliance: "none", front: "doors2", shelves: 1 },
+  hoodHousing: { appliance: "extractor", front: "integrated", shelves: 0 },
   cornerWall: { appliance: "none", front: "door1", shelves: 0 },
   island: { appliance: "none", front: "doors2", shelves: 1 },
 };
@@ -202,6 +222,28 @@ function FrontIcon({ id }: { id: string }) {
         <line key="h" x1={9} y1={31} x2={23} y2={31} stroke={stroke} strokeWidth={1.2} />,
       ];
       break;
+    case "integrated":
+      // Hood concealed behind a short lift-up flap at the cabinet base.
+      shapes = [
+        rect(4, 3, 24, 34),
+        <line key="f" x1={4} y1={28} x2={28} y2={28} stroke={stroke} strokeWidth={1.2} />,
+        <line key="h" x1={12} y1={32.5} x2={20} y2={32.5} stroke={stroke} strokeWidth={1.2} />,
+      ];
+      break;
+    case "standalone":
+      // Visible chimney hood: canopy trapezoid tapering up to a duct.
+      shapes = [
+        <path
+          key="c"
+          d="M5 24 L11 12 L21 12 L27 24 Z"
+          fill="none"
+          stroke={stroke}
+          strokeWidth={1.4}
+          strokeLinejoin="round"
+        />,
+        rect(13, 4, 6, 8),
+      ];
+      break;
     case "doors2":
     default:
       shapes = [rect(4, 3, 11, 34), rect(17, 3, 11, 34)];
@@ -225,12 +267,12 @@ const SAGE = "#647d75";
 
 export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
   const appliances = APPLIANCES_BY_TYPE[unit.type] ?? APPLIANCES[unit.category];
-  const frontIds = frontsFor(value.appliance, unit.category);
+  const frontIds = frontsFor(value.appliance, unit.category, unit.type);
   const accessories = accessoriesFor(unit);
 
   // Choosing an appliance constrains the front — snap to a valid one if needed.
   const selectAppliance = (id: string) => {
-    const valid = frontsFor(id, unit.category);
+    const valid = frontsFor(id, unit.category, unit.type);
     const front = valid.includes(value.front) ? value.front : valid[0];
     onChange({ ...value, appliance: id, front });
   };

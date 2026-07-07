@@ -4,6 +4,12 @@
  */
 
 export * from "./types";
+export {
+  APPLIANCE_ITEMS,
+  defaultAppliances,
+  projectAppliancesFor,
+  type ProjectAppliance,
+} from "./appliances";
 export { defaultSettings, mockMaterialConfig, mockHardwareDB, hardwarePrice } from "./mock-config";
 export {
   generateKitchen,

@@ -4,6 +4,7 @@ import {
   ISLAND_TYPES,
   type CabinetUnit,
   type ExtraCost,
+  type ProjectAppliance,
   type Run,
   type UnitType,
 } from "@/lib/kitchen-calculator";
@@ -17,6 +18,10 @@ interface ComponentListProps {
   extraCosts: ExtraCost[];
   furnitureSubtotal: number;
   presentEssentials: UnitType[];
+  declaredAppliances?: Set<ProjectAppliance>;
+  /** Declared-but-unplaced base housings (dishwasher/hob-oven/oven/fridge) offered
+   *  as gap fills in each run's length alert. */
+  missingBaseHousings?: UnitType[];
   // run-scoped unit handlers
   onRunLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
@@ -59,6 +64,8 @@ export function ComponentList({
   extraCosts,
   furnitureSubtotal,
   presentEssentials,
+  declaredAppliances,
+  missingBaseHousings,
   onRunLengthChange,
   onRemoveRun,
   onTypeChange,
@@ -98,6 +105,8 @@ export function ComponentList({
           run={run}
           removable={runs.length > 1}
           presentEssentials={presentEssentials}
+          declaredAppliances={declaredAppliances}
+          missingBaseHousings={missingBaseHousings}
           onLengthChange={onRunLengthChange}
           onRemoveRun={onRemoveRun}
           onTypeChange={onTypeChange}
@@ -135,6 +144,7 @@ export function ComponentList({
         typeOptions={ISLAND_TYPES}
         addLabel="Add island"
         emptyLabel="No island. Add one to include it in the estimate."
+        declaredAppliances={declaredAppliances}
         onTypeChange={onIslandTypeChange}
         onApplianceChange={onIslandApplianceChange}
         onWidthChange={onIslandWidthChange}

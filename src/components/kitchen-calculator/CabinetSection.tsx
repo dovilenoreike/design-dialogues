@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CabinetUnit, UnitType } from "@/lib/kitchen-calculator";
+import type { CabinetUnit, ProjectAppliance, UnitType } from "@/lib/kitchen-calculator";
 import { AddUnitMenu } from "./AddUnitMenu";
 import { UnitRow } from "./UnitRow";
 
@@ -27,6 +27,7 @@ interface CabinetSectionProps {
   indicator?: ReactNode;
   footerExtra?: ReactNode;
   presentEssentials?: UnitType[];
+  declaredAppliances?: Set<ProjectAppliance>;
   onTypeChange: (id: string, type: UnitType) => void;
   onApplianceChange: (id: string, appliance: string) => void;
   onWidthChange: (id: string, width: number) => void;
@@ -46,6 +47,7 @@ export function CabinetSection({
   indicator,
   footerExtra,
   presentEssentials,
+  declaredAppliances,
   onTypeChange,
   onApplianceChange,
   onWidthChange,
@@ -85,6 +87,7 @@ export function CabinetSection({
                   unit={u}
                   typeOptions={typeOptions}
                   presentEssentials={presentEssentials}
+                  declaredAppliances={declaredAppliances}
                   sortable={sortable}
                   onTypeChange={onTypeChange}
                   onApplianceChange={onApplianceChange}

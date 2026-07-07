@@ -7,6 +7,7 @@ import {
   WALL_TYPES,
   type Run,
   type CabinetUnit,
+  type ProjectAppliance,
   type UnitType,
 } from "@/lib/kitchen-calculator";
 import { CabinetSection } from "./CabinetSection";
@@ -15,6 +16,7 @@ import { WorktopSection } from "./WorktopSection";
 
 const MIN_STORAGE_WIDTH = 150; // mm — don't trim a storage cabinet below this
 const WALL_FILL_MIN = 100; // mm — smallest free span worth offering to fill
+const HOUSING_WIDTH = 600; // mm — standard width of an appliance housing gap fill
 
 const m = (mm: number): string => (mm / 1000).toFixed(2);
 
@@ -22,6 +24,9 @@ interface RunSectionProps {
   run: Run;
   removable: boolean;
   presentEssentials?: UnitType[];
+  declaredAppliances?: Set<ProjectAppliance>;
+  /** Declared-but-unplaced base housings offered as gap fills in the length alert. */
+  missingBaseHousings?: UnitType[];
   onLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
@@ -46,6 +51,8 @@ export function RunSection({
   run,
   removable,
   presentEssentials,
+  declaredAppliances,
+  missingBaseHousings,
   onLengthChange,
   onRemoveRun,
   onTypeChange,
@@ -181,7 +188,12 @@ export function RunSection({
           <RunLengthAlert
             runLengthMm={baseSumMm}
             kitchenLengthMm={run.lengthMm}
+            applianceFills={(missingBaseHousings ?? []).map((type) => ({
+              type,
+              width: HOUSING_WIDTH,
+            }))}
             onFillGap={(gap) => onFillGap(run.id, gap)}
+            onFillAppliance={(type) => onAddBase(run.id, type)}
             onTrimWidest={
               canTrim && widestStorage
                 ? () => onWidthChange(run.id, widestStorage.id, widestStorage.width - overflowMm)
@@ -199,6 +211,7 @@ export function RunSection({
           addLabel="Add unit"
           indicator={runIndicator}
           presentEssentials={presentEssentials}
+          declaredAppliances={declaredAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
@@ -224,6 +237,7 @@ export function RunSection({
           addLabel="Add wall unit"
           indicator={wallIndicator}
           footerExtra={wallFillButton}
+          declaredAppliances={declaredAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}

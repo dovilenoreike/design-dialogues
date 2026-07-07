@@ -27,12 +27,14 @@ interface IconSpec {
 const SPECS: Record<UnitType, IconSpec> = {
   sink: { frame: "base", zones: ["door_pair"], worktop: "sink" },
   hobOven: { frame: "base", zones: ["oven"], worktop: "hob" },
+  dishwasher: { frame: "base", zones: ["door_single"] },
   storage: { frame: "base", zones: ["drawer", "drawer"] },
   cornerBase: { frame: "base", zones: ["door_single"], corner: true },
   fridge: { frame: "tall", zones: [], empty: true },
   ovenHousing: { frame: "tall", zones: ["oven", "drawer"] },
   larder: { frame: "tall", zones: ["door_pair", "door_pair"] },
   wall: { frame: "wall", zones: ["door_pair"] },
+  hoodHousing: { frame: "wall", zones: ["door_single"] },
   cornerWall: { frame: "wall", zones: ["door_single"], corner: true },
   island: { frame: "base", zones: ["drawer", "drawer"], island: true },
 };

@@ -71,6 +71,7 @@ const HARDWARE_PRICES: Record<
   drawerDividers: { unit: "per_unit", name: "Drawer dividers", prices: [16, 30, 60] },
   sinkCutout: { unit: "per_unit", name: "Sink cutout", prices: [40, 60, 100] },
   hobCutout: { unit: "per_unit", name: "Hob cutout", prices: [40, 60, 100] },
+  hoodCutout: { unit: "per_unit", name: "Hood cutout & ducting", prices: [40, 70, 120] },
   plinth: { unit: "per_lm", name: "Plinth", prices: [12, 20, 36] },
   cornice: { unit: "per_lm", name: "Cornice / pelmet", prices: [12, 20, 36] },
   lighting: { unit: "per_lm", name: "Under-cabinet lighting", prices: [24, 50, 90] },

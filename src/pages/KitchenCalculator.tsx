@@ -1,17 +1,15 @@
 import { useMemo, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
-import {
-  ApplianceSelector,
-  defaultAppliances,
-  projectAppliancesFor,
-  type ProjectAppliance,
-} from "@/components/kitchen-calculator/ApplianceSelector";
+import { ApplianceSelector } from "@/components/kitchen-calculator/ApplianceSelector";
 import { ComponentList } from "@/components/kitchen-calculator/ComponentList";
 import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareGradeSelector";
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
 import { KitchenSetup } from "@/components/kitchen-calculator/KitchenSetup";
 import { MaterialsHeader } from "@/components/kitchen-calculator/MaterialsHeader";
-import { MissingUnitsAlert } from "@/components/kitchen-calculator/MissingUnitsAlert";
+import {
+  MissingUnitsAlert,
+  type MissingItem,
+} from "@/components/kitchen-calculator/MissingUnitsAlert";
 import { TotalBar } from "@/components/kitchen-calculator/TotalBar";
 import {
   AlertDialog,
@@ -25,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
+  APPLIANCE_ITEMS,
+  defaultAppliances,
   defaultSettings,
   ESSENTIAL_TYPES,
   generateKitchen,
@@ -36,6 +36,7 @@ import {
   mockMaterialConfig,
   nextRunLabel,
   priceKitchen,
+  projectAppliancesFor,
   retypeUnit,
   UNIT_LABELS,
   type CabinetUnit,
@@ -44,6 +45,7 @@ import {
   type HardwareGrade,
   type KitchenLayout,
   type KitchenState,
+  type ProjectAppliance,
   type Run,
   type UnitType,
 } from "@/lib/kitchen-calculator";
@@ -69,6 +71,21 @@ const ADD_WIDTHS: Partial<Record<UnitType, number>> = {
   island: 1200,
 };
 const addWidth = (type: UnitType): number => ADD_WIDTHS[type] ?? 600;
+
+// How each declared appliance is placed when added from the missing-appliance alert:
+// which unit type, which run section, and (for units without a dedicated type) an
+// appliance override. Mirrors the auto-fill generator's choices.
+const APPLIANCE_PLACEMENT: Record<
+  ProjectAppliance,
+  { type: UnitType; section: "base" | "wall"; appliance?: string }
+> = {
+  dishwasher: { type: "dishwasher", section: "base" },
+  hob: { type: "hobOven", section: "base" },
+  oven: { type: "ovenHousing", section: "base" },
+  fridge: { type: "fridge", section: "base" },
+  hood: { type: "hoodHousing", section: "wall" },
+  microwave: { type: "wall", section: "wall", appliance: "microwave" },
+};
 
 /**
  * Hidden kitchen-furniture price calculator (Phase 1).
@@ -106,7 +123,7 @@ const KitchenCalculator = () => {
     // lengths where legs overlap; default any new legs.
     const mm = defaults.map((d, i) => state.runs[i]?.lengthMm ?? Math.round(Number(d) * 1000));
     setLegLengths(mm.map((v) => String(v / 1000)));
-    setState(generateKitchen(next, mm, settings, grade));
+    setState(generateKitchen(next, mm, settings, grade, appliances));
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -146,7 +163,7 @@ const KitchenCalculator = () => {
   const handleGenerate = () => {
     const mm = legLengths.map((s) => Math.round(Number(s) * 1000));
     if (mm.length === 0 || mm.some((v) => !Number.isFinite(v) || v <= 0)) return;
-    setState(generateKitchen(layout, mm, settings, grade));
+    setState(generateKitchen(layout, mm, settings, grade, appliances));
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -332,28 +349,82 @@ const KitchenCalculator = () => {
     return set;
   }, [state]);
 
-  const missingEssentials = state
-    ? ESSENTIAL_TYPES.filter(
-        (t) => !presentEssentials.includes(t) && !excludedEssentials.includes(t),
-      )
-    : [];
+  const wantedAppliance = (a: ProjectAppliance) => appliances.has(a) && !placedAppliances.has(a);
 
-  const handleAddEssential = (type: UnitType) => {
+  // Declared appliances that aren't placed yet AND belong in a base run — offered
+  // as gap fills in each run's length alert (a hood is a wall unit, so excluded).
+  // hob+oven share one cabinet; an oven declared without a hob is a tall tower.
+  const missingBaseHousings = useMemo<UnitType[]>(() => {
+    if (!state) return [];
+    const out: UnitType[] = [];
+    if (wantedAppliance("dishwasher")) out.push("dishwasher");
+    if (wantedAppliance("hob")) out.push("hobOven");
+    else if (wantedAppliance("oven")) out.push("ovenHousing");
+    if (wantedAppliance("fridge")) out.push("fridge");
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, appliances, placedAppliances]);
+
+  // Add a unit to the first run's base or wall list (used by the missing-item actions).
+  const addToFirstRun = (type: UnitType, section: "base" | "wall", appliance?: string) => {
     setHasEdits(true);
-    setState((prev) =>
-      prev && prev.runs.length > 0
-        ? {
-            ...prev,
-            runs: prev.runs.map((r, i) =>
-              i === 0 ? { ...r, baseUnits: [...r.baseUnits, makeUnit(type, 600)] } : r,
-            ),
-          }
-        : prev,
-    );
+    setState((prev) => {
+      if (!prev || prev.runs.length === 0) return prev;
+      const unit = makeUnit(type, addWidth(type), appliance ? { appliance } : undefined);
+      return {
+        ...prev,
+        runs: prev.runs.map((r, i) =>
+          i !== 0
+            ? r
+            : section === "wall"
+              ? { ...r, wallUnits: [...r.wallUnits, unit] }
+              : { ...r, baseUnits: [...r.baseUnits, unit] },
+        ),
+      };
+    });
   };
+
+  const handleAddAppliance = (a: ProjectAppliance) => {
+    const place = APPLIANCE_PLACEMENT[a];
+    addToFirstRun(place.type, place.section, place.appliance);
+  };
+
+  const handleDismissAppliance = (a: ProjectAppliance) =>
+    setAppliances((prev) => {
+      const next = new Set(prev);
+      next.delete(a);
+      return next;
+    });
 
   const handleExcludeEssential = (type: UnitType) =>
     setExcludedEssentials((prev) => (prev.includes(type) ? prev : [...prev, type]));
+
+  // Prominent action list: the sink fixture (if absent) plus every declared
+  // appliance that isn't placed yet. Each row offers "Add …" or drop it.
+  const missingItems: MissingItem[] = [];
+  if (state) {
+    if (!presentEssentials.includes("sink") && !excludedEssentials.includes("sink")) {
+      missingItems.push({
+        key: "sink",
+        label: "Sink",
+        onAdd: () => addToFirstRun("sink", "base"),
+        onDismiss: () => handleExcludeEssential("sink"),
+        dismissLabel: "Not needed",
+      });
+    }
+    for (const a of APPLIANCE_ITEMS) {
+      if (!wantedAppliance(a.id)) continue;
+      // The hob/oven cabinet covers the oven too — don't also offer a lone oven.
+      if (a.id === "oven" && wantedAppliance("hob")) continue;
+      missingItems.push({
+        key: a.id,
+        label: a.label,
+        onAdd: () => handleAddAppliance(a.id),
+        onDismiss: () => handleDismissAppliance(a.id),
+        dismissLabel: "Not needed",
+      });
+    }
+  }
 
   // Live settings/grade override whatever was stored at generation time.
   const pricing = useMemo(() => {
@@ -401,13 +472,9 @@ const KitchenCalculator = () => {
               />
             </div>
 
-            {missingEssentials.length > 0 && (
+            {missingItems.length > 0 && (
               <div className="mb-4">
-                <MissingUnitsAlert
-                  missing={missingEssentials}
-                  onAdd={handleAddEssential}
-                  onExclude={handleExcludeEssential}
-                />
+                <MissingUnitsAlert items={missingItems} />
               </div>
             )}
 
@@ -429,6 +496,8 @@ const KitchenCalculator = () => {
               runs={state.runs}
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}
+              declaredAppliances={appliances}
+              missingBaseHousings={missingBaseHousings}
               furnitureSubtotal={
                 pricing.unitsTotal + pricing.worktop + pricing.islandWorktop + pricing.extras
               }

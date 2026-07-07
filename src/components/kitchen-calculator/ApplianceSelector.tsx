@@ -1,43 +1,13 @@
 import { AlertTriangle, Check } from "lucide-react";
+import { APPLIANCE_ITEMS, type ProjectAppliance } from "@/lib/kitchen-calculator";
 
 /**
  * Project-level appliance checklist — declares which appliances the kitchen
  * includes. Sits beside the hardware grade at the top of the estimate. The set
- * is the intent the calculator can later help fulfil (every marked appliance
- * should end up housed in a unit). Standard appliances are on by default;
- * microwave is optional.
+ * is the intent the generator fulfils (every marked appliance is placed in a
+ * housing unit on Generate). The taxonomy itself lives in the engine
+ * (`lib/kitchen-calculator/appliances.ts`); this is just its UI.
  */
-
-export type ProjectAppliance = "fridge" | "oven" | "hob" | "hood" | "dishwasher" | "microwave";
-
-export const APPLIANCE_ITEMS: { id: ProjectAppliance; label: string; default: boolean }[] = [
-  { id: "fridge", label: "Fridge", default: true },
-  { id: "oven", label: "Oven", default: true },
-  { id: "hob", label: "Hob", default: true },
-  { id: "hood", label: "Hood", default: true },
-  { id: "dishwasher", label: "Dishwasher", default: true },
-  { id: "microwave", label: "Microwave", default: false },
-];
-
-export const defaultAppliances = (): Set<ProjectAppliance> =>
-  new Set(APPLIANCE_ITEMS.filter((a) => a.default).map((a) => a.id));
-
-// Maps a unit's integrated-appliance id (UnitConfig) to the project appliances it
-// fulfils. "Hob + oven" satisfies both hob and oven; sink/none satisfy nothing here.
-const UNIT_APPLIANCE_TO_PROJECT: Record<string, ProjectAppliance[]> = {
-  fridge: ["fridge"],
-  oven: ["oven"],
-  hob: ["hob"],
-  hobOven: ["hob", "oven"],
-  dishwasher: ["dishwasher"],
-  microwave: ["microwave"],
-  extractor: ["hood"],
-  sink: [],
-  none: [],
-};
-
-export const projectAppliancesFor = (unitApplianceId: string): ProjectAppliance[] =>
-  UNIT_APPLIANCE_TO_PROJECT[unitApplianceId] ?? [];
 
 const SAGE = "#647d75";
 const OCHRE = "#ca8a04";
@@ -56,8 +26,6 @@ export function ApplianceSelector({ selected, onChange, placed }: ApplianceSelec
     else next.add(id);
     onChange(next);
   };
-
-  const missing = APPLIANCE_ITEMS.filter((a) => selected.has(a.id) && !placed?.has(a.id));
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -91,11 +59,6 @@ export function ApplianceSelector({ selected, onChange, placed }: ApplianceSelec
           })}
         </div>
       </div>
-      {missing.length > 0 && (
-        <p className="text-[11px]" style={{ color: OCHRE }}>
-          Not placed yet: {missing.map((a) => a.label).join(", ")}
-        </p>
-      )}
     </div>
   );
 }

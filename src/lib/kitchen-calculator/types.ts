@@ -61,6 +61,7 @@ export type HardwareItem =
   | "drawerDividers"
   | "sinkCutout"
   | "hobCutout"
+  | "hoodCutout"
   | "plinth"
   | "cornice"
   | "lighting";
@@ -112,12 +113,14 @@ export type UnitCategory = "base" | "tall" | "wall" | "island";
 export type UnitType =
   | "sink"
   | "hobOven"
+  | "dishwasher"
   | "storage"
   | "cornerBase"
   | "fridge"
   | "ovenHousing"
   | "larder"
   | "wall"
+  | "hoodHousing"
   | "cornerWall"
   | "island";
 

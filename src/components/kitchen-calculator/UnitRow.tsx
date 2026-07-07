@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, X } from "lucide-react";
+import { AlertTriangle, GripVertical, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UNIT_LABELS, type CabinetUnit, type UnitType } from "@/lib/kitchen-calculator";
+import {
+  projectAppliancesFor,
+  UNIT_LABELS,
+  type CabinetUnit,
+  type ProjectAppliance,
+  type UnitType,
+} from "@/lib/kitchen-calculator";
 import { EssentialBadge } from "./EssentialBadge";
 import { UnitConfig, applianceLabel, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon, UnitTypeIcon } from "./UnitIcon";
@@ -36,6 +42,9 @@ interface UnitRowProps {
   typeOptions: UnitType[];
   /** Essential types already placed somewhere in the kitchen (sink/hob/fridge). */
   presentEssentials?: UnitType[];
+  /** Appliances the project declares — the master set. A unit configured for an
+   *  appliance outside this set is flagged as a mistake on its badge. */
+  declaredAppliances?: Set<ProjectAppliance>;
   /** Show the drag handle (false when the section has a single unit). */
   sortable?: boolean;
   onTypeChange: (id: string, type: UnitType) => void;
@@ -50,6 +59,7 @@ export function UnitRow({
   unit,
   typeOptions,
   presentEssentials = [],
+  declaredAppliances,
   sortable = false,
   onTypeChange,
   onApplianceChange,
@@ -112,6 +122,12 @@ export function UnitRow({
 
   // Grouped picker: main appliances, then base cabinets, then tall units.
   const groups = buildTypeGroups(typeOptions);
+
+  // The project settings are the master list: a unit configured for an appliance
+  // that isn't declared there is a mistake — its badge turns red.
+  const applianceUndeclared =
+    declaredAppliances !== undefined &&
+    projectAppliancesFor(unit.appliance).some((p) => !declaredAppliances.has(p));
 
   const renderOption = (t: UnitType) => (
     <SelectItem key={t} value={t}>
@@ -178,13 +194,23 @@ export function UnitRow({
             ))}
           </SelectContent>
         </Select>
-        {/* Read-only appliance badge — set together with the front in the config dialog. */}
+        {/* Read-only appliance badge — set together with the front in the config dialog.
+            Red when the appliance isn't in the project settings (the master list). */}
         {unit.appliance !== "none" && (
           <span
-            className="hidden whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline"
-            style={{ backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }}
-            title="Appliance — change it in the unit configuration"
+            className="hidden items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline-flex"
+            style={
+              applianceUndeclared
+                ? { backgroundColor: "rgba(154,52,18,0.12)", color: "#9a3412" }
+                : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }
+            }
+            title={
+              applianceUndeclared
+                ? "Not in the project settings — add it there, or change this unit's appliance"
+                : "Appliance — change it in the unit configuration"
+            }
           >
+            {applianceUndeclared && <AlertTriangle className="h-3 w-3" />}
             {applianceLabel(unit.appliance)}
           </span>
         )}
