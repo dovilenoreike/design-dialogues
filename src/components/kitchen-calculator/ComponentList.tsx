@@ -30,6 +30,9 @@ interface ComponentListProps {
   onFillWall: (runId: string, spanMm: number) => void;
   onReorderBase: (runId: string, activeId: string, overId: string) => void;
   onReorderWall: (runId: string, activeId: string, overId: string) => void;
+  onWorktopToggle: (runId: string, value: boolean) => void;
+  onWorktopLengthChange: (runId: string, mm: number) => void;
+  onWorktopLengthReset: (runId: string) => void;
   onBacksplashChange: (runId: string, value: boolean) => void;
   onAddRun: () => void;
   // island handlers (island is not run-scoped)
@@ -66,6 +69,9 @@ export function ComponentList({
   onFillWall,
   onReorderBase,
   onReorderWall,
+  onWorktopToggle,
+  onWorktopLengthChange,
+  onWorktopLengthReset,
   onBacksplashChange,
   onAddRun,
   onIslandTypeChange,
@@ -100,6 +106,9 @@ export function ComponentList({
           onFillWall={onFillWall}
           onReorderBase={onReorderBase}
           onReorderWall={onReorderWall}
+          onWorktopToggle={onWorktopToggle}
+          onWorktopLengthChange={onWorktopLengthChange}
+          onWorktopLengthReset={onWorktopLengthReset}
           onBacksplashChange={onBacksplashChange}
         />
       ))}

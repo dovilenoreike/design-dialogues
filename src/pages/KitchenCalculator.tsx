@@ -213,6 +213,12 @@ const KitchenCalculator = () => {
   const handleReorderWall = (runId: string, activeId: string, overId: string) =>
     updateRun(runId, (r) => ({ ...r, wallUnits: reorderById(r.wallUnits, activeId, overId) }));
 
+  const handleWorktopToggle = (runId: string, value: boolean) =>
+    updateRun(runId, (r) => ({ ...r, worktop: value }));
+  const handleWorktopLengthChange = (runId: string, mm: number) =>
+    updateRun(runId, (r) => ({ ...r, worktopLengthMm: mm }));
+  const handleWorktopLengthReset = (runId: string) =>
+    updateRun(runId, (r) => ({ ...r, worktopLengthMm: null }));
   const handleBacksplashChange = (runId: string, value: boolean) =>
     updateRun(runId, (r) => ({ ...r, backsplash: value }));
 
@@ -410,6 +416,9 @@ const KitchenCalculator = () => {
               onFillWall={handleFillWall}
               onReorderBase={handleReorderBase}
               onReorderWall={handleReorderWall}
+              onWorktopToggle={handleWorktopToggle}
+              onWorktopLengthChange={handleWorktopLengthChange}
+              onWorktopLengthReset={handleWorktopLengthReset}
               onBacksplashChange={handleBacksplashChange}
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}

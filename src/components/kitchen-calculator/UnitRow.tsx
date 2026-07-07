@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, X } from "lucide-react";
+import { GripVertical, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -229,6 +237,39 @@ export function UnitRow({
           </Button>
         )}
       </div>
+
+      {/* Per-unit configuration — placeholder for the future interior editor. */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Configure ${unit.name}`}
+            title="Configure unit"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
+              <UnitTypeIcon type={unit.type} size={24} className="text-muted-foreground" />
+              {unit.name}
+            </DialogTitle>
+            <DialogDescription>
+              Doors, drawers, shelves and internal fittings — set per unit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center">
+            <SlidersHorizontal className="h-6 w-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Here you will configure this unit.</p>
+            <span className="text-[11px] font-medium" style={{ color: "#ca8a04" }}>
+              Coming soon
+            </span>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Button
         variant="ghost"

@@ -74,16 +74,26 @@ function priceUnit(unit: CabinetUnit, ctx: PricingContext): UnitPricing {
 
 // --- Worktop (all runs) ---------------------------------------------------
 
+/** Worktop length for a run: override if set, else the bottom-cabinet span. */
+function runWorktopLengthMm(run: KitchenState["runs"][number]): number {
+  if (run.worktopLengthMm != null) return run.worktopLengthMm;
+  return run.baseUnits
+    .filter((u) => u.category === "base")
+    .reduce((sum, u) => sum + u.width * u.quantity, 0);
+}
+
 function worktopPrice(state: KitchenState, ctx: PricingContext): number {
-  const base = allBaseUnits(state);
-  const baseRunLm = m(sumWidths(base.filter((u) => u.category === "base")));
   const { worktop } = ctx.config.surfaces;
   const { edgeBanding } = ctx.config.structural;
 
-  let price = baseRunLm * WORKTOP_DEPTH_M * worktop + baseRunLm * edgeBanding;
-
-  price += countOfType(base, "sink") * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
-  price += countOfType(base, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
+  let price = 0;
+  for (const run of state.runs) {
+    if (run.worktop === false) continue; // supplied separately — not costed
+    const lm = m(runWorktopLengthMm(run));
+    price += lm * WORKTOP_DEPTH_M * worktop + lm * edgeBanding;
+    price += countOfType(run.baseUnits, "sink") * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
+    price += countOfType(run.baseUnits, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
+  }
   return price;
 }
 

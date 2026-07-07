@@ -34,6 +34,9 @@ interface RunSectionProps {
   onFillWall: (runId: string, spanMm: number) => void;
   onReorderBase: (runId: string, activeId: string, overId: string) => void;
   onReorderWall: (runId: string, activeId: string, overId: string) => void;
+  onWorktopToggle: (runId: string, value: boolean) => void;
+  onWorktopLengthChange: (runId: string, mm: number) => void;
+  onWorktopLengthReset: (runId: string) => void;
   onBacksplashChange: (runId: string, value: boolean) => void;
 }
 
@@ -54,6 +57,9 @@ export function RunSection({
   onFillWall,
   onReorderBase,
   onReorderWall,
+  onWorktopToggle,
+  onWorktopLengthChange,
+  onWorktopLengthReset,
   onBacksplashChange,
 }: RunSectionProps) {
   // --- editable run length (metres) ---------------------------------------
@@ -199,8 +205,13 @@ export function RunSection({
           onReorder={(a, o) => onReorderBase(run.id, a, o)}
         />
         <WorktopSection
-          lengthMm={wallSpanMm}
+          included={run.worktop}
+          autoLengthMm={wallSpanMm}
+          overrideLengthMm={run.worktopLengthMm}
           backsplash={run.backsplash}
+          onToggle={(v) => onWorktopToggle(run.id, v)}
+          onLengthChange={(mm) => onWorktopLengthChange(run.id, mm)}
+          onLengthReset={() => onWorktopLengthReset(run.id)}
           onBacksplashChange={(v) => onBacksplashChange(run.id, v)}
         />
         <CabinetSection

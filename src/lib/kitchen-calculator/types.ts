@@ -149,6 +149,10 @@ export interface Run {
   /** Base + tall units for this leg (shown in the "Base & tall" list). */
   baseUnits: CabinetUnit[];
   wallUnits: CabinetUnit[];
+  /** Whether this run's worktop is part of the quote (off = supplied elsewhere). */
+  worktop: boolean;
+  /** Worktop length override in mm; null = follow the bottom cabinets. */
+  worktopLengthMm: number | null;
   /** Worktop material also runs up the backsplash (same length). */
   backsplash: boolean;
 }
