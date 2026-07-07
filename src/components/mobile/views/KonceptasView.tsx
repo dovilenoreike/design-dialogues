@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, CheckCheck, AlertTriangle, X, Sparkles, Layers, Search, Camera, ArrowLeftRight, ShoppingBag } from "lucide-react";
+import { RotateCcw, Plus, Check, CheckCheck, AlertTriangle, X, Sparkles, Layers, Search, Camera, ArrowLeftRight, MapPin } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
@@ -417,7 +417,7 @@ export default function KonceptasView({
                   style={{ zIndex: 2 }}
                   aria-label={`Where to buy ${piece.slot}`}
                 >
-                  <ShoppingBag className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                  <MapPin className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                 </button>
               )}
               {showVerified && (
