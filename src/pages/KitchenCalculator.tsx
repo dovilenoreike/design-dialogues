@@ -346,11 +346,10 @@ const KitchenCalculator = () => {
             Pick a layout and enter each leg&apos;s length to generate a component list and an
             estimated total. Prices are indicative (mocked) for this preview.
           </p>
+          <div className="mt-4">
+            <MaterialsHeader />
+          </div>
         </header>
-
-        <div className="mb-6">
-          <MaterialsHeader />
-        </div>
 
         <div className="flex flex-col gap-4">
           <KitchenSetup

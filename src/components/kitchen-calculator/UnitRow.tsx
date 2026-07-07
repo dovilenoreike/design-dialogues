@@ -125,7 +125,38 @@ export function UnitRow({
         <span className="w-6 shrink-0" aria-hidden />
       )}
       <div className="flex flex-1 items-center gap-2">
-        <UnitIcon unit={unit} size={40} className="shrink-0 text-muted-foreground" />
+        {/* The unit thumbnail is the way into per-unit configuration. */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Configure ${unit.name}`}
+              title="Configure unit"
+              className="group/icon shrink-0 rounded-md p-0.5 text-muted-foreground transition hover:text-foreground hover:ring-1 focus-visible:outline-none focus-visible:ring-1"
+              style={{ ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)" }}
+            >
+              <UnitIcon unit={unit} size={40} />
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
+                <UnitTypeIcon type={unit.type} size={24} className="text-muted-foreground" />
+                {unit.name}
+              </DialogTitle>
+              <DialogDescription>
+                Doors, drawers, shelves and internal fittings — set per unit.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center">
+              <SlidersHorizontal className="h-6 w-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Here you will configure this unit.</p>
+              <span className="text-[11px] font-medium" style={{ color: "#ca8a04" }}>
+                Coming soon
+              </span>
+            </div>
+          </DialogContent>
+        </Dialog>
         <Select value={unit.type} onValueChange={(v) => onTypeChange(unit.id, v as UnitType)}>
           <SelectTrigger className="w-52">
             <SelectValue>{UNIT_LABELS[unit.type]}</SelectValue>
@@ -237,39 +268,6 @@ export function UnitRow({
           </Button>
         )}
       </div>
-
-      {/* Per-unit configuration — placeholder for the future interior editor. */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Configure ${unit.name}`}
-            title="Configure unit"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
-              <UnitTypeIcon type={unit.type} size={24} className="text-muted-foreground" />
-              {unit.name}
-            </DialogTitle>
-            <DialogDescription>
-              Doors, drawers, shelves and internal fittings — set per unit.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center">
-            <SlidersHorizontal className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Here you will configure this unit.</p>
-            <span className="text-[11px] font-medium" style={{ color: "#ca8a04" }}>
-              Coming soon
-            </span>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Button
         variant="ghost"
