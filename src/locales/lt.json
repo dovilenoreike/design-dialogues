@@ -56,18 +56,17 @@
   "tabs": {
     "moodboard": "Konceptas",
     "design": "Dizainas",
-    "specs": "Specifikacijos",
+    "specs": "Produktai",
     "budget": "Biudžetas",
     "plan": "Planas",
     "project": "Projektas",
     "konceptas": "Konceptas",
-    "vizualas": "Vizualas",
-    "specs": "Specifikacijos"
+    "vizualas": "Vizualas"
   },
   "tab": {
     "vizualas": "Vizualas",
     "konceptas": "Konceptas",
-    "specs": "Specifikacijos"
+    "specs": "Produktai"
   },
   "home": {
     "materials": "Medžiagos",

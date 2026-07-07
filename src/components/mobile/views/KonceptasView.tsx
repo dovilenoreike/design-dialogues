@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
-import { RotateCcw, Plus, Check, CheckCheck, AlertTriangle, X, Sparkles, Layers, Search, Camera, ArrowLeftRight } from "lucide-react";
+import { RotateCcw, Plus, Check, CheckCheck, AlertTriangle, X, Sparkles, Layers, Search, Camera, ArrowLeftRight, ShoppingBag } from "lucide-react";
 import { useDesign } from "@/contexts/DesignContext";
 import { useShowroom } from "@/contexts/ShowroomContext";
+import MaterialSourcingSheet, { type MaterialInfo } from "@/components/MaterialSourcingSheet";
 import { getArchetypeById } from "@/data/archetypes";
 import { type SlotKey, type SlotSelections, SLOT_KEY_TO_ROLE } from "../controls/MaterialSlotPicker";
 import { type PaletteHint } from "@/lib/palette-hint";
@@ -186,6 +187,18 @@ export default function KonceptasView({
   const { materialOverrides, setMaterialOverrides } = useDesign();
   const { activeShowroom } = useShowroom();
   const lang = language as "en" | "lt";
+
+  // Sourcing sheet opened directly from a swatch's product pin (see MaterialSourcingSheet)
+  const [sourcingInfo, setSourcingInfo] = useState<MaterialInfo | null>(null);
+  const openSourcing = (mat: NonNullable<ReturnType<typeof getMaterialByCode>>) => {
+    setSourcingInfo({
+      name: mat.name?.[lang] || mat.name?.en || mat.technicalCode,
+      materialType: mat.materialType,
+      technicalCode: mat.technicalCode,
+      imageUrl: mat.imageUrl || undefined,
+      showroomIds: mat.showroomIds,
+    });
+  };
 
   const { loading: graphLoading, getBestSwapCode, getAllRankedCodes, isCompatibleWithOthers, isCompatibleWithEvery, getUnapprovedWoodPartners, getUnapprovedBusyPatternPartners } = useGraphMaterials();
 
@@ -396,6 +409,17 @@ export default function KonceptasView({
                   <X className="w-2.5 h-2.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
                 </button>
               )}
+              {/* Only offer "where to buy" when we actually have a seller/showroom for this product */}
+              {mat && mat.showroomIds?.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); openSourcing(mat); }}
+                  className="absolute bottom-1 right-1 flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ zIndex: 2 }}
+                  aria-label={`Where to buy ${piece.slot}`}
+                >
+                  <ShoppingBag className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-neutral-100" strokeWidth={1.5} style={{ opacity: 0.4 }} />
+                </button>
+              )}
               {showVerified && (
                 <div className="absolute top-1 left-1 flex items-center gap-0.5" style={{ zIndex: 1 }}>
                   {showVerified && (
@@ -574,6 +598,13 @@ export default function KonceptasView({
           </span>
         </button>
       </div>
+
+      {/* Sourcing sheet — opened from a swatch's product pin */}
+      <MaterialSourcingSheet
+        isOpen={!!sourcingInfo}
+        onClose={() => setSourcingInfo(null)}
+        material={sourcingInfo}
+      />
 
     </div>
   );
