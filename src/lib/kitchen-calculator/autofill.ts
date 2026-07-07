@@ -18,7 +18,7 @@ import type {
   Run,
   UnitType,
 } from "./types";
-import { UNIT_CATEGORY, UNIT_LABELS } from "./units";
+import { DEFAULT_APPLIANCE, UNIT_CATEGORY, UNIT_LABELS } from "./units";
 
 /** Number of runs (legs) per layout. */
 export const LAYOUT_RUN_COUNT: Record<KitchenLayout, number> = {
@@ -63,6 +63,7 @@ export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): Ca
     isCustomWidth: opts.isCustom ?? false,
     quantity: opts.quantity ?? 1,
     occupiesWorktop: category === "base",
+    appliance: DEFAULT_APPLIANCE[type],
   };
 }
 
@@ -100,6 +101,8 @@ export function retypeUnit(unit: CabinetUnit, type: UnitType): CabinetUnit {
     category,
     name: UNIT_LABELS[type],
     occupiesWorktop: category === "base",
+    // A type swap resets the appliance to the new type's default.
+    appliance: DEFAULT_APPLIANCE[type],
   };
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, SlidersHorizontal, X } from "lucide-react";
+import { GripVertical, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { UNIT_LABELS, type CabinetUnit, type UnitType } from "@/lib/kitchen-calculator";
 import { EssentialBadge } from "./EssentialBadge";
+import { UnitConfig, applianceLabel, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon, UnitTypeIcon } from "./UnitIcon";
 import { buildTypeGroups } from "./unitGroups";
 
@@ -38,6 +39,7 @@ interface UnitRowProps {
   /** Show the drag handle (false when the section has a single unit). */
   sortable?: boolean;
   onTypeChange: (id: string, type: UnitType) => void;
+  onApplianceChange: (id: string, appliance: string) => void;
   onWidthChange: (id: string, width: number) => void;
   onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
@@ -50,6 +52,7 @@ export function UnitRow({
   presentEssentials = [],
   sortable = false,
   onTypeChange,
+  onApplianceChange,
   onWidthChange,
   onQuantityChange,
   onRemove,
@@ -94,6 +97,17 @@ export function UnitRow({
       setQtyDraft(String(unit.quantity));
       setEditingQty(false);
     }
+  };
+
+  // Per-unit configuration (visual mock) — reset to type defaults on a type swap.
+  // Appliance is the exception: it lives on the unit (page-level, for the tracker),
+  // so it's read from `unit.appliance` and changes route up via onApplianceChange.
+  const [config, setConfig] = useState<UnitConfigState>(() => defaultUnitConfig(unit));
+  useEffect(() => setConfig(defaultUnitConfig(unit)), [unit.type]); // eslint-disable-line react-hooks/exhaustive-deps
+  const configValue: UnitConfigState = { ...config, appliance: unit.appliance };
+  const handleConfigChange = (next: UnitConfigState) => {
+    if (next.appliance !== unit.appliance) onApplianceChange(unit.id, next.appliance);
+    setConfig(next);
   };
 
   // Grouped picker: main appliances, then base cabinets, then tall units.
@@ -143,18 +157,11 @@ export function UnitRow({
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
                 <UnitTypeIcon type={unit.type} size={24} className="text-muted-foreground" />
                 {unit.name}
+                <span className="text-sm font-normal text-muted-foreground">· {unit.width}mm</span>
               </DialogTitle>
-              <DialogDescription>
-                Doors, drawers, shelves and internal fittings — set per unit.
-              </DialogDescription>
+              <DialogDescription>Set the appliance, front layout and fittings.</DialogDescription>
             </DialogHeader>
-            <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center">
-              <SlidersHorizontal className="h-6 w-6 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Here you will configure this unit.</p>
-              <span className="text-[11px] font-medium" style={{ color: "#ca8a04" }}>
-                Coming soon
-              </span>
-            </div>
+            <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
         <Select value={unit.type} onValueChange={(v) => onTypeChange(unit.id, v as UnitType)}>
@@ -171,6 +178,16 @@ export function UnitRow({
             ))}
           </SelectContent>
         </Select>
+        {/* Read-only appliance badge — set together with the front in the config dialog. */}
+        {unit.appliance !== "none" && (
+          <span
+            className="hidden whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline"
+            style={{ backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }}
+            title="Appliance — change it in the unit configuration"
+          >
+            {applianceLabel(unit.appliance)}
+          </span>
+        )}
       </div>
 
       {editingWidth ? (

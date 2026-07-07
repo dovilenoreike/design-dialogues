@@ -21,6 +21,7 @@ interface ComponentListProps {
   onRunLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
+  onApplianceChange: (runId: string, unitId: string, appliance: string) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
@@ -37,6 +38,7 @@ interface ComponentListProps {
   onAddRun: () => void;
   // island handlers (island is not run-scoped)
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
+  onIslandApplianceChange: (unitId: string, appliance: string) => void;
   onIslandWidthChange: (unitId: string, width: number) => void;
   onIslandQuantityChange: (unitId: string, quantity: number) => void;
   onIslandRemove: (unitId: string) => void;
@@ -60,6 +62,7 @@ export function ComponentList({
   onRunLengthChange,
   onRemoveRun,
   onTypeChange,
+  onApplianceChange,
   onWidthChange,
   onQuantityChange,
   onRemoveUnit,
@@ -75,6 +78,7 @@ export function ComponentList({
   onBacksplashChange,
   onAddRun,
   onIslandTypeChange,
+  onIslandApplianceChange,
   onIslandWidthChange,
   onIslandQuantityChange,
   onIslandRemove,
@@ -97,6 +101,7 @@ export function ComponentList({
           onLengthChange={onRunLengthChange}
           onRemoveRun={onRemoveRun}
           onTypeChange={onTypeChange}
+          onApplianceChange={onApplianceChange}
           onWidthChange={onWidthChange}
           onQuantityChange={onQuantityChange}
           onRemoveUnit={onRemoveUnit}
@@ -131,6 +136,7 @@ export function ComponentList({
         addLabel="Add island"
         emptyLabel="No island. Add one to include it in the estimate."
         onTypeChange={onIslandTypeChange}
+        onApplianceChange={onIslandApplianceChange}
         onWidthChange={onIslandWidthChange}
         onQuantityChange={onIslandQuantityChange}
         onRemove={onIslandRemove}

@@ -163,10 +163,27 @@ export const UNIT_LABELS: Record<UnitType, string> = {
   cornerBase: "Corner base unit",
   fridge: "Fridge housing",
   ovenHousing: "Oven housing",
-  larder: "Larder / tall storage",
+  larder: "Tall unit",
   wall: "Wall cabinet",
   cornerWall: "Corner wall unit",
   island: "Island unit",
+};
+
+/**
+ * Default integrated appliance per unit type (UnitConfig appliance ids). Seeds
+ * `CabinetUnit.appliance` at creation; the user can change it in the config.
+ */
+export const DEFAULT_APPLIANCE: Record<UnitType, string> = {
+  sink: "sink",
+  hobOven: "hobOven",
+  storage: "none",
+  cornerBase: "none",
+  fridge: "fridge",
+  ovenHousing: "oven",
+  larder: "none",
+  wall: "none",
+  cornerWall: "none",
+  island: "none",
 };
 
 export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
@@ -182,14 +199,18 @@ export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
   island: "island",
 };
 
-/** Unit types selectable within each component-list section (for type-swap). */
+/**
+ * Unit types selectable within each component-list section (for type-swap).
+ * `ovenHousing` is intentionally omitted — a Tall unit (larder) covers it via
+ * the appliance config (None = storage, Oven = oven housing). The type still
+ * exists in the engine for when config drives the BOM.
+ */
 export const BASE_TALL_TYPES: UnitType[] = [
   "sink",
   "hobOven",
   "storage",
   "cornerBase",
   "fridge",
-  "ovenHousing",
   "larder",
 ];
 export const WALL_TYPES: UnitType[] = ["wall", "cornerWall"];

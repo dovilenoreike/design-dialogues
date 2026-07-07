@@ -28,6 +28,7 @@ interface CabinetSectionProps {
   footerExtra?: ReactNode;
   presentEssentials?: UnitType[];
   onTypeChange: (id: string, type: UnitType) => void;
+  onApplianceChange: (id: string, appliance: string) => void;
   onWidthChange: (id: string, width: number) => void;
   onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
@@ -46,6 +47,7 @@ export function CabinetSection({
   footerExtra,
   presentEssentials,
   onTypeChange,
+  onApplianceChange,
   onWidthChange,
   onQuantityChange,
   onRemove,
@@ -85,6 +87,7 @@ export function CabinetSection({
                   presentEssentials={presentEssentials}
                   sortable={sortable}
                   onTypeChange={onTypeChange}
+                  onApplianceChange={onApplianceChange}
                   onWidthChange={onWidthChange}
                   onQuantityChange={onQuantityChange}
                   onRemove={onRemove}

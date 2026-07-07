@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
+import {
+  ApplianceSelector,
+  defaultAppliances,
+  projectAppliancesFor,
+  type ProjectAppliance,
+} from "@/components/kitchen-calculator/ApplianceSelector";
 import { ComponentList } from "@/components/kitchen-calculator/ComponentList";
 import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareGradeSelector";
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
@@ -74,6 +80,8 @@ const KitchenCalculator = () => {
   const [legLengths, setLegLengths] = useState<string[]>(DEFAULT_LEG_LENGTHS.line);
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
   const [grade, setGrade] = useState<HardwareGrade>("mid");
+  // Project-level appliances the kitchen includes (declared intent).
+  const [appliances, setAppliances] = useState<Set<ProjectAppliance>>(defaultAppliances);
   const [state, setState] = useState<KitchenState | null>(null);
   // Essentials the user has marked as out of scope (e.g. a standalone fridge).
   const [excludedEssentials, setExcludedEssentials] = useState<UnitType[]>([]);
@@ -169,6 +177,9 @@ const KitchenCalculator = () => {
   const handleQuantityChange = (runId: string, unitId: string, quantity: number) =>
     mapRunUnit(runId, unitId, (u) => ({ ...u, quantity: Math.max(1, Math.round(quantity)) }));
 
+  const handleApplianceChange = (runId: string, unitId: string, appliance: string) =>
+    mapRunUnit(runId, unitId, (u) => ({ ...u, appliance }));
+
   const handleRemoveUnit = (runId: string, unitId: string) =>
     updateRun(runId, (r) => ({
       ...r,
@@ -251,6 +262,8 @@ const KitchenCalculator = () => {
 
   const handleIslandTypeChange = (unitId: string, type: UnitType) =>
     mapIsland(unitId, (u) => retypeUnit(u, type));
+  const handleIslandApplianceChange = (unitId: string, appliance: string) =>
+    mapIsland(unitId, (u) => ({ ...u, appliance }));
   const handleIslandWidthChange = (unitId: string, width: number) =>
     mapIsland(unitId, (u) => ({ ...u, width, isCustomWidth: isCustom(width) }));
   const handleIslandQuantityChange = (unitId: string, quantity: number) =>
@@ -306,6 +319,18 @@ const KitchenCalculator = () => {
   const presentEssentials = state
     ? ESSENTIAL_TYPES.filter((t) => state.runs.some((r) => r.baseUnits.some((u) => u.type === t)))
     : [];
+
+  // Project appliances actually placed in a unit — powers the "missing" tracker.
+  const placedAppliances = useMemo(() => {
+    const set = new Set<ProjectAppliance>();
+    if (!state) return set;
+    const units = [
+      ...state.runs.flatMap((r) => [...r.baseUnits, ...r.wallUnits]),
+      ...state.islandUnits,
+    ];
+    for (const u of units) for (const p of projectAppliancesFor(u.appliance)) set.add(p);
+    return set;
+  }, [state]);
 
   const missingEssentials = state
     ? ESSENTIAL_TYPES.filter(
@@ -367,8 +392,13 @@ const KitchenCalculator = () => {
         {state && pricing && (
           <>
             <Separator className="my-6" />
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-x-8 gap-y-3">
               <HardwareGradeSelector value={grade} onChange={setGrade} />
+              <ApplianceSelector
+                selected={appliances}
+                onChange={setAppliances}
+                placed={placedAppliances}
+              />
             </div>
 
             {missingEssentials.length > 0 && (
@@ -406,6 +436,7 @@ const KitchenCalculator = () => {
               onRunLengthChange={handleRunLengthChange}
               onRemoveRun={handleRemoveRun}
               onTypeChange={handleTypeChange}
+              onApplianceChange={handleApplianceChange}
               onWidthChange={handleWidthChange}
               onQuantityChange={handleQuantityChange}
               onRemoveUnit={handleRemoveUnit}
@@ -421,6 +452,7 @@ const KitchenCalculator = () => {
               onBacksplashChange={handleBacksplashChange}
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}
+              onIslandApplianceChange={handleIslandApplianceChange}
               onIslandWidthChange={handleIslandWidthChange}
               onIslandQuantityChange={handleIslandQuantityChange}
               onIslandRemove={handleIslandRemove}

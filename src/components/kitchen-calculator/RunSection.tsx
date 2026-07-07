@@ -25,6 +25,7 @@ interface RunSectionProps {
   onLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
+  onApplianceChange: (runId: string, unitId: string, appliance: string) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
@@ -48,6 +49,7 @@ export function RunSection({
   onLengthChange,
   onRemoveRun,
   onTypeChange,
+  onApplianceChange,
   onWidthChange,
   onQuantityChange,
   onRemoveUnit,
@@ -198,6 +200,7 @@ export function RunSection({
           indicator={runIndicator}
           presentEssentials={presentEssentials}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
+          onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
@@ -222,6 +225,7 @@ export function RunSection({
           indicator={wallIndicator}
           footerExtra={wallFillButton}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
+          onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}

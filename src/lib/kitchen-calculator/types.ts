@@ -133,6 +133,12 @@ export interface CabinetUnit {
   quantity: number;
   /** True when the unit contributes to the base-run worktop above it. */
   occupiesWorktop: boolean;
+  /**
+   * Integrated appliance id (UnitConfig ids: "none" | "sink" | "hob" | "hobOven"
+   * | "oven" | "dishwasher" | "microwave" | "extractor" | "fridge"). Seeded from
+   * the unit type; drives the project appliance tracker. Not yet priced.
+   */
+  appliance: string;
 }
 
 /** Kitchen shape. Islands are orthogonal (their own section), not a layout. */
