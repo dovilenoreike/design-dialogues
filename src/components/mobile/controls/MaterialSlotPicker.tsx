@@ -252,7 +252,7 @@ export default function MaterialSlotPicker({
       .map((a) => {
         const archetypeMats = mats.filter((m) =>
           (isPlainFrontChip(a.id, role) ? m.texture === 'plain' :
-           a.id === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+           a.id === 'metallic' && role === 'accent' ? m.texture === 'metallic' :
            m.archetypeId === a.id) && m.role.includes(role)
         );
         const recommendedMat = archetypeMats.find((m) => recommendedCodes.has(m.technicalCode));
@@ -372,7 +372,7 @@ export default function MaterialSlotPicker({
     const role = SLOT_KEY_TO_ROLE[slot];
     return graphMaterials.filter(m =>
       (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' :
-       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metallic' :
        m.archetypeId === effectiveActiveId)
       && m.role.includes(role) && !!m.imageUrl
     );
@@ -384,7 +384,7 @@ export default function MaterialSlotPicker({
     const plainChip = isPlainFrontChip(effectiveActiveId, role);
     const inChip = (m: SupabaseMaterial) =>
       plainChip ? m.texture === 'plain' :
-      effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+      effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metallic' :
       m.archetypeId === effectiveActiveId;
     // User-navigated center
     if (gridCenterCode) {
@@ -573,7 +573,7 @@ export default function MaterialSlotPicker({
     const row1Code = row1Items.find(r => r.archetypeId === effectiveActiveId)?.code;
     const candidates = filteredMaterials.filter(m =>
       (isPlainFrontChip(effectiveActiveId, role) ? m.texture === 'plain' :
-       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metal' :
+       effectiveActiveId === 'metallic' && role === 'accent' ? m.texture === 'metallic' :
        m.archetypeId === effectiveActiveId) &&
       m.role.includes(role) &&
       m.imageUrl &&
