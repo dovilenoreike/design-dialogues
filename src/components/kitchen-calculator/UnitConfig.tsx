@@ -42,11 +42,13 @@ const APPLIANCES: Record<UnitCategory, Option[]> = {
     { id: "hob", label: "Hob" },
     { id: "hobOven", label: "Hob + oven" },
   ],
-  // A Tall unit (larder) is None = storage, or Oven / Microwave. Fridge is its
-  // own unit type, so it's excluded here (see APPLIANCES_BY_TYPE).
+  // A Tall unit (larder) is None = storage, or an oven / oven+microwave tower /
+  // microwave. Fridge is its own unit type, so it's excluded here (see
+  // APPLIANCES_BY_TYPE).
   tall: [
     { id: "none", label: "None" },
     { id: "oven", label: "Oven" },
+    { id: "ovenMicrowave", label: "Oven + microwave" },
     { id: "microwave", label: "Microwave" },
   ],
   wall: [
@@ -86,6 +88,7 @@ const APPLIANCE_FRONTS: Record<string, string[]> = {
   // Hob on the worktop, oven built in below — a drawer over the oven, or a full facade.
   hobOven: ["combo", "applianceFront"],
   oven: ["applianceFront", "ovenTower"],
+  ovenMicrowave: ["ovenTower", "applianceFront"],
   dishwasher: ["applianceFront", "door1"],
   microwave: ["applianceFront"],
   // Integrated hood is concealed in a short cabinet; standalone is a visible chimney.
@@ -112,6 +115,7 @@ const APPLIANCE_LABELS: Record<string, string> = {
   hob: "Hob",
   hobOven: "Hob + oven",
   oven: "Oven",
+  ovenMicrowave: "Oven + microwave",
   microwave: "Microwave",
   dishwasher: "Dishwasher",
   extractor: "Hood",
@@ -150,15 +154,19 @@ function accessoriesFor(unit: CabinetUnit): Option[] {
 
 const DEFAULT_BY_TYPE: Partial<Record<UnitType, Partial<UnitConfigState>>> = {
   sink: { appliance: "sink", front: "doors2", shelves: 1, accessories: ["bin"] },
+  hob: { appliance: "hob", front: "drawers3", shelves: 0 },
   hobOven: { appliance: "hobOven", front: "applianceFront", shelves: 0 },
   dishwasher: { appliance: "dishwasher", front: "door1", shelves: 0 },
+  microwave: { appliance: "microwave", front: "applianceFront", shelves: 1 },
   storage: { appliance: "none", front: "drawers3", shelves: 0 },
   cornerBase: { appliance: "none", front: "door1", shelves: 0 },
   fridge: { appliance: "fridge", front: "doorsTall", shelves: 0 },
   ovenHousing: { appliance: "oven", front: "ovenTower", shelves: 1 },
+  ovenMicrowave: { appliance: "ovenMicrowave", front: "ovenTower", shelves: 1 },
   larder: { appliance: "none", front: "doorsTall", shelves: 4 },
   wall: { appliance: "none", front: "doors2", shelves: 1 },
   hoodHousing: { appliance: "extractor", front: "integrated", shelves: 0 },
+  microwaveWall: { appliance: "microwave", front: "applianceFront", shelves: 0 },
   cornerWall: { appliance: "none", front: "door1", shelves: 0 },
   island: { appliance: "none", front: "doors2", shelves: 1 },
 };

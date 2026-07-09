@@ -1,5 +1,11 @@
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const OCHRE = "#ca8a04";
 
@@ -8,8 +14,8 @@ export interface MissingItem {
   key: string;
   /** Display name, e.g. "Dishwasher". */
   label: string;
-  /** Add the item's housing to the kitchen. */
-  onAdd: () => void;
+  /** Add the item's housing to the given run. */
+  onAdd: (runId: string) => void;
   /** Drop the requirement (deselect the appliance / mark the fixture not needed). */
   onDismiss: () => void;
   /** Ghost-button copy for the dismiss action. */
@@ -18,6 +24,8 @@ export interface MissingItem {
 
 interface MissingUnitsAlertProps {
   items: MissingItem[];
+  /** Runs the item can be added to. One run → single button; many → a run picker. */
+  runs: { id: string; label: string }[];
 }
 
 /**
@@ -27,8 +35,11 @@ interface MissingUnitsAlertProps {
  * Structured as a generic action list so future fixes (e.g. overfill) can join.
  * Returns null when there's nothing to act on.
  */
-export function MissingUnitsAlert({ items }: MissingUnitsAlertProps) {
+export function MissingUnitsAlert({ items, runs }: MissingUnitsAlertProps) {
   if (items.length === 0) return null;
+
+  const singleRun = runs.length <= 1;
+  const targetRunId = runs[0]?.id;
 
   return (
     <div
@@ -54,15 +65,39 @@ export function MissingUnitsAlert({ items }: MissingUnitsAlertProps) {
             className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-3 py-2"
           >
             <span className="flex-1 text-sm font-medium">{item.label}</span>
-            <Button
-              size="sm"
-              onClick={item.onAdd}
-              className="shrink-0 gap-1.5 text-white"
-              style={{ backgroundColor: OCHRE }}
-            >
-              <Plus className="h-4 w-4" />
-              Add {item.label.toLowerCase()}
-            </Button>
+            {singleRun ? (
+              <Button
+                size="sm"
+                onClick={() => targetRunId && item.onAdd(targetRunId)}
+                disabled={!targetRunId}
+                className="shrink-0 gap-1.5 text-white"
+                style={{ backgroundColor: OCHRE }}
+              >
+                <Plus className="h-4 w-4" />
+                Add {item.label.toLowerCase()}
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="shrink-0 gap-1.5 text-white"
+                    style={{ backgroundColor: OCHRE }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add {item.label.toLowerCase()}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {runs.map((r) => (
+                    <DropdownMenuItem key={r.id} onSelect={() => item.onAdd(r.id)}>
+                      Add to {r.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button
               variant="ghost"
               size="sm"

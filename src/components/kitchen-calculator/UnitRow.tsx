@@ -23,8 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DEFAULT_APPLIANCE,
   projectAppliancesFor,
-  UNIT_LABELS,
+  UNIT_CATEGORY,
   type CabinetUnit,
   type ProjectAppliance,
   type UnitType,
@@ -32,7 +33,14 @@ import {
 import { EssentialBadge } from "./EssentialBadge";
 import { UnitConfig, applianceLabel, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon, UnitTypeIcon } from "./UnitIcon";
-import { buildTypeGroups } from "./unitGroups";
+import {
+  buildIdentityGroups,
+  identitiesForCategories,
+  identityById,
+  identityForAppliance,
+  resolveIdentity,
+  type UnitIdentity,
+} from "./unitIdentity";
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
 const CUSTOM = "custom";
@@ -116,12 +124,36 @@ export function UnitRow({
   useEffect(() => setConfig(defaultUnitConfig(unit)), [unit.type]); // eslint-disable-line react-hooks/exhaustive-deps
   const configValue: UnitConfigState = { ...config, appliance: unit.appliance };
   const handleConfigChange = (next: UnitConfigState) => {
-    if (next.appliance !== unit.appliance) onApplianceChange(unit.id, next.appliance);
+    // The appliance drives the cabinet type: pick "Oven" and the unit becomes an
+    // oven housing, "None" and it becomes plain storage. Retype so the label,
+    // icon and (later) BOM follow, keeping the chosen appliance.
+    if (next.appliance !== unit.appliance) {
+      const target = identityForAppliance(next.appliance, unit.category);
+      onTypeChange(unit.id, target.type);
+      if (target.appliance !== DEFAULT_APPLIANCE[target.type]) {
+        onApplianceChange(unit.id, target.appliance);
+      }
+    }
     setConfig(next);
   };
 
-  // Grouped picker: main appliances, then base cabinets, then tall units.
-  const groups = buildTypeGroups(typeOptions);
+  // The picker offers unit *identities* (carcass + appliance) for the section's
+  // categories — so appliance variants (Oven housing, Microwave…) appear, not
+  // just the raw carcass types. Selecting one writes both fields together.
+  const sectionCategories = new Set(typeOptions.map((t) => UNIT_CATEGORY[t]));
+  const groups = buildIdentityGroups(identitiesForCategories(sectionCategories));
+  const currentIdentity = resolveIdentity(unit);
+
+  const selectIdentity = (id: string) => {
+    const identity = identityById(id);
+    if (!identity) return;
+    onTypeChange(unit.id, identity.type);
+    // Retyping seeds the type's default appliance; override when the identity
+    // wants a different one (e.g. Hob cabinet = storage carcass + hob).
+    if (identity.appliance !== DEFAULT_APPLIANCE[identity.type]) {
+      onApplianceChange(unit.id, identity.appliance);
+    }
+  };
 
   // The project settings are the master list: a unit configured for an appliance
   // that isn't declared there is a mistake — its badge turns red.
@@ -129,12 +161,17 @@ export function UnitRow({
     declaredAppliances !== undefined &&
     projectAppliancesFor(unit.appliance).some((p) => !declaredAppliances.has(p));
 
-  const renderOption = (t: UnitType) => (
-    <SelectItem key={t} value={t}>
+  const renderOption = (identity: UnitIdentity) => (
+    <SelectItem key={identity.id} value={identity.id}>
       <span className="flex items-center gap-2">
-        <UnitTypeIcon type={t} size={22} className="shrink-0 text-muted-foreground" />
-        <span>{UNIT_LABELS[t]}</span>
-        <EssentialBadge type={t} present={presentEssentials.includes(t)} />
+        <UnitTypeIcon
+          type={identity.type}
+          appliance={identity.appliance}
+          size={22}
+          className="shrink-0 text-muted-foreground"
+        />
+        <span>{identity.label}</span>
+        <EssentialBadge type={identity.type} present={presentEssentials.includes(identity.type)} />
       </span>
     </SelectItem>
   );
@@ -171,8 +208,13 @@ export function UnitRow({
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
-                <UnitTypeIcon type={unit.type} size={24} className="text-muted-foreground" />
-                {unit.name}
+                <UnitTypeIcon
+                  type={currentIdentity.type}
+                  appliance={currentIdentity.appliance}
+                  size={24}
+                  className="text-muted-foreground"
+                />
+                {currentIdentity.label}
                 <span className="text-sm font-normal text-muted-foreground">· {unit.width}mm</span>
               </DialogTitle>
               <DialogDescription>Set the appliance, front layout and fittings.</DialogDescription>
@@ -180,22 +222,22 @@ export function UnitRow({
             <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
-        <Select value={unit.type} onValueChange={(v) => onTypeChange(unit.id, v as UnitType)}>
-          <SelectTrigger className="w-52">
-            <SelectValue>{UNIT_LABELS[unit.type]}</SelectValue>
+        <Select value={currentIdentity.id} onValueChange={selectIdentity}>
+          <SelectTrigger className="w-52 [&>span]:truncate [&>span]:text-left">
+            <SelectValue>{currentIdentity.label}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {groups.map((g, gi) => (
               <SelectGroup key={g.label ?? `g${gi}`}>
                 {gi > 0 && <SelectSeparator />}
                 {g.label && <SelectLabel>{g.label}</SelectLabel>}
-                {g.types.map(renderOption)}
+                {g.items.map(renderOption)}
               </SelectGroup>
             ))}
           </SelectContent>
         </Select>
-        {/* Read-only appliance badge — set together with the front in the config dialog.
-            Red when the appliance isn't in the project settings (the master list). */}
+        {/* Appliance badge — sage when it's declared in the project settings, red
+            (with a warning) when it isn't (add it there, or change the appliance). */}
         {unit.appliance !== "none" && (
           <span
             className="hidden items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline-flex"

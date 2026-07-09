@@ -27,7 +27,8 @@
       "Read(//tmp/**)",
       "Bash(git add *)",
       "Bash(find . -path ./node_modules -prune -o -iname \"*appliance*\" -print)",
-      "Bash(find . -path ./node_modules -prune -o -type d -iname \"*kitchen*\" -print)"
+      "Bash(find . -path ./node_modules -prune -o -type d -iname \"*kitchen*\" -print)",
+      "Bash(npx eslint *)"
     ]
   }
 }

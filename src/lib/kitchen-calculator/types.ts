@@ -112,15 +112,19 @@ export type UnitCategory = "base" | "tall" | "wall" | "island";
 
 export type UnitType =
   | "sink"
+  | "hob"
   | "hobOven"
   | "dishwasher"
   | "storage"
   | "cornerBase"
   | "fridge"
   | "ovenHousing"
+  | "ovenMicrowave"
+  | "microwave"
   | "larder"
   | "wall"
   | "hoodHousing"
+  | "microwaveWall"
   | "cornerWall"
   | "island";
 

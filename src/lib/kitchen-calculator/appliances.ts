@@ -28,6 +28,7 @@ const UNIT_APPLIANCE_TO_PROJECT: Record<string, ProjectAppliance[]> = {
   oven: ["oven"],
   hob: ["hob"],
   hobOven: ["hob", "oven"],
+  ovenMicrowave: ["oven", "microwave"],
   dishwasher: ["dishwasher"],
   microwave: ["microwave"],
   extractor: ["hood"],

@@ -1,4 +1,5 @@
-import type { CabinetUnit, UnitType } from "@/lib/kitchen-calculator";
+import { DEFAULT_APPLIANCE, type CabinetUnit, type UnitType } from "@/lib/kitchen-calculator";
+import { resolveIdentity } from "./unitIdentity";
 
 /**
  * Programmatic line-drawing SVG icon for a cabinet unit.
@@ -26,18 +27,71 @@ interface IconSpec {
 /** Default zone configuration per unit type. */
 const SPECS: Record<UnitType, IconSpec> = {
   sink: { frame: "base", zones: ["door_pair"], worktop: "sink" },
+  hob: { frame: "base", zones: ["drawer", "drawer"], worktop: "hob" },
   hobOven: { frame: "base", zones: ["oven"], worktop: "hob" },
   dishwasher: { frame: "base", zones: ["door_single"] },
   storage: { frame: "base", zones: ["drawer", "drawer"] },
   cornerBase: { frame: "base", zones: ["door_single"], corner: true },
   fridge: { frame: "tall", zones: [], empty: true },
   ovenHousing: { frame: "tall", zones: ["oven", "drawer"] },
+  ovenMicrowave: { frame: "tall", zones: ["oven", "oven", "drawer"] },
+  microwave: { frame: "tall", zones: ["oven", "door_pair"] },
   larder: { frame: "tall", zones: ["door_pair", "door_pair"] },
   wall: { frame: "wall", zones: ["door_pair"] },
   hoodHousing: { frame: "wall", zones: ["door_single"] },
+  microwaveWall: { frame: "wall", zones: ["oven"] },
   cornerWall: { frame: "wall", zones: ["door_single"], corner: true },
   island: { frame: "base", zones: ["drawer", "drawer"], island: true },
 };
+
+/**
+ * Overlay an integrated appliance onto a carcass spec so the icon reflects what
+ * the unit holds — an oven dropped into a storage carcass draws an oven recess,
+ * a hob draws burners on the worktop. Keeps the carcass frame/corner/island;
+ * only the worktop and interior zones change. `none` (and unknown ids) pass the
+ * carcass through unchanged, so a type's default appliance reproduces its SPEC.
+ */
+function applyAppliance(base: IconSpec, appliance: string): IconSpec {
+  switch (appliance) {
+    case "sink":
+      return { ...base, empty: false, worktop: "sink", zones: ["door_pair"] };
+    case "hob":
+      // Hob over drawers (base/island) or over the carcass's own zones otherwise.
+      return {
+        ...base,
+        empty: false,
+        worktop: "hob",
+        zones: base.frame === "base" ? ["drawer", "drawer"] : base.zones,
+      };
+    case "hobOven":
+      return { ...base, empty: false, worktop: "hob", zones: ["oven"] };
+    case "oven":
+      return base.frame === "tall"
+        ? { ...base, empty: false, worktop: undefined, zones: ["oven", "drawer"] }
+        : { ...base, empty: false, zones: ["oven"] };
+    case "ovenMicrowave":
+      return { ...base, empty: false, worktop: undefined, zones: ["oven", "oven", "drawer"] };
+    case "microwave":
+      // A microwave sits in a recess — an oven-like box, over a door in a tall unit.
+      return base.frame === "tall"
+        ? { ...base, empty: false, worktop: undefined, zones: ["oven", "door_pair"] }
+        : { ...base, empty: false, zones: ["oven"] };
+    case "dishwasher":
+      return { ...base, empty: false, worktop: undefined, zones: ["door_single"] };
+    case "fridge":
+      return { ...base, empty: true, zones: [] };
+    case "extractor":
+      return { ...base, empty: false, zones: ["door_single"] };
+    case "none":
+    default:
+      return base;
+  }
+}
+
+/** Resolve the icon spec for a type + appliance (appliance defaults to the type's). */
+function specFor(type: UnitType, appliance?: string): IconSpec {
+  return applyAppliance(SPECS[type], appliance ?? DEFAULT_APPLIANCE[type]);
+}
 
 // Geometry, in the fixed 80×80 viewbox (type/config only — not to scale).
 const VB = 80;
@@ -84,14 +138,16 @@ function bounds(frame: Frame): Bounds {
 
 interface UnitTypeIconProps {
   type: UnitType;
+  /** Integrated appliance — overlays the carcass (defaults to the type's own). */
+  appliance?: string;
   label?: string; // accessible label; falls back to the type
   size?: number; // rendered px, default 48
   className?: string;
 }
 
-/** Small SVG icon for a unit *type* (used in the type dropdown). */
-export function UnitTypeIcon({ type, label, size = 48, className }: UnitTypeIconProps) {
-  const spec = SPECS[type];
+/** Small SVG icon for a unit type + appliance (used in the identity dropdown). */
+export function UnitTypeIcon({ type, appliance, label, size = 48, className }: UnitTypeIconProps) {
+  const spec = specFor(type, appliance);
   const b = bounds(spec.frame);
   const els: JSX.Element[] = [];
   let k = 0;
@@ -209,7 +265,17 @@ interface UnitIconProps {
   className?: string;
 }
 
-/** Small SVG icon for a placed cabinet unit (delegates to its type). */
+/** Small SVG icon for a placed cabinet unit — drawn from its resolved identity
+ *  (the appliance leads, so it stays honest even if the carcass field lags). */
 export function UnitIcon({ unit, size, className }: UnitIconProps) {
-  return <UnitTypeIcon type={unit.type} label={unit.name} size={size} className={className} />;
+  const identity = resolveIdentity(unit);
+  return (
+    <UnitTypeIcon
+      type={identity.type}
+      appliance={identity.appliance}
+      label={identity.label}
+      size={size}
+      className={className}
+    />
+  );
 }

@@ -52,6 +52,7 @@ import {
 
 const STANDARD_WIDTHS = [300, 400, 500, 600, 800, 1000];
 const ADDED_RUN_LENGTH = 2400; // mm, default length for a manually added run
+const HOUSING_WIDTH = 600; // mm — standard appliance housing; a run gap this wide can hold one
 
 // Sensible per-layout seed lengths (metres) so the explorer can just hit Generate
 // and a maker overwrites with real measurements.
@@ -84,7 +85,7 @@ const APPLIANCE_PLACEMENT: Record<
   oven: { type: "ovenHousing", section: "base" },
   fridge: { type: "fridge", section: "base" },
   hood: { type: "hoodHousing", section: "wall" },
-  microwave: { type: "wall", section: "wall", appliance: "microwave" },
+  microwave: { type: "microwaveWall", section: "wall" },
 };
 
 /**
@@ -365,16 +366,16 @@ const KitchenCalculator = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, appliances, placedAppliances]);
 
-  // Add a unit to the first run's base or wall list (used by the missing-item actions).
-  const addToFirstRun = (type: UnitType, section: "base" | "wall", appliance?: string) => {
+  // Add a unit to a specific run's base or wall list (used by the missing-item actions).
+  const addToRun = (runId: string, type: UnitType, section: "base" | "wall", appliance?: string) => {
     setHasEdits(true);
     setState((prev) => {
-      if (!prev || prev.runs.length === 0) return prev;
+      if (!prev) return prev;
       const unit = makeUnit(type, addWidth(type), appliance ? { appliance } : undefined);
       return {
         ...prev,
-        runs: prev.runs.map((r, i) =>
-          i !== 0
+        runs: prev.runs.map((r) =>
+          r.id !== runId
             ? r
             : section === "wall"
               ? { ...r, wallUnits: [...r.wallUnits, unit] }
@@ -384,9 +385,9 @@ const KitchenCalculator = () => {
     });
   };
 
-  const handleAddAppliance = (a: ProjectAppliance) => {
+  const handleAddAppliance = (runId: string, a: ProjectAppliance) => {
     const place = APPLIANCE_PLACEMENT[a];
-    addToFirstRun(place.type, place.section, place.appliance);
+    addToRun(runId, place.type, place.section, place.appliance);
   };
 
   const handleDismissAppliance = (a: ProjectAppliance) =>
@@ -399,15 +400,30 @@ const KitchenCalculator = () => {
   const handleExcludeEssential = (type: UnitType) =>
     setExcludedEssentials((prev) => (prev.includes(type) ? prev : [...prev, type]));
 
+  // A base housing that's missing is offered contextually by the run's own
+  // RunLengthAlert whenever some run has an underfilled gap wide enough to hold
+  // it. In that case the global card would be a redundant, bolder duplicate that
+  // also mis-targets run 0 — so suppress base housings while such a gap exists
+  // and let the in-place alert handle them. Sink and wall appliances (hood,
+  // microwave) are never offered as base gap-fills, so they always stay.
+  const anyRunHasHousingGap = state
+    ? state.runs.some((r) => {
+        const baseSum = r.baseUnits.reduce((sum, u) => sum + u.width * u.quantity, 0);
+        return r.lengthMm - baseSum >= HOUSING_WIDTH;
+      })
+    : false;
+  const isBaseHousing = (a: ProjectAppliance) => APPLIANCE_PLACEMENT[a].section === "base";
+
   // Prominent action list: the sink fixture (if absent) plus every declared
-  // appliance that isn't placed yet. Each row offers "Add …" or drop it.
+  // appliance that isn't placed yet and can't be slotted into an existing gap.
+  // Each row offers "Add …" (to a chosen run when there are several) or drop it.
   const missingItems: MissingItem[] = [];
   if (state) {
     if (!presentEssentials.includes("sink") && !excludedEssentials.includes("sink")) {
       missingItems.push({
         key: "sink",
         label: "Sink",
-        onAdd: () => addToFirstRun("sink", "base"),
+        onAdd: (runId) => addToRun(runId, "sink", "base"),
         onDismiss: () => handleExcludeEssential("sink"),
         dismissLabel: "Not needed",
       });
@@ -416,10 +432,12 @@ const KitchenCalculator = () => {
       if (!wantedAppliance(a.id)) continue;
       // The hob/oven cabinet covers the oven too — don't also offer a lone oven.
       if (a.id === "oven" && wantedAppliance("hob")) continue;
+      // A run gap already offers this base housing in-place; don't duplicate it.
+      if (isBaseHousing(a.id) && anyRunHasHousingGap) continue;
       missingItems.push({
         key: a.id,
         label: a.label,
-        onAdd: () => handleAddAppliance(a.id),
+        onAdd: (runId) => handleAddAppliance(runId, a.id),
         onDismiss: () => handleDismissAppliance(a.id),
         dismissLabel: "Not needed",
       });
@@ -474,7 +492,10 @@ const KitchenCalculator = () => {
 
             {missingItems.length > 0 && (
               <div className="mb-4">
-                <MissingUnitsAlert items={missingItems} />
+                <MissingUnitsAlert
+                  items={missingItems}
+                  runs={state.runs.map((r) => ({ id: r.id, label: r.label }))}
+                />
               </div>
             )}
 
