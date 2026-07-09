@@ -19,6 +19,7 @@ export {
   makeWallRun,
   makeExtraCost,
   nextRunLabel,
+  nextUnitId,
   retypeUnit,
   LAYOUT_RUN_COUNT,
   LAYOUT_CORNER_JUNCTIONS,

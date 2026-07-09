@@ -8,6 +8,7 @@ import {
   type Run,
   type CabinetUnit,
   type ProjectAppliance,
+  type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
 import { CabinetSection } from "./CabinetSection";
@@ -32,9 +33,11 @@ interface RunSectionProps {
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onApplianceChange: (runId: string, unitId: string, appliances: ProjectAppliance[]) => void;
+  onConfigChange: (runId: string, unitId: string, config: UnitFinish) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
+  onDuplicateUnit: (runId: string, unitId: string) => void;
   onAddBase: (runId: string, type: UnitType) => void;
   onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
@@ -59,9 +62,11 @@ export function RunSection({
   onRemoveRun,
   onTypeChange,
   onApplianceChange,
+  onConfigChange,
   onWidthChange,
   onQuantityChange,
   onRemoveUnit,
+  onDuplicateUnit,
   onAddBase,
   onAddWall,
   onFillGap,
@@ -217,9 +222,11 @@ export function RunSection({
           placedAppliances={placedAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
+          onConfigChange={(id, config) => onConfigChange(run.id, id, config)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
+          onDuplicate={(id) => onDuplicateUnit(run.id, id)}
           onAdd={(type) => onAddBase(run.id, type)}
           onReorder={(a, o) => onReorderBase(run.id, a, o)}
         />
@@ -244,9 +251,11 @@ export function RunSection({
           placedAppliances={placedAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
+          onConfigChange={(id, config) => onConfigChange(run.id, id, config)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
           onQuantityChange={(id, qty) => onQuantityChange(run.id, id, qty)}
           onRemove={(id) => onRemoveUnit(run.id, id)}
+          onDuplicate={(id) => onDuplicateUnit(run.id, id)}
           onAdd={(type) => onAddWall(run.id, type)}
           onReorder={(a, o) => onReorderWall(run.id, a, o)}
         />

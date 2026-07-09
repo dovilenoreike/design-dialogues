@@ -1,20 +1,18 @@
 import { Minus, Plus } from "lucide-react";
 import {
-  APPLIANCE_ITEMS,
   primaryApplianceId,
   type CabinetUnit,
   type ProjectAppliance,
   type UnitCategory,
   type UnitType,
 } from "@/lib/kitchen-calculator";
-import { ApplianceGlyph } from "./ApplianceGlyph";
-import { unitKind } from "./unitKind";
 
 /**
  * Per-unit configuration — VISUAL MOCK ONLY (Phase: experience exploration).
- * Lets a unit deviate from its type's default interior: which appliance it
- * integrates, its front layout, and a couple of key accessories. Nothing here
- * is wired to pricing yet — it exists to feel out the interaction.
+ * Lets a unit deviate from its type's default interior: its front layout, shelf
+ * count and a couple of key accessories. Appliances are edited inline on the row
+ * (the glyph +/drop), so they're intentionally not here. Nothing is wired to
+ * pricing yet — it exists to feel out the interaction.
  */
 
 export interface UnitConfigState {
@@ -244,38 +242,16 @@ interface UnitConfigProps {
   unit: CabinetUnit;
   value: UnitConfigState;
   onChange: (next: UnitConfigState) => void;
-  /** Appliances the project declares (the master list). */
-  declared?: Set<ProjectAppliance>;
-  /** Appliances already placed anywhere — used to offer only what's still free. */
-  placed?: Set<ProjectAppliance>;
 }
 
 const SAGE = "#647d75";
-const OCHRE = "#ca8a04";
 
-export function UnitConfig({ unit, value, onChange, declared, placed }: UnitConfigProps) {
+export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
+  // Fronts are still tailored to whatever appliance the unit holds (set on the
+  // row) — e.g. an oven wants a tower/appliance front — so we read the appliance
+  // set here read-only, but no longer edit it in this panel.
   const frontIds = frontsFor(primaryApplianceId(value.appliances), unit.category, unit.type);
   const accessories = accessoriesFor(unit);
-
-  // Appliance assignment only applies to housings (and islands, which can host a
-  // hob). The list offers declared appliances not yet placed elsewhere, plus
-  // whatever this unit already holds — so you can't double-place one.
-  const showAppliances = unitKind(unit) === "housing" || unit.category === "island";
-  const assignable = APPLIANCE_ITEMS.filter(
-    (a) =>
-      (declared?.has(a.id) ?? true) &&
-      (!(placed?.has(a.id) ?? false) || value.appliances.includes(a.id)),
-  );
-
-  // Toggling an appliance re-snaps the front to one valid for the new set.
-  const toggleAppliance = (id: ProjectAppliance) => {
-    const next = value.appliances.includes(id)
-      ? value.appliances.filter((a) => a !== id)
-      : [...value.appliances, id];
-    const valid = frontsFor(primaryApplianceId(next), unit.category, unit.type);
-    const front = valid.includes(value.front) ? value.front : valid[0];
-    onChange({ ...value, appliances: next, front });
-  };
 
   const toggleAccessory = (id: string) =>
     onChange({
@@ -293,44 +269,6 @@ export function UnitConfig({ unit, value, onChange, declared, placed }: UnitConf
 
   return (
     <div className="space-y-5">
-      {/* Appliances — atomic, multi-select (a hob/oven cabinet = hob + oven) */}
-      {showAppliances && (
-        <div>
-          <SectionLabel>Appliances</SectionLabel>
-          {assignable.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              All declared appliances are already placed. Add more up top to house another.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {assignable.map((a) => {
-                const active = value.appliances.includes(a.id);
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => toggleAppliance(a.id)}
-                    aria-pressed={active}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition"
-                    style={
-                      active ? { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" } : undefined
-                    }
-                  >
-                    <ApplianceGlyph id={a.id} size={14} />
-                    {a.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {value.appliances.length === 0 && assignable.length > 0 && (
-            <p className="mt-1.5 text-[11px]" style={{ color: OCHRE }}>
-              No appliance chosen yet — this housing is empty.
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Front layout — schematic tiles */}
       <div>
         <SectionLabel>Front</SectionLabel>

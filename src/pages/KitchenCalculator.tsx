@@ -37,6 +37,7 @@ import {
   mockHardwareDB,
   mockMaterialConfig,
   nextRunLabel,
+  nextUnitId,
   priceKitchen,
   projectAppliancesFor,
   retypeUnit,
@@ -49,6 +50,7 @@ import {
   type KitchenState,
   type ProjectAppliance,
   type Run,
+  type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
 
@@ -206,11 +208,33 @@ const KitchenCalculator = () => {
       appliances,
     }));
 
+  // Interior config (front/shelves/accessories) — persisted verbatim; the type
+  // is unchanged, so no retype. Appliances are handled separately above.
+  const handleConfigChange = (runId: string, unitId: string, config: UnitFinish) =>
+    mapRunUnit(runId, unitId, (u) => ({ ...u, ...config }));
+
   const handleRemoveUnit = (runId: string, unitId: string) =>
     updateRun(runId, (r) => ({
       ...r,
       baseUnits: r.baseUnits.filter((u) => u.id !== unitId),
       wallUnits: r.wallUnits.filter((u) => u.id !== unitId),
+    }));
+
+  // Duplicate a unit as an independent copy right after the original (a fresh id,
+  // everything else — type/width/appliances/quantity — carried over). The unit
+  // lives in exactly one list, so the other passes through unchanged.
+  const duplicateInList = (list: CabinetUnit[], unitId: string): CabinetUnit[] => {
+    const i = list.findIndex((u) => u.id === unitId);
+    if (i < 0) return list;
+    const copy: CabinetUnit = { ...list[i], id: nextUnitId() };
+    return [...list.slice(0, i + 1), copy, ...list.slice(i + 1)];
+  };
+
+  const handleDuplicateUnit = (runId: string, unitId: string) =>
+    updateRun(runId, (r) => ({
+      ...r,
+      baseUnits: duplicateInList(r.baseUnits, unitId),
+      wallUnits: duplicateInList(r.wallUnits, unitId),
     }));
 
   const handleAddBase = (runId: string, type: UnitType) =>
@@ -291,6 +315,8 @@ const KitchenCalculator = () => {
   // Islands keep the island carcass; the appliance just rides on it.
   const handleIslandApplianceChange = (unitId: string, appliances: ProjectAppliance[]) =>
     mapIsland(unitId, (u) => ({ ...u, appliances }));
+  const handleIslandConfigChange = (unitId: string, config: UnitFinish) =>
+    mapIsland(unitId, (u) => ({ ...u, ...config }));
   const handleIslandWidthChange = (unitId: string, width: number) =>
     mapIsland(unitId, (u) => ({ ...u, width, isCustomWidth: isCustom(width) }));
   const handleIslandQuantityChange = (unitId: string, quantity: number) =>
@@ -299,6 +325,12 @@ const KitchenCalculator = () => {
     setHasEdits(true);
     setState((prev) =>
       prev ? { ...prev, islandUnits: prev.islandUnits.filter((u) => u.id !== unitId) } : prev,
+    );
+  };
+  const handleIslandDuplicate = (unitId: string) => {
+    setHasEdits(true);
+    setState((prev) =>
+      prev ? { ...prev, islandUnits: duplicateInList(prev.islandUnits, unitId) } : prev,
     );
   };
   const handleIslandAdd = (type: UnitType) => {
@@ -554,9 +586,11 @@ const KitchenCalculator = () => {
               onRemoveRun={handleRemoveRun}
               onTypeChange={handleTypeChange}
               onApplianceChange={handleApplianceChange}
+              onConfigChange={handleConfigChange}
               onWidthChange={handleWidthChange}
               onQuantityChange={handleQuantityChange}
               onRemoveUnit={handleRemoveUnit}
+              onDuplicateUnit={handleDuplicateUnit}
               onAddBase={handleAddBase}
               onAddWall={handleAddWall}
               onFillGap={handleFillGap}
@@ -570,9 +604,11 @@ const KitchenCalculator = () => {
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}
               onIslandApplianceChange={handleIslandApplianceChange}
+              onIslandConfigChange={handleIslandConfigChange}
               onIslandWidthChange={handleIslandWidthChange}
               onIslandQuantityChange={handleIslandQuantityChange}
               onIslandRemove={handleIslandRemove}
+              onIslandDuplicate={handleIslandDuplicate}
               onIslandAdd={handleIslandAdd}
               onIslandReorder={handleIslandReorder}
               onExtraLabelChange={handleExtraLabelChange}

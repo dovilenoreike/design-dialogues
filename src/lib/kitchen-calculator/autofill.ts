@@ -46,7 +46,8 @@ const WALL_WIDTHS = [600]; // mm, spec mirrors base run with 600mm wall units
 const MAX_UNIT_WIDTH = 1000; // mm — no auto-generated cabinet exceeds this
 
 let idCounter = 0;
-const uid = (): string => `u${++idCounter}`;
+/** Fresh unique unit id (also used when duplicating an existing unit). */
+export const nextUnitId = (): string => `u${++idCounter}`;
 
 interface MakeOpts {
   width2?: number;
@@ -59,7 +60,7 @@ interface MakeOpts {
 export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): CabinetUnit {
   const category = UNIT_CATEGORY[type];
   return {
-    id: uid(),
+    id: nextUnitId(),
     type,
     category,
     name: UNIT_LABELS[type],
@@ -108,6 +109,11 @@ export function retypeUnit(unit: CabinetUnit, type: UnitType): CabinetUnit {
     occupiesWorktop: category === "base",
     // A type swap resets the appliances to the new type's defaults.
     appliances: [...DEFAULT_APPLIANCES[type]],
+    // …and clears the interior config so it re-defaults for the new type
+    // (a 1-door front on a wide housing wouldn't make sense).
+    front: undefined,
+    shelves: undefined,
+    accessories: undefined,
   };
 }
 

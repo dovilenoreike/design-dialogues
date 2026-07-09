@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CabinetUnit, ProjectAppliance, UnitType } from "@/lib/kitchen-calculator";
+import type { CabinetUnit, ProjectAppliance, UnitFinish, UnitType } from "@/lib/kitchen-calculator";
 import { AddUnitMenu } from "./AddUnitMenu";
 import { UnitRow } from "./UnitRow";
 
@@ -31,9 +31,11 @@ interface CabinetSectionProps {
   placedAppliances?: Set<ProjectAppliance>;
   onTypeChange: (id: string, type: UnitType) => void;
   onApplianceChange: (id: string, appliances: ProjectAppliance[]) => void;
+  onConfigChange: (id: string, config: UnitFinish) => void;
   onWidthChange: (id: string, width: number) => void;
   onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onAdd: (type: UnitType) => void;
   onReorder?: (activeId: string, overId: string) => void;
 }
@@ -52,9 +54,11 @@ export function CabinetSection({
   placedAppliances,
   onTypeChange,
   onApplianceChange,
+  onConfigChange,
   onWidthChange,
   onQuantityChange,
   onRemove,
+  onDuplicate,
   onAdd,
   onReorder,
 }: CabinetSectionProps) {
@@ -94,9 +98,11 @@ export function CabinetSection({
                   sortable={sortable}
                   onTypeChange={onTypeChange}
                   onApplianceChange={onApplianceChange}
+                  onConfigChange={onConfigChange}
                   onWidthChange={onWidthChange}
                   onQuantityChange={onQuantityChange}
                   onRemove={onRemove}
+                  onDuplicate={onDuplicate}
                 />
               ))}
             </div>

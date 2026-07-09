@@ -6,6 +6,7 @@ import {
   type ExtraCost,
   type ProjectAppliance,
   type Run,
+  type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
 import { CabinetSection } from "./CabinetSection";
@@ -28,9 +29,11 @@ interface ComponentListProps {
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
   onApplianceChange: (runId: string, unitId: string, appliances: ProjectAppliance[]) => void;
+  onConfigChange: (runId: string, unitId: string, config: UnitFinish) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
+  onDuplicateUnit: (runId: string, unitId: string) => void;
   onAddBase: (runId: string, type: UnitType) => void;
   onAddWall: (runId: string, type: UnitType) => void;
   onFillGap: (runId: string, gapMm: number) => void;
@@ -45,9 +48,11 @@ interface ComponentListProps {
   // island handlers (island is not run-scoped)
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
   onIslandApplianceChange: (unitId: string, appliances: ProjectAppliance[]) => void;
+  onIslandConfigChange: (unitId: string, config: UnitFinish) => void;
   onIslandWidthChange: (unitId: string, width: number) => void;
   onIslandQuantityChange: (unitId: string, quantity: number) => void;
   onIslandRemove: (unitId: string) => void;
+  onIslandDuplicate: (unitId: string) => void;
   onIslandAdd: (type: UnitType) => void;
   onIslandReorder: (activeId: string, overId: string) => void;
   // additional-cost handlers
@@ -72,9 +77,11 @@ export function ComponentList({
   onRemoveRun,
   onTypeChange,
   onApplianceChange,
+  onConfigChange,
   onWidthChange,
   onQuantityChange,
   onRemoveUnit,
+  onDuplicateUnit,
   onAddBase,
   onAddWall,
   onFillGap,
@@ -88,9 +95,11 @@ export function ComponentList({
   onAddRun,
   onIslandTypeChange,
   onIslandApplianceChange,
+  onIslandConfigChange,
   onIslandWidthChange,
   onIslandQuantityChange,
   onIslandRemove,
+  onIslandDuplicate,
   onIslandAdd,
   onIslandReorder,
   onExtraLabelChange,
@@ -114,9 +123,11 @@ export function ComponentList({
           onRemoveRun={onRemoveRun}
           onTypeChange={onTypeChange}
           onApplianceChange={onApplianceChange}
+          onConfigChange={onConfigChange}
           onWidthChange={onWidthChange}
           onQuantityChange={onQuantityChange}
           onRemoveUnit={onRemoveUnit}
+          onDuplicateUnit={onDuplicateUnit}
           onAddBase={onAddBase}
           onAddWall={onAddWall}
           onFillGap={onFillGap}
@@ -151,9 +162,11 @@ export function ComponentList({
         placedAppliances={placedAppliances}
         onTypeChange={onIslandTypeChange}
         onApplianceChange={onIslandApplianceChange}
+        onConfigChange={onIslandConfigChange}
         onWidthChange={onIslandWidthChange}
         onQuantityChange={onIslandQuantityChange}
         onRemove={onIslandRemove}
+        onDuplicate={onIslandDuplicate}
         onAdd={onIslandAdd}
         onReorder={onIslandReorder}
       />

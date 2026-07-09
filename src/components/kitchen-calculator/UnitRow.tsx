@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AlertTriangle, GripVertical, Plus, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, Copy, GripVertical, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import {
   APPLIANCE_ITEMS,
   type CabinetUnit,
   type ProjectAppliance,
+  type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
@@ -53,7 +54,6 @@ const APPLIANCE_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
-const CUSTOM = "custom";
 
 interface UnitRowProps {
   unit: CabinetUnit;
@@ -69,9 +69,11 @@ interface UnitRowProps {
   sortable?: boolean;
   onTypeChange: (id: string, type: UnitType) => void;
   onApplianceChange: (id: string, appliances: ProjectAppliance[]) => void;
+  onConfigChange: (id: string, config: UnitFinish) => void;
   onWidthChange: (id: string, width: number) => void;
   onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => void;
 }
 
 /** One component-list row: drag handle + type swap + width + ×quantity + remove. */
@@ -83,9 +85,11 @@ export function UnitRow({
   sortable = false,
   onTypeChange,
   onApplianceChange,
+  onConfigChange,
   onWidthChange,
   onQuantityChange,
   onRemove,
+  onDuplicate,
 }: UnitRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: unit.id,
@@ -97,19 +101,17 @@ export function UnitRow({
     zIndex: isDragging ? 10 : undefined,
     position: "relative" as const,
   };
-  // Include the unit's own width so a custom/non-standard size stays selectable.
-  const widthOptions = WIDTH_OPTIONS.includes(unit.width)
-    ? WIDTH_OPTIONS
-    : [...WIDTH_OPTIONS, unit.width].sort((a, b) => a - b);
-
-  // When "Custom…" is picked, the width control becomes a free-entry mm input.
-  const [editingWidth, setEditingWidth] = useState(false);
-  const [draftWidth, setDraftWidth] = useState("");
-
-  const commitWidth = () => {
-    const value = Math.round(Number(draftWidth));
+  // Width is typed directly in millimetres — bespoke sizes are the norm, so
+  // free entry is the primary path and the standard sizes are one tap away in
+  // the adjacent menu. Draft mirrors the unit but never snaps back mid-edit.
+  const [widthDraft, setWidthDraft] = useState(String(unit.width));
+  const widthFocused = useRef(false);
+  useEffect(() => {
+    if (!widthFocused.current) setWidthDraft(String(unit.width));
+  }, [unit.width]);
+  const commitWidth = (raw: string) => {
+    const value = Math.round(Number(raw));
     if (Number.isFinite(value) && value > 0) onWidthChange(unit.id, value);
-    setEditingWidth(false);
   };
 
   // Quantity: hidden at ×1 (just a "+ copies" affordance); a small number field
@@ -129,22 +131,35 @@ export function UnitRow({
     }
   };
 
-  // Per-unit interior config (front/shelves/accessories) — reset to type defaults
-  // on a type swap. Appliances live on the unit (for the tracker), so the config
-  // reads them from `unit.appliances` and routes changes up via onApplianceChange.
-  const [config, setConfig] = useState<UnitConfigState>(() => defaultUnitConfig(unit));
-  useEffect(() => setConfig(defaultUnitConfig(unit)), [unit.type]); // eslint-disable-line react-hooks/exhaustive-deps
   const [configOpen, setConfigOpen] = useState(false);
   // The appliance whose glyph was tapped — drives the drop/edit modal.
   const [editAppliance, setEditAppliance] = useState<ProjectAppliance | null>(null);
-  const configValue: UnitConfigState = { ...config, appliances: unit.appliances };
+
+  // The interior config lives on the unit now (so it survives duplication and
+  // reordering); fall back to the type defaults for any field left unset.
+  const configDefaults = defaultUnitConfig(unit);
+  const configValue: UnitConfigState = {
+    appliances: unit.appliances,
+    front: unit.front ?? configDefaults.front,
+    shelves: unit.shelves ?? configDefaults.shelves,
+    accessories: unit.accessories ?? configDefaults.accessories,
+  };
   const handleConfigChange = (next: UnitConfigState) => {
-    // The appliance set drives the carcass type (derived in the store handler).
-    const changed =
+    // Appliances drive the carcass type (retyped — and the interior re-defaulted
+    // — in the store); front/shelves/accessories persist verbatim. An appliance
+    // toggle takes the appliance path; the new type re-defaults the rest.
+    const appliancesChanged =
       next.appliances.length !== unit.appliances.length ||
       next.appliances.some((a) => !unit.appliances.includes(a));
-    if (changed) onApplianceChange(unit.id, next.appliances);
-    setConfig(next);
+    if (appliancesChanged) {
+      onApplianceChange(unit.id, next.appliances);
+    } else {
+      onConfigChange(unit.id, {
+        front: next.front,
+        shelves: next.shelves,
+        accessories: next.accessories,
+      });
+    }
   };
 
   // The picker offers just the coarse carcass kinds (Sink / Storage / Appliance
@@ -221,20 +236,14 @@ export function UnitRow({
               </DialogTitle>
               <DialogDescription>Set the appliances, front layout and fittings.</DialogDescription>
             </DialogHeader>
-            <UnitConfig
-              unit={unit}
-              value={configValue}
-              onChange={handleConfigChange}
-              declared={declaredAppliances}
-              placed={placedAppliances}
-            />
+            <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
         {/* Atomic appliance glyphs — sit next to the cabinet icon so the box +
             what's inside it read as one picture. Fixed-width slot so the kind
             dropdowns still line up down the column. Sage when declared, red when
             the appliance isn't in the project settings. */}
-        <div className="hidden w-20 shrink-0 items-center gap-1 sm:flex">
+        <div className="flex w-20 shrink-0 items-center gap-1">
           {unit.appliances.map((a) => {
             const bad = undeclared(a);
             return (
@@ -365,59 +374,53 @@ export function UnitRow({
         </Select>
       </div>
 
-      {editingWidth ? (
-        <div className="flex w-28 items-center gap-1">
-          <Input
-            type="number"
-            inputMode="numeric"
-            min="1"
-            step="10"
-            autoFocus
-            value={draftWidth}
-            onChange={(e) => setDraftWidth(e.target.value)}
-            onBlur={commitWidth}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                commitWidth();
-              } else if (e.key === "Escape") {
-                setEditingWidth(false);
-              }
-            }}
-            className="w-20"
-            aria-label={`${unit.name} custom width in mm`}
-          />
-          <span className="text-xs text-muted-foreground">mm</span>
-        </div>
-      ) : (
-        <Select
-          value={String(unit.width)}
-          onValueChange={(v) => {
-            if (v === CUSTOM) {
-              setDraftWidth(String(unit.width));
-              setEditingWidth(true);
-            } else {
-              onWidthChange(unit.id, Number(v));
-            }
+      <div className="flex w-32 shrink-0 items-center gap-1">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={10}
+          value={widthDraft}
+          onFocus={(e) => {
+            widthFocused.current = true;
+            e.currentTarget.select();
           }}
-        >
-          <SelectTrigger
-            className="w-28"
-            style={unit.isCustomWidth ? { color: "#ca8a04", borderColor: "#ca8a04" } : undefined}
-            title={unit.isCustomWidth ? "Custom width" : undefined}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {widthOptions.map((w) => (
-              <SelectItem key={w} value={String(w)}>
-                {w}mm
-              </SelectItem>
+          onChange={(e) => {
+            setWidthDraft(e.target.value);
+            commitWidth(e.target.value);
+          }}
+          onBlur={(e) => {
+            widthFocused.current = false;
+            const value = Math.round(Number(e.target.value));
+            if (!Number.isFinite(value) || value <= 0) setWidthDraft(String(unit.width));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="h-9 w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          aria-label={`${unit.name} width in millimetres`}
+        />
+        <span className="text-xs text-muted-foreground">mm</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Standard widths"
+              title="Standard widths"
+              className="flex h-9 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-1"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {WIDTH_OPTIONS.map((w) => (
+              <DropdownMenuItem key={w} onSelect={() => onWidthChange(unit.id, w)}>
+                {w} mm
+              </DropdownMenuItem>
             ))}
-            <SelectItem value={CUSTOM}>Custom…</SelectItem>
-          </SelectContent>
-        </Select>
-      )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Quantity — hidden at ×1; a compact field once a line stands for several. */}
       <div className="flex w-20 shrink-0 items-center justify-end gap-1">
@@ -460,6 +463,17 @@ export function UnitRow({
           </Button>
         )}
       </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onDuplicate(unit.id)}
+        aria-label={`Duplicate ${unit.name}`}
+        title="Duplicate unit"
+        className="text-muted-foreground hover:text-foreground"
+      >
+        <Copy className="h-4 w-4" />
+      </Button>
 
       <Button
         variant="ghost"

@@ -155,7 +155,20 @@ export interface CabinetUnit {
    * drives the project appliance tracker. Not yet priced.
    */
   appliances: ProjectAppliance[];
+  /**
+   * Per-unit interior configuration (front layout / shelf count / accessories).
+   * Visual-only for now (not priced), but persisted on the unit so it survives
+   * duplication and reordering. `undefined` means "use the type default"; a type
+   * swap clears these back to undefined so they re-default. The option ids are
+   * owned by the UI layer (`UnitConfig`).
+   */
+  front?: string;
+  shelves?: number;
+  accessories?: string[];
 }
+
+/** The persisted interior-config slice of a unit (front/shelves/accessories). */
+export type UnitFinish = Pick<CabinetUnit, "front" | "shelves" | "accessories">;
 
 /** Kitchen shape. Islands are orthogonal (their own section), not a layout. */
 export type KitchenLayout = "line" | "l" | "u" | "galley";
