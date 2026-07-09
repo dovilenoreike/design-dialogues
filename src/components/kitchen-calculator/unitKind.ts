@@ -111,6 +111,34 @@ export function typeForAppliances(appliances: ProjectAppliance[], category: Unit
   return emptyHousing(category);
 }
 
+// Which appliance can join an existing single to form the other valid combo.
+// Only two modeled pairs exist (hob+oven, oven+microwave) — see typeForAppliances.
+const PAIR_PARTNERS: Partial<Record<ProjectAppliance, ProjectAppliance[]>> = {
+  hob: ["oven"],
+  oven: ["hob", "microwave"],
+  microwave: ["oven"],
+};
+
+/**
+ * Appliances the inline "+" can add to a unit to reach another *valid, modeled*
+ * state, intersected with what's still assignable (declared, not placed
+ * elsewhere). An empty housing/island → any assignable single; a pairable single
+ * (hob/oven/microwave) → its free partner(s); a full pair, or a non-pairable
+ * single (fridge/dishwasher/hood) → none.
+ */
+export function addableAppliances(
+  current: readonly ProjectAppliance[],
+  assignable: readonly ProjectAppliance[],
+): ProjectAppliance[] {
+  const candidates =
+    current.length === 0
+      ? assignable
+      : current.length === 1
+        ? (PAIR_PARTNERS[current[0]] ?? [])
+        : [];
+  return candidates.filter((a) => assignable.includes(a) && !current.includes(a));
+}
+
 export interface KindOption {
   /** Stable id: `${kind}-${category}`. */
   id: string;

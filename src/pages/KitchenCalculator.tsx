@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   APPLIANCE_ITEMS,
@@ -495,6 +496,17 @@ const KitchenCalculator = () => {
             placed={state ? placedAppliances : undefined}
           />
           <KitchenSettingsPanel settings={settings} onChange={setSettings} />
+          {/* Generate is the terminal CTA: it consumes the layout, appliances and
+              settings above, so it sits after them. Hidden once generated. */}
+          {!state && (
+            <Button
+              onClick={handleGenerate}
+              style={{ backgroundColor: "#647d75" }}
+              className="self-start text-white"
+            >
+              Generate
+            </Button>
+          )}
         </div>
 
         {state && pricing && (

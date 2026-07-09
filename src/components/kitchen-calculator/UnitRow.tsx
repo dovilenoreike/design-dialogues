@@ -11,6 +11,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,6 +38,7 @@ import { ApplianceGlyph } from "./ApplianceGlyph";
 import { UnitConfig, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon } from "./UnitIcon";
 import {
+  addableAppliances,
   categoriesOf,
   currentKindOptionId,
   kindGroupsForCategories,
@@ -128,6 +135,8 @@ export function UnitRow({
   const [config, setConfig] = useState<UnitConfigState>(() => defaultUnitConfig(unit));
   useEffect(() => setConfig(defaultUnitConfig(unit)), [unit.type]); // eslint-disable-line react-hooks/exhaustive-deps
   const [configOpen, setConfigOpen] = useState(false);
+  // The appliance whose glyph was tapped — drives the drop/edit modal.
+  const [editAppliance, setEditAppliance] = useState<ProjectAppliance | null>(null);
   const configValue: UnitConfigState = { ...config, appliances: unit.appliances };
   const handleConfigChange = (next: UnitConfigState) => {
     // The appliance set drives the carcass type (derived in the store handler).
@@ -156,6 +165,17 @@ export function UnitRow({
   // A unit holding an appliance the project doesn't declare is a mistake (red).
   const undeclared = (a: ProjectAppliance) => !!declaredAppliances && !declaredAppliances.has(a);
   const isEmptyHousing = unitKind(unit) === "housing" && unit.appliances.length === 0;
+
+  // Inline "+" affordance. Only housings and islands hold appliances; the menu
+  // offers what's still assignable (declared, not placed elsewhere) that forms a
+  // valid state — the first appliance when empty, or the free pairing partner.
+  const canHoldAppliance = unitKind(unit) === "housing" || unit.category === "island";
+  const assignableIds = APPLIANCE_ITEMS.map((a) => a.id).filter(
+    (id) =>
+      (declaredAppliances?.has(id) ?? true) &&
+      (!(placedAppliances?.has(id) ?? false) || unit.appliances.includes(id)),
+  );
+  const addable = canHoldAppliance ? addableAppliances(unit.appliances, assignableIds) : [];
 
   const renderOption = (opt: KindOption) => (
     <SelectItem key={opt.id} value={opt.id}>
@@ -214,40 +234,121 @@ export function UnitRow({
             what's inside it read as one picture. Fixed-width slot so the kind
             dropdowns still line up down the column. Sage when declared, red when
             the appliance isn't in the project settings. */}
-        <div className="hidden w-16 shrink-0 items-center gap-1 sm:flex">
+        <div className="hidden w-20 shrink-0 items-center gap-1 sm:flex">
           {unit.appliances.map((a) => {
             const bad = undeclared(a);
             return (
-              <span
+              <button
                 key={a}
-                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-1"
-                style={
-                  bad
+                type="button"
+                onClick={() => setEditAppliance(a)}
+                aria-label={`Edit ${APPLIANCE_LABEL[a] ?? a}`}
+                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-1 transition hover:ring-1 focus-visible:outline-none focus-visible:ring-1"
+                style={{
+                  ...(bad
                     ? { backgroundColor: "rgba(154,52,18,0.12)", color: "#9a3412" }
-                    : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }
-                }
+                    : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }),
+                  ["--tw-ring-color" as string]: bad
+                    ? "rgba(154,52,18,0.4)"
+                    : "rgba(100,125,117,0.4)",
+                }}
                 title={
                   bad
-                    ? `${APPLIANCE_LABEL[a] ?? a} — not in the project settings; add it there or remove it here`
-                    : APPLIANCE_LABEL[a] ?? a
+                    ? `${APPLIANCE_LABEL[a] ?? a} — not in the project settings; tap to remove it here`
+                    : `${APPLIANCE_LABEL[a] ?? a} — tap to remove`
                 }
               >
                 {bad && <AlertTriangle className="h-3 w-3" />}
                 <ApplianceGlyph id={a} size={15} />
-              </span>
+              </button>
             );
           })}
-          {isEmptyHousing && (
+          {addable.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={isEmptyHousing ? "Add appliance" : "Add paired appliance"}
+                  title={isEmptyHousing ? "Add appliance" : "Add paired appliance"}
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-1"
+                  style={{
+                    // Ochre while an empty housing still needs its appliance;
+                    // sage for the optional pairing add on an already-filled unit.
+                    color: isEmptyHousing ? "#ca8a04" : "#647d75",
+                    borderColor: isEmptyHousing
+                      ? "rgba(202,138,4,0.5)"
+                      : "rgba(100,125,117,0.5)",
+                    ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)",
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {addable.map((a) => (
+                  <DropdownMenuItem
+                    key={a}
+                    className="gap-2"
+                    onSelect={() => onApplianceChange(unit.id, [...unit.appliances, a])}
+                  >
+                    <ApplianceGlyph id={a} size={15} />
+                    {APPLIANCE_LABEL[a] ?? a}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {isEmptyHousing && addable.length === 0 && (
             <span
               className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium"
               style={{ backgroundColor: "rgba(202,138,4,0.12)", color: "#ca8a04" }}
-              title="Empty housing — assign an appliance in the unit configuration"
+              title="Empty housing — all declared appliances are placed elsewhere; add more in the project settings"
             >
               <AlertTriangle className="h-3 w-3" />
               Empty
             </span>
           )}
         </div>
+
+        {/* Tapping an appliance glyph opens this modal. For now it only offers to
+            drop the appliance; a later step will let you swap it for another. */}
+        <Dialog
+          open={editAppliance !== null}
+          onOpenChange={(open) => !open && setEditAppliance(null)}
+        >
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
+                {editAppliance && (
+                  <ApplianceGlyph id={editAppliance} size={20} className="text-muted-foreground" />
+                )}
+                {editAppliance ? APPLIANCE_LABEL[editAppliance] ?? editAppliance : ""}
+              </DialogTitle>
+              <DialogDescription>
+                Remove this appliance from the unit? It stays available to place elsewhere.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setEditAppliance(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="text-white"
+                style={{ backgroundColor: "#9a3412" }}
+                onClick={() => {
+                  if (editAppliance)
+                    onApplianceChange(
+                      unit.id,
+                      unit.appliances.filter((x) => x !== editAppliance),
+                    );
+                  setEditAppliance(null);
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <Select value={currentKindId} onValueChange={selectKind}>
           <SelectTrigger className="w-52 [&>span]:truncate [&>span]:text-left">
             <SelectValue>{currentLabel}</SelectValue>

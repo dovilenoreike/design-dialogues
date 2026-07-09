@@ -103,9 +103,6 @@ export function KitchenSetup({
               />
             </div>
           ))}
-          <Button onClick={onGenerate} style={{ backgroundColor: "#647d75" }} className="text-white">
-            Generate
-          </Button>
         </div>
       )}
     </div>
