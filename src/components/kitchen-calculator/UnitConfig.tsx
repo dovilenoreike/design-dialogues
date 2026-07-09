@@ -1,5 +1,14 @@
 import { Minus, Plus } from "lucide-react";
-import type { CabinetUnit, UnitCategory, UnitType } from "@/lib/kitchen-calculator";
+import {
+  APPLIANCE_ITEMS,
+  primaryApplianceId,
+  type CabinetUnit,
+  type ProjectAppliance,
+  type UnitCategory,
+  type UnitType,
+} from "@/lib/kitchen-calculator";
+import { ApplianceGlyph } from "./ApplianceGlyph";
+import { unitKind } from "./unitKind";
 
 /**
  * Per-unit configuration — VISUAL MOCK ONLY (Phase: experience exploration).
@@ -9,7 +18,8 @@ import type { CabinetUnit, UnitCategory, UnitType } from "@/lib/kitchen-calculat
  */
 
 export interface UnitConfigState {
-  appliance: string;
+  /** The atomic appliances integrated in this unit ([] for none). */
+  appliances: ProjectAppliance[];
   front: string;
   shelves: number;
   accessories: string[];
@@ -26,44 +36,6 @@ interface Option {
   id: string;
   label: string;
 }
-
-const APPLIANCES: Record<UnitCategory, Option[]> = {
-  base: [
-    { id: "none", label: "None" },
-    { id: "sink", label: "Sink" },
-    { id: "hob", label: "Hob" },
-    { id: "hobOven", label: "Hob + oven" },
-    { id: "oven", label: "Oven" },
-    { id: "dishwasher", label: "Dishwasher" },
-  ],
-  island: [
-    { id: "none", label: "None" },
-    { id: "sink", label: "Sink" },
-    { id: "hob", label: "Hob" },
-    { id: "hobOven", label: "Hob + oven" },
-  ],
-  // A Tall unit (larder) is None = storage, or an oven / oven+microwave tower /
-  // microwave. Fridge is its own unit type, so it's excluded here (see
-  // APPLIANCES_BY_TYPE).
-  tall: [
-    { id: "none", label: "None" },
-    { id: "oven", label: "Oven" },
-    { id: "ovenMicrowave", label: "Oven + microwave" },
-    { id: "microwave", label: "Microwave" },
-  ],
-  wall: [
-    { id: "none", label: "None" },
-    { id: "extractor", label: "Extractor" },
-    { id: "microwave", label: "Microwave" },
-  ],
-};
-
-// Units whose appliance is intrinsic to the type — shown as a single, fixed chip.
-const APPLIANCES_BY_TYPE: Partial<Record<UnitType, Option[]>> = {
-  fridge: [{ id: "fridge", label: "Fridge / freezer" }],
-  dishwasher: [{ id: "dishwasher", label: "Dishwasher" }],
-  hoodHousing: [{ id: "extractor", label: "Hood" }],
-};
 
 // Front layouts available per unit category (ids resolve via FRONT_LABELS / FrontIcon).
 const CATEGORY_FRONTS: Record<UnitCategory, string[]> = {
@@ -153,28 +125,31 @@ function accessoriesFor(unit: CabinetUnit): Option[] {
 // ─── Defaults per unit type (mirrors the engine's default assemblies) ────────
 
 const DEFAULT_BY_TYPE: Partial<Record<UnitType, Partial<UnitConfigState>>> = {
-  sink: { appliance: "sink", front: "doors2", shelves: 1, accessories: ["bin"] },
-  hob: { appliance: "hob", front: "drawers3", shelves: 0 },
-  hobOven: { appliance: "hobOven", front: "applianceFront", shelves: 0 },
-  dishwasher: { appliance: "dishwasher", front: "door1", shelves: 0 },
-  microwave: { appliance: "microwave", front: "applianceFront", shelves: 1 },
-  storage: { appliance: "none", front: "drawers3", shelves: 0 },
-  cornerBase: { appliance: "none", front: "door1", shelves: 0 },
-  fridge: { appliance: "fridge", front: "doorsTall", shelves: 0 },
-  ovenHousing: { appliance: "oven", front: "ovenTower", shelves: 1 },
-  ovenMicrowave: { appliance: "ovenMicrowave", front: "ovenTower", shelves: 1 },
-  larder: { appliance: "none", front: "doorsTall", shelves: 4 },
-  wall: { appliance: "none", front: "doors2", shelves: 1 },
-  hoodHousing: { appliance: "extractor", front: "integrated", shelves: 0 },
-  microwaveWall: { appliance: "microwave", front: "applianceFront", shelves: 0 },
-  cornerWall: { appliance: "none", front: "door1", shelves: 0 },
-  island: { appliance: "none", front: "doors2", shelves: 1 },
+  sink: { front: "doors2", shelves: 1, accessories: ["bin"] },
+  hob: { front: "drawers3", shelves: 0 },
+  hobOven: { front: "applianceFront", shelves: 0 },
+  dishwasher: { front: "door1", shelves: 0 },
+  microwave: { front: "applianceFront", shelves: 1 },
+  storage: { front: "drawers3", shelves: 0 },
+  housing: { front: "applianceFront", shelves: 0 },
+  cornerBase: { front: "door1", shelves: 0 },
+  fridge: { front: "doorsTall", shelves: 0 },
+  ovenHousing: { front: "ovenTower", shelves: 1 },
+  ovenMicrowave: { front: "ovenTower", shelves: 1 },
+  housingTall: { front: "applianceFront", shelves: 0 },
+  larder: { front: "doorsTall", shelves: 4 },
+  wall: { front: "doors2", shelves: 1 },
+  hoodHousing: { front: "integrated", shelves: 0 },
+  microwaveWall: { front: "applianceFront", shelves: 0 },
+  housingWall: { front: "applianceFront", shelves: 0 },
+  cornerWall: { front: "door1", shelves: 0 },
+  island: { front: "doors2", shelves: 1 },
 };
 
 export function defaultUnitConfig(unit: CabinetUnit): UnitConfigState {
   const d = DEFAULT_BY_TYPE[unit.type] ?? {};
   return {
-    appliance: d.appliance ?? "none",
+    appliances: [...unit.appliances],
     front: d.front ?? CATEGORY_FRONTS[unit.category][0],
     shelves: d.shelves ?? 1,
     accessories: d.accessories ?? [],
@@ -269,20 +244,37 @@ interface UnitConfigProps {
   unit: CabinetUnit;
   value: UnitConfigState;
   onChange: (next: UnitConfigState) => void;
+  /** Appliances the project declares (the master list). */
+  declared?: Set<ProjectAppliance>;
+  /** Appliances already placed anywhere — used to offer only what's still free. */
+  placed?: Set<ProjectAppliance>;
 }
 
 const SAGE = "#647d75";
+const OCHRE = "#ca8a04";
 
-export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
-  const appliances = APPLIANCES_BY_TYPE[unit.type] ?? APPLIANCES[unit.category];
-  const frontIds = frontsFor(value.appliance, unit.category, unit.type);
+export function UnitConfig({ unit, value, onChange, declared, placed }: UnitConfigProps) {
+  const frontIds = frontsFor(primaryApplianceId(value.appliances), unit.category, unit.type);
   const accessories = accessoriesFor(unit);
 
-  // Choosing an appliance constrains the front — snap to a valid one if needed.
-  const selectAppliance = (id: string) => {
-    const valid = frontsFor(id, unit.category, unit.type);
+  // Appliance assignment only applies to housings (and islands, which can host a
+  // hob). The list offers declared appliances not yet placed elsewhere, plus
+  // whatever this unit already holds — so you can't double-place one.
+  const showAppliances = unitKind(unit) === "housing" || unit.category === "island";
+  const assignable = APPLIANCE_ITEMS.filter(
+    (a) =>
+      (declared?.has(a.id) ?? true) &&
+      (!(placed?.has(a.id) ?? false) || value.appliances.includes(a.id)),
+  );
+
+  // Toggling an appliance re-snaps the front to one valid for the new set.
+  const toggleAppliance = (id: ProjectAppliance) => {
+    const next = value.appliances.includes(id)
+      ? value.appliances.filter((a) => a !== id)
+      : [...value.appliances, id];
+    const valid = frontsFor(primaryApplianceId(next), unit.category, unit.type);
     const front = valid.includes(value.front) ? value.front : valid[0];
-    onChange({ ...value, appliance: id, front });
+    onChange({ ...value, appliances: next, front });
   };
 
   const toggleAccessory = (id: string) =>
@@ -301,26 +293,43 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
 
   return (
     <div className="space-y-5">
-      {/* Appliance — the primary choice for most units */}
-      <div>
-        <SectionLabel>Appliance</SectionLabel>
-        <div className="flex flex-wrap gap-1.5">
-          {appliances.map((a) => {
-            const active = value.appliance === a.id;
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => selectAppliance(a.id)}
-                className="rounded-full border px-3 py-1.5 text-xs transition"
-                style={active ? { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" } : undefined}
-              >
-                {a.label}
-              </button>
-            );
-          })}
+      {/* Appliances — atomic, multi-select (a hob/oven cabinet = hob + oven) */}
+      {showAppliances && (
+        <div>
+          <SectionLabel>Appliances</SectionLabel>
+          {assignable.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              All declared appliances are already placed. Add more up top to house another.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {assignable.map((a) => {
+                const active = value.appliances.includes(a.id);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => toggleAppliance(a.id)}
+                    aria-pressed={active}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition"
+                    style={
+                      active ? { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" } : undefined
+                    }
+                  >
+                    <ApplianceGlyph id={a.id} size={14} />
+                    {a.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {value.appliances.length === 0 && assignable.length > 0 && (
+            <p className="mt-1.5 text-[11px]" style={{ color: OCHRE }}>
+              No appliance chosen yet — this housing is empty.
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Front layout — schematic tiles */}
       <div>

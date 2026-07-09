@@ -38,3 +38,21 @@ const UNIT_APPLIANCE_TO_PROJECT: Record<string, ProjectAppliance[]> = {
 
 export const projectAppliancesFor = (unitApplianceId: string): ProjectAppliance[] =>
   UNIT_APPLIANCE_TO_PROJECT[unitApplianceId] ?? [];
+
+const setKey = (a: readonly ProjectAppliance[]): string => [...a].sort().join(",");
+
+/**
+ * Reverse of {@link projectAppliancesFor}: the legacy single-appliance id for a
+ * set of atomic project appliances ("none" | "hob" | "hobOven" | …). A bridge
+ * while the UI still speaks the single-id language — a unit now stores the set
+ * (`CabinetUnit.appliances`) and this collapses it back to the id the config /
+ * identity layer expects. Empty set → "none".
+ */
+export const primaryApplianceId = (appliances: readonly ProjectAppliance[]): string => {
+  if (appliances.length === 0) return "none";
+  const key = setKey(appliances);
+  for (const [id, projects] of Object.entries(UNIT_APPLIANCE_TO_PROJECT)) {
+    if (projects.length > 0 && setKey(projects) === key) return id;
+  }
+  return appliances[0]; // unusual combo — fall back to the first appliance
+};

@@ -7,6 +7,7 @@
  * a hardcoded price — pricing is always sum(parts) via parts.ts.
  */
 
+import type { ProjectAppliance } from "./appliances";
 import type { CabinetUnit, GlobalSettings, Part, SurfaceKey, UnitCategory, UnitType } from "./types";
 
 const DRAWER_HEIGHT = 180; // mm, spec Part 3 default
@@ -91,6 +92,17 @@ const builders: Record<UnitType, Builder> = {
     ];
   },
 
+  // Generic appliance housing with no appliance chosen yet — a plain carcass with
+  // a single appliance front. Once an appliance is assigned it becomes a specific
+  // housing type (ovenHousing, dishwasher, …); this is the "empty housing" state.
+  housing: (u, s) => {
+    const { h, d, surface } = dimsFor("base", s);
+    return [
+      { kind: "shell", w: u.width, h, d },
+      { kind: "doorFront", w: u.width, h, surface },
+    ];
+  },
+
   cornerBase: (u, s) => {
     const { h, d, surface } = dimsFor("base", s);
     const w2 = u.width2 ?? u.width;
@@ -152,6 +164,14 @@ const builders: Record<UnitType, Builder> = {
     // microwave cutout (integration work) priced at kitchen level
   },
 
+  housingTall: (u, s) => {
+    const { h, d, surface } = dimsFor("tall", s);
+    return [
+      { kind: "shell", w: u.width, h, d },
+      { kind: "doorFront", w: u.width, h, surface },
+    ];
+  },
+
   larder: (u, s) => {
     const { h, d, surface } = dimsFor("tall", s);
     const doorH = h / 2; // two stacked full-height doors
@@ -207,6 +227,14 @@ const builders: Record<UnitType, Builder> = {
     // microwave cutout (integration work) priced at kitchen level
   },
 
+  housingWall: (u, s) => {
+    const { h, d, surface } = dimsFor("wall", s);
+    return [
+      { kind: "shell", w: u.width, h, d },
+      { kind: "doorFront", w: u.width, h, surface },
+    ];
+  },
+
   // --- ISLAND UNITS -------------------------------------------------------
   island: (u, s) => {
     const { h, d, surface } = dimsFor("island", s);
@@ -231,15 +259,18 @@ export const UNIT_LABELS: Record<UnitType, string> = {
   hobOven: "Hob / oven cabinet",
   dishwasher: "Dishwasher housing",
   storage: "Storage cabinet",
+  housing: "Appliance housing",
   cornerBase: "Corner base unit",
   fridge: "Fridge housing",
   ovenHousing: "Oven housing",
   ovenMicrowave: "Oven & microwave housing",
   microwave: "Microwave housing",
+  housingTall: "Appliance housing",
   larder: "Tall unit",
   wall: "Wall cabinet",
   hoodHousing: "Hood housing",
   microwaveWall: "Microwave cabinet",
+  housingWall: "Appliance housing",
   cornerWall: "Corner wall unit",
   island: "Island unit",
 };
@@ -254,17 +285,47 @@ export const DEFAULT_APPLIANCE: Record<UnitType, string> = {
   hobOven: "hobOven",
   dishwasher: "dishwasher",
   storage: "none",
+  housing: "none",
   cornerBase: "none",
   fridge: "fridge",
   ovenHousing: "oven",
   ovenMicrowave: "ovenMicrowave",
   microwave: "microwave",
+  housingTall: "none",
   larder: "none",
   wall: "none",
   hoodHousing: "extractor",
   microwaveWall: "microwave",
+  housingWall: "none",
   cornerWall: "none",
   island: "none",
+};
+
+/**
+ * Default atomic appliances a unit type integrates. Seeds `CabinetUnit.appliances`
+ * at creation; the user edits the set in the config. (Sink is a carcass kind, not
+ * an appliance, so a sink cabinet holds none.)
+ */
+export const DEFAULT_APPLIANCES: Record<UnitType, ProjectAppliance[]> = {
+  sink: [],
+  hob: ["hob"],
+  hobOven: ["hob", "oven"],
+  dishwasher: ["dishwasher"],
+  storage: [],
+  housing: [],
+  cornerBase: [],
+  fridge: ["fridge"],
+  ovenHousing: ["oven"],
+  ovenMicrowave: ["oven", "microwave"],
+  microwave: ["microwave"],
+  housingTall: [],
+  larder: [],
+  wall: [],
+  hoodHousing: ["hood"],
+  microwaveWall: ["microwave"],
+  housingWall: [],
+  cornerWall: [],
+  island: [],
 };
 
 export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
@@ -273,15 +334,18 @@ export const UNIT_CATEGORY: Record<UnitType, UnitCategory> = {
   hobOven: "base",
   dishwasher: "base",
   storage: "base",
+  housing: "base",
   cornerBase: "base",
   fridge: "tall",
   ovenHousing: "tall",
   ovenMicrowave: "tall",
   microwave: "tall",
+  housingTall: "tall",
   larder: "tall",
   wall: "wall",
   hoodHousing: "wall",
   microwaveWall: "wall",
+  housingWall: "wall",
   cornerWall: "wall",
   island: "island",
 };

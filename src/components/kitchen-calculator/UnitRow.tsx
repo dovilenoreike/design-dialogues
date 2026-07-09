@@ -23,24 +23,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_APPLIANCE,
-  projectAppliancesFor,
-  UNIT_CATEGORY,
+  APPLIANCE_ITEMS,
   type CabinetUnit,
   type ProjectAppliance,
   type UnitType,
 } from "@/lib/kitchen-calculator";
-import { EssentialBadge } from "./EssentialBadge";
-import { UnitConfig, applianceLabel, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
-import { UnitIcon, UnitTypeIcon } from "./UnitIcon";
+import { ApplianceGlyph } from "./ApplianceGlyph";
+import { UnitConfig, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
+import { UnitIcon } from "./UnitIcon";
 import {
-  buildIdentityGroups,
-  identitiesForCategories,
-  identityById,
-  identityForAppliance,
-  resolveIdentity,
-  type UnitIdentity,
-} from "./unitIdentity";
+  categoriesOf,
+  currentKindOptionId,
+  kindGroupsForCategories,
+  kindOptionById,
+  typeForKind,
+  unitKind,
+  type KindOption,
+} from "./unitKind";
+
+const APPLIANCE_LABEL: Record<string, string> = Object.fromEntries(
+  APPLIANCE_ITEMS.map((a) => [a.id, a.label]),
+);
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
 const CUSTOM = "custom";
@@ -50,13 +53,15 @@ interface UnitRowProps {
   typeOptions: UnitType[];
   /** Essential types already placed somewhere in the kitchen (sink/hob/fridge). */
   presentEssentials?: UnitType[];
-  /** Appliances the project declares — the master set. A unit configured for an
+  /** Appliances the project declares — the master set. A unit holding an
    *  appliance outside this set is flagged as a mistake on its badge. */
   declaredAppliances?: Set<ProjectAppliance>;
+  /** Appliances already placed anywhere — the config offers only what's free. */
+  placedAppliances?: Set<ProjectAppliance>;
   /** Show the drag handle (false when the section has a single unit). */
   sortable?: boolean;
   onTypeChange: (id: string, type: UnitType) => void;
-  onApplianceChange: (id: string, appliance: string) => void;
+  onApplianceChange: (id: string, appliances: ProjectAppliance[]) => void;
   onWidthChange: (id: string, width: number) => void;
   onQuantityChange: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
@@ -66,8 +71,8 @@ interface UnitRowProps {
 export function UnitRow({
   unit,
   typeOptions,
-  presentEssentials = [],
   declaredAppliances,
+  placedAppliances,
   sortable = false,
   onTypeChange,
   onApplianceChange,
@@ -117,62 +122,44 @@ export function UnitRow({
     }
   };
 
-  // Per-unit configuration (visual mock) — reset to type defaults on a type swap.
-  // Appliance is the exception: it lives on the unit (page-level, for the tracker),
-  // so it's read from `unit.appliance` and changes route up via onApplianceChange.
+  // Per-unit interior config (front/shelves/accessories) — reset to type defaults
+  // on a type swap. Appliances live on the unit (for the tracker), so the config
+  // reads them from `unit.appliances` and routes changes up via onApplianceChange.
   const [config, setConfig] = useState<UnitConfigState>(() => defaultUnitConfig(unit));
   useEffect(() => setConfig(defaultUnitConfig(unit)), [unit.type]); // eslint-disable-line react-hooks/exhaustive-deps
-  const configValue: UnitConfigState = { ...config, appliance: unit.appliance };
+  const [configOpen, setConfigOpen] = useState(false);
+  const configValue: UnitConfigState = { ...config, appliances: unit.appliances };
   const handleConfigChange = (next: UnitConfigState) => {
-    // The appliance drives the cabinet type: pick "Oven" and the unit becomes an
-    // oven housing, "None" and it becomes plain storage. Retype so the label,
-    // icon and (later) BOM follow, keeping the chosen appliance.
-    if (next.appliance !== unit.appliance) {
-      const target = identityForAppliance(next.appliance, unit.category);
-      onTypeChange(unit.id, target.type);
-      if (target.appliance !== DEFAULT_APPLIANCE[target.type]) {
-        onApplianceChange(unit.id, target.appliance);
-      }
-    }
+    // The appliance set drives the carcass type (derived in the store handler).
+    const changed =
+      next.appliances.length !== unit.appliances.length ||
+      next.appliances.some((a) => !unit.appliances.includes(a));
+    if (changed) onApplianceChange(unit.id, next.appliances);
     setConfig(next);
   };
 
-  // The picker offers unit *identities* (carcass + appliance) for the section's
-  // categories — so appliance variants (Oven housing, Microwave…) appear, not
-  // just the raw carcass types. Selecting one writes both fields together.
-  const sectionCategories = new Set(typeOptions.map((t) => UNIT_CATEGORY[t]));
-  const groups = buildIdentityGroups(identitiesForCategories(sectionCategories));
-  const currentIdentity = resolveIdentity(unit);
+  // The picker offers just the coarse carcass kinds (Sink / Storage / Appliance
+  // housing / Corner), grouped low/tall. The appliance itself is chosen in the
+  // config — so this list stays tiny and stable.
+  const groups = kindGroupsForCategories(categoriesOf(typeOptions));
+  const currentKindId = currentKindOptionId(unit);
+  const currentLabel = kindOptionById(currentKindId)?.label ?? "Storage";
 
-  const selectIdentity = (id: string) => {
-    const identity = identityById(id);
-    if (!identity) return;
-    onTypeChange(unit.id, identity.type);
-    // Retyping seeds the type's default appliance; override when the identity
-    // wants a different one (e.g. Hob cabinet = storage carcass + hob).
-    if (identity.appliance !== DEFAULT_APPLIANCE[identity.type]) {
-      onApplianceChange(unit.id, identity.appliance);
-    }
+  const selectKind = (id: string) => {
+    const opt = kindOptionById(id);
+    if (!opt) return;
+    onTypeChange(unit.id, typeForKind(opt.kind, opt.category));
+    // Picking "Appliance housing" opens the config so you can assign the appliance.
+    if (opt.kind === "housing") setConfigOpen(true);
   };
 
-  // The project settings are the master list: a unit configured for an appliance
-  // that isn't declared there is a mistake — its badge turns red.
-  const applianceUndeclared =
-    declaredAppliances !== undefined &&
-    projectAppliancesFor(unit.appliance).some((p) => !declaredAppliances.has(p));
+  // A unit holding an appliance the project doesn't declare is a mistake (red).
+  const undeclared = (a: ProjectAppliance) => !!declaredAppliances && !declaredAppliances.has(a);
+  const isEmptyHousing = unitKind(unit) === "housing" && unit.appliances.length === 0;
 
-  const renderOption = (identity: UnitIdentity) => (
-    <SelectItem key={identity.id} value={identity.id}>
-      <span className="flex items-center gap-2">
-        <UnitTypeIcon
-          type={identity.type}
-          appliance={identity.appliance}
-          size={22}
-          className="shrink-0 text-muted-foreground"
-        />
-        <span>{identity.label}</span>
-        <EssentialBadge type={identity.type} present={presentEssentials.includes(identity.type)} />
-      </span>
+  const renderOption = (opt: KindOption) => (
+    <SelectItem key={opt.id} value={opt.id}>
+      {opt.label}
     </SelectItem>
   );
 
@@ -193,7 +180,7 @@ export function UnitRow({
       )}
       <div className="flex flex-1 items-center gap-2">
         {/* The unit thumbnail is the way into per-unit configuration. */}
-        <Dialog>
+        <Dialog open={configOpen} onOpenChange={setConfigOpen}>
           <DialogTrigger asChild>
             <button
               type="button"
@@ -208,23 +195,62 @@ export function UnitRow({
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
-                <UnitTypeIcon
-                  type={currentIdentity.type}
-                  appliance={currentIdentity.appliance}
-                  size={24}
-                  className="text-muted-foreground"
-                />
-                {currentIdentity.label}
+                <UnitIcon unit={unit} size={24} className="text-muted-foreground" />
+                {currentLabel}
                 <span className="text-sm font-normal text-muted-foreground">· {unit.width}mm</span>
               </DialogTitle>
-              <DialogDescription>Set the appliance, front layout and fittings.</DialogDescription>
+              <DialogDescription>Set the appliances, front layout and fittings.</DialogDescription>
             </DialogHeader>
-            <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
+            <UnitConfig
+              unit={unit}
+              value={configValue}
+              onChange={handleConfigChange}
+              declared={declaredAppliances}
+              placed={placedAppliances}
+            />
           </DialogContent>
         </Dialog>
-        <Select value={currentIdentity.id} onValueChange={selectIdentity}>
+        {/* Atomic appliance glyphs — sit next to the cabinet icon so the box +
+            what's inside it read as one picture. Fixed-width slot so the kind
+            dropdowns still line up down the column. Sage when declared, red when
+            the appliance isn't in the project settings. */}
+        <div className="hidden w-16 shrink-0 items-center gap-1 sm:flex">
+          {unit.appliances.map((a) => {
+            const bad = undeclared(a);
+            return (
+              <span
+                key={a}
+                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-1"
+                style={
+                  bad
+                    ? { backgroundColor: "rgba(154,52,18,0.12)", color: "#9a3412" }
+                    : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }
+                }
+                title={
+                  bad
+                    ? `${APPLIANCE_LABEL[a] ?? a} — not in the project settings; add it there or remove it here`
+                    : APPLIANCE_LABEL[a] ?? a
+                }
+              >
+                {bad && <AlertTriangle className="h-3 w-3" />}
+                <ApplianceGlyph id={a} size={15} />
+              </span>
+            );
+          })}
+          {isEmptyHousing && (
+            <span
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ backgroundColor: "rgba(202,138,4,0.12)", color: "#ca8a04" }}
+              title="Empty housing — assign an appliance in the unit configuration"
+            >
+              <AlertTriangle className="h-3 w-3" />
+              Empty
+            </span>
+          )}
+        </div>
+        <Select value={currentKindId} onValueChange={selectKind}>
           <SelectTrigger className="w-52 [&>span]:truncate [&>span]:text-left">
-            <SelectValue>{currentIdentity.label}</SelectValue>
+            <SelectValue>{currentLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {groups.map((g, gi) => (
@@ -236,26 +262,6 @@ export function UnitRow({
             ))}
           </SelectContent>
         </Select>
-        {/* Appliance badge — sage when it's declared in the project settings, red
-            (with a warning) when it isn't (add it there, or change the appliance). */}
-        {unit.appliance !== "none" && (
-          <span
-            className="hidden items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline-flex"
-            style={
-              applianceUndeclared
-                ? { backgroundColor: "rgba(154,52,18,0.12)", color: "#9a3412" }
-                : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }
-            }
-            title={
-              applianceUndeclared
-                ? "Not in the project settings — add it there, or change this unit's appliance"
-                : "Appliance — change it in the unit configuration"
-            }
-          >
-            {applianceUndeclared && <AlertTriangle className="h-3 w-3" />}
-            {applianceLabel(unit.appliance)}
-          </span>
-        )}
       </div>
 
       {editingWidth ? (

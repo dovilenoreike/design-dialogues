@@ -8,6 +8,7 @@ export {
   APPLIANCE_ITEMS,
   defaultAppliances,
   projectAppliancesFor,
+  primaryApplianceId,
   type ProjectAppliance,
 } from "./appliances";
 export { defaultSettings, mockMaterialConfig, mockHardwareDB, hardwarePrice } from "./mock-config";
@@ -27,6 +28,7 @@ export {
   UNIT_LABELS,
   UNIT_CATEGORY,
   DEFAULT_APPLIANCE,
+  DEFAULT_APPLIANCES,
   BASE_TALL_TYPES,
   WALL_TYPES,
   ISLAND_TYPES,

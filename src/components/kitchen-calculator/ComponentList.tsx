@@ -19,6 +19,7 @@ interface ComponentListProps {
   furnitureSubtotal: number;
   presentEssentials: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
+  placedAppliances?: Set<ProjectAppliance>;
   /** Declared-but-unplaced base housings (dishwasher/hob-oven/oven/fridge) offered
    *  as gap fills in each run's length alert. */
   missingBaseHousings?: UnitType[];
@@ -26,7 +27,7 @@ interface ComponentListProps {
   onRunLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
-  onApplianceChange: (runId: string, unitId: string, appliance: string) => void;
+  onApplianceChange: (runId: string, unitId: string, appliances: ProjectAppliance[]) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
@@ -43,7 +44,7 @@ interface ComponentListProps {
   onAddRun: () => void;
   // island handlers (island is not run-scoped)
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
-  onIslandApplianceChange: (unitId: string, appliance: string) => void;
+  onIslandApplianceChange: (unitId: string, appliances: ProjectAppliance[]) => void;
   onIslandWidthChange: (unitId: string, width: number) => void;
   onIslandQuantityChange: (unitId: string, quantity: number) => void;
   onIslandRemove: (unitId: string) => void;
@@ -65,6 +66,7 @@ export function ComponentList({
   furnitureSubtotal,
   presentEssentials,
   declaredAppliances,
+  placedAppliances,
   missingBaseHousings,
   onRunLengthChange,
   onRemoveRun,
@@ -106,6 +108,7 @@ export function ComponentList({
           removable={runs.length > 1}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}
+          placedAppliances={placedAppliances}
           missingBaseHousings={missingBaseHousings}
           onLengthChange={onRunLengthChange}
           onRemoveRun={onRemoveRun}
@@ -145,6 +148,7 @@ export function ComponentList({
         addLabel="Add island"
         emptyLabel="No island. Add one to include it in the estimate."
         declaredAppliances={declaredAppliances}
+        placedAppliances={placedAppliances}
         onTypeChange={onIslandTypeChange}
         onApplianceChange={onIslandApplianceChange}
         onWidthChange={onIslandWidthChange}

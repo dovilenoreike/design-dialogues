@@ -25,12 +25,13 @@ interface RunSectionProps {
   removable: boolean;
   presentEssentials?: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
+  placedAppliances?: Set<ProjectAppliance>;
   /** Declared-but-unplaced base housings offered as gap fills in the length alert. */
   missingBaseHousings?: UnitType[];
   onLengthChange: (runId: string, mm: number) => void;
   onRemoveRun: (runId: string) => void;
   onTypeChange: (runId: string, unitId: string, type: UnitType) => void;
-  onApplianceChange: (runId: string, unitId: string, appliance: string) => void;
+  onApplianceChange: (runId: string, unitId: string, appliances: ProjectAppliance[]) => void;
   onWidthChange: (runId: string, unitId: string, width: number) => void;
   onQuantityChange: (runId: string, unitId: string, quantity: number) => void;
   onRemoveUnit: (runId: string, unitId: string) => void;
@@ -52,6 +53,7 @@ export function RunSection({
   removable,
   presentEssentials,
   declaredAppliances,
+  placedAppliances,
   missingBaseHousings,
   onLengthChange,
   onRemoveRun,
@@ -212,6 +214,7 @@ export function RunSection({
           indicator={runIndicator}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}
+          placedAppliances={placedAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}
@@ -238,6 +241,7 @@ export function RunSection({
           indicator={wallIndicator}
           footerExtra={wallFillButton}
           declaredAppliances={declaredAppliances}
+          placedAppliances={placedAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}
           onApplianceChange={(id, app) => onApplianceChange(run.id, id, app)}
           onWidthChange={(id, width) => onWidthChange(run.id, id, width)}

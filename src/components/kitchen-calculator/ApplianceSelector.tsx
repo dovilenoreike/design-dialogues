@@ -1,5 +1,6 @@
 import { AlertTriangle, Check } from "lucide-react";
 import { APPLIANCE_ITEMS, type ProjectAppliance } from "@/lib/kitchen-calculator";
+import { ApplianceGlyph } from "./ApplianceGlyph";
 
 /**
  * Project-level appliance checklist — declares which appliances the kitchen
@@ -15,11 +16,17 @@ const OCHRE = "#ca8a04";
 interface ApplianceSelectorProps {
   selected: Set<ProjectAppliance>;
   onChange: (next: Set<ProjectAppliance>) => void;
-  /** Appliances actually placed in a unit — used to flag declared-but-missing. */
+  /**
+   * Appliances actually placed in a unit — used to flag declared-but-missing.
+   * Omit before the kitchen is generated (nothing is placed yet), so declared
+   * appliances just read as selected rather than as warnings.
+   */
   placed?: Set<ProjectAppliance>;
 }
 
 export function ApplianceSelector({ selected, onChange, placed }: ApplianceSelectorProps) {
+  const trackPlacement = placed !== undefined;
+
   const toggle = (id: ProjectAppliance) => {
     const next = new Set(selected);
     if (next.has(id)) next.delete(id);
@@ -35,11 +42,13 @@ export function ApplianceSelector({ selected, onChange, placed }: ApplianceSelec
           {APPLIANCE_ITEMS.map((a) => {
             const active = selected.has(a.id);
             const isPlaced = placed?.has(a.id) ?? false;
-            const isMissing = active && !isPlaced;
+            // Only warn about "declared but not placed" once we're tracking placement.
+            const isMissing = trackPlacement && active && !isPlaced;
+            const asPlaced = active && (!trackPlacement || isPlaced);
             const style = active
-              ? isPlaced
-                ? { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" }
-                : { borderColor: OCHRE, color: OCHRE }
+              ? isMissing
+                ? { borderColor: OCHRE, color: OCHRE }
+                : { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" }
               : undefined;
             return (
               <button
@@ -51,7 +60,8 @@ export function ApplianceSelector({ selected, onChange, placed }: ApplianceSelec
                 className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition"
                 style={style}
               >
-                {active && isPlaced && <Check className="h-3 w-3" />}
+                <ApplianceGlyph id={a.id} size={15} />
+                {asPlaced && trackPlacement && <Check className="h-3 w-3" />}
                 {isMissing && <AlertTriangle className="h-3 w-3" />}
                 {a.label}
               </button>

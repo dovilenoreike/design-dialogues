@@ -8,10 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UNIT_LABELS, type UnitType } from "@/lib/kitchen-calculator";
-import { EssentialBadge } from "./EssentialBadge";
+import { type UnitType } from "@/lib/kitchen-calculator";
 import { UnitTypeIcon } from "./UnitIcon";
-import { buildTypeGroups } from "./unitGroups";
+import {
+  categoriesOf,
+  kindGroupsForCategories,
+  typeForKind,
+  type KindOption,
+} from "./unitKind";
 
 interface AddUnitMenuProps {
   label: string;
@@ -21,10 +25,11 @@ interface AddUnitMenuProps {
 }
 
 /**
- * "Add unit" control that lets the user pick which type to add. A single-option
- * section (e.g. island) renders a plain button; otherwise a grouped, icon'd menu.
+ * "Add unit" control that lets the user pick which carcass kind to add (Storage,
+ * Sink, Appliance housing, Corner — the appliance itself is chosen afterwards in
+ * the config). A single-option section (island) renders a plain button.
  */
-export function AddUnitMenu({ label, typeOptions, presentEssentials = [], onAdd }: AddUnitMenuProps) {
+export function AddUnitMenu({ label, typeOptions, onAdd }: AddUnitMenuProps) {
   const trigger = (
     <Button variant="ghost" size="sm" className="gap-1.5" style={{ color: "#647d75" }}>
       <Plus className="h-4 w-4" />
@@ -48,15 +53,17 @@ export function AddUnitMenu({ label, typeOptions, presentEssentials = [], onAdd 
     );
   }
 
-  const groups = buildTypeGroups(typeOptions);
+  const groups = kindGroupsForCategories(categoriesOf(typeOptions));
 
-  const renderItem = (t: UnitType) => (
-    <DropdownMenuItem key={t} className="gap-2" onSelect={() => onAdd(t)}>
-      <UnitTypeIcon type={t} size={22} className="shrink-0 text-muted-foreground" />
-      <span className="flex-1">{UNIT_LABELS[t]}</span>
-      <EssentialBadge type={t} present={presentEssentials.includes(t)} />
-    </DropdownMenuItem>
-  );
+  const renderItem = (opt: KindOption) => {
+    const type = typeForKind(opt.kind, opt.category);
+    return (
+      <DropdownMenuItem key={opt.id} className="gap-2" onSelect={() => onAdd(type)}>
+        <UnitTypeIcon type={type} size={22} className="shrink-0 text-muted-foreground" />
+        <span className="flex-1">{opt.label}</span>
+      </DropdownMenuItem>
+    );
+  };
 
   return (
     <DropdownMenu>
@@ -66,7 +73,7 @@ export function AddUnitMenu({ label, typeOptions, presentEssentials = [], onAdd 
           <div key={g.label ?? `g${gi}`}>
             {gi > 0 && <DropdownMenuSeparator />}
             {g.label && <DropdownMenuLabel>{g.label}</DropdownMenuLabel>}
-            {g.types.map(renderItem)}
+            {g.items.map(renderItem)}
           </div>
         ))}
       </DropdownMenuContent>

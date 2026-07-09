@@ -8,6 +8,8 @@
  * See kitchen-calculator-spec.md for the source specification.
  */
 
+import type { ProjectAppliance } from "./appliances";
+
 // ---------------------------------------------------------------------------
 // Material config (externally injected — mocked for V1)
 // ---------------------------------------------------------------------------
@@ -111,21 +113,28 @@ export type Part =
 export type UnitCategory = "base" | "tall" | "wall" | "island";
 
 export type UnitType =
+  // base
   | "sink"
   | "hob"
   | "hobOven"
   | "dishwasher"
   | "storage"
+  | "housing" // generic appliance housing, no appliance assigned yet
   | "cornerBase"
+  // tall
   | "fridge"
   | "ovenHousing"
   | "ovenMicrowave"
   | "microwave"
+  | "housingTall" // generic empty appliance housing (tall)
   | "larder"
+  // wall
   | "wall"
   | "hoodHousing"
   | "microwaveWall"
+  | "housingWall" // generic empty appliance housing (wall)
   | "cornerWall"
+  // island
   | "island";
 
 export interface CabinetUnit {
@@ -141,11 +150,11 @@ export interface CabinetUnit {
   /** True when the unit contributes to the base-run worktop above it. */
   occupiesWorktop: boolean;
   /**
-   * Integrated appliance id (UnitConfig ids: "none" | "sink" | "hob" | "hobOven"
-   * | "oven" | "dishwasher" | "microwave" | "extractor" | "fridge"). Seeded from
-   * the unit type; drives the project appliance tracker. Not yet priced.
+   * The atomic project appliances integrated in this unit (e.g. `["hob","oven"]`
+   * for a hob/oven cabinet, `[]` for plain storage). Seeded from the unit type;
+   * drives the project appliance tracker. Not yet priced.
    */
-  appliance: string;
+  appliances: ProjectAppliance[];
 }
 
 /** Kitchen shape. Islands are orthogonal (their own section), not a layout. */

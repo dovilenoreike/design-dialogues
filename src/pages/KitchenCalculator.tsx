@@ -6,6 +6,7 @@ import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareG
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
 import { KitchenSetup } from "@/components/kitchen-calculator/KitchenSetup";
 import { MaterialsHeader } from "@/components/kitchen-calculator/MaterialsHeader";
+import { typeForAppliances } from "@/components/kitchen-calculator/unitKind";
 import {
   MissingUnitsAlert,
   type MissingItem,
@@ -195,8 +196,14 @@ const KitchenCalculator = () => {
   const handleQuantityChange = (runId: string, unitId: string, quantity: number) =>
     mapRunUnit(runId, unitId, (u) => ({ ...u, quantity: Math.max(1, Math.round(quantity)) }));
 
-  const handleApplianceChange = (runId: string, unitId: string, appliance: string) =>
-    mapRunUnit(runId, unitId, (u) => ({ ...u, appliance }));
+  // The appliance set drives the carcass type: assigning an oven makes it an oven
+  // housing, clearing it back to an (empty) housing. Retype so category/icon/BOM
+  // follow, then keep the chosen set.
+  const handleApplianceChange = (runId: string, unitId: string, appliances: ProjectAppliance[]) =>
+    mapRunUnit(runId, unitId, (u) => ({
+      ...retypeUnit(u, typeForAppliances(appliances, u.category)),
+      appliances,
+    }));
 
   const handleRemoveUnit = (runId: string, unitId: string) =>
     updateRun(runId, (r) => ({
@@ -280,8 +287,9 @@ const KitchenCalculator = () => {
 
   const handleIslandTypeChange = (unitId: string, type: UnitType) =>
     mapIsland(unitId, (u) => retypeUnit(u, type));
-  const handleIslandApplianceChange = (unitId: string, appliance: string) =>
-    mapIsland(unitId, (u) => ({ ...u, appliance }));
+  // Islands keep the island carcass; the appliance just rides on it.
+  const handleIslandApplianceChange = (unitId: string, appliances: ProjectAppliance[]) =>
+    mapIsland(unitId, (u) => ({ ...u, appliances }));
   const handleIslandWidthChange = (unitId: string, width: number) =>
     mapIsland(unitId, (u) => ({ ...u, width, isCustomWidth: isCustom(width) }));
   const handleIslandQuantityChange = (unitId: string, quantity: number) =>
@@ -346,7 +354,7 @@ const KitchenCalculator = () => {
       ...state.runs.flatMap((r) => [...r.baseUnits, ...r.wallUnits]),
       ...state.islandUnits,
     ];
-    for (const u of units) for (const p of projectAppliancesFor(u.appliance)) set.add(p);
+    for (const u of units) for (const p of u.appliances) set.add(p);
     return set;
   }, [state]);
 
@@ -371,7 +379,11 @@ const KitchenCalculator = () => {
     setHasEdits(true);
     setState((prev) => {
       if (!prev) return prev;
-      const unit = makeUnit(type, addWidth(type), appliance ? { appliance } : undefined);
+      const unit = makeUnit(
+        type,
+        addWidth(type),
+        appliance ? { appliances: projectAppliancesFor(appliance) } : undefined,
+      );
       return {
         ...prev,
         runs: prev.runs.map((r) =>
@@ -475,6 +487,13 @@ const KitchenCalculator = () => {
             onGenerate={handleGenerate}
             onStartFresh={handleStartFresh}
           />
+          {/* Declare the kitchen's appliances up front — Generate places a housing
+              for each. Stays editable afterwards (placement is then tracked). */}
+          <ApplianceSelector
+            selected={appliances}
+            onChange={setAppliances}
+            placed={state ? placedAppliances : undefined}
+          />
           <KitchenSettingsPanel settings={settings} onChange={setSettings} />
         </div>
 
@@ -483,11 +502,6 @@ const KitchenCalculator = () => {
             <Separator className="my-6" />
             <div className="mb-4 flex flex-wrap items-center gap-x-8 gap-y-3">
               <HardwareGradeSelector value={grade} onChange={setGrade} />
-              <ApplianceSelector
-                selected={appliances}
-                onChange={setAppliances}
-                placed={placedAppliances}
-              />
             </div>
 
             {missingItems.length > 0 && (
@@ -518,6 +532,7 @@ const KitchenCalculator = () => {
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}
               declaredAppliances={appliances}
+              placedAppliances={placedAppliances}
               missingBaseHousings={missingBaseHousings}
               furnitureSubtotal={
                 pricing.unitsTotal + pricing.worktop + pricing.islandWorktop + pricing.extras
