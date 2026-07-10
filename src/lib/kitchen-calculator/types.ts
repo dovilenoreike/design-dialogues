@@ -181,10 +181,18 @@ export interface CabinetUnit {
   front?: FrontConfig;
   shelves?: number;
   accessories?: string[];
+  /**
+   * A sink cutout riding this carcass. The dedicated `"sink"` *type* is a plain
+   * low base sink cabinet; this flag lets a sink also sit on a corner or island
+   * carcass without replacing its type (mirrors how an island carries its
+   * appliance). Use `unitHasSink()` to test "has a sink" across both forms.
+   */
+  sink?: boolean;
 }
 
-/** The persisted interior-config slice of a unit (front/shelves/accessories). */
-export type UnitFinish = Pick<CabinetUnit, "front" | "shelves" | "accessories">;
+/** The persisted, row-editable slice of a unit (front/shelves/accessories +
+ *  the sink fixture) — set directly from the row and spread onto the unit. */
+export type UnitFinish = Pick<CabinetUnit, "front" | "shelves" | "accessories" | "sink">;
 
 /** Kitchen shape. Islands are orthogonal (their own section), not a layout. */
 export type KitchenLayout = "line" | "l" | "u" | "galley";

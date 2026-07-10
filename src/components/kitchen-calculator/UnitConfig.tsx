@@ -11,10 +11,10 @@ import {
 
 /**
  * Per-unit configuration — VISUAL MOCK ONLY (Phase: experience exploration).
- * Lets a unit deviate from its type's default interior: its front composition,
- * shelf count and a couple of key accessories. Appliances are edited inline on
- * the row (the glyph +/drop), so they're intentionally not here. Nothing is
- * wired to pricing yet — it exists to feel out the interaction.
+ * Lets a unit deviate from its type's default interior: its front composition
+ * and shelf count. Appliances, sink and fittings are edited on the row (glyphs +
+ * the "+" menu), so they're intentionally not here. Nothing is wired to pricing
+ * yet — it exists to feel out the interaction.
  *
  * The front is *composed*, not enumerated: pick a body (Doors / Appliance /
  * none) and optionally stack drawers on top. Doors + drawers reads as a combo;
@@ -39,7 +39,7 @@ const maxDrawersFor = (body: FrontBody): number =>
 
 // ─── Options ────────────────────────────────────────────────────────────────
 
-interface Option {
+export interface Option {
   id: string;
   label: string;
 }
@@ -168,7 +168,7 @@ export function frontShort(front: FrontConfig): string {
 }
 
 // A couple of the most-used accessories, kept intentionally minimal.
-function accessoriesFor(unit: CabinetUnit): Option[] {
+export function accessoriesFor(unit: CabinetUnit): Option[] {
   if (unit.type === "dishwasher" || unit.type === "hoodHousing") return [];
   if (unit.type === "cornerBase" || unit.type === "cornerWall")
     return [{ id: "carousel", label: "Corner carousel" }];
@@ -341,7 +341,6 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
   const allow = allowedElements(validIds);
   // An appliance housing with no door alternative must keep its facade.
   const applianceLocked = allow.appliance && !allow.doors;
-  const accessories = accessoriesFor(unit);
 
   const doorsActive = front.body === "doors";
   const applianceActive = front.body === "appliance";
@@ -376,14 +375,6 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
 
   const drawerValues = Array.from({ length: maxDrawersFor(front.body) }, (_, i) => i + 1);
   const doorValues = Array.from({ length: allow.maxDoors - allow.minDoors + 1 }, (_, i) => allow.minDoors + i);
-
-  const toggleAccessory = (id: string) =>
-    onChange({
-      ...value,
-      accessories: value.accessories.includes(id)
-        ? value.accessories.filter((a) => a !== id)
-        : [...value.accessories, id],
-    });
 
   const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <div className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -472,29 +463,6 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
               onChange={(shelves) => onChange({ ...value, shelves })}
               label="shelves"
             />
-          </div>
-        </div>
-      )}
-
-      {/* Accessories — deliberately just the essentials for now. */}
-      {accessories.length > 0 && (
-        <div>
-          <SectionLabel>Accessories</SectionLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {accessories.map((acc) => {
-              const active = value.accessories.includes(acc.id);
-              return (
-                <button
-                  key={acc.id}
-                  type="button"
-                  onClick={() => toggleAccessory(acc.id)}
-                  className="rounded-full border px-3 py-1.5 text-xs transition"
-                  style={active ? { backgroundColor: SAGE, borderColor: SAGE, color: "#fff" } : undefined}
-                >
-                  {acc.label}
-                </button>
-              );
-            })}
           </div>
         </div>
       )}

@@ -22,7 +22,7 @@ import type {
   PricingContext,
   UnitPricing,
 } from "./types";
-import { unitParts } from "./units";
+import { unitHasSink, unitParts } from "./units";
 
 /**
  * Auto-derived quote lines as a share of the furniture cost (mock defaults —
@@ -52,6 +52,11 @@ function sumWidths(units: CabinetUnit[]): number {
 /** Total count of a given unit type across a list (respecting quantity). */
 function countOfType(units: CabinetUnit[], type: CabinetUnit["type"]): number {
   return units.filter((u) => u.type === type).reduce((sum, u) => sum + u.quantity, 0);
+}
+
+/** Sink cutouts across a list — the dedicated sink type or the fixture flag. */
+function countSinks(units: CabinetUnit[]): number {
+  return units.filter(unitHasSink).reduce((sum, u) => sum + u.quantity, 0);
 }
 
 /** Base + tall units across every run. */
@@ -91,7 +96,7 @@ function worktopPrice(state: KitchenState, ctx: PricingContext): number {
     if (run.worktop === false) continue; // supplied separately — not costed
     const lm = m(runWorktopLengthMm(run));
     price += lm * WORKTOP_DEPTH_M * worktop + lm * edgeBanding;
-    price += countOfType(run.baseUnits, "sink") * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
+    price += countSinks(run.baseUnits) * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
     price += countOfType(run.baseUnits, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
   }
   return price;
@@ -106,7 +111,8 @@ function islandWorktopPrice(state: KitchenState, ctx: PricingContext): number {
   const { worktop } = ctx.config.surfaces;
   const { edgeBanding } = ctx.config.structural;
   const exposedEdgeLm = widthLm + 2 * depthM; // front + both ends
-  return widthLm * depthM * worktop + exposedEdgeLm * edgeBanding;
+  const sinkCutouts = countSinks(state.islandUnits) * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
+  return widthLm * depthM * worktop + exposedEdgeLm * edgeBanding + sinkCutouts;
 }
 
 // --- Extras (spec §Extras — all defaulted on) -----------------------------

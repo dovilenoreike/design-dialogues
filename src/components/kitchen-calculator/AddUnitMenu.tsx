@@ -4,18 +4,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type UnitType } from "@/lib/kitchen-calculator";
 import { UnitTypeIcon } from "./UnitIcon";
-import {
-  categoriesOf,
-  kindGroupsForCategories,
-  typeForKind,
-  type KindOption,
-} from "./unitKind";
+import { categoriesOf, typeForKind } from "./unitKind";
 
 interface AddUnitMenuProps {
   label: string;
@@ -25,27 +18,32 @@ interface AddUnitMenuProps {
 }
 
 /**
- * "Add unit" control that lets the user pick which carcass kind to add (Storage,
- * Sink, Appliance housing, Corner — the appliance itself is chosen afterwards in
- * the config). A single-option section (island) renders a plain button.
+ * "Add unit" control. The only choice at creation time is the carcass *shape*
+ * (Low / Tall / Corner) — a plain box. What it becomes (a housing, a sink) then
+ * follows from what you add to it via the row's "+" menu. A single-option
+ * section (island) renders a plain button.
  */
 export function AddUnitMenu({ label, typeOptions, onAdd }: AddUnitMenuProps) {
-  const trigger = (
-    <Button variant="ghost" size="sm" className="gap-1.5" style={{ color: "#647d75" }}>
-      <Plus className="h-4 w-4" />
-      {label}
-    </Button>
-  );
+  const cats = categoriesOf(typeOptions);
+  const shapes: { id: string; label: string; type: UnitType }[] = [];
+  if (cats.has("base")) shapes.push({ id: "low", label: "Low unit", type: typeForKind("storage", "base") });
+  if (cats.has("tall")) shapes.push({ id: "tall", label: "Tall unit", type: typeForKind("storage", "tall") });
+  if (cats.has("base")) shapes.push({ id: "cornerBase", label: "Corner", type: typeForKind("corner", "base") });
+  if (cats.has("wall")) {
+    shapes.push({ id: "wall", label: "Wall cabinet", type: typeForKind("storage", "wall") });
+    shapes.push({ id: "cornerWall", label: "Corner", type: typeForKind("corner", "wall") });
+  }
+  if (cats.has("island")) shapes.push({ id: "island", label: "Island", type: typeForKind("storage", "island") });
 
-  // One choice — no point showing a menu.
-  if (typeOptions.length <= 1) {
+  // One choice (island) — no point showing a menu.
+  if (shapes.length <= 1) {
     return (
       <Button
         variant="ghost"
         size="sm"
         className="gap-1.5"
         style={{ color: "#647d75" }}
-        onClick={() => typeOptions[0] && onAdd(typeOptions[0])}
+        onClick={() => shapes[0] && onAdd(shapes[0].type)}
       >
         <Plus className="h-4 w-4" />
         {label}
@@ -53,28 +51,20 @@ export function AddUnitMenu({ label, typeOptions, onAdd }: AddUnitMenuProps) {
     );
   }
 
-  const groups = kindGroupsForCategories(categoriesOf(typeOptions));
-
-  const renderItem = (opt: KindOption) => {
-    const type = typeForKind(opt.kind, opt.category);
-    return (
-      <DropdownMenuItem key={opt.id} className="gap-2" onSelect={() => onAdd(type)}>
-        <UnitTypeIcon type={type} size={22} className="shrink-0 text-muted-foreground" />
-        <span className="flex-1">{opt.label}</span>
-      </DropdownMenuItem>
-    );
-  };
-
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-60">
-        {groups.map((g, gi) => (
-          <div key={g.label ?? `g${gi}`}>
-            {gi > 0 && <DropdownMenuSeparator />}
-            {g.label && <DropdownMenuLabel>{g.label}</DropdownMenuLabel>}
-            {g.items.map(renderItem)}
-          </div>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-1.5" style={{ color: "#647d75" }}>
+          <Plus className="h-4 w-4" />
+          {label}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {shapes.map((s) => (
+          <DropdownMenuItem key={s.id} className="gap-2" onSelect={() => onAdd(s.type)}>
+            <UnitTypeIcon type={s.type} size={22} className="shrink-0 text-muted-foreground" />
+            <span className="flex-1">{s.label}</span>
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

@@ -34,6 +34,7 @@ export {
   WALL_TYPES,
   ISLAND_TYPES,
   ESSENTIAL_TYPES,
+  unitHasSink,
 } from "./units";
 export { priceKitchen, buildContext, effectiveExtraAmount, AUTO_EXTRA_PCT } from "./calculate";
 export { pricePart, priceParts } from "./parts";

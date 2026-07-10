@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AlertTriangle, ChevronDown, Copy, GripVertical, Plus, SlidersHorizontal, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  Copy,
+  GripVertical,
+  Plus,
+  SlidersHorizontal,
+  Wrench,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,38 +24,28 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   APPLIANCE_ITEMS,
   type CabinetUnit,
   type ProjectAppliance,
   type UnitFinish,
   type UnitType,
+  unitHasSink,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
-import { FrontIcon, UnitConfig, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
+import { FrontIcon, UnitConfig, accessoriesFor, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon } from "./UnitIcon";
 import {
   addableAppliances,
-  categoriesOf,
   currentKindOptionId,
-  kindGroupsForCategories,
   kindOptionById,
   typeForKind,
   unitKind,
-  type KindOption,
 } from "./unitKind";
 
 const APPLIANCE_LABEL: Record<string, string> = Object.fromEntries(
@@ -76,10 +75,17 @@ interface UnitRowProps {
   onDuplicate: (id: string) => void;
 }
 
-/** One component-list row: drag handle + type swap + width + ×quantity + remove. */
+/**
+ * One component-list row. Kind is *derived from contents* — a plain box is
+ * Storage; add an appliance and it becomes the matching housing; a sink makes it
+ * a sink cabinet. Everything you can put in a unit (appliances, sink, fittings)
+ * and the structural shape (corner / tall) live behind one "+" menu; the front
+ * look lives behind the front icon.
+ */
 export function UnitRow({
   unit,
   typeOptions,
+  presentEssentials,
   declaredAppliances,
   placedAppliances,
   sortable = false,
@@ -135,6 +141,7 @@ export function UnitRow({
   // The glyph that was tapped — drives the drop/edit modal. "sink" is a fixture
   // rather than a project appliance, but shares the same modal.
   const [editAppliance, setEditAppliance] = useState<ProjectAppliance | "sink" | null>(null);
+  const [accessoriesOpen, setAccessoriesOpen] = useState(false);
 
   // The interior config lives on the unit now (so it survives duplication and
   // reordering); fall back to the type defaults for any field left unset.
@@ -163,41 +170,71 @@ export function UnitRow({
     }
   };
 
-  // The picker offers just the coarse carcass kinds (Sink / Storage / Appliance
-  // housing / Corner), grouped low/tall. The appliance itself is chosen in the
-  // config — so this list stays tiny and stable.
-  const groups = kindGroupsForCategories(categoriesOf(typeOptions));
-  const currentKindId = currentKindOptionId(unit);
-  const currentLabel = kindOptionById(currentKindId)?.label ?? "Storage";
-
-  const selectKind = (id: string) => {
-    const opt = kindOptionById(id);
-    if (!opt) return;
-    onTypeChange(unit.id, typeForKind(opt.kind, opt.category));
-    // Picking "Appliance housing" opens the config so you can assign the appliance.
-    if (opt.kind === "housing") setConfigOpen(true);
-  };
+  const kind = unitKind(unit);
+  const currentLabel = kindOptionById(currentKindOptionId(unit))?.label ?? "Storage";
 
   // A unit holding an appliance the project doesn't declare is a mistake (red).
   const undeclared = (a: ProjectAppliance) => !!declaredAppliances && !declaredAppliances.has(a);
-  const isEmptyHousing = unitKind(unit) === "housing" && unit.appliances.length === 0;
 
-  // Inline "+" affordance. Only housings and islands hold appliances; the menu
-  // offers what's still assignable (declared, not placed elsewhere) that forms a
-  // valid state — the first appliance when empty, or the free pairing partner.
-  const canHoldAppliance = unitKind(unit) === "housing" || unit.category === "island";
+  // ── What the "+" can add ────────────────────────────────────────────────
+  // Kind is derived from contents, so appliances can be added to a plain storage
+  // box too (it becomes a housing) — not only to an existing housing.
+  const canHoldAppliance = kind === "storage" || kind === "housing" || unit.category === "island";
   const assignableIds = APPLIANCE_ITEMS.map((a) => a.id).filter(
     (id) =>
       (declaredAppliances?.has(id) ?? true) &&
       (!(placedAppliances?.has(id) ?? false) || unit.appliances.includes(id)),
   );
   const addable = canHoldAppliance ? addableAppliances(unit.appliances, assignableIds) : [];
+  const isEmptyHousing = kind === "housing" && unit.appliances.length === 0;
 
-  const renderOption = (opt: KindOption) => (
-    <SelectItem key={opt.id} value={opt.id}>
-      {opt.label}
-    </SelectItem>
-  );
+  // Fittings apply where the interior is usable. A hob sits on the worktop, so
+  // its cabinet keeps a full interior (cutlery insert, bin) — as do plain drawer
+  // cabinets. An oven / fridge / dishwasher fills the box, so no fittings there.
+  const interiorFilled = unit.appliances.some((a) => a !== "hob");
+  const accessoryOptions = interiorFilled ? [] : accessoriesFor(unit);
+  const currentAccessories = configValue.accessories;
+  const activeAccessories = accessoryOptions.filter((o) => currentAccessories.includes(o.id));
+  const toggleAccessory = (id: string) =>
+    onConfigChange(unit.id, {
+      accessories: currentAccessories.includes(id)
+        ? currentAccessories.filter((x) => x !== id)
+        : [...currentAccessories, id],
+    });
+
+  // A sink can sit on a plain low base box (its own dedicated carcass), or ride a
+  // corner or island carcass as a fixture. It's offered only while the kitchen
+  // has no sink yet (normally just one), and never on a unit that already has it.
+  const hasSink = unitHasSink(unit);
+  const sinkPlaced = !!presentEssentials?.includes("sink");
+  const isLowBox = unit.category === "base" && kind === "storage" && unit.appliances.length === 0;
+  const isCornerBase = kind === "corner" && unit.category === "base";
+  const isIsland = unit.category === "island";
+  const canAddSink = !hasSink && !sinkPlaced && (isLowBox || isCornerBase || isIsland);
+  // A plain low box becomes the dedicated sink carcass; corner / island keep their
+  // carcass and carry the sink as a fixture flag.
+  const addSink = () =>
+    isLowBox ? onTypeChange(unit.id, typeForKind("sink", "base")) : onConfigChange(unit.id, { sink: true });
+  const removeSink = () =>
+    unit.type === "sink"
+      ? onTypeChange(unit.id, typeForKind("storage", unit.category))
+      : onConfigChange(unit.id, { sink: false });
+
+  // The "+" adds *contents* — appliances, sink, fittings. Each option drops as
+  // it's added; when nothing can be added, the "+" disappears. Shape (low / tall
+  // / corner) is chosen when the unit is created (in the Add-unit menu), not here.
+  // Fittings only appear in the "+" to add the *first* one — once any fitting
+  // exists, its 🔧 icon represents all of them (add more / remove happen there).
+  const canAddFirstFitting = accessoryOptions.length > 0 && activeAccessories.length === 0;
+  const hasAddOptions = addable.length > 0 || canAddSink || canAddFirstFitting;
+
+  // Removing the last appliance leaves a plain box (Storage), not an empty
+  // housing — kind follows contents.
+  const removeAppliance = (a: ProjectAppliance) => {
+    const next = unit.appliances.filter((x) => x !== a);
+    if (next.length === 0) onTypeChange(unit.id, typeForKind("storage", unit.category));
+    else onApplianceChange(unit.id, next);
+  };
 
   return (
     <div ref={setNodeRef} style={rowStyle} className="flex items-center gap-2 bg-background py-2">
@@ -215,13 +252,13 @@ export function UnitRow({
         <span className="w-6 shrink-0" aria-hidden />
       )}
       <div className="flex flex-1 items-center gap-2">
-        {/* The unit thumbnail is the way into per-unit configuration. */}
+        {/* The front icon is the way into per-unit appearance (front / shelves). */}
         <Dialog open={configOpen} onOpenChange={setConfigOpen}>
           <DialogTrigger asChild>
             <button
               type="button"
               aria-label={`Configure ${unit.name}`}
-              title="Configure front, shelves & accessories"
+              title="Configure front & shelves"
               className="group/icon flex shrink-0 flex-col items-center gap-0.5 rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1"
               style={{ ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)" }}
             >
@@ -236,19 +273,16 @@ export function UnitRow({
                 {currentLabel}
                 <span className="text-sm font-normal text-muted-foreground">· {unit.width}mm</span>
               </DialogTitle>
-              <DialogDescription>Set the appliances, front layout and fittings.</DialogDescription>
+              <DialogDescription>Set the front layout and shelves.</DialogDescription>
             </DialogHeader>
             <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
-        {/* Atomic appliance glyphs — sit next to the cabinet icon so the box +
-            what's inside it read as one picture. Fixed-width slot so the kind
-            dropdowns still line up down the column. Sage when declared, red when
-            the appliance isn't in the project settings. */}
-        <div className="flex w-20 shrink-0 items-center gap-1">
-          {/* A sink is a fixture, not a project appliance — shown in the same
-              glyph language but a distinct water-blue so it reads as different. */}
-          {unit.type === "sink" && (
+
+        {/* Contents — sink / appliance glyphs, a fittings count, and the "+".
+            Kind is derived and read from the glyphs, so no text label. */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          {hasSink && (
             <button
               type="button"
               onClick={() => setEditAppliance("sink")}
@@ -277,9 +311,7 @@ export function UnitRow({
                   ...(bad
                     ? { backgroundColor: "rgba(154,52,18,0.12)", color: "#9a3412" }
                     : { backgroundColor: "rgba(100,125,117,0.12)", color: "#647d75" }),
-                  ["--tw-ring-color" as string]: bad
-                    ? "rgba(154,52,18,0.4)"
-                    : "rgba(100,125,117,0.4)",
+                  ["--tw-ring-color" as string]: bad ? "rgba(154,52,18,0.4)" : "rgba(100,125,117,0.4)",
                 }}
                 title={
                   bad
@@ -292,41 +324,27 @@ export function UnitRow({
               </button>
             );
           })}
-          {addable.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={isEmptyHousing ? "Add appliance" : "Add paired appliance"}
-                  title={isEmptyHousing ? "Add appliance" : "Add paired appliance"}
-                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-1"
-                  style={{
-                    // Ochre while an empty housing still needs its appliance;
-                    // sage for the optional pairing add on an already-filled unit.
-                    color: isEmptyHousing ? "#ca8a04" : "#647d75",
-                    borderColor: isEmptyHousing
-                      ? "rgba(202,138,4,0.5)"
-                      : "rgba(100,125,117,0.5)",
-                    ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)",
-                  }}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {addable.map((a) => (
-                  <DropdownMenuItem
-                    key={a}
-                    className="gap-2"
-                    onSelect={() => onApplianceChange(unit.id, [...unit.appliances, a])}
-                  >
-                    <ApplianceGlyph id={a} size={15} />
-                    {APPLIANCE_LABEL[a] ?? a}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+          {/* Fittings collapse into one slate chip with a count; tap to edit or
+              remove. Adding is done from the "+" (until all are used). */}
+          {activeAccessories.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAccessoriesOpen(true)}
+              aria-label="Edit fittings"
+              title={`Fittings: ${activeAccessories.map((a) => a.label).join(", ")} — tap to edit`}
+              className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-1 text-[11px] font-medium transition hover:ring-1 focus-visible:outline-none focus-visible:ring-1"
+              style={{
+                backgroundColor: "rgba(100,116,139,0.16)",
+                color: "#475569",
+                ["--tw-ring-color" as string]: "rgba(100,116,139,0.45)",
+              }}
+            >
+              <Wrench className="h-3 w-3" />
+              {activeAccessories.length}
+            </button>
           )}
+
           {isEmptyHousing && addable.length === 0 && (
             <span
               className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium"
@@ -337,14 +355,64 @@ export function UnitRow({
               Empty
             </span>
           )}
+
+          {hasAddOptions && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Add to unit"
+                  title="Add appliance, sink, fitting or shape"
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-dashed transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-1"
+                  style={{
+                    color: isEmptyHousing ? "#ca8a04" : "#647d75",
+                    borderColor: isEmptyHousing ? "rgba(202,138,4,0.5)" : "rgba(100,125,117,0.5)",
+                    ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)",
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {addable.length > 0 && (
+                  <>
+                    <DropdownMenuLabel>{unit.appliances.length ? "Add appliance" : "Appliance"}</DropdownMenuLabel>
+                    {addable.map((a) => (
+                      <DropdownMenuItem
+                        key={a}
+                        className="gap-2"
+                        onSelect={() => onApplianceChange(unit.id, [...unit.appliances, a])}
+                      >
+                        <ApplianceGlyph id={a} size={15} />
+                        {APPLIANCE_LABEL[a] ?? a}
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+
+                {canAddSink && (
+                  <DropdownMenuItem className="gap-2" onSelect={addSink}>
+                    <ApplianceGlyph id="sink" size={15} />
+                    Sink
+                  </DropdownMenuItem>
+                )}
+
+                {canAddFirstFitting && (
+                  <>
+                    {(addable.length > 0 || canAddSink) && <DropdownMenuSeparator />}
+                    <DropdownMenuItem className="gap-2" onSelect={() => setAccessoriesOpen(true)}>
+                      <Wrench className="h-4 w-4 text-muted-foreground" />
+                      Fittings…
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
-        {/* Tapping an appliance glyph opens this modal. For now it only offers to
-            drop the appliance; a later step will let you swap it for another. */}
-        <Dialog
-          open={editAppliance !== null}
-          onOpenChange={(open) => !open && setEditAppliance(null)}
-        >
+        {/* Tapping a sink / appliance glyph opens this modal to remove it. */}
+        <Dialog open={editAppliance !== null} onOpenChange={(open) => !open && setEditAppliance(null)}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
@@ -359,7 +427,9 @@ export function UnitRow({
               </DialogTitle>
               <DialogDescription>
                 {editAppliance === "sink"
-                  ? "Remove the sink? This cabinet becomes plain storage."
+                  ? unit.type === "sink"
+                    ? "Remove the sink? This cabinet becomes plain storage."
+                    : "Remove the sink from this cabinet? The carcass stays as it is."
                   : "Remove this appliance from the unit? It stays available to place elsewhere."}
               </DialogDescription>
             </DialogHeader>
@@ -372,12 +442,9 @@ export function UnitRow({
                 style={{ backgroundColor: "#9a3412" }}
                 onClick={() => {
                   if (editAppliance === "sink") {
-                    onTypeChange(unit.id, typeForKind("storage", unit.category));
+                    removeSink();
                   } else if (editAppliance) {
-                    onApplianceChange(
-                      unit.id,
-                      unit.appliances.filter((x) => x !== editAppliance),
-                    );
+                    removeAppliance(editAppliance);
                   }
                   setEditAppliance(null);
                 }}
@@ -387,20 +454,43 @@ export function UnitRow({
             </div>
           </DialogContent>
         </Dialog>
-        <Select value={currentKindId} onValueChange={selectKind}>
-          <SelectTrigger className="w-52 [&>span]:truncate [&>span]:text-left">
-            <SelectValue>{currentLabel}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {groups.map((g, gi) => (
-              <SelectGroup key={g.label ?? `g${gi}`}>
-                {gi > 0 && <SelectSeparator />}
-                {g.label && <SelectLabel>{g.label}</SelectLabel>}
-                {g.items.map(renderOption)}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
+
+        {/* Fittings editor — add/remove internal accessories (the "🔧 N" icon and
+            the "+" menu both open this). */}
+        <Dialog open={accessoriesOpen} onOpenChange={setAccessoriesOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
+                <Wrench className="h-4 w-4 text-muted-foreground" />
+                Fittings
+              </DialogTitle>
+              <DialogDescription>Internal accessories for this cabinet.</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-wrap gap-1.5">
+              {accessoryOptions.map((acc) => {
+                const active = currentAccessories.includes(acc.id);
+                return (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => toggleAccessory(acc.id)}
+                    className="rounded-full border px-3 py-1.5 text-xs transition"
+                    style={
+                      active ? { backgroundColor: "#647d75", borderColor: "#647d75", color: "#fff" } : undefined
+                    }
+                  >
+                    {acc.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-end">
+              <Button variant="ghost" onClick={() => setAccessoriesOpen(false)}>
+                Done
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex w-32 shrink-0 items-center gap-1">

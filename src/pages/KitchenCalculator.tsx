@@ -29,6 +29,7 @@ import {
   defaultAppliances,
   defaultSettings,
   ESSENTIAL_TYPES,
+  unitHasSink,
   generateKitchen,
   makeExtraCost,
   makeRun,
@@ -376,7 +377,11 @@ const KitchenCalculator = () => {
   // --- completeness (aggregate across all runs) ---------------------------
 
   const presentEssentials = state
-    ? ESSENTIAL_TYPES.filter((t) => state.runs.some((r) => r.baseUnits.some((u) => u.type === t)))
+    ? ESSENTIAL_TYPES.filter((t) =>
+        t === "sink"
+          ? [...state.runs.flatMap((r) => r.baseUnits), ...state.islandUnits].some(unitHasSink)
+          : state.runs.some((r) => r.baseUnits.some((u) => u.type === t)),
+      )
     : [];
 
   // Project appliances actually placed in a unit — powers the "missing" tracker.

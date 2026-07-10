@@ -378,3 +378,11 @@ export const ISLAND_TYPES: UnitType[] = ["island"];
  * and tracked for the missing-essentials notice.
  */
 export const ESSENTIAL_TYPES: UnitType[] = ["sink", "hobOven", "fridge"];
+
+/**
+ * Whether a unit carries a sink cutout. A sink appears in two forms: the
+ * dedicated `"sink"` type (a plain low base sink cabinet) and the `sink` fixture
+ * flag riding a corner or island carcass. Both cost a sink cutout and count as
+ * the kitchen's one sink.
+ */
+export const unitHasSink = (u: CabinetUnit): boolean => u.type === "sink" || u.sink === true;
