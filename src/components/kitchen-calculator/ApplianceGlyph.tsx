@@ -5,16 +5,30 @@ import type { ProjectAppliance } from "@/lib/kitchen-calculator";
  * kitchen plan symbol. Monochrome line art (currentColor), 16×16 viewbox — pair
  * with a tooltip/label since not every symbol is self-evident.
  */
+// Sinks aren't project appliances, but they read as a fixture in the same glyph
+// language (drawn in a different colour by the caller).
+type GlyphId = ProjectAppliance | "sink";
+
 interface ApplianceGlyphProps {
-  id: ProjectAppliance;
+  id: GlyphId;
   size?: number;
   className?: string;
 }
 
 const SW = 1.3;
 
-function shapes(id: ProjectAppliance): JSX.Element {
+function shapes(id: GlyphId): JSX.Element {
   switch (id) {
+    case "sink":
+      // Plan symbol: a basin bowl with a faucet above it.
+      return (
+        <>
+          <rect x={2} y={2} width={12} height={12} rx={1.5} />
+          <circle cx={8} cy={9.5} r={3} />
+          <circle cx={8} cy={4} r={0.9} />
+          <line x1={8} y1={4.9} x2={8} y2={6.3} />
+        </>
+      );
     case "hob":
       // Square with a 2×2 burner grid.
       return (

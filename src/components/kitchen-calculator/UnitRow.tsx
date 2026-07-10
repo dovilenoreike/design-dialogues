@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AlertTriangle, ChevronDown, Copy, GripVertical, Plus, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, Copy, GripVertical, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +36,7 @@ import {
   type UnitType,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
-import { UnitConfig, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
+import { FrontIcon, UnitConfig, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon } from "./UnitIcon";
 import {
   addableAppliances,
@@ -132,8 +132,9 @@ export function UnitRow({
   };
 
   const [configOpen, setConfigOpen] = useState(false);
-  // The appliance whose glyph was tapped — drives the drop/edit modal.
-  const [editAppliance, setEditAppliance] = useState<ProjectAppliance | null>(null);
+  // The glyph that was tapped — drives the drop/edit modal. "sink" is a fixture
+  // rather than a project appliance, but shares the same modal.
+  const [editAppliance, setEditAppliance] = useState<ProjectAppliance | "sink" | null>(null);
 
   // The interior config lives on the unit now (so it survives duplication and
   // reordering); fall back to the type defaults for any field left unset.
@@ -220,11 +221,12 @@ export function UnitRow({
             <button
               type="button"
               aria-label={`Configure ${unit.name}`}
-              title="Configure unit"
-              className="group/icon shrink-0 rounded-md p-0.5 text-muted-foreground transition hover:text-foreground hover:ring-1 focus-visible:outline-none focus-visible:ring-1"
+              title="Configure front, shelves & accessories"
+              className="group/icon flex shrink-0 flex-col items-center gap-0.5 rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1"
               style={{ ["--tw-ring-color" as string]: "rgba(100,125,117,0.4)" }}
             >
-              <UnitIcon unit={unit} size={40} />
+              <FrontIcon front={configValue.front} className="h-9 w-[26px]" />
+              <SlidersHorizontal className="h-2.5 w-2.5 opacity-50 transition group-hover/icon:opacity-100" />
             </button>
           </DialogTrigger>
           <DialogContent>
@@ -244,6 +246,24 @@ export function UnitRow({
             dropdowns still line up down the column. Sage when declared, red when
             the appliance isn't in the project settings. */}
         <div className="flex w-20 shrink-0 items-center gap-1">
+          {/* A sink is a fixture, not a project appliance — shown in the same
+              glyph language but a distinct water-blue so it reads as different. */}
+          {unit.type === "sink" && (
+            <button
+              type="button"
+              onClick={() => setEditAppliance("sink")}
+              aria-label="Edit sink"
+              title="Sink — tap to remove"
+              className="inline-flex items-center rounded-full px-1.5 py-1 transition hover:ring-1 focus-visible:outline-none focus-visible:ring-1"
+              style={{
+                backgroundColor: "rgba(74,107,138,0.14)",
+                color: "#4a6b8a",
+                ["--tw-ring-color" as string]: "rgba(74,107,138,0.4)",
+              }}
+            >
+              <ApplianceGlyph id="sink" size={15} />
+            </button>
+          )}
           {unit.appliances.map((a) => {
             const bad = undeclared(a);
             return (
@@ -331,10 +351,16 @@ export function UnitRow({
                 {editAppliance && (
                   <ApplianceGlyph id={editAppliance} size={20} className="text-muted-foreground" />
                 )}
-                {editAppliance ? APPLIANCE_LABEL[editAppliance] ?? editAppliance : ""}
+                {editAppliance === "sink"
+                  ? "Sink"
+                  : editAppliance
+                    ? APPLIANCE_LABEL[editAppliance] ?? editAppliance
+                    : ""}
               </DialogTitle>
               <DialogDescription>
-                Remove this appliance from the unit? It stays available to place elsewhere.
+                {editAppliance === "sink"
+                  ? "Remove the sink? This cabinet becomes plain storage."
+                  : "Remove this appliance from the unit? It stays available to place elsewhere."}
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2">
@@ -345,11 +371,14 @@ export function UnitRow({
                 className="text-white"
                 style={{ backgroundColor: "#9a3412" }}
                 onClick={() => {
-                  if (editAppliance)
+                  if (editAppliance === "sink") {
+                    onTypeChange(unit.id, typeForKind("storage", unit.category));
+                  } else if (editAppliance) {
                     onApplianceChange(
                       unit.id,
                       unit.appliances.filter((x) => x !== editAppliance),
                     );
+                  }
                   setEditAppliance(null);
                 }}
               >

@@ -137,6 +137,22 @@ export type UnitType =
   // island
   | "island";
 
+/**
+ * How a cabinet front is composed — a body (doors / appliance facade / none)
+ * plus an optional stack of drawers on top. Picking Doors + drawers reads as a
+ * combo; Appliance + drawers as an appliance with drawer(s) above. Visual/mock —
+ * not priced yet.
+ */
+export type FrontBody = "doors" | "appliance" | "none";
+
+export interface FrontConfig {
+  body: FrontBody;
+  /** Number of doors (1–2) — used when body is "doors". */
+  doors: number;
+  /** Drawers stacked on top; the whole front when body is "none". */
+  drawers: number;
+}
+
 export interface CabinetUnit {
   id: string;
   type: UnitType;
@@ -159,10 +175,10 @@ export interface CabinetUnit {
    * Per-unit interior configuration (front layout / shelf count / accessories).
    * Visual-only for now (not priced), but persisted on the unit so it survives
    * duplication and reordering. `undefined` means "use the type default"; a type
-   * swap clears these back to undefined so they re-default. The option ids are
-   * owned by the UI layer (`UnitConfig`).
+   * swap clears these back to undefined so they re-default. The shape of `front`
+   * and the accessory ids are owned by the UI layer (`UnitConfig`).
    */
-  front?: string;
+  front?: FrontConfig;
   shelves?: number;
   accessories?: string[];
 }
