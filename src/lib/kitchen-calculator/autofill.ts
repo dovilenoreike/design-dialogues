@@ -172,11 +172,13 @@ export function makeWallRun(spanMm: number): CabinetUnit[] {
 }
 
 const SINK_WIDTH = 600;
+const HOB_WIDTH = 600;
 const HOB_OVEN_WIDTH = 600;
 const FRIDGE_WIDTH = 600;
 const DISHWASHER_WIDTH = 600;
 const OVEN_HOUSING_WIDTH = 600;
 const HOOD_WIDTH = 600;
+const MICROWAVE_WIDTH = 600;
 
 let runCounter = 0;
 const runId = (): string => `r${++runCounter}`;
@@ -212,32 +214,60 @@ function baseSpan(units: CabinetUnit[]): number {
 }
 
 /**
- * Auto-fill one leg. The first run seats the kitchen's appliances: a sink is
- * always present, and a housing unit is placed for every *declared* appliance —
- * hob (or an oven-only tower), fridge, dishwasher and an integrated hood above
- * the hob. Storage cabinets fill the remaining length; a corner is added if the
- * leg turns into the next.
+ * A sink (the always-present fixture) or a declared appliance — anything the
+ * setup step lets the user assign to a specific run before generating.
+ */
+export type AssignableFixture = ProjectAppliance | "sink";
+
+/** Which run each fixture goes to (0-based). A missing entry defaults to run 0. */
+export type RunAssignment = Partial<Record<AssignableFixture, number>>;
+
+/**
+ * The run a fixture ends up in, clamped to the available runs. The hood hangs
+ * above the hob, so it always follows the hob's run when a hob is declared. The
+ * oven is *independent*: it defaults to the hob's run (built under it as one
+ * unit), but the user can send it to a different run to get a standalone tower.
+ */
+export function effectiveRunFor(
+  key: AssignableFixture,
+  assignments: RunAssignment,
+  declared: Set<ProjectAppliance>,
+  runCount: number,
+): number {
+  if (key === "hood" && declared.has("hob")) {
+    return effectiveRunFor("hob", assignments, declared, runCount);
+  }
+  const raw = assignments[key] ?? 0;
+  return Math.min(Math.max(raw, 0), Math.max(runCount - 1, 0));
+}
+
+/**
+ * Auto-fill one leg. Each run seats the appliances (and sink) assigned to it: a
+ * housing unit for every appliance in this run's set — hob (or an oven-only
+ * tower), fridge, dishwasher and an integrated hood above the hob — plus the
+ * sink if it lives here. Storage cabinets fill the remaining length; a corner is
+ * added if the leg turns into the next.
  */
 function fillRun(
   label: string,
   lengthMm: number,
   {
-    withEssentials,
+    hasSink,
     hasCorner,
     appliances,
-  }: { withEssentials: boolean; hasCorner: boolean; appliances: Set<ProjectAppliance> },
+  }: { hasSink: boolean; hasCorner: boolean; appliances: Set<ProjectAppliance> },
 ): Run {
   const run = makeRun(label, lengthMm);
-  const has = (a: ProjectAppliance) => withEssentials && appliances.has(a);
+  const has = (a: ProjectAppliance) => appliances.has(a);
 
-  if (withEssentials) {
-    // The sink is a fixture (not a declared appliance) — always in the main run.
-    run.baseUnits.push(makeUnit("sink", SINK_WIDTH));
-    if (has("dishwasher")) run.baseUnits.push(makeUnit("dishwasher", DISHWASHER_WIDTH));
-    // Hob+oven share one base unit; an oven declared without a hob is a tall tower.
-    if (has("hob")) run.baseUnits.push(makeUnit("hobOven", HOB_OVEN_WIDTH));
-    else if (has("oven")) run.baseUnits.push(makeUnit("ovenHousing", OVEN_HOUSING_WIDTH));
-  }
+  // The sink is a fixture (not a declared appliance) — placed in its assigned run.
+  if (hasSink) run.baseUnits.push(makeUnit("sink", SINK_WIDTH));
+  if (has("dishwasher")) run.baseUnits.push(makeUnit("dishwasher", DISHWASHER_WIDTH));
+  // Hob + oven in the same run share one built-under unit; split across runs they
+  // become a hob-only base unit and a standalone oven tower.
+  if (has("hob") && has("oven")) run.baseUnits.push(makeUnit("hobOven", HOB_OVEN_WIDTH));
+  else if (has("hob")) run.baseUnits.push(makeUnit("hob", HOB_WIDTH));
+  else if (has("oven")) run.baseUnits.push(makeUnit("ovenHousing", OVEN_HOUSING_WIDTH));
 
   const wantsFridge = has("fridge");
   const used =
@@ -251,10 +281,13 @@ function fillRun(
 
   if (wantsFridge) run.baseUnits.push(makeUnit("fridge", FRIDGE_WIDTH));
 
-  // Wall units mirror the straight base cabinets; an integrated hood housing takes
-  // one 600mm slot above the hob, and the corner gets a corner wall.
+  // Wall units mirror the straight base cabinets; the hood and the microwave each
+  // take one 600mm wall slot, and the corner gets a corner wall.
   const wantsHood = has("hood");
-  run.wallUnits = makeWallRun(Math.max(baseSpan(run.baseUnits) - (wantsHood ? HOOD_WIDTH : 0), 0));
+  const wantsMicrowave = has("microwave");
+  const reservedWall = (wantsHood ? HOOD_WIDTH : 0) + (wantsMicrowave ? MICROWAVE_WIDTH : 0);
+  run.wallUnits = makeWallRun(Math.max(baseSpan(run.baseUnits) - reservedWall, 0));
+  if (wantsMicrowave) run.wallUnits.unshift(makeUnit("microwaveWall", MICROWAVE_WIDTH));
   if (wantsHood) run.wallUnits.unshift(makeUnit("hoodHousing", HOOD_WIDTH));
 
   if (hasCorner) {
@@ -275,17 +308,23 @@ export function generateKitchen(
   settings: GlobalSettings,
   grade: HardwareGrade,
   appliances: Set<ProjectAppliance> = defaultAppliances(),
+  assignments: RunAssignment = {},
 ): KitchenState {
   const runCount = LAYOUT_RUN_COUNT[layout];
   const junctions = LAYOUT_CORNER_JUNCTIONS[layout];
 
+  const runFor = (key: AssignableFixture) =>
+    effectiveRunFor(key, assignments, appliances, runCount);
+
   const runs: Run[] = [];
   for (let i = 0; i < runCount; i++) {
+    // The appliances (and sink) the user assigned to this run.
+    const runAppliances = new Set([...appliances].filter((a) => runFor(a) === i));
     runs.push(
       fillRun(RUN_LABELS[i] ?? `Run ${i + 1}`, legLengthsMm[i] ?? 0, {
-        withEssentials: i === 0,
+        hasSink: runFor("sink") === i,
         hasCorner: i < junctions, // runs 0..junctions-1 turn into the next leg
-        appliances,
+        appliances: runAppliances,
       }),
     );
   }

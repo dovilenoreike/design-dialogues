@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LAYOUT_RUN_COUNT, type KitchenLayout } from "@/lib/kitchen-calculator";
+import { LayoutLegGlyph } from "./LayoutLegGlyph";
 
 const LAYOUTS: { value: KitchenLayout; label: string; hint: string }[] = [
   { value: "line", label: "Line", hint: "no corner" },
@@ -59,20 +60,28 @@ export function KitchenSetup({
                 key={l.value}
                 type="button"
                 onClick={() => onLayoutChange(l.value)}
-                className="flex flex-col items-start rounded-md border px-3 py-2 text-left transition-colors"
+                className="flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-colors"
                 style={
                   active
                     ? { borderColor: "#647d75", backgroundColor: "rgba(100,125,117,0.08)" }
                     : undefined
                 }
               >
-                <span
-                  className="text-sm font-medium"
-                  style={active ? { color: "#647d75" } : undefined}
-                >
-                  {l.label}
+                <LayoutLegGlyph
+                  layout={l.value}
+                  leg={-1}
+                  size={22}
+                  className={active ? "text-[#647d75]" : "text-muted-foreground"}
+                />
+                <span className="flex flex-col">
+                  <span
+                    className="text-sm font-medium"
+                    style={active ? { color: "#647d75" } : undefined}
+                  >
+                    {l.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{l.hint}</span>
                 </span>
-                <span className="text-xs text-muted-foreground">{l.hint}</span>
               </button>
             );
           })}
@@ -87,7 +96,12 @@ export function KitchenSetup({
         <div className="flex flex-wrap items-end gap-3">
           {Array.from({ length: runCount }).map((_, i) => (
             <div key={i} className="flex flex-col gap-1.5">
-              <Label htmlFor={`leg-${i}`}>{RUN_LABELS[i] ?? `Run ${i + 1}`} length (m)</Label>
+              <Label htmlFor={`leg-${i}`} className="flex items-center gap-1.5">
+                {runCount > 1 && (
+                  <LayoutLegGlyph layout={layout} leg={i} size={18} className="text-muted-foreground" />
+                )}
+                {RUN_LABELS[i] ?? `Run ${i + 1}`} length (m)
+              </Label>
               <Input
                 id={`leg-${i}`}
                 type="number"

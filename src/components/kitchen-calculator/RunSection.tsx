@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   BASE_TALL_TYPES,
+  unitHasSink,
   WALL_TYPES,
+  type KitchenLayout,
   type Run,
   type CabinetUnit,
   type ProjectAppliance,
   type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
+import { ApplianceGlyph } from "./ApplianceGlyph";
 import { CabinetSection } from "./CabinetSection";
+import { LayoutLegGlyph } from "./LayoutLegGlyph";
 import { RunLengthAlert } from "./RunLengthAlert";
 import { WorktopSection } from "./WorktopSection";
 
@@ -23,6 +27,9 @@ const m = (mm: number): string => (mm / 1000).toFixed(2);
 
 interface RunSectionProps {
   run: Run;
+  /** Kitchen layout + this run's leg index — drives the header leg glyph. */
+  layout: KitchenLayout;
+  legIndex: number;
   removable: boolean;
   presentEssentials?: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
@@ -53,6 +60,8 @@ interface RunSectionProps {
 /** One kitchen leg: header (label + length + remove), fit alert, base & wall sections with meters. */
 export function RunSection({
   run,
+  layout,
+  legIndex,
   removable,
   presentEssentials,
   declaredAppliances,
@@ -143,10 +152,23 @@ export function RunSection({
     </Button>
   );
 
+  // Header summary — the appliances (and sink) that actually landed in this run,
+  // so the assignment made before generating is visible on the drawn kitchen.
+  const runAppliances = Array.from(
+    new Set([...run.baseUnits, ...run.wallUnits].flatMap((u) => u.appliances)),
+  );
+  const runHasSink = run.baseUnits.some(unitHasSink);
+
   return (
     <div className="rounded-xl border bg-muted/60 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <LayoutLegGlyph
+            layout={layout}
+            leg={legIndex}
+            size={24}
+            className="shrink-0 text-muted-foreground"
+          />
           <span className="font-serif text-xl">{run.label}</span>
           <div className="flex items-center gap-1.5">
             <Input
@@ -176,6 +198,14 @@ export function RunSection({
             />
             <span className="text-xs text-muted-foreground">m</span>
           </div>
+          {(runHasSink || runAppliances.length > 0) && (
+            <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
+              {runHasSink && <ApplianceGlyph id="sink" size={15} />}
+              {runAppliances.map((a) => (
+                <ApplianceGlyph key={a} id={a} size={15} />
+              ))}
+            </div>
+          )}
         </div>
         {removable && (
           <Button

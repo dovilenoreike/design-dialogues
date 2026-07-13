@@ -138,19 +138,21 @@ export type UnitType =
   | "island";
 
 /**
- * How a cabinet front is composed — a body (doors / appliance facade / none)
- * plus an optional stack of drawers on top. Picking Doors + drawers reads as a
- * combo; Appliance + drawers as an appliance with drawer(s) above. Visual/mock —
- * not priced yet.
+ * How a cabinet front is composed — doors, drawers and an integrated appliance
+ * facade are independent elements that can coexist, stacked in a fixed vertical
+ * order: with an appliance, cupboard doors sit above it and drawers below; with
+ * no appliance, drawers sit above the doors (a combo). At least one element is
+ * always present. Visual/mock — not priced yet.
  */
-export type FrontBody = "doors" | "appliance" | "none";
-
 export interface FrontConfig {
-  body: FrontBody;
-  /** Number of doors (1–2) — used when body is "doors". */
+  /** Cupboard doors (0 = none). Above an appliance facade; the body otherwise. */
   doors: number;
-  /** Drawers stacked on top; the whole front when body is "none". */
+  /** Drawers (0 = none). Below an appliance facade; above a door body otherwise. */
   drawers: number;
+  /** An integrated appliance facade occupies the middle of the front. */
+  appliance: boolean;
+  /** Panels the appliance facade reads as (fridge + freezer = 2, oven = 1). */
+  appliancePanels: number;
 }
 
 export interface CabinetUnit {

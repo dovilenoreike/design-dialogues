@@ -2,7 +2,6 @@ import { Minus, Plus } from "lucide-react";
 import {
   primaryApplianceId,
   type CabinetUnit,
-  type FrontBody,
   type FrontConfig,
   type ProjectAppliance,
   type UnitCategory,
@@ -16,10 +15,10 @@ import {
  * the "+" menu), so they're intentionally not here. Nothing is wired to pricing
  * yet — it exists to feel out the interaction.
  *
- * The front is *composed*, not enumerated: pick a body (Doors / Appliance /
- * none) and optionally stack drawers on top. Doors + drawers reads as a combo;
- * Appliance + drawers as an appliance with drawer(s) above. Counts are steppers,
- * so there's no id explosion.
+ * The front is *composed*, not enumerated: doors, drawers and an appliance
+ * facade are independent elements that stack in a fixed order (cupboard doors
+ * above an appliance, drawers below; drawers above a plain door body). Counts
+ * are steppers, so there's no id explosion.
  */
 
 export interface UnitConfigState {
@@ -33,9 +32,17 @@ export interface UnitConfigState {
 const MAX_SHELVES = 6;
 const SHELF_VALUES = Array.from({ length: MAX_SHELVES + 1 }, (_, i) => i);
 
-// Drawer stacks / appliance fronts allow more or fewer drawers on top.
-const maxDrawersFor = (body: FrontBody): number =>
-  body === "appliance" ? 2 : body === "doors" ? 3 : 6;
+// How many drawers a front allows: an appliance leaves little room (2 below it);
+// a drawer-over-door combo up to 3; a pure drawer stack up to 6.
+const maxDrawersFor = (front: FrontConfig): number =>
+  front.appliance ? 2 : front.doors > 0 ? 3 : 6;
+
+// The appliance facade's panel count: a fridge/freezer and an oven+microwave
+// tower each read as two stacked panels; everything else as one.
+function appliancePanelsFor(appliances: ProjectAppliance[]): number {
+  const id = primaryApplianceId(appliances);
+  return id === "fridge" || id === "ovenMicrowave" ? 2 : 1;
+}
 
 // ─── Options ────────────────────────────────────────────────────────────────
 
@@ -121,49 +128,58 @@ export function frontsFor(appliance: string, category: UnitCategory, type?: Unit
 }
 
 /** The front *elements* (doors / drawers / appliance) a unit permits, plus the
- *  door count range. Appliance bodies always permit drawers on top (the oven +
- *  drawer case), even though the legacy ids don't list a drawer variant. */
-function allowedElements(validIds: string[]) {
+ *  door-count cap. An appliance housing additionally permits a cupboard door and
+ *  drawers *around* the appliance, even though its legacy ids don't list them. */
+function allowedElements(validIds: string[], category: UnitCategory) {
   const fams = new Set(validIds.map((id) => FRONT_SPEC[id]?.family).filter(Boolean));
   const allowAppliance = fams.has("appliance");
   const doorCounts = validIds
     .filter((id) => FRONT_SPEC[id]?.family === "doors" || FRONT_SPEC[id]?.family === "liftUp")
     .map((id) => FRONT_SPEC[id]?.count ?? 1);
+  const nativeDoors = fams.has("doors") || fams.has("combo") || fams.has("liftUp");
+  const nativeDrawers = fams.has("drawers") || fams.has("combo");
+  let maxDoors = doorCounts.length ? Math.max(...doorCounts) : 2;
+  // A cupboard above an appliance is 1–2 doors; a tall unit can stack door pairs
+  // (top box over a larder), so it allows up to four.
+  if (allowAppliance) maxDoors = Math.max(maxDoors, 2);
+  if (category === "tall") maxDoors = Math.max(maxDoors, 4);
   return {
-    doors: fams.has("doors") || fams.has("combo") || fams.has("liftUp"),
-    drawers: fams.has("drawers") || fams.has("combo") || allowAppliance,
+    doors: nativeDoors || allowAppliance,
+    drawers: nativeDrawers || allowAppliance,
     appliance: allowAppliance,
-    minDoors: doorCounts.length ? Math.min(...doorCounts) : 1,
-    maxDoors: doorCounts.length ? Math.max(...doorCounts) : 2,
+    // When the appliance facade is the *only* possible body, it can't be removed.
+    applianceLocked: allowAppliance && !nativeDoors && !nativeDrawers,
+    maxDoors,
   };
 }
 
-/** Seed a composition from a legacy default-front id. */
+/** Seed a composition from a legacy default-front id (panels filled in later
+ *  from the unit's appliance). */
 function frontConfigFromId(id: string): FrontConfig {
+  const base = { doors: 0, drawers: 0, appliance: false, appliancePanels: 1 };
   const spec = FRONT_SPEC[id];
   switch (spec?.family) {
     case "doors":
-      return { body: "doors", doors: spec.count ?? 2, drawers: 0 };
+      return { ...base, doors: spec.count ?? 2 };
     case "drawers":
-      return { body: "none", doors: 2, drawers: spec.count ?? 3 };
+      return { ...base, drawers: spec.count ?? 3 };
     case "combo":
-      return { body: "doors", doors: 1, drawers: 1 };
+      return { ...base, doors: 1, drawers: 1 };
     case "liftUp":
-      return { body: "doors", doors: 1, drawers: 0 };
+      return { ...base, doors: 1 };
     case "appliance":
-      return { body: "appliance", doors: 1, drawers: 0 };
+      return { ...base, appliance: true };
     default:
-      return { body: "doors", doors: 2, drawers: 0 };
+      return { ...base, doors: 2 };
   }
 }
 
-/** Compact one-liner for the row's configure control ("3 drawers", "2 doors",
- *  "1 drawer + appliance"). */
+/** Compact one-liner for the preview ("2 doors + appliance + 1 drawer"). */
 export function frontShort(front: FrontConfig): string {
   const parts: string[] = [];
+  if (front.doors > 0) parts.push(`${front.doors} door${front.doors > 1 ? "s" : ""}`);
+  if (front.appliance) parts.push("appliance");
   if (front.drawers > 0) parts.push(`${front.drawers} drawer${front.drawers > 1 ? "s" : ""}`);
-  if (front.body === "doors") parts.push(`${front.doors} door${front.doors > 1 ? "s" : ""}`);
-  else if (front.body === "appliance") parts.push("appliance");
   return parts.join(" + ") || "—";
 }
 
@@ -192,27 +208,44 @@ const DEFAULT_BY_TYPE: Partial<
   dishwasher: { front: "door1", shelves: 0 },
   microwave: { front: "applianceFront", shelves: 1 },
   storage: { front: "drawers3", shelves: 0 },
-  housing: { front: "applianceFront", shelves: 0 },
+  housing: { front: "doors2", shelves: 0 },
   cornerBase: { front: "door1", shelves: 0 },
-  fridge: { front: "doorsTall", shelves: 0 },
+  fridge: { front: "applianceFront", shelves: 0 },
   ovenHousing: { front: "ovenTower", shelves: 1 },
   ovenMicrowave: { front: "ovenTower", shelves: 1 },
-  housingTall: { front: "applianceFront", shelves: 0 },
+  housingTall: { front: "doorsTall", shelves: 0 },
   larder: { front: "doorsTall", shelves: 4 },
   wall: { front: "doors2", shelves: 1 },
   hoodHousing: { front: "integrated", shelves: 0 },
   microwaveWall: { front: "applianceFront", shelves: 0 },
-  housingWall: { front: "applianceFront", shelves: 0 },
+  housingWall: { front: "doors2", shelves: 0 },
   cornerWall: { front: "door1", shelves: 0 },
   island: { front: "doors2", shelves: 1 },
+};
+
+// Composed extras layered onto an appliance-housing default — a bridging cupboard
+// above the fridge, a utility drawer under the oven tower.
+const APPLIANCE_DEFAULT_EXTRAS: Partial<Record<UnitType, { doors?: number; drawers?: number }>> = {
+  fridge: { doors: 1 },
+  ovenHousing: { drawers: 1 },
+  ovenMicrowave: { drawers: 1 },
 };
 
 export function defaultUnitConfig(unit: CabinetUnit): UnitConfigState {
   const d = DEFAULT_BY_TYPE[unit.type] ?? {};
   const frontId = d.front ?? CATEGORY_FRONTS[unit.category][0];
+  const front = frontConfigFromId(frontId);
+  if (front.appliance) {
+    front.appliancePanels = appliancePanelsFor(unit.appliances);
+    const extra = APPLIANCE_DEFAULT_EXTRAS[unit.type];
+    if (extra) {
+      front.doors = extra.doors ?? front.doors;
+      front.drawers = Math.min(extra.drawers ?? front.drawers, maxDrawersFor(front));
+    }
+  }
   return {
     appliances: [...unit.appliances],
-    front: frontConfigFromId(frontId),
+    front,
     shelves: d.shelves ?? 1,
     accessories: d.accessories ?? [],
   };
@@ -220,7 +253,45 @@ export function defaultUnitConfig(unit: CabinetUnit): UnitConfigState {
 
 // ─── Front schematic ─────────────────────────────────────────────────────────
 
-/** SVG diagram of a composed front: drawers stacked on top of the body. */
+// A vertical stack the icon renders top→bottom. Drawers become one band each so
+// a tall stack reads as many thin bands.
+type Band = { kind: "doors" | "drawers" | "appliance"; count: number; weight: number };
+
+function frontBands(front: FrontConfig): Band[] {
+  const bands: Band[] = [];
+  // Doors stack in rows of two, so more doors → a taller band (a 4-door larder).
+  const doorRows = Math.ceil(Math.min(front.doors, 2) > 0 ? front.doors / 2 : 0);
+  const doorBand: Band = { kind: "doors", count: front.doors, weight: 2 * Math.max(doorRows, 1) };
+  const applianceBand: Band = {
+    kind: "appliance",
+    count: front.appliancePanels,
+    weight: front.appliancePanels >= 2 ? 4 : 2.5,
+  };
+  const drawerBands = Array.from({ length: front.drawers }, (): Band => ({
+    kind: "drawers",
+    count: 1,
+    weight: 1,
+  }));
+
+  if (front.appliance) {
+    // Cupboard door on top, appliance in the middle, drawers below.
+    if (front.doors > 0) bands.push(doorBand);
+    bands.push(applianceBand);
+    bands.push(...drawerBands);
+  } else {
+    // Drawers over the door body (a combo), or one or the other alone.
+    bands.push(...drawerBands);
+    if (front.doors > 0) bands.push(doorBand);
+  }
+  return bands;
+}
+
+// Below this band height (in viewBox units) a band is drawn as a plain outline —
+// the "max complexity" threshold that keeps a busy front from turning to noise.
+const MIN_DETAIL_H = 6;
+
+/** SVG diagram of a composed front — a stack of door / appliance / drawer bands,
+ *  with per-band detail dropped once the bands get too thin to read. */
 export function FrontIcon({
   front,
   className = "h-9 w-7",
@@ -244,37 +315,46 @@ export function FrontIcon({
   const T = 3;
   const H = 34;
   const R = L + W;
-  const B = T + H;
   const CX = L + W / 2;
 
-  const { body, doors, drawers } = front;
-  const bodyWeight = body === "none" ? 0 : 2;
-  const totalWeight = drawers + bodyWeight || 1;
-  const bandH = H / totalWeight;
+  const bands = frontBands(front);
+  const totalWeight = bands.reduce((s, b) => s + b.weight, 0) || 1;
 
-  // Drawer bands on top, each with a centred pull.
   let y = T;
-  for (let i = 0; i < drawers; i++) {
-    els.push(rect(L, y, W, bandH));
-    els.push(line(CX - 4, y + bandH / 2, CX + 4, y + bandH / 2));
-    y += bandH;
-  }
+  for (const band of bands) {
+    const h = (H * band.weight) / totalWeight;
+    const detail = h >= MIN_DETAIL_H; // drop inner detail on thin bands
+    els.push(rect(L, y, W, h));
+    const my = y + h / 2;
 
-  // Body below the drawers.
-  const bodyH = B - y;
-  if (body === "doors") {
-    els.push(rect(L, y, W, bodyH));
-    if (doors >= 2) {
-      els.push(line(CX, y + 2, CX, B - 2)); // centre divider
-      els.push(line(CX - 3, y + bodyH / 2 - 3, CX - 3, y + bodyH / 2 + 3)); // left pull
-      els.push(line(CX + 3, y + bodyH / 2 - 3, CX + 3, y + bodyH / 2 + 3)); // right pull
-    } else {
-      els.push(line(R - 4, y + bodyH / 2 - 3, R - 4, y + bodyH / 2 + 3)); // single pull
+    if (band.kind === "drawers" && detail) {
+      els.push(line(CX - 4, my, CX + 4, my)); // pull
+    } else if (band.kind === "doors") {
+      // Doors laid out as a grid: up to two columns, stacking into rows.
+      const cols = Math.min(band.count, 2);
+      const rows = Math.ceil(band.count / cols);
+      const cellW = W / cols;
+      const cellH = h / rows;
+      for (let c = 1; c < cols; c++) els.push(line(L + c * cellW, y + 1.5, L + c * cellW, y + h - 1.5));
+      for (let r = 1; r < rows; r++) els.push(line(L, y + r * cellH, R, y + r * cellH));
+      if (cellH >= MIN_DETAIL_H) {
+        for (let idx = 0; idx < band.count; idx++) {
+          const c = idx % cols;
+          const r = Math.floor(idx / cols);
+          const cy = y + r * cellH + cellH / 2;
+          const px = cols === 2 ? (c === 0 ? CX - 3 : CX + 3) : R - 4;
+          els.push(line(px, cy - 3, px, cy + 3));
+        }
+      }
+    } else if (band.kind === "appliance") {
+      if (detail) els.push(rect(L + 3, y + 2.5, W - 6, Math.min(3.5, h - 5))); // control strip
+      // Split a multi-panel facade (fridge + freezer) with a divider line.
+      for (let p = 1; p < band.count; p++) {
+        els.push(line(L, y + (h * p) / band.count, R, y + (h * p) / band.count));
+      }
+      if (detail) els.push(line(R - 5, y + h - 3, R - 2, y + h - 3)); // handle
     }
-  } else if (body === "appliance") {
-    els.push(rect(L, y, W, bodyH));
-    els.push(rect(L + 3, y + 3, W - 6, Math.min(4, bodyH - 6))); // control strip
-    els.push(line(L + 5, B - 4, R - 5, B - 4)); // handle
+    y += h;
   }
 
   return (
@@ -338,43 +418,38 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
   const front = value.front;
   // Which elements this unit permits (fronts stay tailored to its appliance).
   const validIds = frontsFor(primaryApplianceId(value.appliances), unit.category, unit.type);
-  const allow = allowedElements(validIds);
-  // An appliance housing with no door alternative must keep its facade.
-  const applianceLocked = allow.appliance && !allow.doors;
+  const allow = allowedElements(validIds, unit.category);
+  const applianceLocked = allow.applianceLocked;
 
-  const doorsActive = front.body === "doors";
-  const applianceActive = front.body === "appliance";
+  const doorsActive = front.doors > 0;
+  const applianceActive = front.appliance;
   const drawersActive = front.drawers > 0;
 
-  const setFront = (next: FrontConfig) => onChange({ ...value, front: next });
-
-  const toggleDrawers = () => {
-    if (drawersActive) {
-      // Can only clear drawers if a body remains (never leave an empty front).
-      if (front.body !== "none") setFront({ ...front, drawers: 0 });
-    } else {
-      setFront({ ...front, drawers: 1 });
-    }
+  // Doors, drawers and the appliance facade are independent — a front just can't
+  // end up empty, so a toggle that would clear the last element is ignored.
+  const isEmpty = (f: FrontConfig) => f.doors === 0 && f.drawers === 0 && !f.appliance;
+  const setFront = (next: FrontConfig) => {
+    if (!isEmpty(next)) onChange({ ...value, front: next });
   };
 
-  const selectBody = (body: "doors" | "appliance") => {
-    if (front.body === body) {
-      if (body === "appliance" && applianceLocked) return;
-      // Turning a body off falls back to a drawer stack when drawers are present.
-      if (front.drawers > 0) setFront({ ...front, body: "none" });
-      return;
-    }
-    setFront({
+  const toggleDrawers = () => setFront({ ...front, drawers: drawersActive ? 0 : 1 });
+
+  const toggleDoors = () =>
+    setFront({ ...front, doors: doorsActive ? 0 : front.appliance ? 1 : allow.maxDoors });
+
+  const toggleAppliance = () => {
+    if (applianceLocked) return;
+    const next: FrontConfig = {
       ...front,
-      body,
-      doors:
-        body === "doors" ? Math.min(Math.max(front.doors || allow.maxDoors, allow.minDoors), allow.maxDoors) : front.doors,
-      drawers: Math.min(front.drawers, maxDrawersFor(body)),
-    });
+      appliance: !front.appliance,
+      appliancePanels: appliancePanelsFor(value.appliances),
+    };
+    next.drawers = Math.min(next.drawers, maxDrawersFor(next));
+    setFront(next);
   };
 
-  const drawerValues = Array.from({ length: maxDrawersFor(front.body) }, (_, i) => i + 1);
-  const doorValues = Array.from({ length: allow.maxDoors - allow.minDoors + 1 }, (_, i) => allow.minDoors + i);
+  const drawerValues = Array.from({ length: maxDrawersFor(front) }, (_, i) => i + 1);
+  const doorValues = Array.from({ length: allow.maxDoors }, (_, i) => i + 1);
 
   const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <div className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -401,37 +476,40 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
         </div>
       </div>
 
-      {/* Front — compose from elements. Doors/Appliance are the body (mutually
-          exclusive); Drawers stack on top. */}
+      {/* Front — independent elements. With an appliance, doors sit above it and
+          drawers below; otherwise drawers stack over the doors. */}
       <div>
         <SectionLabel>Front</SectionLabel>
         <div className="flex flex-wrap gap-1.5">
-          {allow.drawers && (
-            <button type="button" onClick={toggleDrawers} {...chip(drawersActive)}>
-              Drawers
-            </button>
-          )}
           {allow.doors && (
-            <button type="button" onClick={() => selectBody("doors")} {...chip(doorsActive)}>
+            <button type="button" onClick={toggleDoors} {...chip(doorsActive)}>
               Doors
             </button>
           )}
           {allow.appliance && (
             <button
               type="button"
-              onClick={() => selectBody("appliance")}
+              onClick={toggleAppliance}
               disabled={applianceLocked}
               {...chip(applianceActive)}
             >
               Appliance front
             </button>
           )}
+          {allow.drawers && (
+            <button type="button" onClick={toggleDrawers} {...chip(drawersActive)}>
+              Drawers
+            </button>
+          )}
         </div>
-        {drawersActive && doorsActive && (
-          <p className="mt-1.5 text-[11px] text-muted-foreground">Drawers over a door — a combo front.</p>
+        {applianceActive && doorsActive && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Cupboard door(s) above the appliance.</p>
         )}
-        {drawersActive && applianceActive && (
-          <p className="mt-1.5 text-[11px] text-muted-foreground">Drawer(s) above the appliance.</p>
+        {applianceActive && drawersActive && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Drawer(s) below the appliance.</p>
+        )}
+        {!applianceActive && doorsActive && drawersActive && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Drawers over a door — a combo front.</p>
         )}
       </div>
 
@@ -452,7 +530,7 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
       )}
 
       {/* Interior — shelves (behind doors only). */}
-      {front.body === "doors" && (
+      {front.doors > 0 && (
         <div>
           <SectionLabel>Interior</SectionLabel>
           <div className="flex items-center gap-3">

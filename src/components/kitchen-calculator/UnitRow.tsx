@@ -31,14 +31,16 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   APPLIANCE_ITEMS,
+  primaryApplianceId,
   type CabinetUnit,
   type ProjectAppliance,
+  type UnitCategory,
   type UnitFinish,
   type UnitType,
   unitHasSink,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
-import { FrontIcon, UnitConfig, accessoriesFor, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
+import { applianceLabel, FrontIcon, UnitConfig, accessoriesFor, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon } from "./UnitIcon";
 import {
   addableAppliances,
@@ -53,6 +55,13 @@ const APPLIANCE_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 const WIDTH_OPTIONS = [300, 400, 500, 600, 800, 1000];
+
+const CATEGORY_LABELS: Record<UnitCategory, string> = {
+  base: "Low unit",
+  tall: "Tall unit",
+  wall: "Wall unit",
+  island: "Island",
+};
 
 interface UnitRowProps {
   unit: CabinetUnit;
@@ -171,7 +180,34 @@ export function UnitRow({
   };
 
   const kind = unitKind(unit);
-  const currentLabel = kindOptionById(currentKindOptionId(unit))?.label ?? "Storage";
+  const kindLabel = kindOptionById(currentKindOptionId(unit))?.label ?? "Storage";
+  // Modal title: the unit's height class + what's actually inside it, since
+  // that's what's worth knowing when configuring the front (e.g. "Tall unit ·
+  // Fridge", "Low unit · Hob + oven"). Falls back to the carcass kind.
+  const categoryLabel = CATEGORY_LABELS[unit.category];
+  const contents = [
+    unitHasSink(unit) ? "Sink" : "",
+    applianceLabel(primaryApplianceId(unit.appliances)),
+  ].filter(Boolean);
+  const currentLabel = contents.length ? contents.join(" + ") : kindLabel;
+
+  // A plain storage/corner unit can be reshaped among the forms its section
+  // allows — Low / Tall / Corner for a base-run unit, Wall / Corner for a wall
+  // unit. Housings and sinks are excluded (those can't be a corner or a tower).
+  const reshapable = kind === "storage" || kind === "corner";
+  const shapeOptions: { label: string; type: UnitType }[] =
+    reshapable && (unit.category === "base" || unit.category === "tall")
+      ? [
+          { label: "Low", type: typeForKind("storage", "base") },
+          { label: "Tall", type: typeForKind("storage", "tall") },
+          { label: "Corner", type: typeForKind("corner", "base") },
+        ]
+      : reshapable && unit.category === "wall"
+        ? [
+            { label: "Wall", type: typeForKind("storage", "wall") },
+            { label: "Corner", type: typeForKind("corner", "wall") },
+          ]
+        : [];
 
   // A unit holding an appliance the project doesn't declare is a mistake (red).
   const undeclared = (a: ProjectAppliance) => !!declaredAppliances && !declaredAppliances.has(a);
@@ -270,11 +306,39 @@ export function UnitRow({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
                 <UnitIcon unit={unit} size={24} className="text-muted-foreground" />
-                {currentLabel}
-                <span className="text-sm font-normal text-muted-foreground">· {unit.width}mm</span>
+                {categoryLabel}
+                <span className="text-sm font-normal text-muted-foreground">
+                  · {currentLabel} · {unit.width}mm
+                </span>
               </DialogTitle>
-              <DialogDescription>Set the front layout and shelves.</DialogDescription>
+              <DialogDescription>Set the shape, front layout and shelves.</DialogDescription>
             </DialogHeader>
+            {shapeOptions.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Shape
+                </span>
+                <div className="inline-flex overflow-hidden rounded-md border">
+                  {shapeOptions.map((opt) => {
+                    const active = unit.type === opt.type;
+                    return (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        onClick={() => onTypeChange(unit.id, opt.type)}
+                        aria-pressed={active}
+                        className={`min-h-[36px] border-l px-3 text-xs font-medium transition first:border-l-0 ${
+                          active ? "" : "text-muted-foreground hover:bg-muted"
+                        }`}
+                        style={active ? { backgroundColor: "rgba(100,125,117,0.14)", color: "#647d75" } : undefined}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>

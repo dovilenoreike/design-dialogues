@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
+import { ApplianceRunAssignment } from "@/components/kitchen-calculator/ApplianceRunAssignment";
 import { ApplianceSelector } from "@/components/kitchen-calculator/ApplianceSelector";
 import { ComponentList } from "@/components/kitchen-calculator/ComponentList";
 import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareGradeSelector";
@@ -31,6 +32,7 @@ import {
   ESSENTIAL_TYPES,
   unitHasSink,
   generateKitchen,
+  LAYOUT_RUN_COUNT,
   makeExtraCost,
   makeRun,
   makeUnit,
@@ -47,10 +49,12 @@ import {
   type ExtraCost,
   type GlobalSettings,
   type HardwareGrade,
+  type AssignableFixture,
   type KitchenLayout,
   type KitchenState,
   type ProjectAppliance,
   type Run,
+  type RunAssignment,
   type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
@@ -69,6 +73,16 @@ const DEFAULT_LEG_LENGTHS: Record<KitchenLayout, string[]> = {
 };
 
 const isCustom = (width: number): boolean => !STANDARD_WIDTHS.includes(width);
+
+/** Pull every run assignment back into range for a layout with `runCount` runs. */
+const clampAssignments = (a: RunAssignment, runCount: number): RunAssignment => {
+  const out: RunAssignment = {};
+  for (const key of Object.keys(a) as AssignableFixture[]) {
+    const v = a[key];
+    if (v !== undefined) out[key] = Math.min(Math.max(v, 0), Math.max(runCount - 1, 0));
+  }
+  return out;
+};
 
 // Sensible starting width when adding a unit by type (corners/islands are wider).
 const ADD_WIDTHS: Partial<Record<UnitType, number>> = {
@@ -105,6 +119,8 @@ const KitchenCalculator = () => {
   const [grade, setGrade] = useState<HardwareGrade>("mid");
   // Project-level appliances the kitchen includes (declared intent).
   const [appliances, setAppliances] = useState<Set<ProjectAppliance>>(defaultAppliances);
+  // Which run each appliance / the sink is assigned to (0-based). Missing = run 0.
+  const [assignments, setAssignments] = useState<RunAssignment>({});
   const [state, setState] = useState<KitchenState | null>(null);
   // Essentials the user has marked as out of scope (e.g. a standalone fridge).
   const [excludedEssentials, setExcludedEssentials] = useState<UnitType[]>([]);
@@ -119,6 +135,12 @@ const KitchenCalculator = () => {
     setLayout(next);
     const defaults = DEFAULT_LEG_LENGTHS[next];
 
+    // Fewer runs may orphan an assignment (e.g. C when dropping U → L) — pull any
+    // out-of-range assignment back onto the last remaining run.
+    const runCount = LAYOUT_RUN_COUNT[next];
+    const clamped = clampAssignments(assignments, runCount);
+    setAssignments(clamped);
+
     if (!state) {
       // Pre-generation: keep any lengths already typed, default the rest.
       setLegLengths((prev) => defaults.map((d, i) => prev[i] ?? d));
@@ -129,7 +151,7 @@ const KitchenCalculator = () => {
     // lengths where legs overlap; default any new legs.
     const mm = defaults.map((d, i) => state.runs[i]?.lengthMm ?? Math.round(Number(d) * 1000));
     setLegLengths(mm.map((v) => String(v / 1000)));
-    setState(generateKitchen(next, mm, settings, grade, appliances));
+    setState(generateKitchen(next, mm, settings, grade, appliances, clamped));
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -166,10 +188,14 @@ const KitchenCalculator = () => {
     setLegLengths((prev) => prev.map((v, i) => (i === index ? value : v)));
   };
 
+  const handleAssignmentChange = (key: AssignableFixture, run: number) => {
+    setAssignments((prev) => ({ ...prev, [key]: run }));
+  };
+
   const handleGenerate = () => {
     const mm = legLengths.map((s) => Math.round(Number(s) * 1000));
     if (mm.length === 0 || mm.some((v) => !Number.isFinite(v) || v <= 0)) return;
-    setState(generateKitchen(layout, mm, settings, grade, appliances));
+    setState(generateKitchen(layout, mm, settings, grade, appliances, assignments));
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -532,6 +558,17 @@ const KitchenCalculator = () => {
             onChange={setAppliances}
             placed={state ? placedAppliances : undefined}
           />
+          {/* Assign appliances to runs before generating (multi-run layouts only).
+              A generation-time control, so it's hidden once the kitchen exists. */}
+          {!state && (
+            <ApplianceRunAssignment
+              layout={layout}
+              runCount={LAYOUT_RUN_COUNT[layout]}
+              selected={appliances}
+              assignments={assignments}
+              onChange={handleAssignmentChange}
+            />
+          )}
           <KitchenSettingsPanel settings={settings} onChange={setSettings} />
           {/* Generate is the terminal CTA: it consumes the layout, appliances and
               settings above, so it sits after them. Hidden once generated. */}
@@ -577,6 +614,7 @@ const KitchenCalculator = () => {
             )}
 
             <ComponentList
+              layout={state.layout}
               runs={state.runs}
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}

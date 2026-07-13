@@ -4,6 +4,7 @@ import {
   ISLAND_TYPES,
   type CabinetUnit,
   type ExtraCost,
+  type KitchenLayout,
   type ProjectAppliance,
   type Run,
   type UnitFinish,
@@ -14,6 +15,7 @@ import { ExtraCostsSection } from "./ExtraCostsSection";
 import { RunSection } from "./RunSection";
 
 interface ComponentListProps {
+  layout: KitchenLayout;
   runs: Run[];
   islandUnits: CabinetUnit[];
   extraCosts: ExtraCost[];
@@ -65,6 +67,7 @@ interface ComponentListProps {
 
 /** All runs (each a RunSection), the island section, and an add-run control. */
 export function ComponentList({
+  layout,
   runs,
   islandUnits,
   extraCosts,
@@ -110,10 +113,12 @@ export function ComponentList({
 }: ComponentListProps) {
   return (
     <div className="flex flex-col gap-6">
-      {runs.map((run) => (
+      {runs.map((run, i) => (
         <RunSection
           key={run.id}
           run={run}
+          layout={layout}
+          legIndex={i}
           removable={runs.length > 1}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}

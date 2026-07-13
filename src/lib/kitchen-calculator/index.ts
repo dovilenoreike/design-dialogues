@@ -21,8 +21,11 @@ export {
   nextRunLabel,
   nextUnitId,
   retypeUnit,
+  effectiveRunFor,
   LAYOUT_RUN_COUNT,
   LAYOUT_CORNER_JUNCTIONS,
+  type AssignableFixture,
+  type RunAssignment,
 } from "./autofill";
 export {
   unitParts,
