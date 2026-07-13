@@ -38,6 +38,7 @@ export {
   ISLAND_TYPES,
   ESSENTIAL_TYPES,
   unitHasSink,
+  categoryDims,
 } from "./units";
 export { priceKitchen, buildContext, effectiveExtraAmount, AUTO_EXTRA_PCT } from "./calculate";
 export { pricePart, priceParts } from "./parts";

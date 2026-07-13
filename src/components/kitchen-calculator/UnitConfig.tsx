@@ -77,7 +77,7 @@ const APPLIANCE_FRONTS: Record<string, string[]> = {
   ovenMicrowave: ["ovenTower", "applianceFront"],
   dishwasher: ["applianceFront", "door1"],
   microwave: ["applianceFront"],
-  extractor: ["integrated", "standalone"],
+  extractor: ["doors2", "door1", "integrated", "standalone"],
   fridge: ["applianceFront", "doorsTall"],
 };
 
@@ -202,7 +202,7 @@ export function accessoriesFor(unit: CabinetUnit): Option[] {
 const DEFAULT_BY_TYPE: Partial<
   Record<UnitType, { front?: string; shelves?: number; accessories?: string[] }>
 > = {
-  sink: { front: "doors2", shelves: 1, accessories: ["bin"] },
+  sink: { front: "drawers2", shelves: 0, accessories: ["bin"] },
   hob: { front: "drawers3", shelves: 0 },
   hobOven: { front: "applianceFront", shelves: 0 },
   dishwasher: { front: "door1", shelves: 0 },
@@ -216,7 +216,7 @@ const DEFAULT_BY_TYPE: Partial<
   housingTall: { front: "doorsTall", shelves: 0 },
   larder: { front: "doorsTall", shelves: 4 },
   wall: { front: "doors2", shelves: 1 },
-  hoodHousing: { front: "integrated", shelves: 0 },
+  hoodHousing: { front: "doors2", shelves: 0 },
   microwaveWall: { front: "applianceFront", shelves: 0 },
   housingWall: { front: "doors2", shelves: 0 },
   cornerWall: { front: "door1", shelves: 0 },
@@ -224,11 +224,15 @@ const DEFAULT_BY_TYPE: Partial<
 };
 
 // Composed extras layered onto an appliance-housing default — a bridging cupboard
-// above the fridge, a utility drawer under the oven tower.
+// above the fridge, a utility drawer under the oven tower, a cupboard beside the
+// microwave.
 const APPLIANCE_DEFAULT_EXTRAS: Partial<Record<UnitType, { doors?: number; drawers?: number }>> = {
   fridge: { doors: 1 },
   ovenHousing: { drawers: 1 },
   ovenMicrowave: { drawers: 1 },
+  hobOven: { drawers: 1 },
+  microwave: { doors: 1 },
+  microwaveWall: { doors: 1 },
 };
 
 export function defaultUnitConfig(unit: CabinetUnit): UnitConfigState {

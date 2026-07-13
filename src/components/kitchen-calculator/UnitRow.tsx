@@ -31,8 +31,10 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   APPLIANCE_ITEMS,
+  categoryDims,
   primaryApplianceId,
   type CabinetUnit,
+  type GlobalSettings,
   type ProjectAppliance,
   type UnitCategory,
   type UnitFinish,
@@ -65,6 +67,8 @@ const CATEGORY_LABELS: Record<UnitCategory, string> = {
 
 interface UnitRowProps {
   unit: CabinetUnit;
+  /** Global heights/depths — the config modal shows the unit's full W × D × H. */
+  settings: GlobalSettings;
   typeOptions: UnitType[];
   /** Essential types already placed somewhere in the kitchen (sink/hob/fridge). */
   presentEssentials?: UnitType[];
@@ -93,6 +97,7 @@ interface UnitRowProps {
  */
 export function UnitRow({
   unit,
+  settings,
   typeOptions,
   presentEssentials,
   declaredAppliances,
@@ -190,6 +195,11 @@ export function UnitRow({
     applianceLabel(primaryApplianceId(unit.appliances)),
   ].filter(Boolean);
   const currentLabel = contents.length ? contents.join(" + ") : kindLabel;
+  // Full carcass footprint — width is per-unit; height/depth come from the global
+  // settings for the unit's category. Shown W × D × H (corners note the return).
+  const { height, depth } = categoryDims(unit.category, settings);
+  const widthLabel = unit.width2 ? `${unit.width}+${unit.width2}` : `${unit.width}`;
+  const dimsLabel = `${widthLabel} × ${depth} × ${height} mm`;
 
   // A plain storage/corner unit can be reshaped among the forms its section
   // allows — Low / Tall / Corner for a base-run unit, Wall / Corner for a wall
@@ -305,10 +315,11 @@ export function UnitRow({
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-lg font-medium">
-                <UnitIcon unit={unit} size={24} className="text-muted-foreground" />
-                {categoryLabel}
-                <span className="text-sm font-normal text-muted-foreground">
-                  · {currentLabel} · {unit.width}mm
+                <UnitIcon unit={unit} size={30} className="shrink-0 text-muted-foreground" silhouette />
+                <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  {categoryLabel}
+                  <span className="text-sm font-normal text-muted-foreground">· {currentLabel}</span>
+                  <span className="text-sm font-normal tabular-nums text-muted-foreground">· {dimsLabel}</span>
                 </span>
               </DialogTitle>
               <DialogDescription>Set the shape, front layout and shelves.</DialogDescription>

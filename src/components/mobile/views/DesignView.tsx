@@ -22,6 +22,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import CollectionPresetCarousel from "../CollectionPresetCarousel";
 import PaletteReviewSheet, { type ReviewMaterial } from "../controls/PaletteReviewSheet";
 import { useGraphMaterials, getMaterialByCode, getPairCountByCode, matchesAllOtherCodes, getApprovedByDesigner } from "@/hooks/useGraphMaterials";
+import { LOADED_WITH_MATERIAL_PARAM, INITIAL_MATERIAL_PARAM } from "@/lib/deep-link";
 import { useSavedPalettes } from "@/hooks/useSavedPalettes";
 import { computePaletteHint } from "@/lib/palette-hint";
 import { surfaces } from "@/data/rooms/surfaces";
@@ -70,6 +71,12 @@ export default function DesignView() {
   const isMobile = useIsMobile();
   // Capture ?material= at mount time — searchParams may be cleared before the graph-loaded effect fires.
   const mountMaterialParam = useRef(new URLSearchParams(location.search).get("material"));
+  // Whether the app loaded with a ?material= deep-link. Used to suppress the collection carousel's
+  // first-visit auto-apply so a deep-link places ONLY its material, never a full preset. Read from
+  // the module-level capture (not a mount-time ref) because applying the deep-link remounts this
+  // view via a "/" → "/design" navigation; a mount ref would see the already-stripped URL as false
+  // and let the carousel fill the board on the remount. See src/lib/deep-link.ts.
+  const hadDeepLinkMaterialAtMount = LOADED_WITH_MATERIAL_PARAM;
 
   const subTab = useMemo((): "konceptas" | "vizualas" | "specs" => {
     if (location.pathname.endsWith("/visual")) return "vizualas";
@@ -283,7 +290,10 @@ export default function DesignView() {
       const slotKey = defaultPkToSlot[paletteKey];
       if (slotKey) initial[slotKey] = matId;
     }
-    if (!initial.floor) initial.floor = "wood";
+    // Default a fresh board to a wood floor — but NOT when a ?material= deep-link is present:
+    // that flow must place only the deep-linked material. Without this guard the "wood" archetype
+    // gets resolved to a real floor code on graph-load and written into materialOverrides.
+    if (!initial.floor && !LOADED_WITH_MATERIAL_PARAM) initial.floor = "wood";
     return initial;
   });
 
@@ -352,11 +362,14 @@ export default function DesignView() {
   }, [materialOverrides, graphLoading]);
 
   // Apply ?material=CODE URL param once graph is loaded (for showroom QR codes).
-  // Reads from the mount-time ref first so the param is never missed if searchParams
-  // gets cleared by another effect before graphLoading flips.
+  // Reads from the mount-time ref first, then the live search params, then the module-level
+  // capture — the last is essential because applying the deep-link remounts this view via a
+  // "/" → "/design" navigation, and by then the param is stripped from both the ref and the URL.
+  // Without it the material would be lost on the remount. Re-applying the same override is
+  // idempotent, so covering the remount here is safe.
   useEffect(() => {
     if (graphLoading) return;
-    const param = mountMaterialParam.current ?? searchParams.get("material");
+    const param = mountMaterialParam.current ?? searchParams.get("material") ?? INITIAL_MATERIAL_PARAM;
     mountMaterialParam.current = null;
     if (!param) return;
     const newOverrides: Record<string, string> = {};
@@ -789,6 +802,7 @@ export default function DesignView() {
               applyPreset(materials, imageUrl, designer, isUserCollectionRestore);
             }}
             hasExistingMaterials={Object.keys(materialOverrides).length > 0}
+            deepLinkMaterialPresent={hadDeepLinkMaterialAtMount}
             isModified={isModified}
             variant="header"
             savedPalettes={savedPalettes}

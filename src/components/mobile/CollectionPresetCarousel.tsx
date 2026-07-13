@@ -14,6 +14,13 @@ interface CollectionPresetCarouselProps {
   onApplyPreset: (materials: Record<string, string>, imageUrl: string | null, designer: string | null, isUserCollectionRestore?: boolean) => void;
   /** Whether the user already has materials set (prevents auto-applying on mount) */
   hasExistingMaterials: boolean;
+  /**
+   * True when a ?material= deep-link was present at page load. Suppresses the first-visit
+   * auto-apply so the deep-link places only its own material instead of a full preset —
+   * the board is briefly empty (default seeding is suppressed for deep-links) and must not
+   * be back-filled with the first collection.
+   */
+  deepLinkMaterialPresent?: boolean;
   /** When true the user has changed materials — show "Your collection" instead of preset name */
   isModified?: boolean;
   /**
@@ -41,6 +48,7 @@ export default function CollectionPresetCarousel({
   roomCategory,
   onApplyPreset,
   hasExistingMaterials,
+  deepLinkMaterialPresent = false,
   isModified = false,
   variant = "overlay",
   savedPalettes = [],
@@ -115,7 +123,7 @@ export default function CollectionPresetCarousel({
   // Skip if the user explicitly reset — they want an empty state across reloads.
   useEffect(() => {
     const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
-    if (!loading && !graphLoading && allItems.length > 0 && !hasExistingMaterials && !userExplicitlyReset) {
+    if (!loading && !graphLoading && allItems.length > 0 && !hasExistingMaterials && !userExplicitlyReset && !deepLinkMaterialPresent) {
       applyAt(0);
     }
   }, [loading, graphLoading, filteredPresets]); // eslint-disable-line react-hooks/exhaustive-deps

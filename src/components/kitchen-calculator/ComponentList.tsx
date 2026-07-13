@@ -4,6 +4,7 @@ import {
   ISLAND_TYPES,
   type CabinetUnit,
   type ExtraCost,
+  type GlobalSettings,
   type KitchenLayout,
   type ProjectAppliance,
   type Run,
@@ -16,6 +17,8 @@ import { RunSection } from "./RunSection";
 
 interface ComponentListProps {
   layout: KitchenLayout;
+  /** Global heights/depths — the config modal shows a unit's full W × D × H. */
+  settings: GlobalSettings;
   runs: Run[];
   islandUnits: CabinetUnit[];
   extraCosts: ExtraCost[];
@@ -68,6 +71,7 @@ interface ComponentListProps {
 /** All runs (each a RunSection), the island section, and an add-run control. */
 export function ComponentList({
   layout,
+  settings,
   runs,
   islandUnits,
   extraCosts,
@@ -118,6 +122,7 @@ export function ComponentList({
           key={run.id}
           run={run}
           layout={layout}
+          settings={settings}
           legIndex={i}
           removable={runs.length > 1}
           presentEssentials={presentEssentials}
@@ -160,6 +165,7 @@ export function ComponentList({
       <CabinetSection
         title="Island"
         units={islandUnits}
+        settings={settings}
         typeOptions={ISLAND_TYPES}
         addLabel="Add island"
         emptyLabel="No island. Add one to include it in the estimate."

@@ -35,6 +35,16 @@ function dimsFor(category: UnitCategory, s: GlobalSettings): Dims {
   }
 }
 
+/** Public helper: the height and depth (mm) a unit of this category takes, from
+ *  global settings (width is per-unit). Used by the UI to show full dimensions. */
+export function categoryDims(
+  category: UnitCategory,
+  s: GlobalSettings,
+): { height: number; depth: number } {
+  const { h, d } = dimsFor(category, s);
+  return { height: h, depth: d };
+}
+
 type Builder = (unit: CabinetUnit, s: GlobalSettings) => Part[];
 
 const builders: Record<UnitType, Builder> = {

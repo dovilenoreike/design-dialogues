@@ -85,10 +85,17 @@ interface UnitTypeIconProps {
   label?: string; // accessible label; falls back to the type
   size?: number; // rendered px, default 48
   className?: string;
+  /**
+   * Draw only the carcass silhouette — the shell box + legs, positioned by height
+   * class — dropping interior zones, handles, sink basin and corner/island detail.
+   * Reads purely as "low vs tall vs wall" by proportion and floor position, so it
+   * stays legible at small sizes (used in the config-modal title).
+   */
+  silhouette?: boolean;
 }
 
 /** Small SVG icon for a unit type's carcass (the appliance is shown as a badge). */
-export function UnitTypeIcon({ type, label, size = 48, className }: UnitTypeIconProps) {
+export function UnitTypeIcon({ type, label, size = 48, className, silhouette = false }: UnitTypeIconProps) {
   const spec = SPECS[type];
   const b = bounds(spec.frame);
   // EXPERIMENT: all frames drawn at the narrow (tall) width, so every icon shares
@@ -108,7 +115,8 @@ export function UnitTypeIcon({ type, label, size = 48, className }: UnitTypeIcon
     <rect key={key()} x={x} y={y} width={w} height={h} rx={rx} ry={rx} fill="none" />
   );
 
-  // Shell — a plain box; dashed for an undefined/placeholder housing.
+  // Shell — a plain box; dashed for an undefined/placeholder housing. The
+  // silhouette keeps it solid: shape/position alone should read as low vs tall.
   els.push(
     <rect
       key={key()}
@@ -119,23 +127,23 @@ export function UnitTypeIcon({ type, label, size = 48, className }: UnitTypeIcon
       rx={R}
       ry={R}
       fill="none"
-      strokeDasharray={spec.dashed ? "3 2.5" : undefined}
+      strokeDasharray={!silhouette && spec.dashed ? "3 2.5" : undefined}
     />,
   );
 
   // Sink basin — a simple oval set into the top edge of the box.
-  if (spec.worktop === "sink") {
+  if (!silhouette && spec.worktop === "sink") {
     els.push(<ellipse key={key()} cx={CX} cy={b.shellTop + 3.5} rx={10} ry={2.4} fill="none" />);
   }
 
   // Island side panels — an inset vertical line on each edge.
-  if (spec.island) {
+  if (!silhouette && spec.island) {
     els.push(line(left + 3, b.shellTop + 3, left + 3, b.shellBottom - 3));
     els.push(line(right - 3, b.shellTop + 3, right - 3, b.shellBottom - 3));
   }
 
-  // Zones + handles (skipped for an empty interior like a fridge).
-  if (!spec.empty && spec.zones.length > 0) {
+  // Zones + handles (skipped for an empty interior like a fridge, or a silhouette).
+  if (!silhouette && !spec.empty && spec.zones.length > 0) {
     const zh = (b.shellBottom - b.shellTop) / spec.zones.length;
     spec.zones.forEach((zone, i) => {
       const zTop = b.shellTop + i * zh;
@@ -171,7 +179,7 @@ export function UnitTypeIcon({ type, label, size = 48, className }: UnitTypeIcon
   }
 
   // Corner return — angled line across the top-right of the shell.
-  if (spec.corner) {
+  if (!silhouette && spec.corner) {
     const c = 14;
     els.push(line(right - c, b.shellTop, right, b.shellTop + c));
   }
@@ -203,10 +211,20 @@ interface UnitIconProps {
   unit: CabinetUnit;
   size?: number;
   className?: string;
+  /** Draw only the carcass silhouette (see UnitTypeIcon). */
+  silhouette?: boolean;
 }
 
 /** Small SVG icon for a placed cabinet unit — its carcass outline (the
  *  appliances it holds are shown as glyph badges alongside it). */
-export function UnitIcon({ unit, size, className }: UnitIconProps) {
-  return <UnitTypeIcon type={unit.type} label={unit.name} size={size} className={className} />;
+export function UnitIcon({ unit, size, className, silhouette }: UnitIconProps) {
+  return (
+    <UnitTypeIcon
+      type={unit.type}
+      label={unit.name}
+      size={size}
+      className={className}
+      silhouette={silhouette}
+    />
+  );
 }

@@ -615,6 +615,7 @@ const KitchenCalculator = () => {
 
             <ComponentList
               layout={state.layout}
+              settings={settings}
               runs={state.runs}
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}

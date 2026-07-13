@@ -6,6 +6,7 @@ import {
   BASE_TALL_TYPES,
   unitHasSink,
   WALL_TYPES,
+  type GlobalSettings,
   type KitchenLayout,
   type Run,
   type CabinetUnit,
@@ -29,6 +30,8 @@ interface RunSectionProps {
   run: Run;
   /** Kitchen layout + this run's leg index — drives the header leg glyph. */
   layout: KitchenLayout;
+  /** Global heights/depths — passed through so unit rows can show full dimensions. */
+  settings: GlobalSettings;
   legIndex: number;
   removable: boolean;
   presentEssentials?: UnitType[];
@@ -61,6 +64,7 @@ interface RunSectionProps {
 export function RunSection({
   run,
   layout,
+  settings,
   legIndex,
   removable,
   presentEssentials,
@@ -244,6 +248,7 @@ export function RunSection({
         <CabinetSection
           title="Base & tall units"
           units={run.baseUnits}
+          settings={settings}
           typeOptions={BASE_TALL_TYPES}
           addLabel="Add unit"
           indicator={runIndicator}
@@ -273,6 +278,7 @@ export function RunSection({
         <CabinetSection
           title="Wall units"
           units={run.wallUnits}
+          settings={settings}
           typeOptions={WALL_TYPES}
           addLabel="Add wall unit"
           indicator={wallIndicator}

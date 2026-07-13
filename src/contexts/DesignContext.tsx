@@ -30,6 +30,7 @@ import type { VibeTag } from "@/data/collections/types";
 import { useShowroom } from "@/contexts/ShowroomContext";
 import { getMaterialsByRole, getPairCountByCode } from "@/hooks/useGraphMaterials";
 import { getRoomByName } from "@/data/rooms";
+import { LOADED_WITH_MATERIAL_PARAM } from "@/lib/deep-link";
 
 export type BottomTab = "design" | "budget" | "plan";
 export type ControlMode = "rooms" | "palettes" | "styles";
@@ -153,6 +154,7 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
   // Router hooks for URL sync
   const location = useLocation();
   const navigate = useNavigate();
+
 
   // Auth state - automatic anonymous auth
   const { user, loading: authLoading } = useAuth();
@@ -403,10 +405,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           });
 
           // Initialize default materials for new users or when no overrides are persisted yet.
-          // Skip if ?material= param is present (QR code flow) or user explicitly reset.
-          const hasMaterialParam = new URLSearchParams(location.search).has("material");
+          // Skip if a ?material= deep-link was present at load (QR code flow) or user explicitly reset.
           const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
-          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam && !userExplicitlyReset) {
+          if (Object.keys(materialOverrides).length === 0 && !LOADED_WITH_MATERIAL_PARAM && !userExplicitlyReset) {
             initializeDefaultMaterials();
           }
 
@@ -440,10 +441,9 @@ export function DesignProvider({ children, initialSharedSession }: DesignProvide
           }
         } else {
           // New user — no saved state — seed with graph-ranked defaults.
-          // Skip if ?material= param is present (QR code flow) or user explicitly reset.
-          const hasMaterialParam = new URLSearchParams(location.search).has("material");
+          // Skip if a ?material= deep-link was present at load (QR code flow) or user explicitly reset.
           const userExplicitlyReset = localStorage.getItem("materials-reset") === "1";
-          if (Object.keys(materialOverrides).length === 0 && !hasMaterialParam && !userExplicitlyReset) {
+          if (Object.keys(materialOverrides).length === 0 && !LOADED_WITH_MATERIAL_PARAM && !userExplicitlyReset) {
             initializeDefaultMaterials();
           }
         }

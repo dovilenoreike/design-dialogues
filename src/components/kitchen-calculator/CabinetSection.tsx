@@ -14,13 +14,21 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CabinetUnit, ProjectAppliance, UnitFinish, UnitType } from "@/lib/kitchen-calculator";
+import type {
+  CabinetUnit,
+  GlobalSettings,
+  ProjectAppliance,
+  UnitFinish,
+  UnitType,
+} from "@/lib/kitchen-calculator";
 import { AddUnitMenu } from "./AddUnitMenu";
 import { UnitRow } from "./UnitRow";
 
 interface CabinetSectionProps {
   title: string;
   units: CabinetUnit[];
+  /** Global heights/depths — a row's config modal shows the unit's full W × D × H. */
+  settings: GlobalSettings;
   typeOptions: UnitType[];
   addLabel: string;
   emptyLabel?: string;
@@ -44,6 +52,7 @@ interface CabinetSectionProps {
 export function CabinetSection({
   title,
   units,
+  settings,
   typeOptions,
   addLabel,
   emptyLabel,
@@ -91,6 +100,7 @@ export function CabinetSection({
                 <UnitRow
                   key={u.id}
                   unit={u}
+                  settings={settings}
                   typeOptions={typeOptions}
                   presentEssentials={presentEssentials}
                   declaredAppliances={declaredAppliances}
