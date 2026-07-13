@@ -21,6 +21,10 @@ export default function EarlyAccessBanner({ onDismiss }: EarlyAccessBannerProps)
     return () => clearTimeout(timer);
   }, [isSharedSession]);
 
+  // Hidden for now: the "early users — your feedback shapes what's next" bar made the product
+  // read as a prototype and wasn't driving feedback. Kept mounted so it's easy to re-enable.
+  return null;
+
   const dismiss = () => {
     setHiding(true);
     localStorage.setItem(EARLY_ACCESS_BANNER_KEY, "1");
