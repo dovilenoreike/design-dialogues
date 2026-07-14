@@ -63,6 +63,7 @@ import {
   type ProjectAppliance,
   type Run,
   type RunAssignment,
+  type RunTarget,
   type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
@@ -87,7 +88,9 @@ const clampAssignments = (a: RunAssignment, runCount: number): RunAssignment => 
   const out: RunAssignment = {};
   for (const key of Object.keys(a) as AssignableFixture[]) {
     const v = a[key];
-    if (v !== undefined) out[key] = Math.min(Math.max(v, 0), Math.max(runCount - 1, 0));
+    if (v === undefined) continue;
+    // The island target is independent of the wall run count — keep it as-is.
+    out[key] = v === "island" ? "island" : Math.min(Math.max(v, 0), Math.max(runCount - 1, 0));
   }
   return out;
 };
@@ -240,8 +243,8 @@ const KitchenCalculator = () => {
     }
   };
 
-  const handleAssignmentChange = (key: AssignableFixture, run: number) => {
-    setAssignments((prev) => ({ ...prev, [key]: run }));
+  const handleAssignmentChange = (key: AssignableFixture, target: RunTarget) => {
+    setAssignments((prev) => ({ ...prev, [key]: target }));
   };
 
   const handleGenerate = () => {
@@ -645,6 +648,7 @@ const KitchenCalculator = () => {
             <ApplianceRunAssignment
               layout={layout}
               runCount={LAYOUT_RUN_COUNT[layout]}
+              hasIsland={hasIsland}
               selected={appliances}
               assignments={assignments}
               onChange={handleAssignmentChange}

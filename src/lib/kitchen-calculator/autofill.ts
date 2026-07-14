@@ -79,6 +79,9 @@ export function makeUnit(type: UnitType, width: number, opts: MakeOpts = {}): Ca
  * cabinets shows as one "× 6" line. Order is preserved; only adjacent matches
  * merge, so a differing unit between two identical ones keeps them apart.
  */
+const sameAppliances = (a: ProjectAppliance[], b: ProjectAppliance[]): boolean =>
+  a.length === b.length && [...a].sort().join(",") === [...b].sort().join(",");
+
 export function collapseAdjacent(units: CabinetUnit[]): CabinetUnit[] {
   const out: CabinetUnit[] = [];
   for (const u of units) {
@@ -89,7 +92,10 @@ export function collapseAdjacent(units: CabinetUnit[]): CabinetUnit[] {
       last.width === u.width &&
       (last.width2 ?? null) === (u.width2 ?? null) &&
       last.isCustomWidth === u.isCustomWidth &&
-      (last.frontMaterial ?? null) === (u.frontMaterial ?? null);
+      (last.frontMaterial ?? null) === (u.frontMaterial ?? null) &&
+      // Island units share the "island" type, so their contents must match too.
+      sameAppliances(last.appliances, u.appliances) &&
+      !!last.sink === !!u.sink;
     if (same) out[out.length - 1] = { ...last, quantity: last.quantity + u.quantity };
     else out.push(u);
   }
@@ -181,6 +187,43 @@ export function makeIslandRun(lengthMm: number): CabinetUnit[] {
   );
 }
 
+const ISLAND_FIXTURE_WIDTH = 600; // mm — a fixture/appliance cabinet on the island
+
+/**
+ * Island cabinets for a footprint, seating the sink and any appliances assigned
+ * to the island (each rides an island carcass, as the island UI models them),
+ * then filling the rest with storage.
+ */
+function fillIsland(
+  lengthMm: number,
+  appliances: Set<ProjectAppliance>,
+  hasSink: boolean,
+): CabinetUnit[] {
+  const units: CabinetUnit[] = [];
+  const has = (a: ProjectAppliance) => appliances.has(a);
+  const carry = (apps: ProjectAppliance[]) =>
+    units.push(makeUnit("island", ISLAND_FIXTURE_WIDTH, { appliances: apps }));
+
+  if (hasSink) {
+    const sinkUnit = makeUnit("island", ISLAND_FIXTURE_WIDTH);
+    sinkUnit.sink = true;
+    units.push(sinkUnit);
+  }
+  if (has("dishwasher")) carry(["dishwasher"]);
+  if (has("hob") && has("oven")) carry(["hob", "oven"]);
+  else if (has("hob")) carry(["hob"]);
+  else if (has("oven")) carry(["oven"]);
+  if (has("fridge")) carry(["fridge"]);
+  if (has("microwave")) carry(["microwave"]);
+  if (has("hood")) carry(["hood"]);
+
+  const used = units.reduce((sum, u) => sum + u.width, 0);
+  for (const fill of greedyFill(Math.max(lengthMm - used, 0), STANDARD_WIDTHS)) {
+    units.push(makeUnit("island", fill.width, { isCustom: fill.isCustom }));
+  }
+  return collapseAdjacent(units);
+}
+
 const SINK_WIDTH = 600;
 const HOB_WIDTH = 600;
 const HOB_OVEN_WIDTH = 600;
@@ -229,25 +272,31 @@ function baseSpan(units: CabinetUnit[]): number {
  */
 export type AssignableFixture = ProjectAppliance | "sink";
 
-/** Which run each fixture goes to (0-based). A missing entry defaults to run 0. */
-export type RunAssignment = Partial<Record<AssignableFixture, number>>;
+/** Where a fixture goes: a 0-based run index, or the island. */
+export type RunTarget = number | "island";
+
+/** Which run (or the island) each fixture goes to. A missing entry defaults to run 0. */
+export type RunAssignment = Partial<Record<AssignableFixture, RunTarget>>;
 
 /**
- * The run a fixture ends up in, clamped to the available runs. The hood hangs
- * above the hob, so it always follows the hob's run when a hob is declared. The
- * oven is *independent*: it defaults to the hob's run (built under it as one
- * unit), but the user can send it to a different run to get a standalone tower.
+ * The run (or island) a fixture ends up in, clamped to what's available. The hood
+ * hangs above the hob, so it always follows the hob's run when a hob is declared.
+ * The oven is *independent*: it defaults to the hob's run (built under it as one
+ * unit), but the user can send it elsewhere to get a standalone oven tower. An
+ * "island" target falls back to run 0 when the kitchen has no island.
  */
 export function effectiveRunFor(
   key: AssignableFixture,
   assignments: RunAssignment,
   declared: Set<ProjectAppliance>,
   runCount: number,
-): number {
+  hasIsland = false,
+): RunTarget {
   if (key === "hood" && declared.has("hob")) {
-    return effectiveRunFor("hob", assignments, declared, runCount);
+    return effectiveRunFor("hob", assignments, declared, runCount, hasIsland);
   }
   const raw = assignments[key] ?? 0;
+  if (raw === "island") return hasIsland ? "island" : 0;
   return Math.min(Math.max(raw, 0), Math.max(runCount - 1, 0));
 }
 
@@ -323,9 +372,10 @@ export function generateKitchen(
 ): KitchenState {
   const runCount = LAYOUT_RUN_COUNT[layout];
   const junctions = LAYOUT_CORNER_JUNCTIONS[layout];
+  const hasIsland = islandLengthMm > 0;
 
   const runFor = (key: AssignableFixture) =>
-    effectiveRunFor(key, assignments, appliances, runCount);
+    effectiveRunFor(key, assignments, appliances, runCount, hasIsland);
 
   const runs: Run[] = [];
   for (let i = 0; i < runCount; i++) {
@@ -347,7 +397,14 @@ export function generateKitchen(
     makeExtraCost("Installation", 0, "installation", true),
     makeExtraCost("Delivery", 100, "delivery"),
   ];
-  const islandUnits = islandLengthMm > 0 ? makeIslandRun(islandLengthMm) : [];
+  // The island seats whatever the user assigned to it, then fills with storage.
+  const islandUnits = hasIsland
+    ? fillIsland(
+        islandLengthMm,
+        new Set([...appliances].filter((a) => runFor(a) === "island")),
+        runFor("sink") === "island",
+      )
+    : [];
   return { layout, settings, grade, runs, islandUnits, extraCosts };
 }
 

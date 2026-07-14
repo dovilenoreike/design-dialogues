@@ -36,7 +36,7 @@ const FRONT_SLOTS: SlotDef[] = [
   { slot: "additionalFronts", surface: "topCabinets", label: "Fronts II" },
   { slot: "tertiaryFronts", surface: "tallCabinets", label: "Fronts III" },
 ];
-const WORKTOP_SLOT: SlotDef = { slot: "worktops", surface: "worktop", label: "Worktops" };
+const WORKTOP_SLOT: SlotDef = { slot: "worktops", surface: "worktops", label: "Worktops" };
 
 const CUSTOM_PREFIX = "custom:";
 export const customCode = (slot: string): string => `${CUSTOM_PREFIX}${slot}`;

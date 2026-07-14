@@ -216,6 +216,7 @@ export function ComponentList({
               typeOptions={ISLAND_TYPES}
               addLabel="Add cabinet"
               unitPrices={unitPrices}
+              presentEssentials={presentEssentials}
               declaredAppliances={declaredAppliances}
               placedAppliances={placedAppliances}
               onTypeChange={onIslandTypeChange}

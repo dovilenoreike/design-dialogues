@@ -27,6 +27,7 @@ export {
   LAYOUT_CORNER_JUNCTIONS,
   type AssignableFixture,
   type RunAssignment,
+  type RunTarget,
 } from "./autofill";
 export {
   unitParts,

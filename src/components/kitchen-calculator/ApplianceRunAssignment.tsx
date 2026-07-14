@@ -4,17 +4,21 @@ import {
   type KitchenLayout,
   type ProjectAppliance,
   type RunAssignment,
+  type RunTarget,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
+import { IslandGlyph } from "./IslandGlyph";
 import { LayoutLegGlyph } from "./LayoutLegGlyph";
 
 interface ApplianceRunAssignmentProps {
   layout: KitchenLayout;
   runCount: number;
+  /** Whether the kitchen has an island — offered as an extra destination. */
+  hasIsland: boolean;
   /** The declared appliance set (drives which rows appear). */
   selected: Set<ProjectAppliance>;
   assignments: RunAssignment;
-  onChange: (key: AssignableFixture, run: number) => void;
+  onChange: (key: AssignableFixture, target: RunTarget) => void;
 }
 
 interface Row {
@@ -37,11 +41,13 @@ const SAGE = "#647d75";
 export function ApplianceRunAssignment({
   layout,
   runCount,
+  hasIsland,
   selected,
   assignments,
   onChange,
 }: ApplianceRunAssignmentProps) {
-  if (runCount < 2) return null;
+  // Nothing to assign unless there are at least two destinations (runs + island).
+  if (runCount < 2 && !hasIsland) return null;
 
   const rows: Row[] = [{ key: "sink", glyph: "sink", label: "Sink" }];
   // Hob and oven are independent rows: keep them on the same run for a built-under
@@ -62,28 +68,34 @@ export function ApplianceRunAssignment({
 
   const runLabel = (i: number) => String.fromCharCode(65 + i); // 0 → A, 1 → B…
 
-  // Quiet segmented A│B│C. The spatial meaning lives in the legend above, so the
-  // control itself stays a small, low-key letter toggle rather than a loud block.
-  const segmented = (row: Row, run: number) => {
+  // The destinations: each run (A│B│C…), then the island as a final segment.
+  const targets: RunTarget[] = [
+    ...Array.from({ length: runCount }, (_, i) => i as RunTarget),
+    ...(hasIsland ? (["island"] as RunTarget[]) : []),
+  ];
+
+  // Quiet segmented A│B│C│◇. The spatial meaning lives in the legend above, so the
+  // control itself stays a small, low-key toggle rather than a loud block.
+  const segmented = (row: Row, target: RunTarget) => {
     const locked = !!row.lockedNote;
     return (
       <div className={`inline-flex overflow-hidden rounded-md border ${locked ? "opacity-50" : ""}`}>
-        {Array.from({ length: runCount }).map((_, i) => {
-          const active = i === run;
+        {targets.map((t) => {
+          const active = t === target;
           return (
             <button
-              key={i}
+              key={String(t)}
               type="button"
               disabled={locked}
-              onClick={() => onChange(row.key, i)}
+              onClick={() => onChange(row.key, t)}
               aria-pressed={active}
-              aria-label={`${row.label} on Run ${runLabel(i)}`}
-              className={`h-7 min-w-[28px] border-l px-2 text-xs font-medium transition first:border-l-0 ${
+              aria-label={t === "island" ? `${row.label} on the island` : `${row.label} on Run ${runLabel(t)}`}
+              className={`flex h-7 min-w-[28px] items-center justify-center border-l px-2 text-xs font-medium transition first:border-l-0 ${
                 active ? "" : `text-muted-foreground${locked ? "" : " hover:bg-muted"}`
               }`}
               style={active ? { backgroundColor: "rgba(100,125,117,0.14)", color: SAGE } : undefined}
             >
-              {runLabel(i)}
+              {t === "island" ? <IslandGlyph size={14} /> : runLabel(t)}
             </button>
           );
         })}
@@ -94,8 +106,8 @@ export function ApplianceRunAssignment({
   return (
     <div className="flex flex-col gap-2.5 rounded-md border px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
-        <span className="text-sm font-medium text-muted-foreground">Which wall?</span>
-        {/* Legend — teaches the letter → leg mapping once, so the rows don't have to. */}
+        <span className="text-sm font-medium text-muted-foreground">Where?</span>
+        {/* Legend — teaches the letter → leg (and island) mapping once. */}
         <div className="flex items-center gap-3">
           {Array.from({ length: runCount }).map((_, i) => (
             <span key={i} className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -103,17 +115,23 @@ export function ApplianceRunAssignment({
               {runLabel(i)}
             </span>
           ))}
+          {hasIsland && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <IslandGlyph size={18} className="text-muted-foreground" />
+              Island
+            </span>
+          )}
         </div>
       </div>
 
       <div className="flex flex-col divide-y">
         {rows.map((row) => {
-          const run = effectiveRunFor(row.key, assignments, selected, runCount);
+          const target = effectiveRunFor(row.key, assignments, selected, runCount, hasIsland);
           // The oven merges into one built-under unit when it shares the hob's run.
           const combined =
             row.key === "oven" &&
             selected.has("hob") &&
-            run === effectiveRunFor("hob", assignments, selected, runCount);
+            target === effectiveRunFor("hob", assignments, selected, runCount, hasIsland);
           const note = row.lockedNote ?? (combined ? "combined with hob" : undefined);
           return (
             <div key={row.key} className="flex items-center gap-3 py-1.5">
@@ -122,7 +140,7 @@ export function ApplianceRunAssignment({
                 {row.label}
                 {note && <span className="ml-1.5 text-xs text-muted-foreground">· {note}</span>}
               </span>
-              {segmented(row, run)}
+              {segmented(row, target)}
             </div>
           );
         })}
