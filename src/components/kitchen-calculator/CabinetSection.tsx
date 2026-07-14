@@ -22,6 +22,7 @@ import type {
   UnitType,
 } from "@/lib/kitchen-calculator";
 import { AddUnitMenu } from "./AddUnitMenu";
+import { formatEur } from "./currency";
 import { UnitRow } from "./UnitRow";
 
 interface CabinetSectionProps {
@@ -34,6 +35,8 @@ interface CabinetSectionProps {
   emptyLabel?: string;
   indicator?: ReactNode;
   footerExtra?: ReactNode;
+  /** Per-unit line subtotals keyed by unit id — sums to the section price. */
+  unitPrices?: Map<string, number>;
   presentEssentials?: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
   placedAppliances?: Set<ProjectAppliance>;
@@ -58,6 +61,7 @@ export function CabinetSection({
   emptyLabel,
   indicator,
   footerExtra,
+  unitPrices,
   presentEssentials,
   declaredAppliances,
   placedAppliances,
@@ -84,6 +88,13 @@ export function CabinetSection({
 
   const sortable = onReorder && units.length > 1;
 
+  // Section subtotal — the sum of this section's unit line prices. Only shown
+  // once there are units and prices to sum (empty island → no price).
+  const sectionSubtotal =
+    unitPrices && units.length > 0
+      ? units.reduce((sum, u) => sum + (unitPrices.get(u.id) ?? 0), 0)
+      : null;
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -100,6 +111,7 @@ export function CabinetSection({
                 <UnitRow
                   key={u.id}
                   unit={u}
+                  price={unitPrices?.get(u.id)}
                   settings={settings}
                   typeOptions={typeOptions}
                   presentEssentials={presentEssentials}
@@ -129,6 +141,14 @@ export function CabinetSection({
             onAdd={onAdd}
           />
           {footerExtra}
+          {sectionSubtotal !== null && (
+            <span
+              className="ml-auto text-sm font-medium tabular-nums"
+              style={{ color: "#647d75" }}
+            >
+              {formatEur(sectionSubtotal)}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

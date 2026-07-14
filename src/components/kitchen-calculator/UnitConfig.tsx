@@ -1,4 +1,5 @@
 import { Minus, Plus } from "lucide-react";
+import { formatEur } from "./currency";
 import {
   primaryApplianceId,
   type CabinetUnit,
@@ -413,12 +414,14 @@ function Stepper({
 interface UnitConfigProps {
   unit: CabinetUnit;
   value: UnitConfigState;
+  /** This unit's line subtotal (quantity included) — omitted while unpriced. */
+  price?: number;
   onChange: (next: UnitConfigState) => void;
 }
 
 const SAGE = "#647d75";
 
-export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
+export function UnitConfig({ unit, value, price, onChange }: UnitConfigProps) {
   const front = value.front;
   // Which elements this unit permits (fronts stay tailored to its appliance).
   const validIds = frontsFor(primaryApplianceId(value.appliances), unit.category, unit.type);
@@ -549,9 +552,23 @@ export function UnitConfig({ unit, value, onChange }: UnitConfigProps) {
         </div>
       )}
 
-      <p className="border-t pt-3 text-[11px] text-muted-foreground">
-        Visual preview — configuration isn&apos;t reflected in the estimate yet.
-      </p>
+      <div className="flex items-end justify-between gap-4 border-t pt-3">
+        <p className="text-[11px] text-muted-foreground">
+          {price !== undefined
+            ? "Estimated from the cabinet's size and hardware. Front and shelf choices are a visual preview — they don't change the price yet."
+            : "Visual preview — configuration isn't reflected in the estimate yet."}
+        </p>
+        {price !== undefined && (
+          <span className="shrink-0 text-right text-sm font-medium tabular-nums" style={{ color: SAGE }}>
+            {formatEur(price)}
+            {unit.quantity > 1 && (
+              <span className="block text-[11px] font-normal text-muted-foreground">
+                {formatEur(price / unit.quantity)} each
+              </span>
+            )}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -34,6 +34,8 @@ interface RunSectionProps {
   settings: GlobalSettings;
   legIndex: number;
   removable: boolean;
+  /** Per-unit line subtotals keyed by unit id — drives section + unit prices. */
+  unitPrices?: Map<string, number>;
   presentEssentials?: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
   placedAppliances?: Set<ProjectAppliance>;
@@ -67,6 +69,7 @@ export function RunSection({
   settings,
   legIndex,
   removable,
+  unitPrices,
   presentEssentials,
   declaredAppliances,
   placedAppliances,
@@ -252,6 +255,7 @@ export function RunSection({
           typeOptions={BASE_TALL_TYPES}
           addLabel="Add unit"
           indicator={runIndicator}
+          unitPrices={unitPrices}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}
           placedAppliances={placedAppliances}
@@ -283,6 +287,7 @@ export function RunSection({
           addLabel="Add wall unit"
           indicator={wallIndicator}
           footerExtra={wallFillButton}
+          unitPrices={unitPrices}
           declaredAppliances={declaredAppliances}
           placedAppliances={placedAppliances}
           onTypeChange={(id, type) => onTypeChange(run.id, id, type)}

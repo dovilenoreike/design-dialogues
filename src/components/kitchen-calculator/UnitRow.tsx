@@ -67,6 +67,8 @@ const CATEGORY_LABELS: Record<UnitCategory, string> = {
 
 interface UnitRowProps {
   unit: CabinetUnit;
+  /** This unit's line subtotal (quantity included) — shown in the config modal. */
+  price?: number;
   /** Global heights/depths — the config modal shows the unit's full W × D × H. */
   settings: GlobalSettings;
   typeOptions: UnitType[];
@@ -97,6 +99,7 @@ interface UnitRowProps {
  */
 export function UnitRow({
   unit,
+  price,
   settings,
   typeOptions,
   presentEssentials,
@@ -350,7 +353,7 @@ export function UnitRow({
                 </div>
               </div>
             )}
-            <UnitConfig unit={unit} value={configValue} onChange={handleConfigChange} />
+            <UnitConfig unit={unit} value={configValue} price={price} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
 

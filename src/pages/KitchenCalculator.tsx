@@ -527,6 +527,14 @@ const KitchenCalculator = () => {
     return priceKitchen(liveState, mockMaterialConfig, mockHardwareDB);
   }, [state, settings, grade]);
 
+  // Per-unit line subtotals (quantity included), keyed by unit id — powers the
+  // section subtotals and each unit's config-modal price.
+  const unitPrices = useMemo(() => {
+    const map = new Map<string, number>();
+    if (pricing) for (const u of pricing.units) map.set(u.id, u.subtotal);
+    return map;
+  }, [pricing]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-6 py-10">
@@ -619,6 +627,7 @@ const KitchenCalculator = () => {
               runs={state.runs}
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}
+              unitPrices={unitPrices}
               declaredAppliances={appliances}
               placedAppliances={placedAppliances}
               missingBaseHousings={missingBaseHousings}

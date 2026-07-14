@@ -22,6 +22,8 @@ interface ComponentListProps {
   runs: Run[];
   islandUnits: CabinetUnit[];
   extraCosts: ExtraCost[];
+  /** Per-unit line subtotals keyed by unit id — drives section + unit prices. */
+  unitPrices?: Map<string, number>;
   furnitureSubtotal: number;
   presentEssentials: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
@@ -75,6 +77,7 @@ export function ComponentList({
   runs,
   islandUnits,
   extraCosts,
+  unitPrices,
   furnitureSubtotal,
   presentEssentials,
   declaredAppliances,
@@ -125,6 +128,7 @@ export function ComponentList({
           settings={settings}
           legIndex={i}
           removable={runs.length > 1}
+          unitPrices={unitPrices}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}
           placedAppliances={placedAppliances}
@@ -169,6 +173,7 @@ export function ComponentList({
         typeOptions={ISLAND_TYPES}
         addLabel="Add island"
         emptyLabel="No island. Add one to include it in the estimate."
+        unitPrices={unitPrices}
         declaredAppliances={declaredAppliances}
         placedAppliances={placedAppliances}
         onTypeChange={onIslandTypeChange}

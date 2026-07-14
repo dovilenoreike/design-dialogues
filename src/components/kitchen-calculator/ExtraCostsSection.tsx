@@ -18,9 +18,6 @@ const SUGGESTIONS = [
   "Discount",
 ];
 
-const eur = (n: number): string =>
-  `${n < 0 ? "−" : ""}€${Math.abs(n).toLocaleString("en-IE", { maximumFractionDigits: 0 })}`;
-
 interface ExtraCostRowProps {
   cost: ExtraCost;
   displayAmount: number;
@@ -122,22 +119,14 @@ export function ExtraCostsSection({
   onRemove,
   onAdd,
 }: ExtraCostsSectionProps) {
-  const subtotal = costs.reduce((sum, c) => sum + effectiveExtraAmount(c, furnitureSubtotal), 0);
   const usedLabels = new Set(costs.map((c) => c.label.trim().toLowerCase()));
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="font-serif text-base font-medium text-foreground">
-            Additional costs
-          </CardTitle>
-          {costs.length > 0 && (
-            <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {eur(subtotal)}
-            </span>
-          )}
-        </div>
+        <CardTitle className="font-serif text-base font-medium text-foreground">
+          Additional costs
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="divide-y">
