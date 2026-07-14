@@ -88,7 +88,8 @@ export function collapseAdjacent(units: CabinetUnit[]): CabinetUnit[] {
       last.type === u.type &&
       last.width === u.width &&
       (last.width2 ?? null) === (u.width2 ?? null) &&
-      last.isCustomWidth === u.isCustomWidth;
+      last.isCustomWidth === u.isCustomWidth &&
+      (last.frontMaterial ?? null) === (u.frontMaterial ?? null);
     if (same) out[out.length - 1] = { ...last, quantity: last.quantity + u.quantity };
     else out.push(u);
   }
@@ -167,6 +168,15 @@ export function makeWallRun(spanMm: number): CabinetUnit[] {
   return collapseAdjacent(
     greedyFill(spanMm, WALL_WIDTHS).map((fill) =>
       makeUnit("wall", fill.width, { isCustom: fill.isCustom }),
+    ),
+  );
+}
+
+/** Island cabinets filling a given footprint length (standard widths), collapsed. */
+export function makeIslandRun(lengthMm: number): CabinetUnit[] {
+  return collapseAdjacent(
+    greedyFill(lengthMm, STANDARD_WIDTHS).map((fill) =>
+      makeUnit("island", fill.width, { isCustom: fill.isCustom }),
     ),
   );
 }
@@ -309,6 +319,7 @@ export function generateKitchen(
   grade: HardwareGrade,
   appliances: Set<ProjectAppliance> = defaultAppliances(),
   assignments: RunAssignment = {},
+  islandLengthMm = 0,
 ): KitchenState {
   const runCount = LAYOUT_RUN_COUNT[layout];
   const junctions = LAYOUT_CORNER_JUNCTIONS[layout];
@@ -336,7 +347,8 @@ export function generateKitchen(
     makeExtraCost("Installation", 0, "installation", true),
     makeExtraCost("Delivery", 100, "delivery"),
   ];
-  return { layout, settings, grade, runs, islandUnits: [], extraCosts };
+  const islandUnits = islandLengthMm > 0 ? makeIslandRun(islandLengthMm) : [];
+  return { layout, settings, grade, runs, islandUnits, extraCosts };
 }
 
 /** Next run label for a manually added run (continues the A/B/C… sequence). */

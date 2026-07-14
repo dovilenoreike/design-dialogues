@@ -42,6 +42,7 @@ import {
   unitHasSink,
 } from "@/lib/kitchen-calculator";
 import { ApplianceGlyph } from "./ApplianceGlyph";
+import { FrontMaterialPicker } from "./FrontMaterialPicker";
 import { applianceLabel, FrontIcon, UnitConfig, accessoriesFor, defaultUnitConfig, type UnitConfigState } from "./UnitConfig";
 import { UnitIcon } from "./UnitIcon";
 import {
@@ -356,6 +357,13 @@ export function UnitRow({
             <UnitConfig unit={unit} value={configValue} price={price} onChange={handleConfigChange} />
           </DialogContent>
         </Dialog>
+
+        {/* The material this front wears — inherited from the project palette, or
+            pinned per-line. */}
+        <FrontMaterialPicker
+          unit={unit}
+          onChange={(frontMaterial) => onConfigChange(unit.id, { frontMaterial })}
+        />
 
         {/* Contents — sink / appliance glyphs, a fittings count, and the "+".
             Kind is derived and read from the glyphs, so no text label. */}

@@ -184,6 +184,12 @@ export interface CabinetUnit {
   shelves?: number;
   accessories?: string[];
   /**
+   * Catalog code for this cabinet's front finish. `undefined` means "inherit the
+   * project palette for this unit's category" (base → Fronts I, wall → Fronts II,
+   * tall → Fronts III, island → Fronts I). Attribution/visual only — not priced.
+   */
+  frontMaterial?: string;
+  /**
    * A sink cutout riding this carcass. The dedicated `"sink"` *type* is a plain
    * low base sink cabinet; this flag lets a sink also sit on a corner or island
    * carcass without replacing its type (mirrors how an island carries its
@@ -194,7 +200,10 @@ export interface CabinetUnit {
 
 /** The persisted, row-editable slice of a unit (front/shelves/accessories +
  *  the sink fixture) — set directly from the row and spread onto the unit. */
-export type UnitFinish = Pick<CabinetUnit, "front" | "shelves" | "accessories" | "sink">;
+export type UnitFinish = Pick<
+  CabinetUnit,
+  "front" | "shelves" | "accessories" | "sink" | "frontMaterial"
+>;
 
 /** Kitchen shape. Islands are orthogonal (their own section), not a layout. */
 export type KitchenLayout = "line" | "l" | "u" | "galley";
@@ -216,6 +225,11 @@ export interface Run {
   worktopLengthMm: number | null;
   /** Worktop material also runs up the backsplash (same length). */
   backsplash: boolean;
+  /**
+   * Catalog code for this run's worktop finish. `undefined` = inherit the
+   * project "Worktops" palette choice. Attribution/visual only — not priced.
+   */
+  worktopMaterial?: string;
 }
 
 export type ExtraRole = "delivery" | "installation" | "design" | "custom";
@@ -236,6 +250,11 @@ export interface KitchenState {
   grade: HardwareGrade;
   runs: Run[];
   islandUnits: CabinetUnit[];
+  /** Whether the island's worktop is part of the quote (undefined = included).
+   *  Set false when it's supplied separately. */
+  islandWorktop?: boolean;
+  /** Catalog code for the island worktop finish; undefined = project default. */
+  islandWorktopMaterial?: string;
   extraCosts: ExtraCost[];
 }
 
@@ -263,6 +282,8 @@ export interface KitchenPricing {
   units: UnitPricing[];
   unitsTotal: number;
   worktop: number;
+  /** Per-run worktop subtotal, keyed by run id (0 when supplied separately). */
+  worktopByRun: Record<string, number>;
   islandWorktop: number;
   extras: number;
   additional: number; // sum of manual ExtraCost lines

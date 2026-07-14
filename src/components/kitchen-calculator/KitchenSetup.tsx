@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LAYOUT_RUN_COUNT, type KitchenLayout } from "@/lib/kitchen-calculator";
+import { IslandGlyph } from "./IslandGlyph";
 import { LayoutLegGlyph } from "./LayoutLegGlyph";
 
 const LAYOUTS: { value: KitchenLayout; label: string; hint: string }[] = [
@@ -18,19 +19,30 @@ interface KitchenSetupProps {
   legLengths: string[]; // metres, one per run
   /** Once generated, leg lengths are edited per-run; the seed inputs are hidden. */
   generated: boolean;
+  /** Whether the kitchen includes an island (coexists with any wall layout). */
+  hasIsland: boolean;
+  /** Island footprint length (metres) — seeds island cabinets on Generate. */
+  islandLength: string;
   onLayoutChange: (layout: KitchenLayout) => void;
   onLegLengthChange: (index: number, value: string) => void;
+  onIslandToggle: (value: boolean) => void;
+  onIslandLengthChange: (value: string) => void;
   onGenerate: () => void;
   onStartFresh: () => void;
 }
 
-/** First action: pick a layout and enter a wall length per leg, then Generate. */
+/** First action: pick a layout and enter a wall length per leg, then Generate.
+ *  An island is an optional add-on that can accompany any layout. */
 export function KitchenSetup({
   layout,
   legLengths,
   generated,
+  hasIsland,
+  islandLength,
   onLayoutChange,
   onLegLengthChange,
+  onIslandToggle,
+  onIslandLengthChange,
   onGenerate,
   onStartFresh,
 }: KitchenSetupProps) {
@@ -85,6 +97,29 @@ export function KitchenSetup({
               </button>
             );
           })}
+
+          {/* Island is additive, not a wall layout — a toggle tile set off by a
+              divider so it reads as "and an island", alongside the chosen shape. */}
+          <span className="mx-1 self-stretch border-l" aria-hidden />
+          <button
+            type="button"
+            onClick={() => onIslandToggle(!hasIsland)}
+            aria-pressed={hasIsland}
+            className="flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+            style={
+              hasIsland
+                ? { borderColor: "#647d75", backgroundColor: "rgba(100,125,117,0.08)" }
+                : undefined
+            }
+          >
+            <IslandGlyph size={22} className={hasIsland ? "text-[#647d75]" : "text-muted-foreground"} />
+            <span className="flex flex-col">
+              <span className="text-sm font-medium" style={hasIsland ? { color: "#647d75" } : undefined}>
+                Island
+              </span>
+              <span className="text-xs text-muted-foreground">optional</span>
+            </span>
+          </button>
         </div>
       </div>
 
@@ -117,6 +152,27 @@ export function KitchenSetup({
               />
             </div>
           ))}
+          {hasIsland && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="island-length" className="flex items-center gap-1.5">
+                <IslandGlyph size={18} className="text-muted-foreground" />
+                Island length (m)
+              </Label>
+              <Input
+                id="island-length"
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                min="0"
+                value={islandLength}
+                onChange={(e) => onIslandLengthChange(e.target.value)}
+                className="w-32"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onGenerate();
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

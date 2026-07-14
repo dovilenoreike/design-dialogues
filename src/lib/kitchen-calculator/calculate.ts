@@ -87,25 +87,30 @@ function runWorktopLengthMm(run: KitchenState["runs"][number]): number {
     .reduce((sum, u) => sum + u.width * u.quantity, 0);
 }
 
-function worktopPrice(state: KitchenState, ctx: PricingContext): number {
+/** One run's worktop cost (slab + edging + sink/hob cutouts); 0 when supplied
+ *  separately. Exposed so the UI can show a per-run worktop subtotal. */
+function runWorktopPrice(run: KitchenState["runs"][number], ctx: PricingContext): number {
+  if (run.worktop === false) return 0; // supplied separately — not costed
   const { worktop } = ctx.config.surfaces;
   const { edgeBanding } = ctx.config.structural;
+  const lm = m(runWorktopLengthMm(run));
+  return (
+    lm * WORKTOP_DEPTH_M * worktop +
+    lm * edgeBanding +
+    countSinks(run.baseUnits) * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout") +
+    countOfType(run.baseUnits, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout")
+  );
+}
 
-  let price = 0;
-  for (const run of state.runs) {
-    if (run.worktop === false) continue; // supplied separately — not costed
-    const lm = m(runWorktopLengthMm(run));
-    price += lm * WORKTOP_DEPTH_M * worktop + lm * edgeBanding;
-    price += countSinks(run.baseUnits) * hardwarePrice(ctx.hardware, ctx.grade, "sinkCutout");
-    price += countOfType(run.baseUnits, "hobOven") * hardwarePrice(ctx.hardware, ctx.grade, "hobCutout");
-  }
-  return price;
+function worktopPrice(state: KitchenState, ctx: PricingContext): number {
+  return state.runs.reduce((sum, run) => sum + runWorktopPrice(run, ctx), 0);
 }
 
 // --- Worktop (island) -----------------------------------------------------
 
 function islandWorktopPrice(state: KitchenState, ctx: PricingContext): number {
   if (state.islandUnits.length === 0) return 0;
+  if (state.islandWorktop === false) return 0; // supplied separately — not costed
   const widthLm = m(sumWidths(state.islandUnits));
   const depthM = m(ctx.settings.islandDepth);
   const { worktop } = ctx.config.surfaces;
@@ -163,7 +168,9 @@ export function priceKitchen(
     priceUnit(u, ctx),
   );
   const unitsTotal = units.reduce((sum, u) => sum + u.subtotal, 0);
-  const worktop = worktopPrice(state, ctx);
+  const worktopByRun: Record<string, number> = {};
+  for (const run of state.runs) worktopByRun[run.id] = runWorktopPrice(run, ctx);
+  const worktop = Object.values(worktopByRun).reduce((sum, p) => sum + p, 0);
   const islandWorktop = islandWorktopPrice(state, ctx);
   const extras = extrasPrice(state, ctx);
 
@@ -178,6 +185,7 @@ export function priceKitchen(
     units,
     unitsTotal,
     worktop,
+    worktopByRun,
     islandWorktop,
     extras,
     additional,

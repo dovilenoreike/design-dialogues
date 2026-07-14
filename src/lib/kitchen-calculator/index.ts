@@ -17,6 +17,7 @@ export {
   makeUnit,
   makeRun,
   makeWallRun,
+  makeIslandRun,
   makeExtraCost,
   nextRunLabel,
   nextUnitId,

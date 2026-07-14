@@ -12,6 +12,7 @@ import {
   useGraphMaterials,
   type SupabaseMaterial,
 } from "@/hooks/useGraphMaterials";
+import type { CustomMaterial } from "./frontMaterialContext";
 
 /**
  * Materials palette for the kitchen, shown as a strip of texture swatches at the
@@ -80,11 +81,6 @@ const FULL_SLOT_SELECTIONS: Record<string, string | null> = {
   additionalTiles: null,
 };
 
-interface CustomMaterial {
-  name: string;
-  price: string;
-}
-
 const matName = (mat: SupabaseMaterial): string => mat.name?.en ?? mat.technicalCode;
 
 const readJSON = <T,>(key: string, fallback: T): T => {
@@ -96,12 +92,31 @@ const readJSON = <T,>(key: string, fallback: T): T => {
   }
 };
 
-export function MaterialsHeader() {
+interface MaterialsHeaderProps {
+  /** Lifted overrides so the header and per-unit pickers share one live source.
+   *  Falls back to its own hook (still localStorage-backed) when omitted. */
+  overrides?: Record<string, string>;
+  setOverrides?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  /** Lifted custom materials (slot → { name, price }) so pickers can offer them.
+   *  Falls back to local state when omitted. */
+  customChoices?: Record<string, CustomMaterial>;
+  setCustomChoices?: React.Dispatch<React.SetStateAction<Record<string, CustomMaterial>>>;
+}
+
+export function MaterialsHeader({
+  overrides,
+  setOverrides,
+  customChoices: customChoicesProp,
+  setCustomChoices: setCustomChoicesProp,
+}: MaterialsHeaderProps = {}) {
   // Kick off the catalog load; re-renders this strip once texture images resolve.
   useGraphMaterials();
 
-  // Shared with the moodboard via localStorage.
-  const { materialOverrides, setMaterialOverrides } = useMaterialOverrides();
+  // Shared with the moodboard via localStorage. When a lifted source is passed
+  // in, use it so on-page pickers stay in sync without a reload.
+  const own = useMaterialOverrides();
+  const materialOverrides = overrides ?? own.materialOverrides;
+  const setMaterialOverrides = setOverrides ?? own.setMaterialOverrides;
 
   const [slotSelections, setSlotSelections] = useState<Record<string, string | null>>(() => ({
     ...FULL_SLOT_SELECTIONS,
@@ -131,8 +146,11 @@ export function MaterialsHeader() {
     } catch {}
   }, [slotSurfaces]);
 
-  // Custom (off-catalog) materials — calculator-local, not synced.
-  const [customChoices, setCustomChoices] = useState<Record<string, CustomMaterial>>({});
+  // Custom (off-catalog) materials — calculator-local, not synced. Lifted to the
+  // page when provided so per-line pickers can offer them; local otherwise.
+  const [ownCustomChoices, setOwnCustomChoices] = useState<Record<string, CustomMaterial>>({});
+  const customChoices = customChoicesProp ?? ownCustomChoices;
+  const setCustomChoices = setCustomChoicesProp ?? setOwnCustomChoices;
   // Which popover is open: a slot key, the "add" menu, or nothing.
   const [openKey, setOpenKey] = useState<FurnitureSlot | "add" | null>(null);
   const [query, setQuery] = useState("");
@@ -573,6 +591,17 @@ export function MaterialsHeader() {
                     {!isSet && (
                       <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                         <Plus className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-[#647d75]" />
+                      </span>
+                    )}
+                    {/* Custom material has no texture — name it on the tile. */}
+                    {custom && !hasImage && (
+                      <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 px-1.5 pb-4 text-center">
+                        <span className="max-w-full truncate text-[10px] font-medium leading-tight text-foreground">
+                          {custom.name}
+                        </span>
+                        {custom.price && (
+                          <span className="text-[9px] text-muted-foreground">€{custom.price}/m²</span>
+                        )}
                       </span>
                     )}
                     {/* Caption overlaid on the texture */}

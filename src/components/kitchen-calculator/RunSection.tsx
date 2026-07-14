@@ -36,6 +36,8 @@ interface RunSectionProps {
   removable: boolean;
   /** Per-unit line subtotals keyed by unit id — drives section + unit prices. */
   unitPrices?: Map<string, number>;
+  /** This run's worktop subtotal — shown on the worktop section. */
+  worktopPrice?: number;
   presentEssentials?: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
   placedAppliances?: Set<ProjectAppliance>;
@@ -60,6 +62,7 @@ interface RunSectionProps {
   onWorktopLengthChange: (runId: string, mm: number) => void;
   onWorktopLengthReset: (runId: string) => void;
   onBacksplashChange: (runId: string, value: boolean) => void;
+  onWorktopMaterialChange: (runId: string, code: string | undefined) => void;
 }
 
 /** One kitchen leg: header (label + length + remove), fit alert, base & wall sections with meters. */
@@ -70,6 +73,7 @@ export function RunSection({
   legIndex,
   removable,
   unitPrices,
+  worktopPrice,
   presentEssentials,
   declaredAppliances,
   placedAppliances,
@@ -93,6 +97,7 @@ export function RunSection({
   onWorktopLengthChange,
   onWorktopLengthReset,
   onBacksplashChange,
+  onWorktopMaterialChange,
 }: RunSectionProps) {
   // --- editable run length (metres) ---------------------------------------
   // Free-typing draft so the field can be cleared and retyped; commits live on
@@ -274,10 +279,13 @@ export function RunSection({
           autoLengthMm={wallSpanMm}
           overrideLengthMm={run.worktopLengthMm}
           backsplash={run.backsplash}
+          material={run.worktopMaterial}
+          price={worktopPrice}
           onToggle={(v) => onWorktopToggle(run.id, v)}
           onLengthChange={(mm) => onWorktopLengthChange(run.id, mm)}
           onLengthReset={() => onWorktopLengthReset(run.id)}
           onBacksplashChange={(v) => onBacksplashChange(run.id, v)}
+          onMaterialChange={(code) => onWorktopMaterialChange(run.id, code)}
         />
         <CabinetSection
           title="Wall units"

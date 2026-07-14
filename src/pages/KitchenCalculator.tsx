@@ -7,7 +7,14 @@ import { HardwareGradeSelector } from "@/components/kitchen-calculator/HardwareG
 import { KitchenSettingsPanel } from "@/components/kitchen-calculator/KitchenSettingsPanel";
 import { KitchenSetup } from "@/components/kitchen-calculator/KitchenSetup";
 import { MaterialsHeader } from "@/components/kitchen-calculator/MaterialsHeader";
+import {
+  buildFrontPalette,
+  FrontMaterialsProvider,
+  type CustomMaterial,
+} from "@/components/kitchen-calculator/frontMaterialContext";
 import { typeForAppliances } from "@/components/kitchen-calculator/unitKind";
+import { useMaterialOverrides } from "@/hooks/useMaterialOverrides";
+import { useGraphMaterials } from "@/hooks/useGraphMaterials";
 import {
   MissingUnitsAlert,
   type MissingItem,
@@ -34,6 +41,7 @@ import {
   generateKitchen,
   LAYOUT_RUN_COUNT,
   makeExtraCost,
+  makeIslandRun,
   makeRun,
   makeUnit,
   makeWallRun,
@@ -115,6 +123,9 @@ const APPLIANCE_PLACEMENT: Record<
 const KitchenCalculator = () => {
   const [layout, setLayout] = useState<KitchenLayout>("line");
   const [legLengths, setLegLengths] = useState<string[]>(DEFAULT_LEG_LENGTHS.line);
+  // Island is an optional add-on that accompanies any wall layout, chosen upfront.
+  const [hasIsland, setHasIsland] = useState(false);
+  const [islandLength, setIslandLength] = useState("1.8");
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
   const [grade, setGrade] = useState<HardwareGrade>("mid");
   // Project-level appliances the kitchen includes (declared intent).
@@ -130,6 +141,27 @@ const KitchenCalculator = () => {
   const [confirmAction, setConfirmAction] = useState<
     { type: "layout"; layout: KitchenLayout } | { type: "fresh" } | null
   >(null);
+
+  // Project front/worktop materials, shared with the moodboard via localStorage.
+  // Lifted here (rather than owned by MaterialsHeader) so the header and every
+  // per-unit picker read/write one live source. Loading the catalog here also
+  // re-renders once texture images resolve, so row swatches fill in.
+  const { materialOverrides, setMaterialOverrides } = useMaterialOverrides();
+  useGraphMaterials();
+  // Custom (off-catalog) materials, shared with the header so pickers can offer them.
+  const [customChoices, setCustomChoices] = useState<Record<string, CustomMaterial>>({});
+
+  // The chosen palette fronts (catalog or custom), deduped, as per-unit quick picks.
+  const frontPalette = useMemo(
+    () => buildFrontPalette(materialOverrides, customChoices),
+    [materialOverrides, customChoices],
+  );
+
+  // Island footprint in mm (falls back to a sensible default if the field is blank).
+  const islandMm = () => {
+    const v = Math.round(Number(islandLength) * 1000);
+    return Number.isFinite(v) && v > 0 ? v : 1800;
+  };
 
   const applyLayout = (next: KitchenLayout) => {
     setLayout(next);
@@ -151,7 +183,14 @@ const KitchenCalculator = () => {
     // lengths where legs overlap; default any new legs.
     const mm = defaults.map((d, i) => state.runs[i]?.lengthMm ?? Math.round(Number(d) * 1000));
     setLegLengths(mm.map((v) => String(v / 1000)));
-    setState(generateKitchen(next, mm, settings, grade, appliances, clamped));
+    // The island is orthogonal to the wall layout — carry it across a shape change.
+    const regen = generateKitchen(next, mm, settings, grade, appliances, clamped);
+    setState({
+      ...regen,
+      islandUnits: state.islandUnits,
+      islandWorktop: state.islandWorktop,
+      islandWorktopMaterial: state.islandWorktopMaterial,
+    });
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -188,6 +227,19 @@ const KitchenCalculator = () => {
     setLegLengths((prev) => prev.map((v, i) => (i === index ? value : v)));
   };
 
+  const handleIslandLengthChange = (value: string) => setIslandLength(value);
+
+  // Toggling the island: before generation it's just intent; afterwards it seeds
+  // (or clears) the island cabinets directly, since the island is independent of
+  // the wall runs and needn't rebuild them.
+  const handleIslandToggle = (on: boolean) => {
+    setHasIsland(on);
+    if (state) {
+      setHasEdits(true);
+      setState((prev) => (prev ? { ...prev, islandUnits: on ? makeIslandRun(islandMm()) : [] } : prev));
+    }
+  };
+
   const handleAssignmentChange = (key: AssignableFixture, run: number) => {
     setAssignments((prev) => ({ ...prev, [key]: run }));
   };
@@ -195,7 +247,9 @@ const KitchenCalculator = () => {
   const handleGenerate = () => {
     const mm = legLengths.map((s) => Math.round(Number(s) * 1000));
     if (mm.length === 0 || mm.some((v) => !Number.isFinite(v) || v <= 0)) return;
-    setState(generateKitchen(layout, mm, settings, grade, appliances, assignments));
+    setState(
+      generateKitchen(layout, mm, settings, grade, appliances, assignments, hasIsland ? islandMm() : 0),
+    );
     setExcludedEssentials([]);
     setHasEdits(false);
   };
@@ -309,6 +363,8 @@ const KitchenCalculator = () => {
     updateRun(runId, (r) => ({ ...r, worktopLengthMm: null }));
   const handleBacksplashChange = (runId: string, value: boolean) =>
     updateRun(runId, (r) => ({ ...r, backsplash: value }));
+  const handleWorktopMaterialChange = (runId: string, code: string | undefined) =>
+    updateRun(runId, (r) => ({ ...r, worktopMaterial: code }));
 
   const handleRemoveRun = (runId: string) => {
     setHasEdits(true);
@@ -371,6 +427,14 @@ const KitchenCalculator = () => {
     setState((prev) =>
       prev ? { ...prev, islandUnits: reorderById(prev.islandUnits, activeId, overId) } : prev,
     );
+  };
+  const handleIslandWorktopToggle = (value: boolean) => {
+    setHasEdits(true);
+    setState((prev) => (prev ? { ...prev, islandWorktop: value } : prev));
+  };
+  const handleIslandWorktopMaterialChange = (code: string | undefined) => {
+    setHasEdits(true);
+    setState((prev) => (prev ? { ...prev, islandWorktopMaterial: code } : prev));
   };
 
   // --- additional costs ---------------------------------------------------
@@ -545,7 +609,12 @@ const KitchenCalculator = () => {
             estimated total. Prices are indicative (mocked) for this preview.
           </p>
           <div className="mt-4">
-            <MaterialsHeader />
+            <MaterialsHeader
+              overrides={materialOverrides}
+              setOverrides={setMaterialOverrides}
+              customChoices={customChoices}
+              setCustomChoices={setCustomChoices}
+            />
           </div>
         </header>
 
@@ -554,8 +623,12 @@ const KitchenCalculator = () => {
             layout={layout}
             legLengths={legLengths}
             generated={state !== null}
+            hasIsland={state ? state.islandUnits.length > 0 : hasIsland}
+            islandLength={islandLength}
             onLayoutChange={handleLayoutChange}
             onLegLengthChange={handleLegLengthChange}
+            onIslandToggle={handleIslandToggle}
+            onIslandLengthChange={handleIslandLengthChange}
             onGenerate={handleGenerate}
             onStartFresh={handleStartFresh}
           />
@@ -621,6 +694,9 @@ const KitchenCalculator = () => {
               </p>
             )}
 
+            <FrontMaterialsProvider
+              value={{ overrides: materialOverrides, customs: customChoices, palette: frontPalette }}
+            >
             <ComponentList
               layout={state.layout}
               settings={settings}
@@ -628,6 +704,7 @@ const KitchenCalculator = () => {
               islandUnits={state.islandUnits}
               extraCosts={state.extraCosts ?? []}
               unitPrices={unitPrices}
+              worktopPrices={pricing.worktopByRun}
               declaredAppliances={appliances}
               placedAppliances={placedAppliances}
               missingBaseHousings={missingBaseHousings}
@@ -654,6 +731,7 @@ const KitchenCalculator = () => {
               onWorktopLengthChange={handleWorktopLengthChange}
               onWorktopLengthReset={handleWorktopLengthReset}
               onBacksplashChange={handleBacksplashChange}
+              onWorktopMaterialChange={handleWorktopMaterialChange}
               onAddRun={handleAddRun}
               onIslandTypeChange={handleIslandTypeChange}
               onIslandApplianceChange={handleIslandApplianceChange}
@@ -664,12 +742,18 @@ const KitchenCalculator = () => {
               onIslandDuplicate={handleIslandDuplicate}
               onIslandAdd={handleIslandAdd}
               onIslandReorder={handleIslandReorder}
+              islandWorktopIncluded={state.islandWorktop !== false}
+              islandWorktopMaterial={state.islandWorktopMaterial}
+              islandWorktopPrice={pricing.islandWorktop}
+              onIslandWorktopToggle={handleIslandWorktopToggle}
+              onIslandWorktopMaterialChange={handleIslandWorktopMaterialChange}
               onExtraLabelChange={handleExtraLabelChange}
               onExtraAmountChange={handleExtraAmountChange}
               onExtraResetAuto={handleExtraResetAuto}
               onExtraRemove={handleExtraRemove}
               onExtraAdd={handleExtraAdd}
             />
+            </FrontMaterialsProvider>
 
             <div className="mt-6">
               <TotalBar total={pricing.total} />

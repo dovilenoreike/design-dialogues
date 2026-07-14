@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ISLAND_TYPES,
+  unitHasSink,
   type CabinetUnit,
   type ExtraCost,
   type GlobalSettings,
@@ -11,9 +12,12 @@ import {
   type UnitFinish,
   type UnitType,
 } from "@/lib/kitchen-calculator";
+import { ApplianceGlyph } from "./ApplianceGlyph";
 import { CabinetSection } from "./CabinetSection";
 import { ExtraCostsSection } from "./ExtraCostsSection";
+import { IslandGlyph } from "./IslandGlyph";
 import { RunSection } from "./RunSection";
+import { WorktopSection } from "./WorktopSection";
 
 interface ComponentListProps {
   layout: KitchenLayout;
@@ -24,6 +28,8 @@ interface ComponentListProps {
   extraCosts: ExtraCost[];
   /** Per-unit line subtotals keyed by unit id — drives section + unit prices. */
   unitPrices?: Map<string, number>;
+  /** Per-run worktop subtotals, keyed by run id. */
+  worktopPrices?: Record<string, number>;
   furnitureSubtotal: number;
   presentEssentials: UnitType[];
   declaredAppliances?: Set<ProjectAppliance>;
@@ -51,6 +57,7 @@ interface ComponentListProps {
   onWorktopLengthChange: (runId: string, mm: number) => void;
   onWorktopLengthReset: (runId: string) => void;
   onBacksplashChange: (runId: string, value: boolean) => void;
+  onWorktopMaterialChange: (runId: string, code: string | undefined) => void;
   onAddRun: () => void;
   // island handlers (island is not run-scoped)
   onIslandTypeChange: (unitId: string, type: UnitType) => void;
@@ -62,6 +69,12 @@ interface ComponentListProps {
   onIslandDuplicate: (unitId: string) => void;
   onIslandAdd: (type: UnitType) => void;
   onIslandReorder: (activeId: string, overId: string) => void;
+  /** Island worktop: included flag (undefined = included), material + subtotal. */
+  islandWorktopIncluded: boolean;
+  islandWorktopMaterial?: string;
+  islandWorktopPrice?: number;
+  onIslandWorktopToggle: (value: boolean) => void;
+  onIslandWorktopMaterialChange: (code: string | undefined) => void;
   // additional-cost handlers
   onExtraLabelChange: (id: string, label: string) => void;
   onExtraAmountChange: (id: string, amount: number) => void;
@@ -78,6 +91,7 @@ export function ComponentList({
   islandUnits,
   extraCosts,
   unitPrices,
+  worktopPrices,
   furnitureSubtotal,
   presentEssentials,
   declaredAppliances,
@@ -102,6 +116,7 @@ export function ComponentList({
   onWorktopLengthChange,
   onWorktopLengthReset,
   onBacksplashChange,
+  onWorktopMaterialChange,
   onAddRun,
   onIslandTypeChange,
   onIslandApplianceChange,
@@ -112,12 +127,21 @@ export function ComponentList({
   onIslandDuplicate,
   onIslandAdd,
   onIslandReorder,
+  islandWorktopIncluded,
+  islandWorktopMaterial,
+  islandWorktopPrice,
+  onIslandWorktopToggle,
+  onIslandWorktopMaterialChange,
   onExtraLabelChange,
   onExtraAmountChange,
   onExtraResetAuto,
   onExtraRemove,
   onExtraAdd,
 }: ComponentListProps) {
+  // Sink / appliances that landed on the island — mirrored in its header glyphs.
+  const islandAppliances = Array.from(new Set(islandUnits.flatMap((u) => u.appliances)));
+  const islandHasSink = islandUnits.some(unitHasSink);
+
   return (
     <div className="flex flex-col gap-6">
       {runs.map((run, i) => (
@@ -129,6 +153,7 @@ export function ComponentList({
           legIndex={i}
           removable={runs.length > 1}
           unitPrices={unitPrices}
+          worktopPrice={worktopPrices?.[run.id]}
           presentEssentials={presentEssentials}
           declaredAppliances={declaredAppliances}
           placedAppliances={placedAppliances}
@@ -152,6 +177,7 @@ export function ComponentList({
           onWorktopLengthChange={onWorktopLengthChange}
           onWorktopLengthReset={onWorktopLengthReset}
           onBacksplashChange={onBacksplashChange}
+          onWorktopMaterialChange={onWorktopMaterialChange}
         />
       ))}
 
@@ -166,26 +192,56 @@ export function ComponentList({
         Add run
       </Button>
 
-      <CabinetSection
-        title="Island"
-        units={islandUnits}
-        settings={settings}
-        typeOptions={ISLAND_TYPES}
-        addLabel="Add island"
-        emptyLabel="No island. Add one to include it in the estimate."
-        unitPrices={unitPrices}
-        declaredAppliances={declaredAppliances}
-        placedAppliances={placedAppliances}
-        onTypeChange={onIslandTypeChange}
-        onApplianceChange={onIslandApplianceChange}
-        onConfigChange={onIslandConfigChange}
-        onWidthChange={onIslandWidthChange}
-        onQuantityChange={onIslandQuantityChange}
-        onRemove={onIslandRemove}
-        onDuplicate={onIslandDuplicate}
-        onAdd={onIslandAdd}
-        onReorder={onIslandReorder}
-      />
+      {/* The island reads as its own leg — same bordered block as a run, holding
+          its cabinets and worktop together. Added/removed via the setup tile. */}
+      {islandUnits.length > 0 && (
+        <div className="rounded-xl border bg-muted/60 p-4">
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <IslandGlyph size={24} className="shrink-0 text-muted-foreground" />
+            <span className="font-serif text-xl">Island</span>
+            {(islandHasSink || islandAppliances.length > 0) && (
+              <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
+                {islandHasSink && <ApplianceGlyph id="sink" size={15} />}
+                {islandAppliances.map((a) => (
+                  <ApplianceGlyph key={a} id={a} size={15} />
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-4">
+            <CabinetSection
+              title="Cabinets"
+              units={islandUnits}
+              settings={settings}
+              typeOptions={ISLAND_TYPES}
+              addLabel="Add cabinet"
+              unitPrices={unitPrices}
+              declaredAppliances={declaredAppliances}
+              placedAppliances={placedAppliances}
+              onTypeChange={onIslandTypeChange}
+              onApplianceChange={onIslandApplianceChange}
+              onConfigChange={onIslandConfigChange}
+              onWidthChange={onIslandWidthChange}
+              onQuantityChange={onIslandQuantityChange}
+              onRemove={onIslandRemove}
+              onDuplicate={onIslandDuplicate}
+              onAdd={onIslandAdd}
+              onReorder={onIslandReorder}
+            />
+            <WorktopSection
+              title="Worktop"
+              showBacksplash={false}
+              lengthEditable={false}
+              included={islandWorktopIncluded}
+              autoLengthMm={islandUnits.reduce((sum, u) => sum + u.width * u.quantity, 0)}
+              material={islandWorktopMaterial}
+              price={islandWorktopPrice}
+              onToggle={onIslandWorktopToggle}
+              onMaterialChange={onIslandWorktopMaterialChange}
+            />
+          </div>
+        </div>
+      )}
 
       <ExtraCostsSection
         costs={extraCosts}
