@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { surfaces } from "@/data/rooms/surfaces";
+import { showroomBrands } from "@/data/sourcing";
 import { useMaterialOverrides } from "@/hooks/useMaterialOverrides";
 import {
   getCachedImageUrl,
@@ -82,6 +83,12 @@ const FULL_SLOT_SELECTIONS: Record<string, string | null> = {
 };
 
 const matName = (mat: SupabaseMaterial): string => mat.name?.en ?? mat.technicalCode;
+
+// Showroom id → display name, so a material's showroomIds read as supplier names.
+const SHOWROOM_NAME: Record<string, string> = Object.fromEntries(
+  showroomBrands.map((s) => [s.id, s.name]),
+);
+const showroomNames = (ids: string[]): string[] => ids.map((id) => SHOWROOM_NAME[id] ?? id);
 
 const readJSON = <T,>(key: string, fallback: T): T => {
   try {
@@ -331,8 +338,10 @@ export function MaterialsHeader({
   const renderSwatchPopover = (slot: FurnitureSlot) => {
     const code = codeForSlot(slot);
     const custom = customChoices[slot];
+    const mat = code ? getMaterialByCode(code) : undefined;
     const isSet = !!code || !!custom;
     const results = openKey === slot ? searchResults(slot) : [];
+    const showrooms = mat ? showroomNames(mat.showroomIds) : [];
     return (
       <PopoverContent align="start" className="w-80 space-y-3">
         <div className="flex items-center justify-between">
@@ -358,6 +367,54 @@ export function MaterialsHeader({
             </button>
           </div>
         </div>
+
+        {/* Selected catalog material — name + type, then a labelled key/value list
+            for the supplier code and stockists. (Price joins here once available.) */}
+        {mat && (
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <div className="flex items-start gap-3">
+              {mat.imageUrl && (
+                <img
+                  src={mat.imageUrl}
+                  alt={matName(mat)}
+                  className="h-12 w-12 shrink-0 rounded-md border object-cover"
+                  loading="lazy"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium leading-snug">{matName(mat)}</div>
+                {mat.materialType && (
+                  <span
+                    className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+                    style={{ backgroundColor: "rgba(100,125,117,0.14)", color: "#647d75" }}
+                  >
+                    {mat.materialType}
+                  </span>
+                )}
+              </div>
+            </div>
+            <dl className="mt-2.5 space-y-1.5 border-t pt-2.5">
+              <div className="flex gap-2">
+                <dt className="w-16 shrink-0 pt-px text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Code
+                </dt>
+                <dd className="min-w-0 flex-1 break-all font-mono text-[11px] text-foreground/80">
+                  {mat.technicalCode}
+                </dd>
+              </div>
+              {showrooms.length > 0 && (
+                <div className="flex gap-2">
+                  <dt className="w-16 shrink-0 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Supplier
+                  </dt>
+                  <dd className="min-w-0 flex-1 text-[11px] text-foreground/80">
+                    {showrooms.join(", ")}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
 
         {/* Surface assignment — which surfaces this material applies to.
             Only shown when the role has more than one surface (worktop has one). */}
