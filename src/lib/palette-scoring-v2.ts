@@ -726,7 +726,10 @@ export function computeV2Debug(
     ? (dir: DirectionId, errs: Record<string, number>): number | null => {
         if (isWood) {
           const spec = WOOD_CURVE_SPECS[dir];
-          return spec ? scoreWoodCurve(candidate, ref, spec, errs) : null;
+          if (!spec) return null;
+          // Lightness assigns exactly one tab; only score the candidate's own region.
+          if (woodLightnessRegion(candidate.lightness, ref.L) !== dir) return null;
+          return scoreWoodCurve(candidate, ref, errs);
         }
         const config = archetypeCfgs?.[dir];
         return config ? computeDirectionScore(candidate, ref, config, errs) : null;
@@ -922,52 +925,79 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
 //
 // ══ WOOD CALIBRATION KNOBS — all wood tuning lives here (+ curve shape constants
 //    α/β/γ/θ in src/lib/wood-curve.ts DEFAULT_CONSTANTS) ══
-//   WOOD_AXIS_WEIGHTS — how much each axis counts in the distance score
-//   WOOD_CURVE_SPECS  — the lightness target (points) + visibility gate per direction
+//   WOOD_AXIS_WEIGHTS — how much each UNDERTONE axis (W/C/H) counts in the harmony score
+//   WOOD_CURVE_SPECS  — recommended lightness centre + visibility gate per direction
 
+// Only W/C/H rank a wood candidate (lightness assigns the tab via woodLightnessRegion,
+// it is not scored). L is retained in the type for the shared axis shape but is unused
+// in scoreWoodCurve.
 export interface WoodAxisWeights { L: number; W: number; C: number; H: number }
-export const WOOD_AXIS_WEIGHTS: WoodAxisWeights = { L: 1.1, W: 0.8, C: 0.8, H: 1.5 };
+export const WOOD_AXIS_WEIGHTS: WoodAxisWeights = { L: 0, W: 0.8, C: 0.8, H: 2.0 };
 
-// Direction membership: a candidate on the wrong side of the anchor (e.g. a lighter
-// wood offered under darker_echo) is pushed below the tab's min-score by this extra L
-// penalty, keeping the lighter/darker tabs honest. Candidates within WOOD_TONAL_BAND_PTS
-// lightness points of the anchor count as "same lightness" and are exempt.
-const WOOD_TONAL_BAND_PTS = 3;
-const WOOD_WRONG_SIDE_PENALTY = 0.5;
+// Per-axis normalization spans: each raw axis error is divided by the realistic
+// spread of wood values on that axis, so a full-range disagreement reads as ~1.0
+// (not a fraction of a theoretical maximum the data never reaches). These are
+// smooth linear scales, NOT thresholds. Derived from the p5–p95 catalogue span
+// (chroma 43, warmth 0.46), rounded slightly wider so an incomplete catalogue is
+// not overtrusted. Re-derive after any bulk rescore. Hue span (~74°) already
+// matches its /90 scale, and L is the separate 'which-tab' axis — both kept at
+// their prior scale on purpose.
+export const WOOD_AXIS_SPANS = { W: 0.5, C: 45 } as const;
+
+// Lightness assigns the TAB; harmony (W/H/C) ranks within it. A wood candidate belongs
+// to exactly one direction by how far its lightness sits from the anchor — it is NOT a
+// scored term, so being off the recommended centre never costs harmony. Cut points are
+// the midpoints between the direction targets (0 / ±17 / ±40):
+//   |ΔL| ≤ 8            → tonal_match
+//   8 < |ΔL| ≤ 25       → lighter_echo (lighter) / darker_echo (darker)
+//   |ΔL| > 25           → soft_contrast (either side)
+// These are bucket edges (tabs are inherently discrete), not the if/else "stairs" we
+// avoid on continuous axes like chroma.
+const WOOD_TONAL_MAX_PTS = 8;   // midpoint of 0 and 17
+const WOOD_ECHO_MAX_PTS  = 25;  // midpoint of 17 and 40
+
+function woodLightnessRegion(candidateL: number, anchorL: number): DirectionId {
+  const d  = candidateL - anchorL;   // + = candidate lighter than anchor
+  const ad = Math.abs(d);
+  if (ad <= WOOD_TONAL_MAX_PTS) return 'tonal_match';
+  if (ad <= WOOD_ECHO_MAX_PTS)  return d > 0 ? 'lighter_echo' : 'darker_echo';
+  return 'soft_contrast';
+}
 
 interface WoodDirectionSpec {
-  // Target lightness offset from the anchor, in ABSOLUTE points (positive = lighter).
-  // Sets which tab a candidate belongs to (lighter/tonal/darker). NOT the undertone
-  // curve — that is always evaluated at the candidate's OWN lightness (relative, Gemini).
+  // Recommended lightness offset from the anchor (the tab's centre), ABSOLUTE points,
+  // positive = lighter. Display/reference only — lightness membership is decided by
+  // woodLightnessRegion, and the undertone curve is evaluated at the candidate's OWN
+  // lightness. deltaL is no longer a scored target.
   deltaL: number;
-  bidirectional?: boolean;  // soft_contrast: target ±deltaL, keep the closer side
   minScore: number;         // soft gate: hide the direction tab if no candidate reaches this
 }
 
+// minScore gates for the linear-weight quadratic-mean form (scores run lower / more
+// spread than the old squared-weight form). Reference points at equivalent error levels:
+// perfect on-curve ≈1.0, decent ≈0.90, wrong-hue ≈0.80, clash ≈0.74. Tuned by hand in the
+// UI — revisit if the score form or WOOD_AXIS_WEIGHTS change.
 const WOOD_CURVE_SPECS: Partial<Record<DirectionId, WoodDirectionSpec>> = {
-  tonal_match:   { deltaL:   0, minScore: 0.97 },
-  lighter_echo:  { deltaL: +17, minScore: 0.93 },
-  darker_echo:   { deltaL: -17, minScore: 0.93 },
-  soft_contrast: { deltaL:  40, bidirectional: true, minScore: 0.90 },
+  tonal_match:   { deltaL:   0, minScore: 0.9 },
+  lighter_echo:  { deltaL: +17, minScore: 0.8 },
+  darker_echo:   { deltaL: -17, minScore: 0.8 },
+  soft_contrast: { deltaL:  40, minScore: 0.8 },
 };
 
-// Score a wood candidate against the curve for a direction. Two roles, cleanly split:
+// Score a wood candidate purely by UNDERTONE FIT (warmth / hue / chroma) — "is it ON
+// the curve?". The curve is evaluated at the candidate's OWN lightness (its own ΔL_rel),
+// so a lighter candidate is judged against what a lighter partner *should* look like.
+// Lightness is NOT scored here: it decides the tab (woodLightnessRegion) and nothing
+// else, so hitting the recommended ±15/0 centre never competes with harmony. This is
+// exactly the tW/tH/tC the dev overlay shows.
 //
-//  • Undertone fit (W/H/C) — "is it ON the curve?" — is scored against the curve
-//    evaluated at the candidate's OWN lightness (its own ΔL_rel). A material sits on
-//    the curve if, at its lightness, its warmth/hue/chroma match what the curve
-//    predicts — regardless of how far along the curve it is. (This is exactly the
-//    tW/tH/tC the dev overlay shows.)
-//  • Lightness (L) — "is it the right AMOUNT lighter/darker for this tab?" — is scored
-//    against the direction's ΔL point. This is what differentiates lighter / tonal /
-//    darker / soft_contrast; without it every direction would score a material the same.
-//
-// RMS aggregation + 1/(1+e) shape mirror computeDirectionScore so scores stay
-// comparable across archetypes and the same min-score gates apply.
+// Aggregation is a weighted quadratic mean with LINEAR weights: √(Σ wᵢ·eᵢ² / Σwᵢ),
+// then the 1/(1+d) shape. (computeDirectionScore still uses the older squared-weight
+// form √(Σ(eᵢ·wᵢ)²)/Σwᵢ — wood diverges here on purpose; the wood minScore gates are
+// tuned for THIS form, so they are not comparable to the other archetypes' gates.)
 function scoreWoodCurve(
   candidate: GraphMaterial,
   ref: DirectionRef,
-  spec: WoodDirectionSpec,
   axisErrs?: Record<string, number>,
 ): number {
   // Anchor = the wood reference (mass-weighted mean of placed woods).
@@ -975,14 +1005,14 @@ function scoreWoodCurve(
   const anchorHue = ref.hue ?? candidate.hue_angle ?? 0;
   const anchor = { L: ref.L, W: ref.W, H: anchorHue, C: ref.C };
   const w = WOOD_AXIS_WEIGHTS;
-  const wsum = w.L + w.W + w.C + w.H;
+  const wsum = w.W + w.C + w.H;   // lightness is tab membership, not a ranking axis
 
   // Undertone target: curve at the candidate's own lightness.
   // ΔL_rel = ABSOLUTE lightness gap on the 0–100 scale: (L_anchor − L_cand)/100.
   const dLcand = (ref.L - candidate.lightness) / 100;
   const t = woodCurve(anchor, dLcand, WOOD_CURVE_CONSTANTS);
-  const eW = Math.abs(candidate.warmth - t.W) / 2;
-  const eC = Math.abs(candidate.chroma - t.C) / 100;
+  const eW = Math.abs(candidate.warmth - t.W) / WOOD_AXIS_SPANS.W;
+  const eC = Math.abs(candidate.chroma - t.C) / WOOD_AXIS_SPANS.C;
   let eH: number;
   if (candidate.hue_angle != null && ref.hue != null) {
     const raw = Math.abs(candidate.hue_angle - t.H);
@@ -994,26 +1024,13 @@ function scoreWoodCurve(
     eH = 0;
   }
 
-  // Lightness term: distance from the direction's target lightness (anchor + deltaL
-  // points, clamped to 0–100). For soft_contrast (bidirectional) either the lighter or
-  // the darker point may satisfy it — take the closer.
-  const lTarget = (dPts: number) => Math.max(0, Math.min(100, ref.L + dPts));
-  let eL = spec.bidirectional
-    ? Math.min(Math.abs(candidate.lightness - lTarget(spec.deltaL)),
-               Math.abs(candidate.lightness - lTarget(-spec.deltaL))) / 100
-    : Math.abs(candidate.lightness - lTarget(spec.deltaL)) / 100;
-
-  // Wrong-side guard: a unidirectional tab only accepts candidates on its side of the
-  // anchor (beyond the tonal band). A lighter wood cannot pose as darker_echo, etc.
-  if (!spec.bidirectional && spec.deltaL !== 0 && Math.abs(candidate.lightness - ref.L) > WOOD_TONAL_BAND_PTS) {
-    const wantLighter = spec.deltaL > 0;
-    const isLighter   = candidate.lightness > ref.L;
-    if (wantLighter !== isLighter) eL += WOOD_WRONG_SIDE_PENALTY;
-  }
-
-  if (axisErrs) { axisErrs.L = eL; axisErrs.W = eW; axisErrs.C = eC; axisErrs.H = eH; }
-  const sq = (eL * w.L) ** 2 + (eW * w.W) ** 2 + (eC * w.C) ** 2 + (eH * w.H) ** 2;
-  return 1 / (1 + Math.sqrt(sq) / wsum);
+  // Informational only (dev overlay): how far the candidate sits from anchor lightness.
+  // Not part of the score — lightness is handled by woodLightnessRegion.
+  if (axisErrs) { axisErrs.L = Math.abs(candidate.lightness - ref.L) / 100; axisErrs.W = eW; axisErrs.C = eC; axisErrs.H = eH; }
+  // Weighted quadratic mean (weights LINEAR, not squared): √(Σ wᵢ·eᵢ² / Σwᵢ). A uniform
+  // error e on every axis maps to exactly e, and a weight of 1.5 counts 1.5× (not 2.25×).
+  const sq = w.W * eW ** 2 + w.C * eC ** 2 + w.H * eH ** 2;
+  return 1 / (1 + Math.sqrt(sq / wsum));
 }
 
 function computeDirectionScore(
@@ -1200,7 +1217,9 @@ export function rankClusteredCandidates(
         if (isWood) {
           const spec = WOOD_CURVE_SPECS[dir];
           if (!spec) continue;
-          rawDirScore = scoreWoodCurve(material, ref, spec);
+          // Lightness picks the tab; a candidate is only offered in its own region.
+          if (woodLightnessRegion(material.lightness, ref.L) !== dir) continue;
+          rawDirScore = scoreWoodCurve(material, ref);
           blended = rawDirScore;   // wood has no harmonyWeight blend
         } else {
           const config = archetypeConfigs![dir];

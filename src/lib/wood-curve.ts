@@ -6,9 +6,12 @@
  * hue are dependent outputs that co-vary with the lightness shift — so "light /
  * tonal / dark" are not separate rules, just different sample points on one curve.
  *
- * Implements the formulas in `material-matching/gemini-wood-matching.md` §2 as
- * written. `alpha` is set to 0.8 (low end of the doc's 0.8–1.2 range); the
- * formula itself is left faithful to the spec until a change is tested + agreed.
+ * Based on `material-matching/gemini-wood-matching.md` §2, with two agreed changes:
+ *  · ΔL_rel is an ABSOLUTE lightness gap (L_anchor − L_cand)/100, not the doc's
+ *    relative (L_a−L_c)/L_a — relative blows up for dark anchors.
+ *  · the chroma output is re-projected through salience (treating our DB chroma as
+ *    perceptual); warmth couples to that re-projected chroma. L and H follow the
+ *    spec. `alpha` is 1.2 (top of the doc's 0.8–1.2 range).
  *
  * WIRED INTO LIVE RANKING: `scoreWoodCurve()` in `palette-scoring-v2.ts` calls
  * `woodCurve(...)` to score/rank wood candidates in the picker, so changing
@@ -34,12 +37,10 @@ export interface WoodCurveConstants {
   theta: number; // hue shift factor, CIELAB degrees (default 12)
 }
 
-// alpha = 0.8 — the low end of the Gemini doc's 0.8–1.2 range. The catalogue
-// analysis (scripts/analyze-wood-chroma.ts) hints the "darker wood keeps
-// richness" effect may be weaker than alpha=1 assumes, so we sit at the bottom
-// of the documented range — but we keep the document's formula as-is until we've
-// tested a change properly and agreed on it. Do not deviate from the spec here
-// without that.
+// alpha = 1.2 — the top of the Gemini doc's 0.8–1.2 range. Tuned up so lighter
+// candidates come out appropriately muted: a lighter partner has ΔL_rel < 0, so a
+// higher alpha shrinks Cdoc more, offsetting the salience re-projection's chroma
+// boost (see woodCurve). beta/gamma/theta stay at the doc defaults.
 export const DEFAULT_CONSTANTS: WoodCurveConstants = {
   alpha: 1.2,
   beta:  0.5,
@@ -55,10 +56,9 @@ export const WOOD_CHROMA_TOL_GAIN = 1.0; // extra slack toward the extremes: up 
 
 /**
  * salience(L) — perceptual weight sin(πL/100); matches colourSalience in
- * palette-scoring-v2. Peaks at L=50, → 0 at black/white. Used ONLY to shape the
- * chroma *tolerance* below — never to scale the chroma *value* itself. The
- * catalogue's HSV-saturation chroma already dips at the extremes, so scaling the
- * value again would double-count (see scripts/analyze-wood-chroma.ts).
+ * palette-scoring-v2. Peaks at L=50, → 0 at black/white. Used to re-project the
+ * chroma value in woodCurve (un-/re-discount, treating DB chroma as perceptual)
+ * and to shape the chroma tolerance below.
  */
 export function salience(L: number): number {
   return Math.sin(Math.PI * Math.max(0, Math.min(100, L)) / 100);
