@@ -29,7 +29,8 @@
       "Bash(find . -path ./node_modules -prune -o -iname \"*appliance*\" -print)",
       "Bash(find . -path ./node_modules -prune -o -type d -iname \"*kitchen*\" -print)",
       "Bash(npx eslint *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(cd *)"
     ]
   }
 }
