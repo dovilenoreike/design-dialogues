@@ -494,7 +494,7 @@ export default function KonceptasView({
                     style={{ zIndex: 2, background: "linear-gradient(transparent, rgba(0,0,0,0.65))" }}
                   >
                     <span className="text-white/90 font-mono leading-none text-[6px] lg:text-[10px]">
-                      {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{Math.round(mat.chroma * Math.sin(Math.PI * mat.lightness / 100))}
+                      {rank != null ? `#${rank} ` : ""}L{mat.lightness} W{mat.warmth?.toFixed(2)} C{Math.round(mat.chroma)}
                     </span>
                     <span className="text-white/70 font-mono leading-none text-[6px] lg:text-[10px]">
                       H{mat.hue_angle ?? "—"} P{mat.pattern}
@@ -510,6 +510,11 @@ export default function KonceptasView({
                         <span className="text-white/60 font-mono leading-none text-[6px] lg:text-[10px]">
                           eL:{dbg.axisErrors.L?.toFixed(2)} eW:{dbg.axisErrors.W?.toFixed(2)} eC:{dbg.axisErrors.C?.toFixed(2)} eP:{dbg.axisErrors.P?.toFixed(2)}{dbg.axisErrors.H != null ? ` eH:${dbg.axisErrors.H.toFixed(2)}` : ""}
                         </span>
+                        {dbg.woodTarget && (
+                          <span className="font-mono leading-none text-[6px] lg:text-[10px]" style={{ color: '#7dd3fc' }}>
+                            curve ΔL:{dbg.woodTarget.dL.toFixed(2)} tW:{dbg.woodTarget.W.toFixed(2)}{dbg.woodTarget.H != null ? ` tH:${Math.round(dbg.woodTarget.H)}` : ""} tC:{Math.round(dbg.woodTarget.C)}
+                          </span>
+                        )}
                       </>
                     )}
                   </div>

@@ -1,4 +1,5 @@
 import type { GraphMaterial } from '@/lib/graph-compatibility';
+import { woodCurve, DEFAULT_CONSTANTS as WOOD_CURVE_CONSTANTS } from '@/lib/wood-curve';
 
 // ─── Pure utilities ──────────────────────────────────────────────────────────
 function clamp01(v: number): number {
@@ -505,7 +506,8 @@ export const CLAIMING_PRIORITY: Record<string, DirectionId[]> = {
 // Resolve which direction family applies. Prefer the explicit chip routing
 // from the picker; fall back to the material's own archetype, then texture.
 function archetypeForDirections(c: GraphMaterial, chipArchetypeId?: string | null): string | null {
-  const known = (id: string) => DIRECTIONS_BY_ARCHETYPE[id] && DIRECTION_CONFIGS[id];
+  // Wood is scored by the generative curve (WOOD_CURVE_SPECS), not DIRECTION_CONFIGS.
+  const known = (id: string) => DIRECTIONS_BY_ARCHETYPE[id] && (DIRECTION_CONFIGS[id] || id === 'wood');
   if (chipArchetypeId && known(chipArchetypeId)) return chipArchetypeId;
   if (c.archetypeId  && known(c.archetypeId))   return c.archetypeId;
   const fromTexture = c.texture === 'plain' ? 'plain'
@@ -701,6 +703,8 @@ export function computeV2Debug(
   tension: number;
   axisErrors: Record<string, number>;
   refAvg: { L: number; W: number; C: number; hue: number | null; pattern: number } | null;
+  // Read-only wood-curve target for the dev overlay (not used in ranking).
+  woodTarget: { dL: number; W: number; H: number | null; C: number } | null;
 } | null {
   const placed = otherCodes.map(c => byCode.get(c)).filter((m): m is GraphMaterial => !!m);
   if (placed.length === 0) return null;
@@ -715,29 +719,48 @@ export function computeV2Debug(
   let dirId: DirectionId | null = null;
   let dirScore = 0;
   let axisErrors: Record<string, number> = {};
-  if (ref && directions && archetypeCfgs) {
-    if (targetDirection && directions.includes(targetDirection as DirectionId) && archetypeCfgs[targetDirection as DirectionId]) {
+  const isWood = archetype === 'wood';
+  // Score one direction (wood → curve, others → hand-tuned config). Returns null if
+  // the direction has no spec/config. Populates `errs` with per-axis errors.
+  const scoreDir = ref
+    ? (dir: DirectionId, errs: Record<string, number>): number | null => {
+        if (isWood) {
+          const spec = WOOD_CURVE_SPECS[dir];
+          return spec ? scoreWoodCurve(candidate, ref, spec, errs) : null;
+        }
+        const config = archetypeCfgs?.[dir];
+        return config ? computeDirectionScore(candidate, ref, config, errs) : null;
+      }
+    : null;
+  if (scoreDir && directions && (isWood || archetypeCfgs)) {
+    if (targetDirection && directions.includes(targetDirection as DirectionId)) {
       // Score specifically for the user's chosen direction
-      const config = archetypeCfgs[targetDirection as DirectionId]!;
       const errs: Record<string, number> = {};
-      dirScore = computeDirectionScore(candidate, ref, config, errs);
-      dirId = targetDirection as DirectionId;
-      axisErrors = errs;
+      const s = scoreDir(targetDirection as DirectionId, errs);
+      if (s != null) { dirScore = s; dirId = targetDirection as DirectionId; axisErrors = errs; }
     } else {
       let bestDirScore = -1;
       for (const dir of directions) {
-        const config = archetypeCfgs[dir];
-        if (!config) continue;
         const errs: Record<string, number> = {};
-        const s = computeDirectionScore(candidate, ref, config, errs);
-        if (s > bestDirScore) { bestDirScore = s; dirId = dir; dirScore = s; axisErrors = errs; }
+        const s = scoreDir(dir, errs);
+        if (s != null && s > bestDirScore) { bestDirScore = s; dirId = dir; dirScore = s; axisErrors = errs; }
       }
     }
   }
 
   const refAvg = ref ? { L: ref.L, W: ref.W, C: ref.C, hue: ref.hue, pattern: ref.pattern } : null;
 
-  return { harmonyScore: hScore, directionId: dirId, directionScore: dirScore, tension: state.tension, axisErrors, refAvg };
+  // Read-only wood-curve comparison for the dev overlay: treat the wood reference
+  // as the anchor and ask the curve what an ideal partner's W/H/C would be at the
+  // candidate's actual lightness. Purely informational — no effect on scoring.
+  let woodTarget: { dL: number; W: number; H: number | null; C: number } | null = null;
+  if (archetype === 'wood' && ref && ref.L > 0 && ref.C > 0) {
+    const dL = (ref.L - candidate.lightness) / 100;  // ΔL_rel = absolute gap /100
+    const t = woodCurve({ L: ref.L, W: ref.W, H: ref.hue ?? 0, C: ref.C }, dL);
+    woodTarget = { dL, W: t.W, H: ref.hue != null ? t.H : null, C: t.C };
+  }
+
+  return { harmonyScore: hScore, directionId: dirId, directionScore: dirScore, tension: state.tension, axisErrors, refAvg, woodTarget };
 }
 
 // ─── New API for the picker: harmony-filtered + clustered + tagged ──────────
@@ -887,37 +910,111 @@ const DIRECTION_CONFIGS: Record<string, Partial<Record<DirectionId, DirectionCon
     },
   },
 
-  wood: {
-    tonal_match: {
-      L: { weight: 1.1, idealDelta: 0},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2  },
-      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0 , trajectoryK: 10 },
-      minScore: 0.97,  // "tonal match" label is only credible if best candidate actually scores well
-    },
-    lighter_echo: {
-      L: { weight: 1.1, idealDelta: 0.15, refK: 0.1},
-      W: { weight: 0.8, idealDelta: 0, trajectoryK: -0.2 },
-      C: { weight: 0.8, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
-      minScore: 0.93,  // exploratory — just needs something lighter in the pool
-    },
-    darker_echo: {
-      L: { weight: 1.1, idealDelta: -0.15, refK: -0.1},
-      W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.2 },
-      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10  },
-      minScore: 0.93,
-    },
-    soft_contrast: {
-      L: { weight: 1.1, idealDelta: 0.35, absDeviation: true },
-      W: { weight: 0.6, idealDelta: 0, trajectoryK: -0.2  },
-      C: { weight: 0.6, idealDelta: 0, trajectoryK: -0.30 },
-      H: { weight: 1.5, idealDeg: 0, trajectoryK: 10 },
-      minScore: 0.9,  // very permissive direction — almost always valid if contrast materials exist
-    },
-  },
+  // wood: removed — wood is scored by the generative curve below (scoreWoodCurve),
+  // not by hand-tuned idealDelta/trajectory configs.
 };
+
+// ─── Wood matching — generative curve ────────────────────────────────────────
+// Wood partners are scored by DISTANCE TO A GENERATED TARGET, not hand-tuned deltas.
+// For a direction, woodCurve(anchor, ΔL_rel) produces the ideal partner vector and
+// the candidate is scored by weighted distance to it. "light / tonal / dark" are just
+// different ΔL_rel points on one curve.
+//
+// ══ WOOD CALIBRATION KNOBS — all wood tuning lives here (+ curve shape constants
+//    α/β/γ/θ in src/lib/wood-curve.ts DEFAULT_CONSTANTS) ══
+//   WOOD_AXIS_WEIGHTS — how much each axis counts in the distance score
+//   WOOD_CURVE_SPECS  — the lightness target (points) + visibility gate per direction
+
+export interface WoodAxisWeights { L: number; W: number; C: number; H: number }
+export const WOOD_AXIS_WEIGHTS: WoodAxisWeights = { L: 1.1, W: 0.8, C: 0.8, H: 1.5 };
+
+// Direction membership: a candidate on the wrong side of the anchor (e.g. a lighter
+// wood offered under darker_echo) is pushed below the tab's min-score by this extra L
+// penalty, keeping the lighter/darker tabs honest. Candidates within WOOD_TONAL_BAND_PTS
+// lightness points of the anchor count as "same lightness" and are exempt.
+const WOOD_TONAL_BAND_PTS = 3;
+const WOOD_WRONG_SIDE_PENALTY = 0.5;
+
+interface WoodDirectionSpec {
+  // Target lightness offset from the anchor, in ABSOLUTE points (positive = lighter).
+  // Sets which tab a candidate belongs to (lighter/tonal/darker). NOT the undertone
+  // curve — that is always evaluated at the candidate's OWN lightness (relative, Gemini).
+  deltaL: number;
+  bidirectional?: boolean;  // soft_contrast: target ±deltaL, keep the closer side
+  minScore: number;         // soft gate: hide the direction tab if no candidate reaches this
+}
+
+const WOOD_CURVE_SPECS: Partial<Record<DirectionId, WoodDirectionSpec>> = {
+  tonal_match:   { deltaL:   0, minScore: 0.97 },
+  lighter_echo:  { deltaL: +17, minScore: 0.93 },
+  darker_echo:   { deltaL: -17, minScore: 0.93 },
+  soft_contrast: { deltaL:  40, bidirectional: true, minScore: 0.90 },
+};
+
+// Score a wood candidate against the curve for a direction. Two roles, cleanly split:
+//
+//  • Undertone fit (W/H/C) — "is it ON the curve?" — is scored against the curve
+//    evaluated at the candidate's OWN lightness (its own ΔL_rel). A material sits on
+//    the curve if, at its lightness, its warmth/hue/chroma match what the curve
+//    predicts — regardless of how far along the curve it is. (This is exactly the
+//    tW/tH/tC the dev overlay shows.)
+//  • Lightness (L) — "is it the right AMOUNT lighter/darker for this tab?" — is scored
+//    against the direction's ΔL point. This is what differentiates lighter / tonal /
+//    darker / soft_contrast; without it every direction would score a material the same.
+//
+// RMS aggregation + 1/(1+e) shape mirror computeDirectionScore so scores stay
+// comparable across archetypes and the same min-score gates apply.
+function scoreWoodCurve(
+  candidate: GraphMaterial,
+  ref: DirectionRef,
+  spec: WoodDirectionSpec,
+  axisErrs?: Record<string, number>,
+): number {
+  // Anchor = the wood reference (mass-weighted mean of placed woods).
+  if (ref.L <= 0 || ref.C <= 0) return 0.5;
+  const anchorHue = ref.hue ?? candidate.hue_angle ?? 0;
+  const anchor = { L: ref.L, W: ref.W, H: anchorHue, C: ref.C };
+  const w = WOOD_AXIS_WEIGHTS;
+  const wsum = w.L + w.W + w.C + w.H;
+
+  // Undertone target: curve at the candidate's own lightness.
+  // ΔL_rel = ABSOLUTE lightness gap on the 0–100 scale: (L_anchor − L_cand)/100.
+  const dLcand = (ref.L - candidate.lightness) / 100;
+  const t = woodCurve(anchor, dLcand, WOOD_CURVE_CONSTANTS);
+  const eW = Math.abs(candidate.warmth - t.W) / 2;
+  const eC = Math.abs(candidate.chroma - t.C) / 100;
+  let eH: number;
+  if (candidate.hue_angle != null && ref.hue != null) {
+    const raw = Math.abs(candidate.hue_angle - t.H);
+    eH = Math.min(raw, 360 - raw) / 90;
+  } else if (candidate.hue_angle == null && ref.hue != null) {
+    // Achromatic candidate beside a coloured ref — small penalty (matches elsewhere).
+    eH = ACHROMATIC_HUE_PENALTY * clamp01((ref.C / 100) * colourSalience(ref.L) * 2);
+  } else {
+    eH = 0;
+  }
+
+  // Lightness term: distance from the direction's target lightness (anchor + deltaL
+  // points, clamped to 0–100). For soft_contrast (bidirectional) either the lighter or
+  // the darker point may satisfy it — take the closer.
+  const lTarget = (dPts: number) => Math.max(0, Math.min(100, ref.L + dPts));
+  let eL = spec.bidirectional
+    ? Math.min(Math.abs(candidate.lightness - lTarget(spec.deltaL)),
+               Math.abs(candidate.lightness - lTarget(-spec.deltaL))) / 100
+    : Math.abs(candidate.lightness - lTarget(spec.deltaL)) / 100;
+
+  // Wrong-side guard: a unidirectional tab only accepts candidates on its side of the
+  // anchor (beyond the tonal band). A lighter wood cannot pose as darker_echo, etc.
+  if (!spec.bidirectional && spec.deltaL !== 0 && Math.abs(candidate.lightness - ref.L) > WOOD_TONAL_BAND_PTS) {
+    const wantLighter = spec.deltaL > 0;
+    const isLighter   = candidate.lightness > ref.L;
+    if (wantLighter !== isLighter) eL += WOOD_WRONG_SIDE_PENALTY;
+  }
+
+  if (axisErrs) { axisErrs.L = eL; axisErrs.W = eW; axisErrs.C = eC; axisErrs.H = eH; }
+  const sq = (eL * w.L) ** 2 + (eW * w.W) ** 2 + (eC * w.C) ** 2 + (eH * w.H) ** 2;
+  return 1 / (1 + Math.sqrt(sq) / wsum);
+}
 
 function computeDirectionScore(
   candidate: GraphMaterial,
@@ -1048,7 +1145,9 @@ export function directionMinScore(
   dir: DirectionId,
   hasSameArchetypeRef = true,
 ): number {
-  const base = DIRECTION_CONFIGS[archetypeId]?.[dir]?.minScore ?? 0;
+  const base = archetypeId === 'wood'
+    ? (WOOD_CURVE_SPECS[dir]?.minScore ?? 0)
+    : (DIRECTION_CONFIGS[archetypeId]?.[dir]?.minScore ?? 0);
   if (!hasSameArchetypeRef && dir === 'tonal_match') {
     // Scoring wood-against-stone-average naturally yields lower scores than wood-against-wood.
     // Cap at 0.75 so medium-quality options aren't hidden when no same-archetype ref exists.
@@ -1093,18 +1192,28 @@ export function rankClusteredCandidates(
     const archetypeConfigs = archetype ? DIRECTION_CONFIGS[archetype] : null;
     const ref              = archetype ? directionReference(archetype, state) : null;
 
-    if (directions && archetypeConfigs && ref) {
+    const isWood = archetype === 'wood';
+    if (directions && ref && (isWood || archetypeConfigs)) {
       for (const dir of directions) {
-        const config = archetypeConfigs[dir];
-        if (!config) continue;
-        if (config.minAbsC !== undefined && material.chroma < config.minAbsC) continue;
-        if (config.minL    !== undefined && material.lightness < config.minL) continue;
-        if (config.maxL    !== undefined && material.lightness > config.maxL) continue;
-        const dirScore   = computeDirectionScore(material, ref, config);
-        const hw         = config.harmonyWeight ?? 0;
-        const blended    = hw > 0 ? dirScore * (1 - hw) + harmScore * hw : dirScore;
+        let rawDirScore: number;   // pure direction/curve fit (0–1); stored on the entry
+        let blended: number;       // after optional harmony blend (non-wood only)
+        if (isWood) {
+          const spec = WOOD_CURVE_SPECS[dir];
+          if (!spec) continue;
+          rawDirScore = scoreWoodCurve(material, ref, spec);
+          blended = rawDirScore;   // wood has no harmonyWeight blend
+        } else {
+          const config = archetypeConfigs![dir];
+          if (!config) continue;
+          if (config.minAbsC !== undefined && material.chroma < config.minAbsC) continue;
+          if (config.minL    !== undefined && material.lightness < config.minL) continue;
+          if (config.maxL    !== undefined && material.lightness > config.maxL) continue;
+          rawDirScore = computeDirectionScore(material, ref, config);
+          const hw = config.harmonyWeight ?? 0;
+          blended  = hw > 0 ? rawDirScore * (1 - hw) + harmScore * hw : rawDirScore;
+        }
         const finalScore = pw > 0 ? blended * (1 - pw) + pairScore * pw : blended;
-        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: dirScore, direction: dir, clusterKey, archetype });
+        entries.push({ code: material.technicalCode, score: finalScore, harmonyScore: harmScore, pairScore, directionScore: rawDirScore, direction: dir, clusterKey, archetype });
       }
     } else {
       const finalScore = pw > 0 ? harmScore * (1 - pw) + pairScore * pw : harmScore;

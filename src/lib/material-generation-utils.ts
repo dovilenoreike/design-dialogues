@@ -7,7 +7,7 @@ import { Flame } from "lucide-react";
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 export const LOG_PROMPTS_TO_CONSOLE = IS_DEV;
-export const SHOW_COLOUR_SCORES = false; // set to IS_DEV to re-enable score overlays
+export const SHOW_COLOUR_SCORES = IS_DEV; // score overlays: on in dev, off in production
 
 export interface MaterialImageWithMeta {
   base64: string;
