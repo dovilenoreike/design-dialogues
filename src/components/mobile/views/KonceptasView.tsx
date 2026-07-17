@@ -232,7 +232,7 @@ export default function KonceptasView({
     <div className="-mt-3" onClick={() => setActiveSlot(null)}>
       {/* Canvas */}
       <div
-        className="relative w-full overflow-hidden rounded-2xl"
+        className="relative w-full overflow-hidden rounded-2xl lg:w-[80%] lg:mx-auto"
         style={{ aspectRatio: "4/4.9" }}
         onClick={(e) => { e.stopPropagation(); setActiveSlot(null); }}
       >

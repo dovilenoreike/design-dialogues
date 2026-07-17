@@ -1353,27 +1353,33 @@ export default function MaterialSlotPicker({
                 className="flex gap-2 px-4 pb-5 pt-2 overflow-x-auto flex-shrink-0"
                 style={{ scrollbarWidth: "none" } as React.CSSProperties}
               >
-                {directionTopItems.map(item => (
-                  <button
-                    key={`dtop-${item.code}`}
-                    onClick={() => { if (slot && effectiveActiveId) onSelect(slot, effectiveActiveId, item.code); }}
-                    className="relative flex-shrink-0 active:scale-95"
-                    style={{
-                      width: ALT_SWATCH_SIZE,
-                      height: ALT_SWATCH_SIZE,
-                      borderRadius: ALT_SWATCH_RADIUS,
-                      overflow: "hidden",
-                      border: item.isSelected ? "2px solid #647d75" : "2px solid transparent",
-                      transition: "border-color 0.15s, transform 0.1s",
-                    }}
-                  >
-                    <img src={item.image} alt="" className="w-full h-full object-cover" />
-                    {item.isSelected && (
-                      <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
-                        <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
-                      </div>
+                {directionTopItems.map((item, index) => (
+                  <div key={`dtop-${item.code}`} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: ALT_SWATCH_SIZE }}>
+                    <button
+                      onClick={() => { if (slot && effectiveActiveId) onSelect(slot, effectiveActiveId, item.code); }}
+                      className="relative active:scale-95 flex-shrink-0"
+                      style={{
+                        width: ALT_SWATCH_SIZE,
+                        height: ALT_SWATCH_SIZE,
+                        borderRadius: ALT_SWATCH_RADIUS,
+                        overflow: "hidden",
+                        border: item.isSelected ? "2px solid #647d75" : index === 0 ? "2px solid rgba(100,125,117,0.35)" : "2px solid transparent",
+                        transition: "border-color 0.15s, transform 0.1s",
+                      }}
+                    >
+                      <img src={item.image} alt="" className="w-full h-full object-cover" />
+                      {item.isSelected && (
+                        <div className="absolute flex items-center justify-center" style={{ bottom: 4, right: 4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#647d75' }}>
+                          <Check className="w-2 h-2 text-white" strokeWidth={2.5} />
+                        </div>
+                      )}
+                    </button>
+                    {index === 0 && (
+                      <span className="text-[9px] font-medium leading-none" style={{ color: '#647d75' }}>
+                        {t('surface.bestMatch')}
+                      </span>
                     )}
-                  </button>
+                  </div>
                 ))}
               </div>
             </>

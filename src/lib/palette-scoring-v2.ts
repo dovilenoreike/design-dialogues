@@ -978,7 +978,7 @@ interface WoodDirectionSpec {
 // perfect on-curve ≈1.0, decent ≈0.90, wrong-hue ≈0.80, clash ≈0.74. Tuned by hand in the
 // UI — revisit if the score form or WOOD_AXIS_WEIGHTS change.
 const WOOD_CURVE_SPECS: Partial<Record<DirectionId, WoodDirectionSpec>> = {
-  tonal_match:   { deltaL:   0, minScore: 0.9 },
+  tonal_match:   { deltaL:   0, minScore: 0.93 },
   lighter_echo:  { deltaL: +17, minScore: 0.8 },
   darker_echo:   { deltaL: -17, minScore: 0.8 },
   soft_contrast: { deltaL:  40, minScore: 0.8 },
